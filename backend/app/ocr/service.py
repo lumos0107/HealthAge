@@ -87,19 +87,23 @@ def initialize_ocr() -> None:
 # ──────────────────────────────────────────────────────────────────
 
 async def extract_ocr(
-    image_bytes: bytes,
+    image_bytes: bytes | list[bytes],
     mime_type: str | None = None,
     doc_type: str = "checkup",
+    page_names: str | list[str] | None = None,
 ) -> dict[str, Any]:
-    """이미지 bytes → OCR JSON dict.
+    """이미지 bytes(단일 또는 여러 장) → OCR JSON dict.
 
     OCR 친구의 동기 함수를 asyncio.to_thread로 감싸서 비동기 컨텍스트에서 안전하게 호출.
+    여러 장이면 entry가 페이지별 처리 후 하나의 JSON으로 병합한다.
 
     Args:
-        image_bytes: 이미지 raw bytes (PNG/JPEG/WEBP).
+        image_bytes: 이미지 raw bytes (PNG/JPEG/WEBP), 또는 그 리스트 (멀티페이지).
         mime_type: "image/png" 등. PIL이 자동 감지하니 None도 OK.
         doc_type: 문서 종류 — "checkup" (기본, 건강검진) 또는 "med_label" (약봉투).
                   프론트→백엔드에서 명시되어 내려옴.
+        page_names: 응답 meta.source_images에 들어갈 페이지 식별자.
+                    None이면 "uploaded"(단일) 또는 자동 생성(멀티).
 
     Returns:
         OCR JSON dict. doc_type에 따라 스키마 다름 (entry.extract_from_images 참조).
@@ -107,11 +111,13 @@ async def extract_ocr(
     Raises:
         OCRError: OCR 처리 실패 (이미지 손상, 비전 모델 오류 등).
     """
+    if page_names is None and isinstance(image_bytes, bytes):
+        page_names = "uploaded"
     try:
         result = await asyncio.to_thread(
             extract_from_images,
             image_bytes,
-            page_names="uploaded",
+            page_names=page_names,
             mime_type=mime_type,
             doc_type=doc_type,
         )

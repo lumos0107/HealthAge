@@ -191,6 +191,8 @@ GROUP_A_SYSTEM_PROMPT = f"""당신은 한국 건강검진 결과지에서 다음
 - 보통 검진지 상단 헤더 또는 하단 푸터에 표시됨
 - 정식 명칭 그대로 추출 (예: "서울대학교병원 건강검진센터")
 - 보이지 않으면 null
+- 주의: 표 안의 다른 칸을 병원명으로 가져오지 마세요.
+  "내원", "표면항원" 같은 짧은 단어나 검사항목명은 병원명이 아닙니다 → null
 
 키 이름과 단위는 절대 바꾸지 말고, value만 이미지에서 찾아 채우세요.
 없는 항목은 null 그대로 두세요."""
@@ -318,6 +320,182 @@ GROUP_B_USER_PROMPT = """이미지에서 시스템 지시에 따라 9개 항목�
    - "■ 금연필요" 체크 → smoking: "current"
    - "■ 절주필요" 체크 → drinking: "yes"
    (이 권고들은 해당 행동을 하는 사람에게만 주어짐)"""
+
+
+# ============================================================
+# 페이지 게이트 프롬프트 (환각 방지)
+# ============================================================
+# 종합소견·판정·안내문 페이지에서 7B 모델이 수치를 창작하는 문제(정리/05 §4)를
+# 막기 위해, 수치 추출 전에 "이 영역에 측정값 표가 있는가"를 먼저 판별한다.
+# 불확실하면 true(추출 진행) — 진짜 수치를 버리는 것이 환각보다 더 나쁘기 때문.
+
+GATE_SYSTEM_PROMPT = """당신은 한국 건강검진 결과지 이미지를 분류하는 전문가입니다.
+
+이 이미지에 "검사 항목명 옆에 측정된 숫자 값"이 있는지만 판단하세요. 값을 추출하지 마세요.
+
+has_measurement_values 판단 기준:
+- true: 신장/체중/허리둘레/혈압/혈당/혈색소/콜레스테롤/간기능(AST·ALT) 같은
+  검사 항목명 옆에 그 사람의 측정 숫자가 적혀 있음
+- false: 측정 숫자 표가 없는 페이지. 예:
+  * 종합소견/판정 페이지 — 문장 소견과 "정상A/정상B/일반질환의심" 같은 판정만 있음
+  * 표지, 안내문, 수검 안내, 문진표(설문 체크박스만 있는 페이지)
+- 확실하지 않으면 true로 답하세요. (측정 숫자가 하나라도 보이면 true)
+
+JSON 객체 하나만 출력. 설명 금지:
+{"has_measurement_values": true, "reason": "판단 근거 한 줄"}"""
+
+GATE_USER_PROMPT = """이 이미지에 검사 항목의 측정 숫자 값이 있습니까?
+시스템 지시의 JSON 형식으로만 답하세요. 불확실하면 true."""
+
+
+# 페이지 전체를 보고 판정하는 게이트.
+# 영역 단위 게이트만으로는 종합소견 페이지의 일부 스트립 영역이 "표처럼" 보여
+# 통과해 버린다(실측: general_01_p1 region #0에서 수치 9개 창작).
+# 페이지 전체를 보면 "이건 종합소견 페이지"라는 맥락이 살아 판별이 정확해진다.
+PAGE_GATE_SYSTEM_PROMPT = """당신은 한국 건강검진 결과지의 페이지 종류를 분류하는 전문가입니다.
+
+이 페이지가 "검사 수치 표가 실린 페이지"인지 판단하세요. 값을 추출하지 마세요.
+
+page_type:
+- "measurement": 검사 항목명과 측정 숫자가 표로 정리된 페이지.
+  (신장·체중·허리둘레·혈압·공복혈당·혈색소·콜레스테롤·AST/ALT 등이 숫자와 함께 나열)
+- "summary": 종합소견/판정 페이지. 문장 소견, "정상A/정상B/일반질환의심" 같은
+  판정 결과, 권고사항 위주. 검사 수치 표는 없음.
+- "other": 표지, 안내문, 문진표(설문 체크박스만), 빈 페이지 등.
+
+주의: 페이지 하단이나 구석에 작은 표 모양 박스가 있어도, 그 안에 검사 수치가
+아니라 판정/소견/안내 문구만 있으면 "measurement"가 아닙니다.
+
+확실하지 않으면 "measurement"로 답하세요.
+
+JSON 객체 하나만 출력. 설명 금지:
+{"page_type": "measurement", "reason": "판단 근거 한 줄"}"""
+
+PAGE_GATE_USER_PROMPT = """이 페이지는 검사 수치 표가 실린 페이지입니까?
+시스템 지시의 JSON 형식으로만 답하세요. 불확실하면 "measurement"."""
+
+
+def page_has_measurement_values(
+    image: Image.Image,
+    model: str | None = None,
+) -> tuple[bool, dict]:
+    """페이지 전체를 보고 "검사 수치 표가 있는 페이지"인지 판정 (환각 방지).
+
+    호출 실패·응답 불명확 시 True (fail-open) — 진짜 수치를 버리는 것이
+    환각을 남기는 것보다 더 나쁘기 때문.
+
+    Returns:
+        (has_values, debug)
+    """
+    b64 = image_utils.image_to_base64(image, format="PNG")
+    try:
+        parsed, meta = ollama_client.call_vision_model(
+            system_prompt=PAGE_GATE_SYSTEM_PROMPT,
+            user_prompt=PAGE_GATE_USER_PROMPT,
+            image_base64=b64,
+            model=model or config.OLLAMA_MODEL_VISION,
+        )
+    except Exception as e:
+        print(f"[PageGate] 호출 실패 ({type(e).__name__}) — 수치 추출 진행(fail-open)")
+        return True, {"success": False, "error": f"{type(e).__name__}: {e}"}
+
+    page_type = (parsed or {}).get("page_type")
+    reason = (parsed or {}).get("reason")
+    if not isinstance(page_type, str):
+        print(f"[PageGate] page_type 불명확 — 수치 추출 진행(fail-open)")
+        return True, {"success": True, "page_type": None, "reason": reason}
+
+    has_values = page_type.strip().lower() == "measurement"
+    print(f"[PageGate] page_type={page_type} "
+          f"({meta.get('elapsed_sec', 0):.1f}초) → "
+          f"{'수치 추출 진행' if has_values else '수치 추출 생략(환각 방지)'}")
+    return has_values, {
+        "success": True,
+        "page_type": page_type,
+        "reason": reason,
+        "elapsed_sec": meta.get("elapsed_sec"),
+    }
+
+
+# ============================================================
+# 혈색소 재시도 프롬프트 (단일 항목 집중 호출)
+# ============================================================
+# e2e 테스트에서 혈색소만 반복 누락됨(정리/05 §2). 그룹 A가 놓치면
+# 혈색소 하나만 찾는 집중 호출로 한 번 더 시도한다.
+
+HB_RETRY_SYSTEM_PROMPT = """당신은 한국 건강검진 결과지에서 혈색소(헤모글로빈) 값 하나만 찾는 OCR 전문가입니다.
+
+찾을 항목: "혈색소", "헤모글로빈", "Hb", "Hemoglobin"
+- 주로 "혈액검사", "빈혈" 섹션의 행에 있음. 단위는 g/dL, 값은 대개 8~18 사이.
+- 반드시 항목명과 같은 가로 행의 측정값만 가져오세요.
+- "남 13.0-16.5", "여 12.0-15.5" 같은 범위 표기는 참고치이므로 절대 가져오지 마세요.
+- 항목이 없거나 "비해당"이면 null.
+
+JSON 객체 하나만 출력. 설명 금지:
+{"hb": {"value": null, "unit": "g/dL"}}"""
+
+HB_RETRY_USER_PROMPT = """이미지에서 혈색소(Hb) 측정값 하나만 찾아 시스템 지시의 JSON으로 답하세요.
+참고치(범위 표기) 말고 측정값만. 없으면 null."""
+
+
+# ============================================================
+# 전사(transcription) 교차검증 프롬프트 — 환각 방지의 핵심
+# ============================================================
+# "수치가 있느냐"를 묻는 게이트는 7B 모델이 신뢰성 있게 답하지 못했다(실측:
+# 종합소견 페이지의 푸터 스트립에서 검진 수치 9개를 confidence 0.9로 창작).
+# 그래서 판단을 묻는 대신 "보이는 숫자를 그대로 옮겨 적게" 한다.
+# 전사는 추출적(extractive) 작업이라 창작이 훨씬 덜 일어나며,
+# 전사 목록에 없는 값은 근거 없는 값으로 보고 버린다.
+# 정리/05의 원칙 "잘못된 값을 넣는 것보다 빠뜨리는 게 낫다"와 일치.
+
+EVIDENCE_SYSTEM_PROMPT = """이미지에 인쇄된 숫자를 그대로 옮겨 적는 전사(transcription) 작업입니다.
+
+규칙:
+- 이미지에서 눈에 보이는 모든 숫자를 찾아 나열하세요.
+  측정값·참고치·날짜·번호·단위에 붙은 숫자 무엇이든 전부 포함합니다.
+- 보이는 그대로 적으세요. 계산·보정·해석하지 마세요.
+- "138/88"처럼 붙어 있으면 "138/88" 그대로 적으세요.
+- 숫자가 하나도 보이지 않으면 빈 배열을 반환하세요.
+- 보이지 않는 숫자를 절대 지어내지 마세요. 이것이 가장 중요합니다.
+
+JSON 객체 하나만 출력. 설명 금지:
+{"numbers": ["170.0", "65.0", "120/80", "2020.01.01"]}"""
+
+EVIDENCE_USER_PROMPT = """이 이미지에 인쇄되어 보이는 숫자를 전부 그대로 나열하세요.
+없으면 {"numbers": []}. 보이지 않는 숫자를 지어내지 마세요."""
+
+
+def _extract_evidence_numbers(raw_list) -> set[float] | None:
+    """전사 응답의 문자열 목록 → 숫자 집합.
+
+    "120/80" 같은 복합 표기는 120과 80으로 분해한다.
+    응답이 리스트가 아니면 None (교차검증 불가 → 필터 미적용).
+    """
+    if not isinstance(raw_list, list):
+        return None
+    import re
+    out: set[float] = set()
+    for item in raw_list:
+        for tok in re.findall(r"\d+(?:\.\d+)?", str(item)):
+            try:
+                out.add(float(tok))
+            except ValueError:
+                continue
+    return out
+
+
+def _value_supported(value: float, evidence: set[float]) -> bool:
+    """측정값이 전사 목록에 근거를 갖는지 판정.
+
+    - 부동소수 오차 및 표기 차이(14.0 vs 14) 허용
+    - 신장은 m→cm 정규화(1.75→175)를 거치므로 원표기 1.75도 근거로 인정
+    """
+    candidates = (value, value / 100.0, value * 100.0)
+    for cand in candidates:
+        for ev in evidence:
+            if abs(ev - cand) <= max(0.05, abs(cand) * 0.001):
+                return True
+    return False
 
 
 # ============================================================
@@ -497,8 +675,17 @@ def _normalize_name(value):
     return s
 
 
+# 의료기관명에 흔히 포함되는 키워드. 하나도 없으면 표의 다른 칸("내원",
+# "표면항원" 같은 검사항목명)을 병원명으로 오인한 것으로 보고 버린다(정리/05 §3).
+_HOSPITAL_KEYWORDS = (
+    "병원", "의원", "센터", "클리닉", "의료", "검진", "보건",
+    "내과", "외과", "가정의학", "산부인과", "소아", "한의", "한방", "치과",
+    "메디", "의학", "대학교", "재단", "공단",
+)
+
+
 def _normalize_hospital(value):
-    """병원명 정규화. 빈 문자열/공백만이면 None."""
+    """병원명 정규화. 빈 문자열/공백만이거나 기관명으로 볼 수 없으면 None."""
     if value is None or not isinstance(value, str):
         return None
     s = value.strip()
@@ -506,6 +693,9 @@ def _normalize_hospital(value):
         return None
     if len(s) > 200:
         print(f"[TablePipeline] 병원명이 너무 김 ({len(s)}자) — null로")
+        return None
+    if not any(kw in s for kw in _HOSPITAL_KEYWORDS):
+        print(f"[TablePipeline] 기관명 키워드 없음 ({len(s)}자) — 병원명 오인식 의심, null로")
         return None
     return s
 
@@ -590,6 +780,9 @@ class TablePipeline(BasePipeline):
     ):
         self.model = model or config.OLLAMA_MODEL_VISION
         self.save_debug = save_debug
+        # 페이지 단위 게이트 결과 주입점. run_multipage가 페이지 처리 전에 세팅.
+        # False면 이 페이지의 수치는 환각으로 보고 추출/보존하지 않는다.
+        self.extract_measurements = True
     
     @property
     def supported_region_type(self) -> RegionType:
@@ -600,13 +793,41 @@ class TablePipeline(BasePipeline):
         region_image: Image.Image,
         region_info: RegionInfo,
     ) -> PipelineResult:
-        # crop 이미지를 base64로 변환 (두 호출이 같은 이미지 공유)
+        # crop 이미지를 base64로 변환 (모든 호출이 같은 이미지 공유)
         b64 = image_utils.image_to_base64(region_image, format="PNG")
-        
-        print(f"[TablePipeline] 영역 {region_info.bbox} 처리 시작 (2회 호출)")
-        
+
+        print(f"[TablePipeline] 영역 {region_info.bbox} 처리 시작")
+
         # ----------------------------------------
-        # 1차 호출: 그룹 A (9개 항목)
+        # 0차 호출: 영역 게이트 (환각 방지)
+        # 페이지 게이트가 이미 "수치 없음"이면 호출 자체를 생략한다.
+        # 게이트 실패/불명확 시 true(추출 진행) — fail-open.
+        # ----------------------------------------
+        if not self.extract_measurements:
+            has_values = False
+            gate_result, gate_debug = {}, {"skipped": "page_gate_no_measurement_values"}
+            print(f"[TablePipeline] 페이지 게이트: 수치 없는 페이지 "
+                  f"— 수치 추출 생략, meta만 추출 (환각 방지)")
+        else:
+            print(f"[TablePipeline] [0/2] 영역 게이트 호출 (측정값 표 유무 판별)")
+            gate_result, gate_debug = self._call_group(
+                b64=b64,
+                system_prompt=GATE_SYSTEM_PROMPT,
+                user_prompt=GATE_USER_PROMPT,
+                group_name="GATE",
+            )
+            has_values = True
+            if isinstance(gate_result, dict) and isinstance(
+                gate_result.get("has_measurement_values"), bool
+            ):
+                has_values = gate_result["has_measurement_values"]
+            if not has_values:
+                print(f"[TablePipeline] 영역 게이트: 측정값 표 없음 판정 "
+                      f"— 수치 추출 생략, meta만 추출 (환각 방지)")
+
+        # ----------------------------------------
+        # 1차 호출: 그룹 A (9개 항목 + meta)
+        # 게이트가 false여도 호출 — meta(검진일/주민번호/이름/병원)는 필요.
         # ----------------------------------------
         print(f"[TablePipeline] [1/2] 그룹 A 호출 (신체/혈압/혈당/혈액/신장/소변)")
         group_a_result, group_a_debug = self._call_group(
@@ -615,17 +836,20 @@ class TablePipeline(BasePipeline):
             user_prompt=GROUP_A_USER_PROMPT,
             group_name="A",
         )
-        
+
         # ----------------------------------------
-        # 2차 호출: 그룹 B (9개 항목)
+        # 2차 호출: 그룹 B (9개 항목) — 측정값 표가 있을 때만
         # ----------------------------------------
-        print(f"[TablePipeline] [2/2] 그룹 B 호출 (지질/간기능/생활습관)")
-        group_b_result, group_b_debug = self._call_group(
-            b64=b64,
-            system_prompt=GROUP_B_SYSTEM_PROMPT,
-            user_prompt=GROUP_B_USER_PROMPT,
-            group_name="B",
-        )
+        if has_values:
+            print(f"[TablePipeline] [2/2] 그룹 B 호출 (지질/간기능/생활습관)")
+            group_b_result, group_b_debug = self._call_group(
+                b64=b64,
+                system_prompt=GROUP_B_SYSTEM_PROMPT,
+                user_prompt=GROUP_B_USER_PROMPT,
+                group_name="B",
+            )
+        else:
+            group_b_result, group_b_debug = {}, {"skipped": "gate_no_measurement_values"}
         
         # ----------------------------------------
         # 두 결과 병합
@@ -654,7 +878,53 @@ class TablePipeline(BasePipeline):
         # ----------------------------------------
         cleaned_measurements = _clean_measurements(merged_measurements)
         cleaned_lifestyle = _clean_lifestyle(merged_lifestyle)
-        
+
+        # 게이트가 "측정값 표 없음"이면 수치·생활습관 폐기 (환각 방지, 정리/05 §4)
+        evidence_debug: dict = {}
+        evidence_set: set[float] | None = None
+        if not has_values:
+            discarded = sum(
+                1 for v in cleaned_measurements.values()
+                if v.get("value") is not None or v.get("code") is not None
+            )
+            if discarded:
+                print(f"[TablePipeline] 게이트 판정에 따라 수치 {discarded}개 폐기 (환각 의심)")
+            cleaned_measurements = {}
+            cleaned_lifestyle = {"smoking": None, "drinking": None}
+        else:
+            # 전사 교차검증 — 이 크롭에 실제로 인쇄된 숫자에 근거가 없는 값은 버린다.
+            cleaned_measurements, evidence_debug, evidence_set = self._filter_by_evidence(
+                b64, cleaned_measurements
+            )
+            # 숫자 근거가 하나도 남지 않은 크롭이면 요단백(체크박스)·생활습관도 신뢰할 수 없다.
+            # 요단백·생활습관은 숫자가 아니라 개별 검증이 안 되므로, 같은 표에 속한
+            # 숫자 항목이 전멸했다는 사실을 연대 근거로 삼아 함께 버린다.
+            numeric_survived = any(
+                k != "urine_protein" and v.get("value") is not None
+                for k, v in cleaned_measurements.items()
+            )
+            if evidence_debug.get("applied") and not numeric_survived:
+                if cleaned_measurements.get("urine_protein"):
+                    print(f"[TablePipeline] 숫자 근거 전무 — 요단백·생활습관도 폐기 (환각 의심)")
+                cleaned_measurements.pop("urine_protein", None)
+                cleaned_lifestyle = {"smoking": None, "drinking": None}
+
+        # ----------------------------------------
+        # 혈색소 재시도 (그룹 A가 놓쳤을 때 단일 항목 집중 호출, 정리/05 §2)
+        # ----------------------------------------
+        # 전사에 이미 숫자 근거가 있는 크롭에서만 재시도한다 (근거 없는 크롭에서
+        # 재시도하면 방금 막은 환각을 다시 들여오는 셈이 된다).
+        hb_item = cleaned_measurements.get("hb") or {}
+        if has_values and hb_item.get("value") is None and evidence_set != set():
+            retry_value = self._retry_hb(b64)
+            if retry_value is None:
+                pass
+            elif evidence_set is not None and not _value_supported(retry_value, evidence_set):
+                print(f"[TablePipeline] 혈색소 재시도 값 {retry_value}에 전사 근거 없음 — 폐기")
+            else:
+                cleaned_measurements["hb"] = {"value": retry_value, "unit": "g/dL"}
+                print(f"[TablePipeline] 혈색소 재시도 성공: hb={retry_value}")
+
         # ----------------------------------------
         # OCR 신뢰도 산정 (추출 성공률)
         # ----------------------------------------
@@ -723,6 +993,12 @@ class TablePipeline(BasePipeline):
             debug={
                 "region_bbox": list(region_info.bbox),
                 "region_label": region_info.label,
+                "gate": {
+                    "has_measurement_values": has_values,
+                    "reason": (gate_result or {}).get("reason"),
+                    **gate_debug,
+                },
+                "evidence": evidence_debug,
                 "group_a": group_a_debug,
                 "group_b": group_b_debug,
             },
@@ -731,9 +1007,105 @@ class TablePipeline(BasePipeline):
         )
     
     # ----------------------------------------
+    # 전사 교차검증 (환각 방지)
+    # ----------------------------------------
+
+    def _filter_by_evidence(
+        self,
+        b64: str,
+        measurements: dict,
+    ) -> tuple[dict, dict, set[float] | None]:
+        """크롭에 인쇄된 숫자를 전사시켜, 근거 없는 측정값을 버린다.
+
+        전사 호출이 실패하거나 응답 형식이 어긋나면 필터를 적용하지 않는다
+        (applied=False) — 검증 불가일 뿐 값이 틀렸다는 뜻은 아니므로.
+        전사 결과가 명시적으로 빈 배열이면 "이 크롭엔 숫자가 없다"는 뜻이므로
+        수치를 전부 버린다.
+
+        Returns:
+            (필터링된 measurements, debug, 전사 숫자 집합 or None)
+        """
+        extracted = {
+            k: v for k, v in measurements.items()
+            if v.get("value") is not None or v.get("code") is not None
+        }
+        if not extracted:
+            return measurements, {"applied": False, "reason": "추출된 수치 없음"}, None
+
+        print(f"[TablePipeline] 전사 교차검증 호출 (근거 확인)")
+        result, debug = self._call_group(
+            b64=b64,
+            system_prompt=EVIDENCE_SYSTEM_PROMPT,
+            user_prompt=EVIDENCE_USER_PROMPT,
+            group_name="EVIDENCE",
+        )
+        evidence = _extract_evidence_numbers(
+            (result or {}).get("numbers") if isinstance(result, dict) else None
+        )
+        if evidence is None:
+            print(f"[TablePipeline] 전사 응답 형식 이상 — 교차검증 생략(값 유지)")
+            return (measurements,
+                    {"applied": False, "reason": "전사 응답 형식 이상", **debug},
+                    None)
+
+        filtered = dict(measurements)
+        dropped: list[str] = []
+        for key, item in extracted.items():
+            # 요단백은 체크박스(코드)라 숫자 근거 대상이 아님 — 검증에서 제외
+            if key == "urine_protein":
+                continue
+            value = item.get("value")
+            if not isinstance(value, (int, float)):
+                continue
+            if not _value_supported(float(value), evidence):
+                filtered[key] = {"value": None, "unit": item.get("unit")}
+                dropped.append(f"{key}={value}")
+
+        if dropped:
+            print(f"[TablePipeline] 전사 근거 없는 수치 {len(dropped)}개 폐기 "
+                  f"(환각 의심): {', '.join(dropped)}")
+        else:
+            print(f"[TablePipeline] 전사 교차검증 통과 — 폐기 없음")
+
+        return filtered, {
+            "applied": True,
+            "evidence_count": len(evidence),
+            "dropped": dropped,
+            **debug,
+        }, evidence
+
+    # ----------------------------------------
+    # 혈색소 단일 항목 재시도
+    # ----------------------------------------
+
+    def _retry_hb(self, b64: str) -> float | None:
+        """그룹 A가 혈색소를 놓쳤을 때 단일 항목 집중 호출로 한 번 더 시도.
+
+        실패하거나 의학적 범위(config.MEDICAL_RANGES["hb"]) 밖이면 None.
+        """
+        print(f"[TablePipeline] 혈색소 누락 — 단일 항목 재시도 호출")
+        result, _debug = self._call_group(
+            b64=b64,
+            system_prompt=HB_RETRY_SYSTEM_PROMPT,
+            user_prompt=HB_RETRY_USER_PROMPT,
+            group_name="HB-RETRY",
+        )
+        hb_obj = result.get("hb") if isinstance(result, dict) else None
+        if not isinstance(hb_obj, dict):
+            return None
+        value = _clean_numeric(hb_obj.get("value"))
+        if value is None:
+            return None
+        lo, hi = config.MEDICAL_RANGES["hb"]
+        if not (lo <= value <= hi):
+            print(f"[TablePipeline] 혈색소 재시도 값이 의학적 범위 밖 ({value}) — 폐기")
+            return None
+        return value
+
+    # ----------------------------------------
     # 그룹별 호출 (실패 격리)
     # ----------------------------------------
-    
+
     def _call_group(
         self,
         b64: str,

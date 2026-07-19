@@ -42,10 +42,24 @@ class MedLabelMerger:
         for p in page_results:
             all_medications.extend(p.medications)
 
-        # meta: 최고 confidence 페이지 것 사용
-        # (각 페이지가 독립 약봉투면 meta가 페이지마다 다를 수 있는데, 일단 대표값으로)
-        best_page = max(page_results, key=lambda p: p.ocr_confidence)
-        meta = best_page.meta
+        # meta: 최고 confidence 페이지를 기준으로, 비어 있는 필드는
+        # 다음 confidence 순 페이지에서 채움 (필드 단위 보완 병합).
+        # 예: 1페이지엔 약국명만, 2페이지엔 환자명만 찍혀도 둘 다 살린다.
+        ordered = sorted(page_results, key=lambda p: p.ocr_confidence, reverse=True)
+        meta = MedLabelMeta(
+            dispense_date=ordered[0].meta.dispense_date,
+            patient_name=ordered[0].meta.patient_name,
+            patient_birth=ordered[0].meta.patient_birth,
+            pharmacy_name=ordered[0].meta.pharmacy_name,
+            prescriber=ordered[0].meta.prescriber,
+        )
+        for p in ordered[1:]:
+            for field_name in (
+                "dispense_date", "patient_name", "patient_birth",
+                "pharmacy_name", "prescriber",
+            ):
+                if getattr(meta, field_name) is None:
+                    setattr(meta, field_name, getattr(p.meta, field_name))
 
         # medication_count_declared: 합산 (None은 0으로 취급)
         declared_sum = 0

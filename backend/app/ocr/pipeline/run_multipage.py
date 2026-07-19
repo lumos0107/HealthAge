@@ -25,6 +25,7 @@ from app.ocr.pipeline import config
 from PIL import Image
 from app.ocr.pipeline.splitter import get_splitter
 from app.ocr.pipeline.pipelines import get_pipeline_for_region
+from app.ocr.pipeline.pipelines.table_pipeline import page_has_measurement_values
 from app.ocr.pipeline.utils import image_utils, ollama_client
 from app.ocr.pipeline.utils.schemas import PipelineResult, RegionType
 from app.ocr.pipeline.merger import PageMerger, PageResult
@@ -168,7 +169,11 @@ def _process_page_core(
     
     split_elapsed = time.time() - t0
     print(f"  분할 완료: {split_elapsed:.2f}초, {len(split_result.regions)}개 영역")
-    
+
+    # 페이지 단위 환각 게이트 — 종합소견/안내 페이지면 수치를 추출·보존하지 않는다.
+    # 영역 단위 게이트만으론 페이지 일부 스트립이 "표처럼" 보여 통과하는 사례가 있었다.
+    page_has_values, page_gate_debug = page_has_measurement_values(image)
+
     # 영역별 파이프라인 처리 → 페이지 단위로 병합
     page_measurements: dict = {}
     page_lifestyle: dict = {"smoking": None, "drinking": None}
@@ -185,6 +190,9 @@ def _process_page_core(
             continue
         
         print(f"  [영역 #{i}: {region.region_type.value}] → {pipeline.name}")
+        # 페이지 게이트 결과 주입 (지원하는 파이프라인만)
+        if hasattr(pipeline, "extract_measurements"):
+            pipeline.extract_measurements = page_has_values
         cropped = image_utils.crop_region(image, region.bbox)
         
         # crop된 영역이 작으면 업스케일 (파이프라인이 더 잘 읽도록)
@@ -246,6 +254,20 @@ def _process_page_core(
             "debug": result.debug,
         })
     
+    # 페이지 게이트가 "수치 없는 페이지"로 판정하면 어떤 영역에서 나왔든 수치를 버린다.
+    # (metadata 파이프라인 등 게이트를 모르는 경로로 새어 들어온 값까지 확실히 차단)
+    if not page_has_values:
+        discarded = sum(
+            1 for v in page_measurements.values()
+            if v.get("value") is not None or v.get("code") is not None
+        )
+        if discarded:
+            print(f"  [페이지 게이트] 수치 {discarded}개 폐기 (환각 의심)")
+        page_measurements = {}
+        page_lifestyle = {"smoking": None, "drinking": None}
+        page_measurements_conf = {}
+        page_lifestyle_conf = {}
+
     return PageResult(
         source_image=page_name,
         measurements=page_measurements,
@@ -254,6 +276,7 @@ def _process_page_core(
         pipeline_debug={
             "split_elapsed_sec": round(split_elapsed, 2),
             "region_count": len(split_result.regions),
+            "page_gate": page_gate_debug,
             "regions": region_debugs,
         },
         # [step12] confidence 전달

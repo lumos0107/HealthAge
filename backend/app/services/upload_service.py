@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 # 이미지 크기 제한
 MAX_IMAGE_BYTES = 10 * 1024 * 1024   # 10MB
 
+# 한 번에 올릴 수 있는 최대 페이지 수 (검진지는 보통 3페이지)
+MAX_UPLOAD_PAGES = 5
+
 # 허용 MIME 타입
 ALLOWED_MIME_TYPES = {
     "image/png",
@@ -49,10 +52,12 @@ def validate_image_upload(content_type: str | None, size_bytes: int) -> None:
 
 
 async def upload_and_extract(
-    image_bytes: bytes,
-    content_type: str | None,
+    pages: list[tuple[bytes, str | None, str | None]],
 ) -> dict[str, Any]:
-    """이미지 → OCR 추출.
+    """이미지(1장 이상) → OCR 추출 (멀티페이지는 통합 JSON으로 병합).
+
+    Args:
+        pages: (image_bytes, content_type, filename) 튜플 리스트. 페이지 순서대로.
 
     Returns:
         {"ocr": {...}, "warnings": [...]}
@@ -60,12 +65,30 @@ async def upload_and_extract(
     Raises:
         HTTPException: 400 (검증 실패), 503 (OCR 연결 실패), 500 (예상치 못한 에러).
     """
-    validate_image_upload(content_type, len(image_bytes))
+    if len(pages) > MAX_UPLOAD_PAGES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"페이지 수 초과: {len(pages)}장 (최대 {MAX_UPLOAD_PAGES}장)",
+        )
+
+    for idx, (image_bytes, content_type, filename) in enumerate(pages, 1):
+        try:
+            validate_image_upload(content_type, len(image_bytes))
+        except HTTPException as e:
+            raise HTTPException(
+                status_code=e.status_code,
+                detail=f"페이지 {idx} ({filename or '이름 없음'}): {e.detail}",
+            )
 
     warnings: list[str] = []
+    images_list = [b for b, _, _ in pages]
+    page_names = [
+        filename or f"page_{idx}"
+        for idx, (_, _, filename) in enumerate(pages, 1)
+    ]
 
     try:
-        ocr_json = await extract_ocr(image_bytes, content_type)
+        ocr_json = await extract_ocr(images_list, page_names=page_names)
     except OCRError as e:
         # OCR backend 연결 실패 또는 처리 실패
         msg = str(e)
