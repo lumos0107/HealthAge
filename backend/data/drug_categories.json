@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "version": "v1",
+    "description": "HIRA 영문 성분명(ingredient_en) → 카테고리 매핑. 대사증후군 분석용 약물 결합 연산에 사용.",
+    "categories": ["hypertension", "diabetes", "dyslipidemia"],
+    "matching": "ingredient_en 텍스트를 소문자로 정규화한 뒤, 각 카테고리 키워드 리스트와 부분 일치 검색 (substring match).",
+    "last_updated": "2026-06-01"
+  },
+  "hypertension": {
+    "ace_inhibitor": [
+      "enalapril", "ramipril", "lisinopril", "captopril", "perindopril",
+      "imidapril", "trandolapril", "fosinopril", "benazepril", "moexipril"
+    ],
+    "arb": [
+      "losartan", "valsartan", "irbesartan", "candesartan", "telmisartan",
+      "olmesartan", "fimasartan", "eprosartan", "azilsartan"
+    ],
+    "ccb": [
+      "amlodipine", "nifedipine", "felodipine", "lercanidipine", "lacidipine",
+      "nicardipine", "isradipine", "manidipine", "barnidipine", "benidipine",
+      "cilnidipine", "efonidipine", "diltiazem", "verapamil"
+    ],
+    "beta_blocker": [
+      "bisoprolol", "atenolol", "metoprolol", "carvedilol", "propranolol",
+      "nebivolol", "betaxolol", "celiprolol", "labetalol", "pindolol",
+      "esmolol", "acebutolol"
+    ],
+    "diuretic": [
+      "hydrochlorothiazide", "indapamide", "chlorthalidone", "furosemide",
+      "spironolactone", "torasemide", "amiloride", "triamterene", "eplerenone"
+    ],
+    "alpha_blocker": [
+      "doxazosin", "terazosin", "prazosin"
+    ],
+    "central": [
+      "clonidine", "methyldopa", "moxonidine"
+    ]
+  },
+  "diabetes": {
+    "biguanide": [
+      "metformin"
+    ],
+    "sulfonylurea": [
+      "glimepiride", "gliclazide", "glipizide", "glibenclamide", "gliquidone"
+    ],
+    "dpp4_inhibitor": [
+      "sitagliptin", "vildagliptin", "linagliptin", "saxagliptin",
+      "alogliptin", "gemigliptin", "anagliptin", "teneligliptin",
+      "evogliptin"
+    ],
+    "sglt2_inhibitor": [
+      "dapagliflozin", "empagliflozin", "ipragliflozin", "ertugliflozin",
+      "canagliflozin"
+    ],
+    "tzd": [
+      "pioglitazone", "rosiglitazone", "lobeglitazone"
+    ],
+    "glp1_agonist": [
+      "liraglutide", "dulaglutide", "semaglutide", "exenatide", "lixisenatide"
+    ],
+    "meglitinide": [
+      "repaglinide", "nateglinide", "mitiglinide"
+    ],
+    "alpha_glucosidase_inhibitor": [
+      "acarbose", "voglibose", "miglitol"
+    ],
+    "insulin": [
+      "insulin glargine", "insulin aspart", "insulin lispro", "insulin detemir",
+      "insulin degludec", "insulin glulisine", "insulin isophane", "insulin lyspro",
+      "insulin human", "regular insulin"
+    ]
+  },
+  "dyslipidemia": {
+    "statin": [
+      "atorvastatin", "rosuvastatin", "simvastatin", "pravastatin",
+      "pitavastatin", "fluvastatin", "lovastatin"
+    ],
+    "fibrate": [
+      "fenofibrate", "gemfibrozil", "bezafibrate", "ciprofibrate"
+    ],
+    "ezetimibe": [
+      "ezetimibe"
+    ],
+    "pcsk9_inhibitor": [
+      "evolocumab", "alirocumab"
+    ],
+    "bile_acid_sequestrant": [
+      "cholestyramine", "colestipol", "colesevelam"
+    ],
+    "nicotinic_acid": [
+      "niacin", "nicotinic acid"
+    ],
+    "omega3": [
+      "omega-3", "icosapent ethyl"
+    ]
+  }
+}

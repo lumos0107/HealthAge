@@ -1,0 +1,506 @@
+import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useMemo, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { medicationDosageText, medicationPeriodText, medicationTemplate, ocrTemplate } from '../data';
+import type { MedicationItem, OcrField, TabKey, UserProfile } from '../data';
+import { analyzeCheckup, fieldsToOcrResult, ocrResultToFields, uploadCheckupImage, uploadMedicationFile } from '../health';
+import type { RealOcrResult } from '../health';
+
+const HIRA_URL = 'https://www.hira.or.kr/rb/dur/form.do?pgmid=HIRAA050300000100';
+
+// 외부 링크를 안전하게 연다 — 실패해도 조용히 죽지 않고 안내를 띄운다.
+async function openExternalUrl(url: string) {
+  try {
+    await Linking.openURL(url);
+  } catch {
+    Alert.alert('링크를 열 수 없어요', '브라우저에서 아래 주소를 직접 입력해 주세요.\n\n' + url);
+  }
+}
+
+export default function UploadScreen({ profile, onTab, onSaved }: { profile: UserProfile; onTab: (tab: TabKey) => void; onSaved?: () => void }) {
+  const [mode, setMode] = useState<'checkup' | 'medication'>('checkup');
+  const [fields, setFields] = useState<OcrField[]>([]);
+  const [source, setSource] = useState('');
+  const [touched, setTouched] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [medItems, setMedItems] = useState<MedicationItem[]>([]);
+  const [medUsingExample, setMedUsingExample] = useState(false);
+  const [medUploading, setMedUploading] = useState(false);
+  const [medResult, setMedResult] = useState<{ inserted: number; persisted: boolean } | null>(null);
+  // 실제 OCR 응답 원본 — 사용자가 검수한 값을 다시 같은 모양으로 합쳐서 /analyze로 보낼 때 필요하다.
+  const [ocrRaw, setOcrRaw] = useState<RealOcrResult['ocr'] | null>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [analyzeLoading, setAnalyzeLoading] = useState(false);
+  const [usingExample, setUsingExample] = useState(false);
+  // 방금 저장한 분석이 복약 정보를 반영했는지 여부 — false면 "약을 안 드시는 것으로 가정"했다는 뜻이라 안내를 띄운다.
+  const [medsKnown, setMedsKnown] = useState<boolean | null>(null);
+
+  const loadMedExample = () => {
+    setMedItems(medicationTemplate.map((m) => ({ ...m })));
+    setMedUsingExample(true);
+    setMedResult(null);
+    setStatusMsg('예시 복약 정보입니다. 실제로 저장하려면 "복약자료 파일 업로드"로 본인의 HIRA 엑셀 파일을 올려주세요.');
+    setIsError(false);
+  };
+
+  // 실제 HIRA 복약이력 엑셀(xls/xlsx) 업로드 → 백엔드 파싱 + 저장(POST /medication/upload)
+  const pickMedicationFile = async () => {
+    let result: DocumentPicker.DocumentPickerResult;
+    try {
+      result = await DocumentPicker.getDocumentAsync({
+        type: ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        copyToCacheDirectory: true,
+      });
+    } catch {
+      Alert.alert('파일 선택 실패', '파일을 선택하는 중 문제가 발생했습니다.');
+      return;
+    }
+    if (result.canceled || !result.assets?.length) return;
+    const asset = result.assets[0];
+
+    setMedUploading(true);
+    setMedUsingExample(false);
+    setIsError(false);
+    setMedResult(null);
+    setStatusMsg('복약자료 파일을 분석하는 중이에요...');
+    try {
+      const res = await uploadMedicationFile(asset.uri, asset.name ?? 'medication.xlsx');
+      setMedItems(res.items as unknown as MedicationItem[]);
+      setMedResult({ inserted: res.inserted, persisted: res.persisted });
+      setIsError(false);
+      setStatusMsg(
+        res.persisted
+          ? `복약 정보 ${res.count}건을 확인했고, ${res.inserted}건을 저장했습니다. 이후 검진 결과 분석에 "복용 중인 약" 정보로 활용됩니다.`
+          : `복약 정보 ${res.count}건을 확인했습니다. (이미 저장되어 있어 추가로 저장된 건수는 없어요)`
+      );
+      // 저장이 되었으면 상위(App)에서 복약 목록을 다시 불러오게 해 기록화면에 바로 반영한다.
+      if (res.persisted) onSaved?.();
+    } catch (e) {
+      setIsError(true);
+      setStatusMsg(e instanceof Error ? `복약자료 업로드에 실패했습니다: ${e.message}` : '복약자료 업로드에 실패했습니다.');
+    } finally {
+      setMedUploading(false);
+    }
+  };
+
+  // 효능군(category)별로 묶어서 보여준다 — 어떤 약을 왜 먹는지 한눈에 파악하기 쉽도록.
+  const medGroups = useMemo(() => {
+    const order: string[] = [];
+    const map = new Map<string, MedicationItem[]>();
+    for (const item of medItems) {
+      const category = item.efficacy_class || '기타';
+      if (!map.has(category)) { map.set(category, []); order.push(category); }
+      map.get(category)!.push(item);
+    }
+    return order.map((category) => ({ category, items: map.get(category)! }));
+  }, [medItems]);
+
+  const missing = fields.filter((f) => f.required && !f.value.trim());
+
+  // 예시 결과 — 실제 OCR을 호출하지 않고 화면 형태만 미리 보여줄 때 사용한다(더미 데이터임을 명확히 표시).
+  const loadExample = (src = 'sample-checkup-photo.jpg') => {
+    setFields(ocrTemplate.map((f) => ({ ...f })));
+    setOcrRaw(null); setUsingExample(true); setMedsKnown(null);
+    setSource(src); setTouched(false); setSaved(false); setIsError(false);
+    setStatusMsg('예시 결과입니다. 실제 사진은 "카메라 촬영" 또는 "갤러리 선택"으로 업로드해 주세요.');
+  };
+
+  // 실제 검진지 사진 → 백엔드 OCR(POST /uploads) 호출 → 인식 결과로 항목을 채운다.
+  const runOcr = async (asset: ImagePicker.ImagePickerAsset) => {
+    setOcrLoading(true); setIsError(false); setUsingExample(false); setMedsKnown(null);
+    setStatusMsg('사진에서 검진 결과를 읽는 중이에요...');
+    try {
+      const fileName = asset.fileName ?? asset.uri.split('/').pop() ?? 'checkup.jpg';
+      const mimeType = asset.mimeType ?? 'image/jpeg';
+      const result = await uploadCheckupImage(asset.uri, fileName, mimeType);
+      setOcrRaw(result.ocr);
+      setFields(ocrResultToFields(result.ocr));
+      setSource(fileName);
+      setTouched(false); setSaved(false);
+      const warn = result.warnings?.length ? ` ${result.warnings.join(' ')}` : '';
+      setIsError(!!result.warnings?.length);
+      setStatusMsg(`사진에서 읽은 결과가 준비되었습니다. 검진표와 다른 값이 있으면 수정한 뒤 저장하세요.${warn}`);
+    } catch (e) {
+      setIsError(true);
+      setStatusMsg(e instanceof Error ? `결과지 인식에 실패했습니다: ${e.message}` : '결과지 인식에 실패했습니다.');
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+    if (!result.canceled) await runOcr(result.assets[0]);
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('카메라 권한 필요', '설정에서 카메라 권한을 허용해주세요.'); return; }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+    if (!result.canceled) await runOcr(result.assets[0]);
+  };
+
+  const updateField = (id: string, value: string) => setFields((p) => p.map((f) => f.id === id ? { ...f, value } : f));
+
+  const requestSave = () => {
+    setTouched(true);
+    if (!fields.length) { Alert.alert('결과지 선택', '먼저 결과지를 촬영하거나 선택해주세요.'); return; }
+    if (missing.length) { setIsError(true); setStatusMsg('필수 항목이 비어 있습니다. 빨간 표시 항목을 채워주세요.'); return; }
+    if (usingExample || !ocrRaw) {
+      Alert.alert('예시 데이터입니다', '지금 보이는 항목은 예시 데이터예요. 실제로 저장하려면 "카메라 촬영" 또는 "갤러리 선택"으로 본인의 검진지 사진을 업로드해 주세요.');
+      return;
+    }
+    setIsError(false); setStatusMsg(''); setConfirmOpen(true);
+  };
+
+  // 검수 완료된 값을 실제 분석 서버(POST /analyze)로 보내 분석 + 저장까지 진행한다.
+  const confirmSave = async () => {
+    if (!ocrRaw) { setConfirmOpen(false); return; }
+    setConfirmOpen(false);
+    setAnalyzeLoading(true);
+    setIsError(false);
+    setStatusMsg('검진 결과를 분석하고 저장하는 중이에요...');
+    try {
+      const ocrToSend = fieldsToOcrResult(fields, ocrRaw);
+      const result = await analyzeCheckup(ocrToSend, true);
+      setSaved(true);
+      // 백엔드가 이 분석에 복약 정보를 반영했는지 — false면 아래에서 복약자료 업로드를 안내한다.
+      setMedsKnown(result.medications_known ?? null);
+      const warn = result.warnings?.length ? ` (${result.warnings.join(' ')})` : '';
+      setStatusMsg(`확인한 검진표 값이 저장되었습니다.${warn}`);
+      onSaved?.();
+    } catch (e) {
+      setIsError(true);
+      setStatusMsg(e instanceof Error ? `저장에 실패했습니다: ${e.message}` : '저장에 실패했습니다.');
+    } finally {
+      setAnalyzeLoading(false);
+    }
+  };
+
+  const changeMode = (m: 'checkup' | 'medication') => {
+    setMode(m); setFields([]); setSource(''); setTouched(false); setSaved(false); setStatusMsg(''); setIsError(false);
+    setMedItems([]); setMedUsingExample(false); setMedResult(null); setOcrRaw(null); setUsingExample(false); setMedsKnown(null);
+  };
+
+  const getPlaceholder = (field: OcrField) => {
+    if (field.id === 'exam_date') return '예: 2024-03-15';
+    if (field.id === 'hospital') return '예: 서울대병원 강남센터';
+    if (field.required) return '필수 입력';
+    return '미측정 또는 직접 입력';
+  };
+
+  return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
+
+        {/* 페이지 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
+        <FadeInUp delay={0}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
+          <Eyebrow>UPLOAD</Eyebrow>
+          <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>결과지 업로드</Text>
+          <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>자료 종류를 선택한 뒤 내용을 확인하고 저장합니다.</Text>
+        </View>
+        </FadeInUp>
+
+        {/* 모드 탭 — 카드로 감싸지 않고 구분선 위에 탭만 둔다 */}
+        <FadeInUp delay={70}>
+        <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: T.divider }}>
+          {(['checkup', 'medication'] as const).map((m) => (
+            <Pressable
+              key={m}
+              onPress={() => changeMode(m)}
+              style={[
+                { flex: 1, paddingVertical: 13, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
+                mode === m && { borderBottomColor: T.primary },
+              ]}
+            >
+              <Text style={{ fontSize: 14, fontWeight: mode === m ? '700' : '500', color: mode === m ? T.text1 : T.text3 }}>
+                {m === 'checkup' ? '건강검진 결과지' : '처방전·복약자료'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        </FadeInUp>
+
+        {/* 선택한 모드에 맞는 내용 — 모드를 바꾸면 살짝 페이드되며 갱신된다 */}
+        <FadeIn key={mode}>
+        {mode === 'checkup' && (
+          <>
+            <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 }}>
+              {/* 회원 정보 안내 — 박스 안에 박스를 두지 않고, 카드 안에서 아이콘+텍스트로 평평하게 표시 */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 16, marginBottom: 18, borderBottomWidth: 1, borderBottomColor: T.divider }}>
+                <Ionicons name="person-circle-outline" size={20} color={T.primary} />
+                <Text style={{ fontSize: 13, color: T.text2, flex: 1 }}>
+                  <Text style={{ fontWeight: '700', color: T.text1 }}>{profile.name}</Text> / <Text style={{ fontWeight: '700', color: T.text1 }}>{profile.gender === 1 ? '남성' : '여성'}</Text> 정보가 자동 적용됩니다.
+                </Text>
+              </View>
+
+              {/* 업로드 버튼 */}
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+                <UploadTile title={ocrLoading ? '인식하는 중...' : '카메라 촬영'} icon="camera" primary onPress={takePhoto} disabled={ocrLoading} />
+                <UploadTile title={ocrLoading ? '인식하는 중...' : '갤러리 선택'} icon="images" onPress={pickImage} disabled={ocrLoading} />
+              </View>
+              <Pressable
+                onPress={() => loadExample()}
+                disabled={ocrLoading}
+                style={{ paddingVertical: 14, borderRadius: T.radiusSm, alignItems: 'center', backgroundColor: T.bg, opacity: ocrLoading ? 0.5 : 1 }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
+              </Pressable>
+            </View>
+
+            {fields.length > 0 && (
+              <>
+                {missing.length > 0 && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 14, marginHorizontal: 16, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
+                    <Ionicons name="alert-circle-outline" size={20} color={T.danger} />
+                    <Text style={{ fontSize: 13, color: T.danger, fontWeight: '700' }}>확인 필요 {missing.length}개 항목이 있습니다.</Text>
+                  </View>
+                )}
+
+                {(['기본 정보', '검사 수치'] as OcrField['section'][]).map((section) => (
+                  <View key={section} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8, marginBottom: 8 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>{section}</Text>
+                    {fields.filter((f) => f.section === section).map((field, fi, arr) => {
+                      const bad = touched && !!field.required && !field.value.trim();
+                      return (
+                        <View key={field.id} style={[{ paddingBottom: 14 }, fi < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider, marginBottom: 14 }]}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: bad ? T.danger : T.text2 }}>
+                              {field.label}{field.required ? <Text style={{ color: T.danger }}> *</Text> : null}
+                            </Text>
+                            {bad && <Text style={{ fontSize: 12, color: T.danger, fontWeight: '600' }}>확인 필요</Text>}
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <TextInput
+                              style={{
+                                flex: 1, height: 50,
+                                borderWidth: 1,
+                                borderColor: bad ? T.danger : T.border,
+                                borderRadius: T.radiusSm,
+                                paddingHorizontal: 14,
+                                fontSize: 15, color: T.text1, backgroundColor: T.white,
+                              }}
+                              value={field.value}
+                              onChangeText={(v) => updateField(field.id, v)}
+                              placeholder={getPlaceholder(field)}
+                              placeholderTextColor={T.text3}
+                            />
+                            {field.unit ? <Text style={{ fontSize: 13, color: T.text3, fontWeight: '500', width: 48 }}>{field.unit}</Text> : null}
+                          </View>
+                          {field.id === 'exam_date' && (
+                            <Text style={{ fontSize: 11, color: T.text3, marginTop: 5 }}>YYYY-MM-DD 형식으로 입력 (예: 2024-03-15)</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                ))}
+
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
+                  <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
+                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>저장하기 전에 측정값과 검진기관, 검진일이 실제 검진표와 같은지 다시 확인해주세요.</Text>
+                </View>
+                <View style={{ paddingHorizontal: 16 }}>
+                  <Pressable
+                    style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', opacity: analyzeLoading ? 0.6 : 1 }}
+                    onPress={requestSave}
+                    disabled={analyzeLoading}
+                  >
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>{analyzeLoading ? '저장하는 중...' : '확인한 값 저장'}</Text>
+                  </Pressable>
+                  {saved && (
+                    <Pressable
+                      style={{ height: 54, backgroundColor: T.white, borderRadius: T.radiusPill, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}
+                      onPress={() => onTab('records')}
+                    >
+                      <Text style={{ fontSize: 15, fontWeight: '700', color: T.text2 }}>검진기록에서 확인하기</Text>
+                    </Pressable>
+                  )}
+                  {/* 복약 정보 없이 분석된 경우 — 더 정확한 분석을 위해 복약자료 업로드를 안내한다 */}
+                  {saved && medsKnown === false && (
+                    <Pressable
+                      onPress={() => changeMode('medication')}
+                      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12, padding: 14, backgroundColor: T.primaryLight, borderRadius: T.radiusSm }}
+                    >
+                      <Ionicons name="information-circle-outline" size={18} color={T.primary} style={{ marginTop: 1 }} />
+                      <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
+                        복약 정보가 없어 <Text style={{ fontWeight: '700', color: T.text1 }}>약을 복용하지 않는 것으로 가정</Text>하고 분석했어요. '처방전·복약자료' 탭에서 복약자료를 올리면 약 복용을 감안한 더 정확한 분석을 받을 수 있어요.
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              </>
+            )}
+          </>
+        )}
+
+        {mode === 'medication' && (
+          <>
+            {/* HIRA 링크 카드 */}
+            <Pressable
+              onPress={() => openExternalUrl(HIRA_URL)}
+              style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 16 }}
+            >
+              <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="open-outline" size={24} color={T.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '700', color: T.text1, fontSize: 15, marginBottom: 3 }}>복약자료 발급 방법 안내</Text>
+                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>건강보험심사평가원에서 내 복약정보 조회</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 5 }}>
+                  <Text style={{ fontSize: 12, color: T.primary, fontWeight: '700' }}>브라우저에서 열기</Text>
+                  <Ionicons name="arrow-forward" size={11} color={T.primary} />
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={T.text3} />
+            </Pressable>
+
+            {/* 단계 안내 */}
+            <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>이렇게 진행하세요</Text>
+              {['건강보험심사평가원 접속', '내가 먹는 약! 한눈에 메뉴 선택', '공동인증서 또는 간편인증 로그인', '복약정보 조회 후 엑셀 파일 저장', '아래 파일 선택으로 업로드'].map((step, i) => (
+                <View key={i} style={[{ flexDirection: 'row', gap: 14, paddingVertical: 12, alignItems: 'flex-start' }, i < 4 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
+                  <View style={{ width: 26, height: 26, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+                    <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>{i + 1}</Text>
+                  </View>
+                  <Text style={{ fontSize: 14, color: T.text2, flex: 1, lineHeight: 21 }}>{step}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* 파일 업로드 — 실제 HIRA 엑셀(xls/xlsx)을 백엔드로 보내 파싱·저장한다 */}
+            <Pressable
+              onPress={pickMedicationFile}
+              disabled={medUploading}
+              style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 16, opacity: medUploading ? 0.6 : 1 }}
+            >
+              <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="document-attach-outline" size={24} color={T.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '700', color: T.text1, fontSize: 15, marginBottom: 3 }}>{medUploading ? '분석하는 중...' : '복약자료 파일 업로드'}</Text>
+                <Text style={{ fontSize: 12, color: T.text3 }}>xls / xlsx 파일을 선택하면 자동으로 분석·저장돼요.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={T.text3} />
+            </Pressable>
+
+            {/* 예시 미리보기 — 실제 파일 없이 화면 형태만 먼저 확인할 때 */}
+            <Pressable
+              onPress={loadMedExample}
+              disabled={medUploading}
+              style={{ marginHorizontal: 16, paddingVertical: 14, borderRadius: T.radiusSm, alignItems: 'center', backgroundColor: T.bg, marginBottom: medItems.length ? 8 : 0, opacity: medUploading ? 0.5 : 1 }}
+            >
+              <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
+            </Pressable>
+
+            {/* 정리된 결과 — OCR/파싱 후 "효능군별로" 묶어서 보여준다.
+                약이 많아질수록 무슨 약을 왜 먹는지 한눈에 알기 어려우므로,
+                고혈압약/당뇨약/이상지질혈증약처럼 효능군 단위로 묶고
+                각 약의 성분·용법·복용 기간을 함께 표시해 맥락을 이해하기 쉽게 한다. */}
+            {medGroups.map(({ category, items }) => (
+              <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                  <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.primary }}>{category}</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, color: T.text3 }}>{items.length}개</Text>
+                </View>
+                {items.map((item, i) => (
+                  <View key={`${item.drug_code ?? item.product_name}-${item.dispensed_date}`} style={[{ paddingBottom: 14 }, i < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider, marginBottom: 14 }]}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{item.product_name}</Text>
+                    <Text style={{ fontSize: 12, color: T.text3, marginBottom: 6 }}>성분: {item.ingredient_en}</Text>
+                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{medicationDosageText(item)}</Text>
+                    <Text style={{ fontSize: 12, color: T.text3, marginTop: 3 }}>복용 기간: {medicationPeriodText(item)}</Text>
+                    {item.safety_alert ? (
+                      <Text style={{ fontSize: 12, color: T.danger, marginTop: 3 }}>⚠ {item.safety_alert}</Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            ))}
+
+            {medItems.length > 0 && (
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
+                <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
+                <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>
+                  {medUsingExample
+                    ? '지금 보이는 내용은 형태를 보여주기 위한 예시 데이터로, 실제로 저장되지는 않습니다. 실제로 저장하려면 위의 "복약자료 파일 업로드"로 본인의 HIRA 엑셀 파일을 올려주세요.'
+                    : medResult
+                      ? '저장된 복약 정보는 앞으로 검진 결과 분석 시 "복용 중인 약" 정보로 함께 활용되어, 약을 먹어서 정상 범위로 보이는 항목도 정확히 안내해 드릴 수 있어요.'
+                      : '파일을 업로드하면 검진 결과 분석 시 "복용 중인 약" 정보로 함께 활용되어, 약을 먹어서 정상 범위로 보이는 항목도 정확히 안내해 드릴 수 있어요.'}
+                </Text>
+              </View>
+            )}
+          </>
+        )}
+        </FadeIn>
+
+        {statusMsg ? (
+          <View style={{ marginHorizontal: 16, marginTop: 8, paddingVertical: 12, borderTopWidth: 1, borderTopColor: T.divider, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+            <Ionicons name={isError ? 'alert-circle-outline' : 'checkmark-circle-outline'} size={18} color={isError ? T.danger : T.primary} style={{ marginTop: 1 }} />
+            <Text style={{ fontSize: 13, color: isError ? T.danger : T.primary, fontWeight: '600', flex: 1, lineHeight: 20 }}>{statusMsg}</Text>
+          </View>
+        ) : null}
+      </ScrollView>
+  
+      {/* 저장 확인 모달 */}
+      <Modal transparent visible={confirmOpen} animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: T.white, borderRadius: T.radiusMd, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 }}>
+            <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <Ionicons name="save-outline" size={24} color={T.primary} />
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: T.text1, marginBottom: 8 }}>이 값으로 저장할까요?</Text>
+            <Text style={{ fontSize: 14, lineHeight: 22, color: T.text2, marginBottom: 24 }}>
+              검진일, 검진기관, 주요 측정값이 실제 검진표와 같은지 마지막으로 확인해주세요.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Pressable
+                style={{ flex: 1, height: 52, backgroundColor: T.bg, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
+                onPress={() => setConfirmOpen(false)}
+              >
+                <Text style={{ fontWeight: '600', color: T.text2, fontSize: 15 }}>다시 확인</Text>
+              </Pressable>
+              <Pressable
+                style={{ flex: 1, height: 52, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
+                onPress={confirmSave}
+              >
+                <Text style={{ fontWeight: '700', color: '#fff', fontSize: 15 }}>저장하기</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+}
+
+function UploadTile({ title, icon, primary, onPress, disabled }: { title: string; icon: keyof typeof Ionicons.glyphMap; primary?: boolean; onPress: () => void; disabled?: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={{
+        flex: 1,
+        backgroundColor: primary ? T.primary : T.bg,
+        borderRadius: T.radiusSm,
+        padding: 18,
+        alignItems: 'center',
+        gap: 8,
+        minHeight: 88,
+        justifyContent: 'center',
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      <Ionicons name={icon} size={28} color={primary ? '#fff' : T.text2} />
+      <Text style={{ fontSize: 13, fontWeight: '700', color: primary ? '#fff' : T.text1 }}>{title}</Text>
+    </Pressable>
+  );
+}

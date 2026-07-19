@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>내가 먹는 약! 한눈에 자료 발급 안내</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f4f7fb;
+        color: #1d2b3a;
+        font-family: "Sejong Hospital", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      }
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 48px 28px;
+      }
+      section {
+        border: 1px solid #cbd7e3;
+        background: #ffffff;
+        padding: 34px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 32px;
+        letter-spacing: -0.04em;
+      }
+      p {
+        margin: 0;
+        color: #526273;
+        line-height: 1.8;
+      }
+      ol {
+        margin: 28px 0 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: step;
+      }
+      li {
+        counter-increment: step;
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 16px;
+        border-top: 1px solid #e1e8ef;
+        padding: 22px 0;
+      }
+      li::before {
+        content: counter(step);
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        background: #0b5cad;
+        color: #ffffff;
+        font-weight: 800;
+      }
+      strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 19px;
+        color: #1d2b3a;
+      }
+      .notice {
+        margin-top: 28px;
+        border: 1px solid #b8cee5;
+        background: #eef6ff;
+        padding: 18px;
+        color: #1d4f7c;
+      }
+      @media print {
+        body {
+          background: #ffffff;
+        }
+        main {
+          padding: 0;
+        }
+        section {
+          border: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h1>내가 먹는 약! 한눈에 자료 발급 안내</h1>
+        <p>
+          복약자료 분석은 건강검진 분석에 복용 약 정보를 반영하기 위한 기능입니다.
+          아래 순서대로 HIRA에서 엑셀 파일을 받은 뒤, 헬스케어 결과지 업로드 화면에 업로드하세요.
+        </p>
+
+        <ol>
+          <li>
+            <div>
+              <strong>건강보험심사평가원 또는 정부24에서 서비스 접속</strong>
+              <p>“내가 먹는 약! 한눈에” 메뉴를 검색해 본인 인증 후 접속합니다.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>복약 이력 조회</strong>
+              <p>최근 처방 및 조제 이력을 확인합니다. 가족 자료는 본인 자료와 섞이지 않도록 구분합니다.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>엑셀 파일 다운로드</strong>
+              <p>분석용 파일은 .xls 또는 .xlsx 형식으로 저장합니다. 파일 암호가 필요한 경우 생년월일 정보를 확인해 둡니다.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>헬스케어 업로드 화면에 등록</strong>
+              <p>결과지 업로드 화면의 “내가 먹는 약! 한눈에 업로드” 영역에서 해당 엑셀 파일을 선택합니다.</p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="notice">
+          약물 정보는 건강검진 수치 해석을 돕는 참고 자료입니다. 복용 중단, 변경, 병용 여부는 반드시 의료진 또는 약사와 상담하세요.
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

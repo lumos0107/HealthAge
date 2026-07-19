@@ -1,0 +1,56 @@
+[project]
+name = "health-service"
+version = "0.1.0"
+description = "한국 건강검진 OCR 기반 개인 건강 서비스 — 통합 백엔드"
+requires-python = ">=3.11"
+dependencies = [
+    # ── 웹 프레임워크
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",      # 이미지 업로드
+    # ── 설정
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "python-dotenv>=1.0.0",
+    # ── Supabase + Auth
+    "supabase>=2.9.0",
+    "pyjwt[crypto]>=2.9.0",
+    # ── 분석 (analyzer/_internal/에서 사용)
+    # ⚠️ 분리 시점에 이 묶음은 analyzer-service로 떨어져 나감
+    "polars>=1.18.0",
+    "pandas>=2.2.0",
+    "numpy>=2.0.0",
+    # ── OCR (app/ocr/pipeline/에서 사용)
+    "Pillow>=10.0",                  # PIL — 이미지 처리
+    "requests>=2.31",                # OllamaBackend의 HTTP 호출
+    "opencv-python-headless>=4.8",   # OpenCVTableDetector (격자 검출)
+    # ⚠️ -headless: GUI 빼서 Cloud Run 이미지 가벼움
+    # numpy는 위 분석에서 이미 추가됨
+    # ── Gemini (선택 — 프로덕션 전환 시)
+    # 미사용 시 주석 처리. gemini.py가 lazy import라 미설치 환경에서도 OK.
+    # "google-genai>=0.3.0",
+    "google-genai>=2.6.0",
+    "msoffcrypto-tool>=6.0.0",
+    "openpyxl>=3.1.5",
+    "xlrd>=2.0.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.0",
+    "ruff>=0.8.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

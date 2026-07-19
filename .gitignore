@@ -1,0 +1,67 @@
+# Environment
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+**/.Python
+**/.venv/
+**/venv/
+**/env/
+**/*.egg-info/
+**/.pytest_cache/
+**/.ruff_cache/
+
+# Node
+**/node_modules/
+**/dist/
+**/build/
+**/.next/
+**/.nuxt/
+
+# Data
+backend/data/local/
+backend/data/processed/
+backend/data/raw/
+**/*.db
+
+# OCR pipeline backups
+**/pipeline.before_*.bak/
+
+# OCR debug
+**/debug/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+**/logs/
+
+# OS
+Thumbs.db
+
+# Zip / 구버전 아카이브
+*.zip
+health-service-back-main*/
+
+# 백업 폴더
+**/analyzer/_backup_*/
+
+# 문서 파일 (보고서 등)
+*.docx
+*.pptx
+
+# 로그 텍스트
+expo_log.txt
+
+# 구버전/참고용 프론트엔드 (실제 사용 안 함 — backend/, frontend-mobile/ 만 사용)
+frontend-withus/
+frontend-reference-preview/
