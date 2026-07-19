@@ -109,6 +109,46 @@ export type RealRecommendations = {
   _meta?: { generated_at?: string; version?: string; disclaimer?: string };
 };
 
+// ---- 조합 그룹(복합 질환군) — analyzer/_internal/combo_group_analysis.py 응답 구조 ----
+// 발표에 쓰는 모집단 수치(예: 메타볼릭 트라이어드 O/E=2.93)를 사용자 결과와 연결한다.
+// ⚠️ 07 마이그레이션 이전에 저장된 분석에는 이 필드가 없다 → 항상 null 처리할 것.
+export type RealComboGroup = {
+  combo_name: string;
+  category: string;
+  meaning: string;
+  components: string[];
+  is_ascvd_risk: boolean;
+  population: {
+    n_in_combo: number;
+    pct_of_total: number;
+    expected_n_if_independent: number;
+    observed_to_expected: number;
+    top_metrics: { metric: string; combo_mean: number; non_combo_mean: number; diff: number; cohens_d: number }[];
+  } | null;
+};
+
+export type RealComboAnalysis = {
+  combo_groups?: {
+    matched: RealComboGroup[];
+    not_evaluable: { combo_name: string; category: string; met: string[]; missing: string[]; reason: string }[];
+    matched_count: number;
+    ascvd_risk_combos: string[];
+    highest_synergy: RealComboGroup | null;
+    population: { year: number | null; total_n: number | null; source: string };
+    caveats: string[];
+  } | null;
+  fatty_liver?: {
+    applicable: boolean;
+    type: string | null;
+    provisional: boolean;
+    basis: string;
+    cardiometabolic_factors: string[];
+    note?: string;
+  } | null;
+  disclaimer?: string;
+  error?: string;
+};
+
 export type RealReportPayload = {
   user_id: string;
   year: number;
@@ -116,6 +156,7 @@ export type RealReportPayload = {
   basic_report?: { summary?: string };
   comprehensive: RealComprehensive;
   recommendations?: RealRecommendations | null;
+  combo_analysis?: RealComboAnalysis | null;
   analyzed_at?: string;
 };
 
@@ -371,6 +412,12 @@ export function latestRecommendations(raw: RealReportPayload[]): RealRecommendat
   if (raw.length === 0) return null;
   const latest = raw[raw.length - 1];
   return latest.recommendations ?? null;
+}
+
+/** 최신 연도 보고서의 조합 그룹 분석 — 구버전 분석에는 없으므로 null이 정상이다. */
+export function latestComboAnalysis(raw: RealReportPayload[]): RealComboAnalysis | null {
+  if (raw.length === 0) return null;
+  return raw[raw.length - 1].combo_analysis ?? null;
 }
 
 /**

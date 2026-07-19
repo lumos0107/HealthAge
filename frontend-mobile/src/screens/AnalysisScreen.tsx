@@ -4,15 +4,19 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { computeGroupsForReport, directionLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import type { RealRecommendations, RealEgfr } from '../health';
+import type { RealRecommendations, RealEgfr, RealComboAnalysis } from '../health';
 
-export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendations, egfr }: {
+export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendations, egfr, comboAnalysis }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
   recommendations?: RealRecommendations | null;
   egfr?: RealEgfr | null;
+  comboAnalysis?: RealComboAnalysis | null;
 }) {
+  // 조합 그룹은 07 마이그레이션 이후 분석에만 있다 — 없으면 카드 자체를 그리지 않는다.
+  const comboGroups = comboAnalysis?.combo_groups ?? null;
+  const fattyLiver = comboAnalysis?.fatty_liver ?? null;
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
   const report = reports[yearIdx];
 
@@ -176,6 +180,73 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           </View>
           <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{egfr.description}</Text>
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* ③-2 복합 위험 패턴(조합 그룹) — 공단 표본에서 이 조합이 얼마나 함께 나타나는지 보여준다.
+          O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도다. */}
+      {comboGroups && comboGroups.matched_count > 0 && (
+        <FadeInUp delay={210}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>복합 위험 패턴</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
+            여러 위험 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
+            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교했어요.
+          </Text>
+
+          {comboGroups.matched.slice(0, 4).map((c, i) => (
+            <View key={c.combo_name} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{c.combo_name}</Text>
+                {c.is_ascvd_risk && (
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.danger, backgroundColor: '#FFF0F0', paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                    심혈관 고위험
+                  </Text>
+                )}
+              </View>
+              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginBottom: 6 }}>{c.meaning}</Text>
+              {c.population && (
+                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 19 }}>
+                  같은 조합 {c.population.n_in_combo.toLocaleString()}명 (표본의 {c.population.pct_of_total}%)
+                  {c.population.observed_to_expected >= 1.2 && (
+                    <Text style={{ color: T.warn, fontWeight: '700' }}>
+                      {'  ·  '}따로 나타날 때보다 {c.population.observed_to_expected}배 자주 동반
+                    </Text>
+                  )}
+                </Text>
+              )}
+            </View>
+          ))}
+
+          {comboGroups.matched.length > 4 && (
+            <Text style={{ fontSize: 12, color: T.text3, marginTop: 10 }}>
+              외 {comboGroups.matched.length - 4}개 조합에 더 해당해요.
+            </Text>
+          )}
+
+          {/* 지방간 유형 — 음주량이 없으면 잠정 분류임을 반드시 밝힌다 */}
+          {fattyLiver?.applicable && fattyLiver.type && (
+            <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>
+                지방간 유형 {fattyLiver.provisional ? '(잠정)' : ''}
+              </Text>
+              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{fattyLiver.type}</Text>
+              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 4 }}>{fattyLiver.basis}</Text>
+              {!!fattyLiver.note && (
+                <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>{fattyLiver.note}</Text>
+              )}
+            </View>
+          )}
+
+          {/* 해석의 한계 — 숨기지 않고 그대로 노출한다 */}
+          {!!comboGroups.caveats?.length && (
+            <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+              {comboGroups.caveats.map((c, i) => (
+                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· {c}</Text>
+              ))}
+            </View>
+          )}
         </View>
         </FadeInUp>
       )}

@@ -109,6 +109,9 @@ async def analyze_and_save(
     basic_report = result.get("basic_report", {})
     comprehensive = result.get("comprehensive", {})
     recommendations = result.get("recommendations", {})
+    # 그룹 분석(대사증후군 세부 + 조합 그룹)은 그동안 계산만 하고 버려지고 있었다.
+    group_analysis = result.get("group_analysis") or {}
+    combo_analysis = group_analysis.get("combo_analysis") or {}
     if "warnings" in result:
         warnings.extend(result.get("warnings", []))
 
@@ -123,6 +126,7 @@ async def analyze_and_save(
                 basic_report,
                 comprehensive,
                 recommendations,
+                combo_analysis,
             )
         except Exception as e:
             logger.exception("DB 저장 실패 (분석 결과는 반환)")
@@ -141,6 +145,8 @@ async def analyze_and_save(
         "basic_report": basic_report,
         "comprehensive": comprehensive,
         "recommendations": recommendations,
+        "group_analysis": group_analysis,
+        "combo_analysis": combo_analysis,
         "medications_known": medications_known,
         "saved": saved_paths is not None,
         "saved_paths": saved_paths,
@@ -254,6 +260,7 @@ def _save_to_db(
     basic_report: dict[str, Any],
     comprehensive: dict[str, Any],
     recommendations: dict[str, Any],
+    combo_analysis: dict[str, Any] | None = None,
 ) -> list[str]:
     """checkup_records + analysis_results 저장.
 
@@ -285,6 +292,7 @@ def _save_to_db(
         "basic_report": basic_report,
         "comprehensive": comprehensive,
         "recommendations": recommendations or None,
+        "combo_analysis": combo_analysis or None,
     }
     try:
         r_analysis = client.table("analysis_results").insert(analysis_row).execute()
@@ -453,6 +461,8 @@ def get_report_by_year(
         "basic_report": analysis.get("basic_report"),
         "comprehensive": analysis.get("comprehensive"),
         "recommendations": analysis.get("recommendations"),
+        # 구버전 분석(07 마이그레이션 이전)에는 없다 → 프론트는 null 처리 필요
+        "combo_analysis": analysis.get("combo_analysis"),
         "analyzed_at": analysis.get("analyzed_at"),
     }
 
@@ -478,6 +488,7 @@ def get_latest_comprehensive(client: Client, user_id: str) -> dict[str, Any]:
         "comprehensive": r.data.get("comprehensive"),
         "basic_report": r.data.get("basic_report"),
         "recommendations": r.data.get("recommendations"),
+        "combo_analysis": r.data.get("combo_analysis"),
         "analyzed_at": r.data.get("analyzed_at"),
     }
 

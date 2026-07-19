@@ -14,6 +14,11 @@ router = APIRouter(prefix="/renal", tags=["renal"])
 
 @router.post("/egfr", response_model=RenalResponse)
 def post_egfr(payload: RenalRequest) -> RenalResponse:
-    """크레아티닌·나이·성별로 eGFR과 신장 상태(병기)를 반환."""
-    result = analyze_renal(payload.serum_cr, payload.age, payload.sex)
+    """크레아티닌·나이·성별로 eGFR과 신장 상태(병기)를 반환.
+
+    체중(weight_kg)을 함께 주면 약물 용량 참고용 CrCl(Cockcroft-Gault)도 계산한다.
+    """
+    result = analyze_renal(
+        payload.serum_cr, payload.age, payload.sex, payload.weight_kg,
+    )
     return RenalResponse(**result.to_dict())

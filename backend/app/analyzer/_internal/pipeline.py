@@ -21,6 +21,7 @@ from typing import Optional
 from .ocr_adapter import parse_ocr_json
 from .health_report import generate_report
 from .thresholds import evaluate_value
+from .clinical_targets import annotate_peer_difference
 
 
 # ============================================================
@@ -145,6 +146,11 @@ def run_comprehensive_analysis(
         )
         eval_result["percentile"] = item.get("백분위")
         eval_result["peer_mean"] = item.get("동연령_평균")
+        # 또래 평균과의 차이가 임상적으로 의미 있는 수준인지 판정 (약대 자문 20% 기준).
+        # 값을 숨기지는 않고, 화면이 "사실상 차이 없음"으로 표현할 수 있게 신호만 준다.
+        eval_result["peer_comparison"] = annotate_peer_difference(
+            value, eval_result["peer_mean"],
+        )
         all_evaluations.append(eval_result)
 
     # BMI 자동 계산
@@ -300,6 +306,48 @@ def run_group_analysis(
     # 3. 희귀도
     rarity = calculate_group_rarity(user_groups, gender, age, year)
 
+    # 4. 조합 그룹(복합 질환군) + 지방간 유형 — 모집단 통계 파일에만 의존하므로
+    #    실패해도 나머지 그룹 결과는 그대로 반환한다.
+    from .combo_group_analysis import run_combo_analysis
+
+    try:
+        combo_result = run_combo_analysis(checkup, gender, user_groups)
+    except Exception as e:
+        combo_result = {
+            "error": f"조합 그룹 분석 실패: {type(e).__name__}: {e}",
+            "combo_groups": None,
+            "fatty_liver": None,
+        }
+
+    # 5. 임상 목표치(LDL 위험도별) + 지방간 보조지표(FLI/HSI)
+    from .clinical_targets import classify_ldl_risk, fatty_liver_indices
+
+    try:
+        ldl_target = classify_ldl_risk(checkup, gender, age, user_groups, medications)
+    except Exception as e:
+        ldl_target = {"error": f"LDL 목표 판정 실패: {type(e).__name__}: {e}"}
+
+    try:
+        fl_indices = fatty_liver_indices(checkup, gender, user_groups)
+    except Exception as e:
+        fl_indices = {"error": f"지방간 지표 계산 실패: {type(e).__name__}: {e}"}
+
+    # 지방간 유형(MASLD/ALD) 옆에 보조지표를 같이 붙여 한 화면에서 읽히게 한다.
+    if isinstance(combo_result.get("fatty_liver"), dict):
+        combo_result["fatty_liver"]["indices"] = fl_indices
+
+    # 6. ASCVD 10년 위험도 — 참고용 시뮬레이션 (한국인 미검증, 진단 아님)
+    from .ascvd import run_ascvd_simulation
+
+    try:
+        ascvd = run_ascvd_simulation(checkup, gender, age, user_groups, medications)
+    except Exception as e:
+        ascvd = {
+            "available": False,
+            "is_simulation": True,
+            "reason": f"ASCVD 시뮬레이션 실패: {type(e).__name__}: {e}",
+        }
+
     # 약물 요약
     med_summary = {
         "hypertension": medications.get("hypertension", False),
@@ -318,11 +366,93 @@ def run_group_analysis(
         "user_groups": user_groups,
         "metabolic_syndrome_detail": ms_evaluation,
         "rarity": rarity,
+        "combo_analysis": combo_result,
+        "ldl_target": ldl_target,
+        "ascvd_simulation": ascvd,
         "_meta": {
             "analyzed_at": datetime.now().isoformat(timespec="seconds"),
-            "version": "v2 (약대 자문 - 약물 결합)",
+            "version": "v2 (약대 자문 - 약물 결합) + 조합그룹",
         },
     }
+
+
+# ============================================================
+# 약물 코멘트 3단계 차등 (4.7)
+# ============================================================
+# 같은 약을 먹어도 조절 상태가 다르면 필요한 말이 다르다.
+#   controlled     : 약으로 수치가 목표 범위에 들어옴 → 유지·중단 금지 안내
+#   partially      : 약을 먹는데 관련 인자가 아직 충족 → 추가 관리 안내
+#   uncontrolled   : 약을 먹는데도 질환군 판정 유지 → 의료진 상담 안내
+
+_MED_SPEC = {
+    "hypertension": {
+        "label": "고혈압약",
+        "factor": "고혈압",
+        "group": "g_hypertension",
+        "controlled": "혈압이 목표 범위에서 관리되고 있습니다. 임의로 중단하지 마시고 현재 처방을 유지하세요.",
+        "partial": "약을 드시는 중에도 혈압 인자가 남아 있습니다. 가정에서 아침·저녁 혈압을 기록해 진료 시 보여주세요.",
+        "uncontrolled": "약을 드시는데도 혈압이 높게 유지됩니다. 용량·병용 조정이 필요할 수 있으니 의료진과 상담하세요.",
+    },
+    "diabetes": {
+        "label": "당뇨약",
+        "factor": "고혈당",
+        "group": "g_diabetes",
+        "controlled": "혈당이 목표 범위에서 관리되고 있습니다. 저혈당 증상(어지러움·식은땀·떨림)에 유의하며 식사를 거르지 마세요.",
+        "partial": "약을 드시는 중에도 혈당 인자가 남아 있습니다. HbA1c로 3개월 평균 혈당을 확인해 보세요.",
+        "uncontrolled": "약을 드시는데도 혈당이 높게 유지됩니다. HbA1c 검사와 함께 치료 조정을 상담하세요.",
+    },
+    "dyslipidemia": {
+        "label": "이상지질혈증약 (스타틴 등)",
+        "factor": None,  # 대사증후군 인자 2개(낮은 HDL·고중성지방)에 걸쳐 있어 아래에서 따로 판정
+        "group": "g_dyslipidemia",
+        "controlled": "지질 수치가 관리되고 있습니다. 간 효소와 근육통 여부는 정기적으로 확인하세요.",
+        "partial": "약을 드시는 중에도 지질 인자가 남아 있습니다. 식사·운동 병행 효과를 함께 확인해 보세요.",
+        "uncontrolled": "약을 드시는데도 지질 수치가 목표에 못 미칩니다. 근육통이 있으면 함께 알리고 치료 조정을 상담하세요.",
+    },
+}
+
+
+def _medication_notes(
+    medications: dict,
+    ms_detail: dict,
+    user_groups: dict,
+) -> list[dict]:
+    """복용 중인 약물별로 조절 상태에 맞는 코멘트를 만든다."""
+    notes: list[dict] = []
+    factors = (ms_detail or {}).get("factors", {}) or {}
+
+    for med_key, spec in _MED_SPEC.items():
+        if not medications.get(med_key):
+            continue
+
+        # 질환군 판정이 유지되는가 (약물 때문에 True가 된 경우는 제외해야 하므로
+        # 대사증후군 인자의 by_medication 플래그로 "수치 때문인지"를 가른다)
+        if med_key == "dyslipidemia":
+            related = [factors.get("낮은 HDL"), factors.get("고중성지방")]
+            by_value = any(
+                f and f.get("met") and not f.get("by_medication") for f in related
+            )
+        else:
+            f = factors.get(spec["factor"])
+            by_value = bool(f and f.get("met") and not f.get("by_medication"))
+
+        in_group = bool(user_groups.get(spec["group"]))
+
+        if by_value:
+            level, note = "uncontrolled", spec["uncontrolled"]
+        elif in_group:
+            # 약 때문에 그룹에 들어간 상태 = 수치는 잡혀 있음
+            level, note = "controlled", spec["controlled"]
+        else:
+            level, note = "partially_controlled", spec["partial"]
+
+        notes.append({
+            "medication": spec["label"],
+            "control_level": level,
+            "note": note,
+        })
+
+    return notes
 
 
 # ============================================================
@@ -415,22 +545,11 @@ def run_recommendations(
                 "details": info["details"],
             })
 
-    # 4. 약물 복용 주의사항
-    if medications.get("hypertension"):
-        recommendations["medication_notes"].append({
-            "medication": "고혈압약",
-            "note": "혈압이 정상이더라도 임의로 약물을 중단하지 마세요. 가정 혈압 측정으로 변화를 추적하세요.",
-        })
-    if medications.get("diabetes"):
-        recommendations["medication_notes"].append({
-            "medication": "당뇨약",
-            "note": "저혈당 증상(어지러움, 식은땀, 떨림)에 주의하세요. 식사를 거르지 마세요.",
-        })
-    if medications.get("dyslipidemia"):
-        recommendations["medication_notes"].append({
-            "medication": "이상지질혈증약 (스타틴 등)",
-            "note": "간 효소 수치가 높아질 수 있으니 정기 검사가 필요합니다. 근육통이 있으면 의료진과 상담하세요.",
-        })
+    # 4. 약물 복용 주의사항 — 조절 상태에 따라 3단계로 차등한다.
+    #    같은 "고혈압약 복용 중"이라도 혈압이 잘 잡힌 사람과 여전히 높은 사람에게
+    #    같은 문구를 주면 둘 다에게 쓸모가 없다.
+    for note in _medication_notes(medications, ms_detail, user_groups):
+        recommendations["medication_notes"].append(note)
 
     # 5. 65세 이상 안내
     if age and age >= 65:

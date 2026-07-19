@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { DoHyeon_400Regular, useFonts } from '@expo-google-fonts/do-hyeon';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
@@ -19,8 +19,8 @@ import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/ap
 import { C, Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
 import { initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem } from './src/data';
-import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, latestRecommendations, fetchEgfr, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
-import type { RealTimeseries, RealRecommendations, RealEgfr } from './src/health';
+import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, latestRecommendations, latestComboAnalysis, fetchEgfr, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
+import type { RealTimeseries, RealRecommendations, RealEgfr, RealComboAnalysis } from './src/health';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
@@ -62,6 +62,8 @@ export default function App() {
   const [timeseries, setTimeseries] = useState<RealTimeseries | null>(null);
   // 개인화 권장사항 — 최신 연도 분석 결과에 백엔드가 실제로 생성해 보내준 내용 그대로.
   const [recommendations, setRecommendations] = useState<RealRecommendations | null>(null);
+  // 조합 그룹(복합 위험 패턴) — 구버전 분석에는 없어 null이 정상이다.
+  const [comboAnalysis, setComboAnalysis] = useState<RealComboAnalysis | null>(null);
   // 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 받아온다.
   const [egfr, setEgfr] = useState<RealEgfr | null>(null);
   // 저장된 복약 정보 — 업로드한 HIRA 복약이력을 조회해 기록화면 복약탭에 실제로 표시한다.
@@ -70,7 +72,7 @@ export default function App() {
   const loadHealthData = async (userId?: string) => {
     if (!userId) {
       setRealReports(null); setRealMetricDefinitions(null);
-      setTimeseries(null); setRecommendations(null); setEgfr(null);
+      setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
       setMedications([]);
       return;
     }
@@ -83,6 +85,7 @@ export default function App() {
         setRealReports(fetchedReports);
         setRealMetricDefinitions(latestEvaluationsAsMetricDefinitions(raw));
         setRecommendations(latestRecommendations(raw));
+        setComboAnalysis(latestComboAnalysis(raw));
 
         // 시계열 하이라이트 — 기록이 2년 이상일 때만 의미가 있다(백엔드도 그 미만이면 비워서 내려줌).
         let ts = await fetchTimeseries(userId);
@@ -108,13 +111,13 @@ export default function App() {
       } else {
         setRealReports(null);
         setRealMetricDefinitions(null);
-        setTimeseries(null); setRecommendations(null); setEgfr(null);
+        setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
       }
     } catch {
       // 검진 기록이 아직 없거나 서버 호출에 실패하면 더미 데이터로 화면을 보여준다.
       setRealReports(null);
       setRealMetricDefinitions(null);
-      setTimeseries(null); setRecommendations(null); setEgfr(null);
+      setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
     } finally {
       setHealthDataLoading(false);
     }
@@ -265,7 +268,7 @@ export default function App() {
               if (supabaseConfigured) await supabase.auth.signOut().catch(() => undefined);
               setLoggedIn(false); setDemoMode(false); setProfile(initialProfile); setTab('dashboard');
               setRealReports(null); setRealMetricDefinitions(null);
-              setTimeseries(null); setRecommendations(null); setEgfr(null);
+              setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
               showToast('회원탈퇴가 완료되었습니다.');
             } catch (e) {
               showToast(e instanceof Error ? `회원탈퇴에 실패했습니다: ${e.message}` : '회원탈퇴에 실패했습니다.');
@@ -324,7 +327,7 @@ export default function App() {
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : null} />)}
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : null} egfr={usingRealData ? egfr : null} />)}
+          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : null} egfr={usingRealData ? egfr : null} comboAnalysis={usingRealData ? comboAnalysis : null} />)}
         {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} />}
         {tab === 'profile' && loggedIn && (
           <ProfileScreen

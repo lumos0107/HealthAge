@@ -1,0 +1,2647 @@
+{
+  "year": 2024,
+  "total_n": 994018,
+  "combo_groups": [
+    {
+      "combo_name": "당뇨+고혈압",
+      "category": "심혈관",
+      "meaning": "당뇨 합병증 위험 가중 (신장, 심혈관)",
+      "components": [
+        "당뇨",
+        "고혈압"
+      ],
+      "n_in_combo": 18694,
+      "pct_of_total": 1.88,
+      "expected_n_if_independent": 10764,
+      "observed_to_expected": 1.74,
+      "top_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 158.84,
+          "non_combo_mean": 99.86,
+          "diff": 58.98,
+          "cohens_d": 2.756,
+          "single_means": {
+            "당뇨": 156.97,
+            "고혈압": 99.67
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 147.62,
+          "non_combo_mean": 122.22,
+          "diff": 25.4,
+          "cohens_d": 1.792,
+          "single_means": {
+            "당뇨": 122.98,
+            "고혈압": 145.53
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 87.76,
+          "non_combo_mean": 74.99,
+          "diff": 12.78,
+          "cohens_d": 1.252,
+          "single_means": {
+            "당뇨": 74.55,
+            "고혈압": 89.2
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 89.88,
+          "non_combo_mean": 81.39,
+          "diff": 8.49,
+          "cohens_d": 0.792,
+          "single_means": {
+            "당뇨": 87.08,
+            "고혈압": 86.17
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 26.75,
+          "non_combo_mean": 24.18,
+          "diff": 2.58,
+          "cohens_d": 0.648,
+          "single_means": {
+            "당뇨": 25.56,
+            "고혈압": 25.78
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 158.84,
+          "non_combo_mean": 99.86,
+          "diff": 58.98,
+          "cohens_d": 2.756,
+          "single_means": {
+            "당뇨": 156.97,
+            "고혈압": 99.67
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 147.62,
+          "non_combo_mean": 122.22,
+          "diff": 25.4,
+          "cohens_d": 1.792,
+          "single_means": {
+            "당뇨": 122.98,
+            "고혈압": 145.53
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 87.76,
+          "non_combo_mean": 74.99,
+          "diff": 12.78,
+          "cohens_d": 1.252,
+          "single_means": {
+            "당뇨": 74.55,
+            "고혈압": 89.2
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 89.88,
+          "non_combo_mean": 81.39,
+          "diff": 8.49,
+          "cohens_d": 0.792,
+          "single_means": {
+            "당뇨": 87.08,
+            "고혈압": 86.17
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 26.75,
+          "non_combo_mean": 24.18,
+          "diff": 2.58,
+          "cohens_d": 0.648,
+          "single_means": {
+            "당뇨": 25.56,
+            "고혈압": 25.78
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 63.46,
+          "non_combo_mean": 34.16,
+          "diff": 29.3,
+          "cohens_d": 0.599,
+          "single_means": {
+            "당뇨": 51.88,
+            "고혈압": 44.49
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 181.48,
+          "non_combo_mean": 127.38,
+          "diff": 54.1,
+          "cohens_d": 0.594,
+          "single_means": {
+            "당뇨": 160.74,
+            "고혈압": 145.44
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 37.07,
+          "non_combo_mean": 26.31,
+          "diff": 10.76,
+          "cohens_d": 0.454,
+          "single_means": {
+            "당뇨": 34.08,
+            "고혈압": 30.25
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 34.15,
+          "non_combo_mean": 26.79,
+          "diff": 7.35,
+          "cohens_d": 0.388,
+          "single_means": {
+            "당뇨": 31.63,
+            "고혈압": 29.53
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 101.09,
+          "non_combo_mean": 114.78,
+          "diff": -13.69,
+          "cohens_d": -0.354,
+          "single_means": {
+            "당뇨": 94.75,
+            "고혈압": 114.72
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 14.71,
+          "non_combo_mean": 14.21,
+          "diff": 0.5,
+          "cohens_d": 0.326,
+          "single_means": {
+            "당뇨": 14.6,
+            "고혈압": 14.48
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 52.38,
+          "non_combo_mean": 57.17,
+          "diff": -4.79,
+          "cohens_d": -0.321,
+          "single_means": {
+            "당뇨": 51.69,
+            "고혈압": 56.12
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 188.25,
+          "non_combo_mean": 196.96,
+          "diff": -8.71,
+          "cohens_d": -0.202,
+          "single_means": {
+            "당뇨": 177.87,
+            "고혈압": 199.17
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "고혈압+이상지질혈증",
+      "category": "심혈관",
+      "meaning": "동맥경화 가속화",
+      "components": [
+        "고혈압",
+        "이상지질혈증"
+      ],
+      "n_in_combo": 22172,
+      "pct_of_total": 2.23,
+      "expected_n_if_independent": 16228,
+      "observed_to_expected": 1.37,
+      "top_metrics": [
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 146.12,
+          "non_combo_mean": 119.99,
+          "diff": 26.14,
+          "cohens_d": 2.118,
+          "single_means": {
+            "고혈압": 146.02,
+            "이상지질혈증": 121.06
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 89.37,
+          "non_combo_mean": 73.56,
+          "diff": 15.82,
+          "cohens_d": 1.75,
+          "single_means": {
+            "고혈압": 87.56,
+            "이상지질혈증": 74.34
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 213.94,
+          "non_combo_mean": 122.69,
+          "diff": 91.25,
+          "cohens_d": 1.03,
+          "single_means": {
+            "고혈압": 106.51,
+            "이상지질혈증": 182.22
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 88.55,
+          "non_combo_mean": 80.88,
+          "diff": 7.67,
+          "cohens_d": 0.723,
+          "single_means": {
+            "고혈압": 84.95,
+            "이상지질혈증": 84.51
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 47.86,
+          "non_combo_mean": 57.7,
+          "diff": -9.84,
+          "cohens_d": -0.667,
+          "single_means": {
+            "고혈압": 60.96,
+            "이상지질혈증": 48.38
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 146.12,
+          "non_combo_mean": 119.99,
+          "diff": 26.14,
+          "cohens_d": 2.118,
+          "single_means": {
+            "고혈압": 146.02,
+            "이상지질혈증": 121.06
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 89.37,
+          "non_combo_mean": 73.56,
+          "diff": 15.82,
+          "cohens_d": 1.75,
+          "single_means": {
+            "고혈압": 87.56,
+            "이상지질혈증": 74.34
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 213.94,
+          "non_combo_mean": 122.69,
+          "diff": 91.25,
+          "cohens_d": 1.03,
+          "single_means": {
+            "고혈압": 106.51,
+            "이상지질혈증": 182.22
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 88.55,
+          "non_combo_mean": 80.88,
+          "diff": 7.67,
+          "cohens_d": 0.723,
+          "single_means": {
+            "고혈압": 84.95,
+            "이상지질혈증": 84.51
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 47.86,
+          "non_combo_mean": 57.7,
+          "diff": -9.84,
+          "cohens_d": -0.667,
+          "single_means": {
+            "고혈압": 60.96,
+            "이상지질혈증": 48.38
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 26.54,
+          "non_combo_mean": 24.0,
+          "diff": 2.54,
+          "cohens_d": 0.654,
+          "single_means": {
+            "고혈압": 25.08,
+            "이상지질혈증": 25.1
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 111.22,
+          "non_combo_mean": 100.1,
+          "diff": 11.11,
+          "cohens_d": 0.501,
+          "single_means": {
+            "고혈압": 105.92,
+            "이상지질혈증": 104.96
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 55.82,
+          "non_combo_mean": 33.0,
+          "diff": 22.82,
+          "cohens_d": 0.487,
+          "single_means": {
+            "고혈압": 39.79,
+            "이상지질혈증": 42.75
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 214.31,
+          "non_combo_mean": 195.55,
+          "diff": 18.75,
+          "cohens_d": 0.438,
+          "single_means": {
+            "고혈압": 186.0,
+            "이상지질혈증": 214.59
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 34.64,
+          "non_combo_mean": 25.83,
+          "diff": 8.8,
+          "cohens_d": 0.378,
+          "single_means": {
+            "고혈압": 27.7,
+            "이상지질혈증": 30.78
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 127.25,
+          "non_combo_mean": 113.66,
+          "diff": 13.6,
+          "cohens_d": 0.352,
+          "single_means": {
+            "고혈압": 103.55,
+            "이상지질혈증": 132.14
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 14.65,
+          "non_combo_mean": 14.18,
+          "diff": 0.47,
+          "cohens_d": 0.31,
+          "single_means": {
+            "고혈압": 14.29,
+            "이상지질혈증": 14.43
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 31.92,
+          "non_combo_mean": 26.52,
+          "diff": 5.4,
+          "cohens_d": 0.291,
+          "single_means": {
+            "고혈압": 29.16,
+            "이상지질혈증": 29.0
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "당뇨+이상지질혈증",
+      "category": "심혈관",
+      "meaning": "당뇨성 이상지질혈증",
+      "components": [
+        "당뇨",
+        "이상지질혈증"
+      ],
+      "n_in_combo": 14289,
+      "pct_of_total": 1.44,
+      "expected_n_if_independent": 9333,
+      "observed_to_expected": 1.53,
+      "top_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 162.09,
+          "non_combo_mean": 97.17,
+          "diff": 64.92,
+          "cohens_d": 4.291,
+          "single_means": {
+            "당뇨": 152.39,
+            "이상지질혈증": 98.44
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 232.85,
+          "non_combo_mean": 124.06,
+          "diff": 108.78,
+          "cohens_d": 1.226,
+          "single_means": {
+            "당뇨": 110.39,
+            "이상지질혈증": 182.03
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 44.85,
+          "non_combo_mean": 57.6,
+          "diff": -12.75,
+          "cohens_d": -0.866,
+          "single_means": {
+            "당뇨": 57.66,
+            "이상지질혈증": 48.76
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 88.96,
+          "non_combo_mean": 81.11,
+          "diff": 7.86,
+          "cohens_d": 0.737,
+          "single_means": {
+            "당뇨": 86.11,
+            "이상지질혈증": 84.76
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 64.15,
+          "non_combo_mean": 33.24,
+          "diff": 30.91,
+          "cohens_d": 0.665,
+          "single_means": {
+            "당뇨": 45.73,
+            "이상지질혈증": 42.6
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 162.09,
+          "non_combo_mean": 97.17,
+          "diff": 64.92,
+          "cohens_d": 4.291,
+          "single_means": {
+            "당뇨": 152.39,
+            "이상지질혈증": 98.44
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 232.85,
+          "non_combo_mean": 124.06,
+          "diff": 108.78,
+          "cohens_d": 1.226,
+          "single_means": {
+            "당뇨": 110.39,
+            "이상지질혈증": 182.03
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 44.85,
+          "non_combo_mean": 57.6,
+          "diff": -12.75,
+          "cohens_d": -0.866,
+          "single_means": {
+            "당뇨": 57.66,
+            "이상지질혈증": 48.76
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 88.96,
+          "non_combo_mean": 81.11,
+          "diff": 7.86,
+          "cohens_d": 0.737,
+          "single_means": {
+            "당뇨": 86.11,
+            "이상지질혈증": 84.76
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 64.15,
+          "non_combo_mean": 33.24,
+          "diff": 30.91,
+          "cohens_d": 0.665,
+          "single_means": {
+            "당뇨": 45.73,
+            "이상지질혈증": 42.6
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 26.32,
+          "non_combo_mean": 24.11,
+          "diff": 2.22,
+          "cohens_d": 0.563,
+          "single_means": {
+            "당뇨": 25.05,
+            "이상지질혈증": 25.24
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 37.72,
+          "non_combo_mean": 25.89,
+          "diff": 11.83,
+          "cohens_d": 0.51,
+          "single_means": {
+            "당뇨": 30.87,
+            "이상지질혈증": 30.65
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 129.6,
+          "non_combo_mean": 122.28,
+          "diff": 7.32,
+          "cohens_d": 0.505,
+          "single_means": {
+            "당뇨": 128.4,
+            "이상지질혈증": 125.23
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 34.37,
+          "non_combo_mean": 26.56,
+          "diff": 7.82,
+          "cohens_d": 0.42,
+          "single_means": {
+            "당뇨": 30.64,
+            "이상지질혈증": 28.88
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 14.68,
+          "non_combo_mean": 14.19,
+          "diff": 0.49,
+          "cohens_d": 0.32,
+          "single_means": {
+            "당뇨": 14.48,
+            "이상지질혈증": 14.44
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 78.3,
+          "non_combo_mean": 75.04,
+          "diff": 3.26,
+          "cohens_d": 0.316,
+          "single_means": {
+            "당뇨": 76.42,
+            "이상지질혈증": 77.01
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 105.7,
+          "non_combo_mean": 114.84,
+          "diff": -9.14,
+          "cohens_d": -0.236,
+          "single_means": {
+            "당뇨": 89.22,
+            "이상지질혈증": 134.56
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 193.96,
+          "non_combo_mean": 196.89,
+          "diff": -2.93,
+          "cohens_d": -0.068,
+          "single_means": {
+            "당뇨": 169.14,
+            "이상지질혈증": 217.37
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "대사증후군+흡연",
+      "category": "심혈관",
+      "meaning": "심혈관 위험 매우 증가",
+      "components": [
+        "대사증후군",
+        "현재 흡연자"
+      ],
+      "n_in_combo": 30427,
+      "pct_of_total": 3.06,
+      "expected_n_if_independent": 23081,
+      "observed_to_expected": 1.32,
+      "top_metrics": [
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 248.08,
+          "non_combo_mean": 121.65,
+          "diff": 126.43,
+          "cohens_d": 1.458,
+          "single_means": {
+            "대사증후군": 189.95,
+            "현재 흡연자": 130.26
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 94.88,
+          "non_combo_mean": 81.12,
+          "diff": 13.75,
+          "cohens_d": 1.307,
+          "single_means": {
+            "대사증후군": 92.56,
+            "현재 흡연자": 83.59
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 28.33,
+          "non_combo_mean": 24.1,
+          "diff": 4.23,
+          "cohens_d": 1.08,
+          "single_means": {
+            "대사증후군": 27.92,
+            "현재 흡연자": 24.35
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.57,
+          "non_combo_mean": 14.18,
+          "diff": 1.39,
+          "cohens_d": 0.919,
+          "single_means": {
+            "대사증후군": 14.48,
+            "현재 흡연자": 15.11
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 84.22,
+          "non_combo_mean": 74.94,
+          "diff": 9.27,
+          "cohens_d": 0.907,
+          "single_means": {
+            "대사증후군": 82.19,
+            "현재 흡연자": 75.96
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 248.08,
+          "non_combo_mean": 121.65,
+          "diff": 126.43,
+          "cohens_d": 1.458,
+          "single_means": {
+            "대사증후군": 189.95,
+            "현재 흡연자": 130.26
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 94.88,
+          "non_combo_mean": 81.12,
+          "diff": 13.75,
+          "cohens_d": 1.307,
+          "single_means": {
+            "대사증후군": 92.56,
+            "현재 흡연자": 83.59
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 28.33,
+          "non_combo_mean": 24.1,
+          "diff": 4.23,
+          "cohens_d": 1.08,
+          "single_means": {
+            "대사증후군": 27.92,
+            "현재 흡연자": 24.35
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.57,
+          "non_combo_mean": 14.18,
+          "diff": 1.39,
+          "cohens_d": 0.919,
+          "single_means": {
+            "대사증후군": 14.48,
+            "현재 흡연자": 15.11
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 84.22,
+          "non_combo_mean": 74.94,
+          "diff": 9.27,
+          "cohens_d": 0.907,
+          "single_means": {
+            "대사증후군": 82.19,
+            "현재 흡연자": 75.96
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 120.42,
+          "non_combo_mean": 100.35,
+          "diff": 20.06,
+          "cohens_d": 0.888,
+          "single_means": {
+            "대사증후군": 118.12,
+            "현재 흡연자": 101.39
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 75.53,
+          "non_combo_mean": 33.43,
+          "diff": 42.1,
+          "cohens_d": 0.868,
+          "single_means": {
+            "대사증후군": 47.79,
+            "현재 흡연자": 49.32
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 134.42,
+          "non_combo_mean": 122.33,
+          "diff": 12.09,
+          "cohens_d": 0.837,
+          "single_means": {
+            "대사증후군": 136.07,
+            "현재 흡연자": 122.0
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 45.6,
+          "non_combo_mean": 57.73,
+          "diff": -12.13,
+          "cohens_d": -0.826,
+          "single_means": {
+            "대사증후군": 47.98,
+            "현재 흡연자": 55.49
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 41.92,
+          "non_combo_mean": 26.02,
+          "diff": 15.9,
+          "cohens_d": 0.674,
+          "single_means": {
+            "대사증후군": 35.79,
+            "현재 흡연자": 29.39
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 33.7,
+          "non_combo_mean": 26.72,
+          "diff": 6.98,
+          "cohens_d": 0.369,
+          "single_means": {
+            "대사증후군": 31.62,
+            "현재 흡연자": 28.03
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 203.99,
+          "non_combo_mean": 196.34,
+          "diff": 7.65,
+          "cohens_d": 0.178,
+          "single_means": {
+            "대사증후군": 195.01,
+            "현재 흡연자": 195.52
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 113.05,
+          "non_combo_mean": 114.56,
+          "diff": -1.51,
+          "cohens_d": -0.039,
+          "single_means": {
+            "대사증후군": 110.23,
+            "현재 흡연자": 114.36
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "음주+지방간의심",
+      "category": "간 질환",
+      "meaning": "알코올성 지방간 의심",
+      "components": [
+        "음주자",
+        "지방간 의심"
+      ],
+      "n_in_combo": 145307,
+      "pct_of_total": 14.62,
+      "expected_n_if_independent": 126272,
+      "observed_to_expected": 1.15,
+      "top_metrics": [
+        {
+          "metric": "감마지티피",
+          "combo_mean": 93.18,
+          "non_combo_mean": 24.71,
+          "diff": 68.48,
+          "cohens_d": 1.605,
+          "single_means": {
+            "음주자": 23.49,
+            "지방간 의심": 64.94
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 53.53,
+          "non_combo_mean": 21.88,
+          "diff": 31.65,
+          "cohens_d": 1.512,
+          "single_means": {
+            "음주자": 19.77,
+            "지방간 의심": 56.97
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 42.22,
+          "non_combo_mean": 24.32,
+          "diff": 17.91,
+          "cohens_d": 1.001,
+          "single_means": {
+            "음주자": 22.73,
+            "지방간 의심": 44.22
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 89.19,
+          "non_combo_mean": 80.24,
+          "diff": 8.95,
+          "cohens_d": 0.868,
+          "single_means": {
+            "음주자": 79.98,
+            "지방간 의심": 87.15
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.25,
+          "non_combo_mean": 14.04,
+          "diff": 1.21,
+          "cohens_d": 0.823,
+          "single_means": {
+            "음주자": 14.22,
+            "지방간 의심": 14.58
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "감마지티피",
+          "combo_mean": 93.18,
+          "non_combo_mean": 24.71,
+          "diff": 68.48,
+          "cohens_d": 1.605,
+          "single_means": {
+            "음주자": 23.49,
+            "지방간 의심": 64.94
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 53.53,
+          "non_combo_mean": 21.88,
+          "diff": 31.65,
+          "cohens_d": 1.512,
+          "single_means": {
+            "음주자": 19.77,
+            "지방간 의심": 56.97
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 42.22,
+          "non_combo_mean": 24.32,
+          "diff": 17.91,
+          "cohens_d": 1.001,
+          "single_means": {
+            "음주자": 22.73,
+            "지방간 의심": 44.22
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 89.19,
+          "non_combo_mean": 80.24,
+          "diff": 8.95,
+          "cohens_d": 0.868,
+          "single_means": {
+            "음주자": 79.98,
+            "지방간 의심": 87.15
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.25,
+          "non_combo_mean": 14.04,
+          "diff": 1.21,
+          "cohens_d": 0.823,
+          "single_means": {
+            "음주자": 14.22,
+            "지방간 의심": 14.58
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 188.81,
+          "non_combo_mean": 117.91,
+          "diff": 70.89,
+          "cohens_d": 0.808,
+          "single_means": {
+            "음주자": 117.58,
+            "지방간 의심": 150.11
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 26.62,
+          "non_combo_mean": 23.82,
+          "diff": 2.8,
+          "cohens_d": 0.726,
+          "single_means": {
+            "음주자": 23.75,
+            "지방간 의심": 26.21
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 80.02,
+          "non_combo_mean": 74.41,
+          "diff": 5.61,
+          "cohens_d": 0.553,
+          "single_means": {
+            "음주자": 74.45,
+            "지방간 의심": 77.15
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 127.45,
+          "non_combo_mean": 121.88,
+          "diff": 5.57,
+          "cohens_d": 0.385,
+          "single_means": {
+            "음주자": 120.65,
+            "지방간 의심": 126.56
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 108.25,
+          "non_combo_mean": 99.72,
+          "diff": 8.53,
+          "cohens_d": 0.377,
+          "single_means": {
+            "음주자": 98.26,
+            "지방간 의심": 109.21
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 53.46,
+          "non_combo_mean": 57.71,
+          "diff": -4.25,
+          "cohens_d": -0.286,
+          "single_means": {
+            "음주자": 58.68,
+            "지방간 의심": 51.91
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 204.23,
+          "non_combo_mean": 195.44,
+          "diff": 8.79,
+          "cohens_d": 0.205,
+          "single_means": {
+            "음주자": 198.97,
+            "지방간 의심": 191.31
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 115.35,
+          "non_combo_mean": 114.34,
+          "diff": 1.01,
+          "cohens_d": 0.026,
+          "single_means": {
+            "음주자": 117.07,
+            "지방간 의심": 109.89
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "비만+지방간의심",
+      "category": "간 질환",
+      "meaning": "비알코올성 지방간 (NAFLD)",
+      "components": [
+        "비만",
+        "지방간 의심"
+      ],
+      "n_in_combo": 116214,
+      "pct_of_total": 11.69,
+      "expected_n_if_independent": 70551,
+      "observed_to_expected": 1.65,
+      "top_metrics": [
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 58.1,
+          "non_combo_mean": 22.33,
+          "diff": 35.77,
+          "cohens_d": 1.723,
+          "single_means": {
+            "비만": 22.77,
+            "지방간 의심": 48.58
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 29.08,
+          "non_combo_mean": 23.58,
+          "diff": 5.5,
+          "cohens_d": 1.538,
+          "single_means": {
+            "비만": 27.95,
+            "지방간 의심": 22.56
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 93.99,
+          "non_combo_mean": 79.9,
+          "diff": 14.09,
+          "cohens_d": 1.439,
+          "single_means": {
+            "비만": 89.38,
+            "지방간 의심": 80.53
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 81.42,
+          "non_combo_mean": 28.53,
+          "diff": 52.89,
+          "cohens_d": 1.15,
+          "single_means": {
+            "비만": 26.4,
+            "지방간 의심": 94.0
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 42.01,
+          "non_combo_mean": 24.94,
+          "diff": 17.07,
+          "cohens_d": 0.94,
+          "single_means": {
+            "비만": 23.76,
+            "지방간 의심": 43.78
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 58.1,
+          "non_combo_mean": 22.33,
+          "diff": 35.77,
+          "cohens_d": 1.723,
+          "single_means": {
+            "비만": 22.77,
+            "지방간 의심": 48.58
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 29.08,
+          "non_combo_mean": 23.58,
+          "diff": 5.5,
+          "cohens_d": 1.538,
+          "single_means": {
+            "비만": 27.95,
+            "지방간 의심": 22.56
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 93.99,
+          "non_combo_mean": 79.9,
+          "diff": 14.09,
+          "cohens_d": 1.439,
+          "single_means": {
+            "비만": 89.38,
+            "지방간 의심": 80.53
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 81.42,
+          "non_combo_mean": 28.53,
+          "diff": 52.89,
+          "cohens_d": 1.15,
+          "single_means": {
+            "비만": 26.4,
+            "지방간 의심": 94.0
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 42.01,
+          "non_combo_mean": 24.94,
+          "diff": 17.07,
+          "cohens_d": 0.94,
+          "single_means": {
+            "비만": 23.76,
+            "지방간 의심": 43.78
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.33,
+          "non_combo_mean": 14.07,
+          "diff": 1.25,
+          "cohens_d": 0.848,
+          "single_means": {
+            "비만": 14.41,
+            "지방간 의심": 14.73
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 193.67,
+          "non_combo_mean": 119.7,
+          "diff": 73.97,
+          "cohens_d": 0.839,
+          "single_means": {
+            "비만": 137.0,
+            "지방간 의심": 157.16
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 80.85,
+          "non_combo_mean": 74.48,
+          "diff": 6.37,
+          "cohens_d": 0.627,
+          "single_means": {
+            "비만": 77.38,
+            "지방간 의심": 76.98
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 49.86,
+          "non_combo_mean": 58.05,
+          "diff": -8.2,
+          "cohens_d": -0.557,
+          "single_means": {
+            "비만": 52.88,
+            "지방간 의심": 57.65
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 129.1,
+          "non_combo_mean": 121.85,
+          "diff": 7.25,
+          "cohens_d": 0.504,
+          "single_means": {
+            "비만": 126.54,
+            "지방간 의심": 124.35
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 110.24,
+          "non_combo_mean": 99.74,
+          "diff": 10.5,
+          "cohens_d": 0.465,
+          "single_means": {
+            "비만": 103.25,
+            "지방간 의심": 105.77
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 202.75,
+          "non_combo_mean": 195.95,
+          "diff": 6.81,
+          "cohens_d": 0.158,
+          "single_means": {
+            "비만": 193.24,
+            "지방간 의심": 198.11
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 116.3,
+          "non_combo_mean": 114.25,
+          "diff": 2.05,
+          "cohens_d": 0.053,
+          "single_means": {
+            "비만": 113.36,
+            "지방간 의심": 110.48
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "당뇨+지방간의심",
+      "category": "간 질환",
+      "meaning": "NAFLD + 당뇨 (NASH 위험)",
+      "components": [
+        "당뇨",
+        "지방간 의심"
+      ],
+      "n_in_combo": 27806,
+      "pct_of_total": 2.8,
+      "expected_n_if_independent": 15113,
+      "observed_to_expected": 1.84,
+      "top_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 160.45,
+          "non_combo_mean": 99.26,
+          "diff": 61.19,
+          "cohens_d": 2.984,
+          "single_means": {
+            "당뇨": 155.75,
+            "지방간 의심": 99.66
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 104.46,
+          "non_combo_mean": 32.71,
+          "diff": 71.75,
+          "cohens_d": 1.508,
+          "single_means": {
+            "당뇨": 27.3,
+            "지방간 의심": 83.3
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 56.68,
+          "non_combo_mean": 25.64,
+          "diff": 31.04,
+          "cohens_d": 1.34,
+          "single_means": {
+            "당뇨": 22.78,
+            "지방간 의심": 53.96
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 46.98,
+          "non_combo_mean": 26.36,
+          "diff": 20.63,
+          "cohens_d": 1.105,
+          "single_means": {
+            "당뇨": 24.12,
+            "지방간 의심": 41.98
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 91.42,
+          "non_combo_mean": 81.26,
+          "diff": 10.16,
+          "cohens_d": 0.954,
+          "single_means": {
+            "당뇨": 85.72,
+            "지방간 의심": 88.23
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 160.45,
+          "non_combo_mean": 99.26,
+          "diff": 61.19,
+          "cohens_d": 2.984,
+          "single_means": {
+            "당뇨": 155.75,
+            "지방간 의심": 99.66
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 104.46,
+          "non_combo_mean": 32.71,
+          "diff": 71.75,
+          "cohens_d": 1.508,
+          "single_means": {
+            "당뇨": 27.3,
+            "지방간 의심": 83.3
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 56.68,
+          "non_combo_mean": 25.64,
+          "diff": 31.04,
+          "cohens_d": 1.34,
+          "single_means": {
+            "당뇨": 22.78,
+            "지방간 의심": 53.96
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 46.98,
+          "non_combo_mean": 26.36,
+          "diff": 20.63,
+          "cohens_d": 1.105,
+          "single_means": {
+            "당뇨": 24.12,
+            "지방간 의심": 41.98
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 91.42,
+          "non_combo_mean": 81.26,
+          "diff": 10.16,
+          "cohens_d": 0.954,
+          "single_means": {
+            "당뇨": 85.72,
+            "지방간 의심": 88.23
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 209.07,
+          "non_combo_mean": 126.01,
+          "diff": 83.06,
+          "cohens_d": 0.921,
+          "single_means": {
+            "당뇨": 143.66,
+            "지방간 의심": 173.2
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 27.28,
+          "non_combo_mean": 24.14,
+          "diff": 3.14,
+          "cohens_d": 0.795,
+          "single_means": {
+            "당뇨": 25.06,
+            "지방간 의심": 26.39
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.22,
+          "non_combo_mean": 14.19,
+          "diff": 1.03,
+          "cohens_d": 0.679,
+          "single_means": {
+            "당뇨": 14.3,
+            "지방간 의심": 15.07
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 130.26,
+          "non_combo_mean": 122.48,
+          "diff": 7.78,
+          "cohens_d": 0.536,
+          "single_means": {
+            "당뇨": 128.08,
+            "지방간 의심": 126.72
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 80.38,
+          "non_combo_mean": 75.08,
+          "diff": 5.3,
+          "cohens_d": 0.514,
+          "single_means": {
+            "당뇨": 76.23,
+            "지방간 의심": 79.15
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 50.8,
+          "non_combo_mean": 57.27,
+          "diff": -6.47,
+          "cohens_d": -0.434,
+          "single_means": {
+            "당뇨": 52.4,
+            "지방간 의심": 53.46
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 100.31,
+          "non_combo_mean": 114.91,
+          "diff": -14.6,
+          "cohens_d": -0.378,
+          "single_means": {
+            "당뇨": 94.35,
+            "지방간 의심": 116.21
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 190.71,
+          "non_combo_mean": 196.96,
+          "diff": -6.25,
+          "cohens_d": -0.145,
+          "single_means": {
+            "당뇨": 175.13,
+            "지방간 의심": 202.67
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "비만+당뇨전단계",
+      "category": "대사",
+      "meaning": "당뇨 진행 위험군",
+      "components": [
+        "비만",
+        "당뇨 전단계"
+      ],
+      "n_in_combo": 145168,
+      "pct_of_total": 14.6,
+      "expected_n_if_independent": 117491,
+      "observed_to_expected": 1.24,
+      "top_metrics": [
+        {
+          "metric": "BMI",
+          "combo_mean": 28.41,
+          "non_combo_mean": 23.51,
+          "diff": 4.9,
+          "cohens_d": 1.363,
+          "single_means": {
+            "비만": 28.24,
+            "당뇨 전단계": 22.29
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 91.53,
+          "non_combo_mean": 79.84,
+          "diff": 11.69,
+          "cohens_d": 1.173,
+          "single_means": {
+            "비만": 90.4,
+            "당뇨 전단계": 78.39
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 128.63,
+          "non_combo_mean": 121.68,
+          "diff": 6.95,
+          "cohens_d": 0.484,
+          "single_means": {
+            "비만": 126.52,
+            "당뇨 전단계": 123.72
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 79.31,
+          "non_combo_mean": 74.53,
+          "diff": 4.78,
+          "cohens_d": 0.468,
+          "single_means": {
+            "비만": 77.93,
+            "당뇨 전단계": 75.44
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 35.31,
+          "non_combo_mean": 25.0,
+          "diff": 10.31,
+          "cohens_d": 0.44,
+          "single_means": {
+            "비만": 33.11,
+            "당뇨 전단계": 24.5
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "BMI",
+          "combo_mean": 28.41,
+          "non_combo_mean": 23.51,
+          "diff": 4.9,
+          "cohens_d": 1.363,
+          "single_means": {
+            "비만": 28.24,
+            "당뇨 전단계": 22.29
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 91.53,
+          "non_combo_mean": 79.84,
+          "diff": 11.69,
+          "cohens_d": 1.173,
+          "single_means": {
+            "비만": 90.4,
+            "당뇨 전단계": 78.39
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 128.63,
+          "non_combo_mean": 121.68,
+          "diff": 6.95,
+          "cohens_d": 0.484,
+          "single_means": {
+            "비만": 126.52,
+            "당뇨 전단계": 123.72
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 79.31,
+          "non_combo_mean": 74.53,
+          "diff": 4.78,
+          "cohens_d": 0.468,
+          "single_means": {
+            "비만": 77.93,
+            "당뇨 전단계": 75.44
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 35.31,
+          "non_combo_mean": 25.0,
+          "diff": 10.31,
+          "cohens_d": 0.44,
+          "single_means": {
+            "비만": 33.11,
+            "당뇨 전단계": 24.5
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 51.78,
+          "non_combo_mean": 58.03,
+          "diff": -6.25,
+          "cohens_d": -0.423,
+          "single_means": {
+            "비만": 52.01,
+            "당뇨 전단계": 58.78
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 160.76,
+          "non_combo_mean": 122.76,
+          "diff": 38.01,
+          "cohens_d": 0.421,
+          "single_means": {
+            "비만": 151.19,
+            "당뇨 전단계": 123.77
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 14.74,
+          "non_combo_mean": 14.13,
+          "diff": 0.61,
+          "cohens_d": 0.402,
+          "single_means": {
+            "비만": 14.67,
+            "당뇨 전단계": 14.14
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 108.67,
+          "non_combo_mean": 99.65,
+          "diff": 9.02,
+          "cohens_d": 0.399,
+          "single_means": {
+            "비만": 103.37,
+            "당뇨 전단계": 107.59
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 47.38,
+          "non_combo_mean": 32.55,
+          "diff": 14.83,
+          "cohens_d": 0.304,
+          "single_means": {
+            "비만": 41.55,
+            "당뇨 전단계": 36.02
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 30.14,
+          "non_combo_mean": 26.38,
+          "diff": 3.76,
+          "cohens_d": 0.199,
+          "single_means": {
+            "비만": 29.17,
+            "당뇨 전단계": 26.76
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 113.91,
+          "non_combo_mean": 114.59,
+          "diff": -0.68,
+          "cohens_d": -0.018,
+          "single_means": {
+            "비만": 114.52,
+            "당뇨 전단계": 113.93
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 196.9,
+          "non_combo_mean": 196.74,
+          "diff": 0.16,
+          "cohens_d": 0.004,
+          "single_means": {
+            "비만": 195.86,
+            "당뇨 전단계": 197.15
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "대사증후군+비만",
+      "category": "대사",
+      "meaning": "대사 이상 가중",
+      "components": [
+        "대사증후군",
+        "비만"
+      ],
+      "n_in_combo": 99183,
+      "pct_of_total": 9.98,
+      "expected_n_if_independent": 47068,
+      "observed_to_expected": 2.11,
+      "top_metrics": [
+        {
+          "metric": "허리둘레",
+          "combo_mean": 95.54,
+          "non_combo_mean": 79.99,
+          "diff": 15.55,
+          "cohens_d": 1.598,
+          "single_means": {
+            "대사증후군": 84.68,
+            "비만": 89.1
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 29.4,
+          "non_combo_mean": 23.65,
+          "diff": 5.74,
+          "cohens_d": 1.597,
+          "single_means": {
+            "대사증후군": 23.24,
+            "비만": 27.9
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 135.94,
+          "non_combo_mean": 121.23,
+          "diff": 14.71,
+          "cohens_d": 1.057,
+          "single_means": {
+            "대사증후군": 134.79,
+            "비만": 124.17
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 203.67,
+          "non_combo_mean": 114.14,
+          "diff": 89.53,
+          "cohens_d": 1.051,
+          "single_means": {
+            "대사증후군": 204.42,
+            "비만": 118.65
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 83.38,
+          "non_combo_mean": 74.32,
+          "diff": 9.06,
+          "cohens_d": 0.907,
+          "single_means": {
+            "대사증후군": 80.2,
+            "비만": 76.66
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "허리둘레",
+          "combo_mean": 95.54,
+          "non_combo_mean": 79.99,
+          "diff": 15.55,
+          "cohens_d": 1.598,
+          "single_means": {
+            "대사증후군": 84.68,
+            "비만": 89.1
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 29.4,
+          "non_combo_mean": 23.65,
+          "diff": 5.74,
+          "cohens_d": 1.597,
+          "single_means": {
+            "대사증후군": 23.24,
+            "비만": 27.9
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 135.94,
+          "non_combo_mean": 121.23,
+          "diff": 14.71,
+          "cohens_d": 1.057,
+          "single_means": {
+            "대사증후군": 134.79,
+            "비만": 124.17
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 203.67,
+          "non_combo_mean": 114.14,
+          "diff": 89.53,
+          "cohens_d": 1.051,
+          "single_means": {
+            "대사증후군": 204.42,
+            "비만": 118.65
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 83.38,
+          "non_combo_mean": 74.32,
+          "diff": 9.06,
+          "cohens_d": 0.907,
+          "single_means": {
+            "대사증후군": 80.2,
+            "비만": 76.66
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 118.63,
+          "non_combo_mean": 99.01,
+          "diff": 19.62,
+          "cohens_d": 0.888,
+          "single_means": {
+            "대사증후군": 118.8,
+            "비만": 100.58
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 47.44,
+          "non_combo_mean": 58.92,
+          "diff": -11.48,
+          "cohens_d": -0.801,
+          "single_means": {
+            "대사증후군": 47.35,
+            "비만": 55.28
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 39.7,
+          "non_combo_mean": 25.05,
+          "diff": 14.65,
+          "cohens_d": 0.628,
+          "single_means": {
+            "대사증후군": 28.76,
+            "비만": 31.86
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 14.88,
+          "non_combo_mean": 14.14,
+          "diff": 0.73,
+          "cohens_d": 0.484,
+          "single_means": {
+            "대사증후군": 14.25,
+            "비만": 14.63
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 55.36,
+          "non_combo_mean": 32.43,
+          "diff": 22.93,
+          "cohens_d": 0.472,
+          "single_means": {
+            "대사증후군": 51.05,
+            "비만": 39.59
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 32.77,
+          "non_combo_mean": 26.29,
+          "diff": 6.48,
+          "cohens_d": 0.343,
+          "single_means": {
+            "대사증후군": 29.87,
+            "비만": 28.36
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 111.67,
+          "non_combo_mean": 115.0,
+          "diff": -3.33,
+          "cohens_d": -0.086,
+          "single_means": {
+            "대사증후군": 108.97,
+            "비만": 116.12
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 197.93,
+          "non_combo_mean": 196.54,
+          "diff": 1.39,
+          "cohens_d": 0.032,
+          "single_means": {
+            "대사증후군": 195.33,
+            "비만": 195.04
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "흡연+음주+비만",
+      "category": "생활습관 트리플",
+      "meaning": "생활습관 위험 가중",
+      "components": [
+        "현재 흡연자",
+        "음주자",
+        "비만"
+      ],
+      "n_in_combo": 69670,
+      "pct_of_total": 7.01,
+      "expected_n_if_independent": 43621,
+      "observed_to_expected": 1.6,
+      "top_metrics": [
+        {
+          "metric": "BMI",
+          "combo_mean": 28.48,
+          "non_combo_mean": 23.91,
+          "diff": 4.58,
+          "cohens_d": 1.2,
+          "single_means": {
+            "현재 흡연자": 21.92,
+            "음주자": 21.83,
+            "비만": 28.21
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 92.79,
+          "non_combo_mean": 80.7,
+          "diff": 12.09,
+          "cohens_d": 1.17,
+          "single_means": {
+            "현재 흡연자": 78.95,
+            "음주자": 75.44,
+            "비만": 89.83
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.5,
+          "non_combo_mean": 14.12,
+          "diff": 1.38,
+          "cohens_d": 0.923,
+          "single_means": {
+            "현재 흡연자": 14.73,
+            "음주자": 13.93,
+            "비만": 14.05
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 196.26,
+          "non_combo_mean": 123.57,
+          "diff": 72.68,
+          "cohens_d": 0.812,
+          "single_means": {
+            "현재 흡연자": 129.08,
+            "음주자": 107.31,
+            "비만": 135.88
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 62.06,
+          "non_combo_mean": 32.65,
+          "diff": 29.41,
+          "cohens_d": 0.607,
+          "single_means": {
+            "현재 흡연자": 30.34,
+            "음주자": 27.52,
+            "비만": 31.94
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "BMI",
+          "combo_mean": 28.48,
+          "non_combo_mean": 23.91,
+          "diff": 4.58,
+          "cohens_d": 1.2,
+          "single_means": {
+            "현재 흡연자": 21.92,
+            "음주자": 21.83,
+            "비만": 28.21
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 92.79,
+          "non_combo_mean": 80.7,
+          "diff": 12.09,
+          "cohens_d": 1.17,
+          "single_means": {
+            "현재 흡연자": 78.95,
+            "음주자": 75.44,
+            "비만": 89.83
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.5,
+          "non_combo_mean": 14.12,
+          "diff": 1.38,
+          "cohens_d": 0.923,
+          "single_means": {
+            "현재 흡연자": 14.73,
+            "음주자": 13.93,
+            "비만": 14.05
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 196.26,
+          "non_combo_mean": 123.57,
+          "diff": 72.68,
+          "cohens_d": 0.812,
+          "single_means": {
+            "현재 흡연자": 129.08,
+            "음주자": 107.31,
+            "비만": 135.88
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 62.06,
+          "non_combo_mean": 32.65,
+          "diff": 29.41,
+          "cohens_d": 0.607,
+          "single_means": {
+            "현재 흡연자": 30.34,
+            "음주자": 27.52,
+            "비만": 31.94
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 49.33,
+          "non_combo_mean": 57.64,
+          "diff": -8.31,
+          "cohens_d": -0.562,
+          "single_means": {
+            "현재 흡연자": 50.57,
+            "음주자": 62.17,
+            "비만": 52.33
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 38.67,
+          "non_combo_mean": 25.59,
+          "diff": 13.07,
+          "cohens_d": 0.556,
+          "single_means": {
+            "현재 흡연자": 24.02,
+            "음주자": 21.25,
+            "비만": 30.5
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 79.96,
+          "non_combo_mean": 74.87,
+          "diff": 5.09,
+          "cohens_d": 0.496,
+          "single_means": {
+            "현재 흡연자": 73.42,
+            "음주자": 72.95,
+            "비만": 77.01
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 127.44,
+          "non_combo_mean": 122.34,
+          "diff": 5.1,
+          "cohens_d": 0.351,
+          "single_means": {
+            "현재 흡연자": 120.16,
+            "음주자": 118.39,
+            "비만": 128.37
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 107.14,
+          "non_combo_mean": 100.5,
+          "diff": 6.64,
+          "cohens_d": 0.291,
+          "single_means": {
+            "현재 흡연자": 103.42,
+            "음주자": 96.46,
+            "비만": 106.09
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 31.12,
+          "non_combo_mean": 26.62,
+          "diff": 4.5,
+          "cohens_d": 0.238,
+          "single_means": {
+            "현재 흡연자": 24.76,
+            "음주자": 24.56,
+            "비만": 28.81
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 202.02,
+          "non_combo_mean": 196.37,
+          "diff": 5.64,
+          "cohens_d": 0.131,
+          "single_means": {
+            "현재 흡연자": 189.76,
+            "음주자": 200.99,
+            "비만": 187.84
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 115.9,
+          "non_combo_mean": 114.39,
+          "diff": 1.51,
+          "cohens_d": 0.039,
+          "single_means": {
+            "현재 흡연자": 113.64,
+            "음주자": 117.58,
+            "비만": 108.49
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "당뇨+고혈압+이상지질혈증",
+      "category": "메타볼릭 트라이어드",
+      "meaning": "전형적인 대사 위험 조합",
+      "components": [
+        "당뇨",
+        "고혈압",
+        "이상지질혈증"
+      ],
+      "n_in_combo": 3754,
+      "pct_of_total": 0.38,
+      "expected_n_if_independent": 1280,
+      "observed_to_expected": 2.93,
+      "top_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 163.34,
+          "non_combo_mean": 100.07,
+          "diff": 63.27,
+          "cohens_d": 2.971,
+          "single_means": {
+            "당뇨": 152.25,
+            "고혈압": 99.29,
+            "이상지질혈증": 97.98
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 147.85,
+          "non_combo_mean": 122.32,
+          "diff": 25.53,
+          "cohens_d": 1.787,
+          "single_means": {
+            "당뇨": 122.72,
+            "고혈압": 145.81,
+            "이상지질혈증": 120.81
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 252.23,
+          "non_combo_mean": 127.23,
+          "diff": 125.0,
+          "cohens_d": 1.382,
+          "single_means": {
+            "당뇨": 109.23,
+            "고혈압": 105.41,
+            "이상지질혈증": 176.84
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 88.38,
+          "non_combo_mean": 75.03,
+          "diff": 13.36,
+          "cohens_d": 1.307,
+          "single_means": {
+            "당뇨": 73.68,
+            "고혈압": 87.83,
+            "이상지질혈증": 74.3
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 90.94,
+          "non_combo_mean": 81.41,
+          "diff": 9.53,
+          "cohens_d": 0.888,
+          "single_means": {
+            "당뇨": 85.6,
+            "고혈압": 84.54,
+            "이상지질혈증": 84.05
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 163.34,
+          "non_combo_mean": 100.07,
+          "diff": 63.27,
+          "cohens_d": 2.971,
+          "single_means": {
+            "당뇨": 152.25,
+            "고혈압": 99.29,
+            "이상지질혈증": 97.98
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 147.85,
+          "non_combo_mean": 122.32,
+          "diff": 25.53,
+          "cohens_d": 1.787,
+          "single_means": {
+            "당뇨": 122.72,
+            "고혈압": 145.81,
+            "이상지질혈증": 120.81
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 252.23,
+          "non_combo_mean": 127.23,
+          "diff": 125.0,
+          "cohens_d": 1.382,
+          "single_means": {
+            "당뇨": 109.23,
+            "고혈압": 105.41,
+            "이상지질혈증": 176.84
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 88.38,
+          "non_combo_mean": 75.03,
+          "diff": 13.36,
+          "cohens_d": 1.307,
+          "single_means": {
+            "당뇨": 73.68,
+            "고혈압": 87.83,
+            "이상지질혈증": 74.3
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 90.94,
+          "non_combo_mean": 81.41,
+          "diff": 9.53,
+          "cohens_d": 0.888,
+          "single_means": {
+            "당뇨": 85.6,
+            "고혈압": 84.54,
+            "이상지질혈증": 84.05
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 72.83,
+          "non_combo_mean": 34.24,
+          "diff": 38.59,
+          "cohens_d": 0.801,
+          "single_means": {
+            "당뇨": 43.58,
+            "고혈압": 37.93,
+            "이상지질혈증": 40.5
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 27.18,
+          "non_combo_mean": 24.18,
+          "diff": 2.99,
+          "cohens_d": 0.755,
+          "single_means": {
+            "당뇨": 24.83,
+            "고혈압": 24.98,
+            "이상지질혈증": 24.99
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 46.07,
+          "non_combo_mean": 57.19,
+          "diff": -11.12,
+          "cohens_d": -0.746,
+          "single_means": {
+            "당뇨": 57.44,
+            "고혈압": 61.33,
+            "이상지질혈증": 48.87
+          }
+        },
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 40.14,
+          "non_combo_mean": 26.33,
+          "diff": 13.81,
+          "cohens_d": 0.586,
+          "single_means": {
+            "당뇨": 30.3,
+            "고혈압": 26.98,
+            "이상지질혈증": 30.03
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 36.32,
+          "non_combo_mean": 26.81,
+          "diff": 9.51,
+          "cohens_d": 0.505,
+          "single_means": {
+            "당뇨": 30.29,
+            "고혈압": 28.78,
+            "이상지질혈증": 28.42
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 14.77,
+          "non_combo_mean": 14.21,
+          "diff": 0.56,
+          "cohens_d": 0.366,
+          "single_means": {
+            "당뇨": 14.48,
+            "고혈압": 14.27,
+            "이상지질혈증": 14.4
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 202.75,
+          "non_combo_mean": 196.7,
+          "diff": 6.05,
+          "cohens_d": 0.141,
+          "single_means": {
+            "당뇨": 167.58,
+            "고혈압": 187.63,
+            "이상지질혈증": 217.52
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 110.79,
+          "non_combo_mean": 114.52,
+          "diff": -3.73,
+          "cohens_d": -0.096,
+          "single_means": {
+            "당뇨": 88.11,
+            "고혈압": 105.05,
+            "이상지질혈증": 135.43
+          }
+        }
+      ]
+    },
+    {
+      "combo_name": "비만+이상지질혈증+지방간의심",
+      "category": "메타볼릭 트리오",
+      "meaning": "비알코올성 지방간증후군 패턴",
+      "components": [
+        "비만",
+        "이상지질혈증",
+        "지방간 의심"
+      ],
+      "n_in_combo": 22444,
+      "pct_of_total": 2.26,
+      "expected_n_if_independent": 8394,
+      "observed_to_expected": 2.67,
+      "top_metrics": [
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 59.39,
+          "non_combo_mean": 23.01,
+          "diff": 36.38,
+          "cohens_d": 1.927,
+          "single_means": {
+            "비만": 22.74,
+            "이상지질혈증": 20.28,
+            "지방간 의심": 48.19
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 252.82,
+          "non_combo_mean": 119.9,
+          "diff": 132.92,
+          "cohens_d": 1.559,
+          "single_means": {
+            "비만": 105.59,
+            "이상지질혈증": 151.11,
+            "지방간 의심": 107.59
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 29.13,
+          "non_combo_mean": 23.69,
+          "diff": 5.44,
+          "cohens_d": 1.489,
+          "single_means": {
+            "비만": 27.71,
+            "이상지질혈증": 22.37,
+            "지방간 의심": 22.37
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 94.4,
+          "non_combo_mean": 80.18,
+          "diff": 14.22,
+          "cohens_d": 1.414,
+          "single_means": {
+            "비만": 89.38,
+            "이상지질혈증": 78.36,
+            "지방간 의심": 79.98
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 87.85,
+          "non_combo_mean": 29.53,
+          "diff": 58.32,
+          "cohens_d": 1.336,
+          "single_means": {
+            "비만": 25.77,
+            "이상지질혈증": 23.36,
+            "지방간 의심": 87.55
+          }
+        }
+      ],
+      "all_metrics": [
+        {
+          "metric": "혈청지피티(ALT)",
+          "combo_mean": 59.39,
+          "non_combo_mean": 23.01,
+          "diff": 36.38,
+          "cohens_d": 1.927,
+          "single_means": {
+            "비만": 22.74,
+            "이상지질혈증": 20.28,
+            "지방간 의심": 48.19
+          }
+        },
+        {
+          "metric": "트리글리세라이드",
+          "combo_mean": 252.82,
+          "non_combo_mean": 119.9,
+          "diff": 132.92,
+          "cohens_d": 1.559,
+          "single_means": {
+            "비만": 105.59,
+            "이상지질혈증": 151.11,
+            "지방간 의심": 107.59
+          }
+        },
+        {
+          "metric": "BMI",
+          "combo_mean": 29.13,
+          "non_combo_mean": 23.69,
+          "diff": 5.44,
+          "cohens_d": 1.489,
+          "single_means": {
+            "비만": 27.71,
+            "이상지질혈증": 22.37,
+            "지방간 의심": 22.37
+          }
+        },
+        {
+          "metric": "허리둘레",
+          "combo_mean": 94.4,
+          "non_combo_mean": 80.18,
+          "diff": 14.22,
+          "cohens_d": 1.414,
+          "single_means": {
+            "비만": 89.38,
+            "이상지질혈증": 78.36,
+            "지방간 의심": 79.98
+          }
+        },
+        {
+          "metric": "감마지티피",
+          "combo_mean": 87.85,
+          "non_combo_mean": 29.53,
+          "diff": 58.32,
+          "cohens_d": 1.336,
+          "single_means": {
+            "비만": 25.77,
+            "이상지질혈증": 23.36,
+            "지방간 의심": 87.55
+          }
+        },
+        {
+          "metric": "혈청지오티(AST)",
+          "combo_mean": 42.77,
+          "non_combo_mean": 25.3,
+          "diff": 17.47,
+          "cohens_d": 1.035,
+          "single_means": {
+            "비만": 24.44,
+            "이상지질혈증": 23.96,
+            "지방간 의심": 45.1
+          }
+        },
+        {
+          "metric": "혈색소",
+          "combo_mean": 15.43,
+          "non_combo_mean": 14.09,
+          "diff": 1.34,
+          "cohens_d": 0.893,
+          "single_means": {
+            "비만": 14.41,
+            "이상지질혈증": 13.96,
+            "지방간 의심": 14.61
+          }
+        },
+        {
+          "metric": "HDL콜레스테롤",
+          "combo_mean": 45.31,
+          "non_combo_mean": 57.89,
+          "diff": -12.58,
+          "cohens_d": -0.861,
+          "single_means": {
+            "비만": 57.45,
+            "이상지질혈증": 50.88,
+            "지방간 의심": 62.71
+          }
+        },
+        {
+          "metric": "이완기혈압",
+          "combo_mean": 81.48,
+          "non_combo_mean": 74.59,
+          "diff": 6.88,
+          "cohens_d": 0.678,
+          "single_means": {
+            "비만": 77.08,
+            "이상지질혈증": 74.46,
+            "지방간 의심": 76.25
+          }
+        },
+        {
+          "metric": "식전혈당(공복혈당)",
+          "combo_mean": 112.75,
+          "non_combo_mean": 99.91,
+          "diff": 12.83,
+          "cohens_d": 0.586,
+          "single_means": {
+            "비만": 103.14,
+            "이상지질혈증": 101.96,
+            "지방간 의심": 104.79
+          }
+        },
+        {
+          "metric": "수축기혈압",
+          "combo_mean": 129.64,
+          "non_combo_mean": 121.99,
+          "diff": 7.65,
+          "cohens_d": 0.528,
+          "single_means": {
+            "비만": 127.13,
+            "이상지질혈증": 122.71,
+            "지방간 의심": 124.2
+          }
+        },
+        {
+          "metric": "총콜레스테롤",
+          "combo_mean": 217.78,
+          "non_combo_mean": 195.29,
+          "diff": 22.49,
+          "cohens_d": 0.527,
+          "single_means": {
+            "비만": 183.84,
+            "이상지질혈증": 217.22,
+            "지방간 의심": 185.17
+          }
+        },
+        {
+          "metric": "LDL콜레스테롤",
+          "combo_mean": 127.21,
+          "non_combo_mean": 113.69,
+          "diff": 13.52,
+          "cohens_d": 0.35,
+          "single_means": {
+            "비만": 105.13,
+            "이상지질혈증": 137.15,
+            "지방간 의심": 100.79
+          }
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "n_combos_analyzed": 12,
+    "n_combos_defined": 12
+  }
+}

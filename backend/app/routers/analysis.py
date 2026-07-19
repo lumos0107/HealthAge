@@ -42,10 +42,18 @@ class AnalyzeRequest(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
-    """기존 분석 측 명세의 AnalyzeResponse 호환."""
+    """기존 분석 측 명세의 AnalyzeResponse 호환 (필드 추가는 하위호환)."""
     basic_report: dict[str, Any]
     comprehensive: dict[str, Any]
     recommendations: dict[str, Any] = Field(default_factory=dict)
+    group_analysis: dict[str, Any] = Field(
+        default_factory=dict,
+        description="그룹 분류 + 대사증후군 세부 + 조합그룹",
+    )
+    combo_analysis: dict[str, Any] = Field(
+        default_factory=dict,
+        description="조합 그룹(복합 질환군) 판정 + 모집단 O/E 통계 + 지방간 유형",
+    )
     medications_known: bool = False
     saved: bool
     saved_paths: list[str] | None = None

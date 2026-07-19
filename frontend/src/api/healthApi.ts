@@ -192,10 +192,52 @@ export type UploadOcrResponse = {
   warnings?: string[];
 };
 
+// 조합 그룹(복합 질환군) — analyzer/_internal/combo_group_analysis.py 응답 구조.
+// 공단 표본에서 이 조합이 독립 가정 대비 몇 배 자주 동반되는지(O/E비)를 함께 내려준다.
+// ⚠️ sql/07 마이그레이션 이전에 저장된 분석에는 없다 → 항상 null 처리할 것.
+export type ApiComboGroup = {
+  combo_name: string;
+  category: string;
+  meaning: string;
+  components: string[];
+  is_ascvd_risk: boolean;
+  population: {
+    n_in_combo: number;
+    pct_of_total: number;
+    expected_n_if_independent: number;
+    observed_to_expected: number;
+    top_metrics: { metric: string; combo_mean: number; non_combo_mean: number; diff: number; cohens_d: number }[];
+  } | null;
+};
+
+export type ApiComboAnalysis = {
+  combo_groups?: {
+    matched: ApiComboGroup[];
+    not_evaluable: { combo_name: string; category: string; met: string[]; missing: string[]; reason: string }[];
+    matched_count: number;
+    ascvd_risk_combos: string[];
+    highest_synergy: ApiComboGroup | null;
+    population: { year: number | null; total_n: number | null; source: string };
+    caveats: string[];
+  } | null;
+  fatty_liver?: {
+    applicable: boolean;
+    type: string | null;
+    provisional: boolean;
+    basis: string;
+    cardiometabolic_factors: string[];
+    note?: string;
+  } | null;
+  disclaimer?: string;
+  error?: string;
+};
+
 export type AnalyzeResponse = {
   basic_report: unknown;
   comprehensive: ApiComprehensiveReport;
   recommendations?: ApiRecommendations | null;
+  group_analysis?: unknown;
+  combo_analysis?: ApiComboAnalysis | null;
   saved: boolean;
   saved_paths?: Record<string, string> | string[] | null;
   warnings?: string[];
