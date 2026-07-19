@@ -65,3 +65,6 @@ expo_log.txt
 # 구버전/참고용 프론트엔드 (실제 사용 안 함 — backend/, frontend-mobile/ 만 사용)
 frontend-withus/
 frontend-reference-preview/
+
+# 개인정보 원칙상 테스트 검진지 이미지는 커밋하지 않음
+**/테스트검진지_마스킹/
