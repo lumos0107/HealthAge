@@ -223,7 +223,15 @@ export default function App() {
         showToast('회원가입과 프로필 저장이 완료되었습니다.');
       } else { setProfile(next); showToast('이메일 인증 후 로그인해주세요.'); }
       setLoggedIn(true); setAuthOpen(false);
-    } catch (e) { showToast(e instanceof Error ? e.message : '회원가입에 실패했습니다.'); }
+    } catch (e) {
+      // Supabase 영문 에러를 상황별 한국어로 번역 (로그인 쪽과 동일한 방식)
+      const msg = e instanceof Error ? e.message : '';
+      if (/already registered|already been registered/i.test(msg)) showToast('이미 가입된 이메일입니다. 로그인해주세요.');
+      else if (/at least 6|password should be/i.test(msg)) showToast('비밀번호는 6자 이상이어야 해요.');
+      else if (/invalid.*email|email.*invalid/i.test(msg)) showToast('올바른 이메일 형식이 아니에요.');
+      else if (/rate limit/i.test(msg)) showToast('요청이 너무 많아요. 잠시 후 다시 시도해주세요.');
+      else showToast(msg || '회원가입에 실패했습니다.');
+    }
     finally { setAuthLoading(false); }
   };
 
@@ -445,12 +453,36 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
 }) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [form, setForm] = useState({ email: '', name: '', birth_date: '1980-01-01', gender: '1', password: '' });
+  // 제출 전 검증 실패 메시지 — 서버까지 가기 전에 조건을 한국어로 안내한다.
+  const [localError, setLocalError] = useState('');
+
+  // 가입 조건을 서버(Supabase)에 보내기 전에 클라이언트에서 먼저 검사한다.
+  // 비밀번호 6자는 Supabase 기본 정책과 동일한 값.
+  const validate = (): string => {
+    const email = form.email.trim();
+    if (!email || !form.password) return '이메일과 비밀번호를 입력해주세요.';
+    // 데모 계정(root/1234)은 이메일 형식이 아니므로 형식 검사를 건너뛴다.
+    if (email === 'root') return '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return '올바른 이메일 형식이 아니에요. (예: name@example.com)';
+    if (mode === 'login') return '';
+    if (form.password.length < 6) return '비밀번호는 6자 이상이어야 해요.';
+    if (!form.name.trim()) return '이름을 입력해주세요.';
+    const bd = form.birth_date.trim();
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(bd);
+    const d = m ? new Date(`${bd}T00:00:00`) : null;
+    if (!m || !d || Number.isNaN(d.getTime()) || d.getMonth() + 1 !== Number(m[2]) || d.getDate() !== Number(m[3])) {
+      return '생년월일을 YYYY-MM-DD 형식으로 입력해주세요. (예: 1980-01-01)';
+    }
+    if (d > new Date()) return '생년월일이 미래 날짜일 수 없어요.';
+    return '';
+  };
 
   const submit = () => {
-    if (!form.email.trim() || !form.password) { Alert.alert('입력 확인', '이메일과 비밀번호를 입력해주세요.'); return; }
+    const problem = validate();
+    setLocalError(problem);
+    if (problem) return;
     if (mode === 'login') { onLogin(form.email.trim(), form.password); return; }
-    if (!form.name.trim()) { Alert.alert('입력 확인', '이름을 입력해주세요.'); return; }
-    onSignup({ email: form.email.trim(), name: form.name.trim(), birth_date: form.birth_date, gender: Number(form.gender) === 2 ? 2 : 1, password: form.password });
+    onSignup({ email: form.email.trim(), name: form.name.trim(), birth_date: form.birth_date.trim(), gender: Number(form.gender) === 2 ? 2 : 1, password: form.password });
   };
 
   return (
@@ -461,7 +493,7 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
           <Pressable
             key={m}
             style={[{ flex: 1, paddingVertical: 11, alignItems: 'center', borderRadius: T.radiusSm - 2 }, mode === m && { backgroundColor: T.white, ...T.shadow }]}
-            onPress={() => setMode(m)}
+            onPress={() => { setMode(m); setLocalError(''); }}
           >
             <Text style={{ fontWeight: mode === m ? '700' : '500', fontSize: 15, color: mode === m ? T.text1 : T.text3 }}>
               {m === 'login' ? '로그인' : '회원가입'}
@@ -483,9 +515,18 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
         </>
       )}
       <FieldInput label="비밀번호" value={form.password} onChangeText={(v) => setForm((s) => ({ ...s, password: v }))} secureTextEntry placeholder="••••••••" />
+      {mode === 'signup' && (
+        <Text style={{ fontSize: 12, color: T.text3, marginTop: -6, marginBottom: 12 }}>6자 이상 입력해주세요.</Text>
+      )}
       <PrimaryBtn label={loading ? '처리 중...' : mode === 'login' ? '로그인' : '회원가입'} onPress={submit} loading={loading} />
 
-      {!!errorMessage && (
+      {!!localError && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF0F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
+          <Ionicons name="alert-circle" size={16} color={T.danger} />
+          <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', flex: 1 }}>{localError}</Text>
+        </View>
+      )}
+      {!!errorMessage && !localError && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF0F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
           <Ionicons name="alert-circle" size={16} color={T.danger} />
           <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', flex: 1 }}>{errorMessage}</Text>
