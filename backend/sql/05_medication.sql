@@ -69,4 +69,17 @@ CREATE TRIGGER trg_medication_records_updated_at
 ALTER TABLE public.medication_records ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS medication_records_select_own ON public.medication_records;
-CREATE POLICY medication_records_
+CREATE POLICY medication_records_select_own ON public.medication_records
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS medication_records_insert_own ON public.medication_records;
+CREATE POLICY medication_records_insert_own ON public.medication_records
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS medication_records_update_own ON public.medication_records;
+CREATE POLICY medication_records_update_own ON public.medication_records
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS medication_records_delete_own ON public.medication_records;
+CREATE POLICY medication_records_delete_own ON public.medication_records
+  FOR DELETE USING (auth.uid() = user_id);

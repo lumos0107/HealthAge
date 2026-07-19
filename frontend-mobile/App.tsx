@@ -172,8 +172,10 @@ export default function App() {
 
   const login = async (email: string, password: string) => {
     setAuthError('');
-    // root/1234 = 데모(개발자) 계정 — Supabase 설정 여부와 무관하게 항상 더미 데이터로 시연.
-    if (email === 'root' && password === '1234') {
+    // root/1234 = 데모(개발자) 계정 — Supabase 미설정 환경에서만 활성.
+    // 실서비스(Supabase 설정됨)에서 시연이 필요하면 EXPO_PUBLIC_ENABLE_DEMO=1 로 명시 활성화.
+    const demoEnabled = !supabaseConfigured || process.env.EXPO_PUBLIC_ENABLE_DEMO === '1';
+    if (demoEnabled && email === 'root' && password === '1234') {
       setDemoMode(true); setLoggedIn(true); setAuthOpen(false);
       loadHealthData(); // 실제 데이터 초기화(더미로 표시되도록)
       showToast('데모 계정으로 로그인되었습니다.'); return;

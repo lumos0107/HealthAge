@@ -437,7 +437,7 @@ def _parse_rrn_prefix(value):
     
     if len(digits) < 7:
         if digits:
-            print(f"[TablePipeline] 주민번호 형식 이상 (7자리 미만): '{value}' → '{digits}'")
+            print(f"[TablePipeline] 주민번호 형식 이상 (7자리 미만, {len(digits)}자리) — 파싱 skip")
         return None, None
     
     yy = digits[0:2]
@@ -463,12 +463,12 @@ def _parse_rrn_prefix(value):
         month = int(mm)
         day = int(dd)
     except ValueError:
-        print(f"[TablePipeline] 주민번호 숫자 변환 실패: '{value}'")
+        print(f"[TablePipeline] 주민번호 숫자 변환 실패 — 파싱 skip")
         return None, None
-    
+
     # 유효성
     if not (1 <= month <= 12 and 1 <= day <= 31):
-        print(f"[TablePipeline] 주민번호의 생년월일 범위 이상: '{value}'")
+        print(f"[TablePipeline] 주민번호의 생년월일 범위 이상 — 파싱 skip")
         return None, None
     
     # 미래 날짜 검증 (OCR 오인식으로 인한 엉뚱한 값 방지)
@@ -476,8 +476,7 @@ def _parse_rrn_prefix(value):
     from datetime import date as _date
     today = _date.today()
     if year > today.year or (year == today.year and (month, day) > (today.month, today.day)):
-        print(f"[TablePipeline] 주민번호의 생년월일이 미래 — OCR 오인식 의심: "
-              f"'{value}' → {year}-{month:02d}-{day:02d}")
+        print(f"[TablePipeline] 주민번호의 생년월일이 미래 — OCR 오인식 의심, 파싱 skip")
         return None, None
     
     birth = f"{year:04d}-{month:02d}-{day:02d}"
@@ -493,7 +492,7 @@ def _normalize_name(value):
         return None
     # 너무 긴 값(50자 초과)은 이상 — null 처리
     if len(s) > 50:
-        print(f"[TablePipeline] 이름이 너무 김 (50자 초과) — null로: '{s[:30]}...'")
+        print(f"[TablePipeline] 이름이 너무 김 (50자 초과, {len(s)}자) — null로")
         return None
     return s
 
@@ -506,7 +505,7 @@ def _normalize_hospital(value):
     if not s:
         return None
     if len(s) > 200:
-        print(f"[TablePipeline] 병원명이 너무 김 — null로: '{s[:50]}...'")
+        print(f"[TablePipeline] 병원명이 너무 김 ({len(s)}자) — null로")
         return None
     return s
 

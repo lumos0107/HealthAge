@@ -264,8 +264,9 @@ def _save_to_db(
         Exception: DB 에러 그대로 전파. 호출 측에서 warnings 처리.
 
     Notes:
-        트랜잭션 보장은 보상 트랜잭션 패턴으로 추후 추가 예정.
-        현재는 analysis_results INSERT 실패 시 checkup_records 고아 가능.
+        PostgREST는 두 INSERT를 하나의 트랜잭션으로 묶지 못하므로,
+        analysis_results INSERT 실패 시 방금 넣은 checkup_records 행을
+        보상 삭제하여 고아 행을 방지한다.
     """
     # 1. checkup_records INSERT
     checkup_row = _ocr_to_checkup_row(ocr_json)
@@ -276,7 +277,7 @@ def _save_to_db(
         raise RuntimeError("checkup_records INSERT 결과 비어있음")
     record_id = r_checkup.data[0]["record_id"]
 
-    # 2. analysis_results INSERT
+    # 2. analysis_results INSERT — 실패 시 1번 행을 보상 삭제
     analysis_row = {
         "record_id": record_id,
         "user_id": user_id,
@@ -285,9 +286,18 @@ def _save_to_db(
         "comprehensive": comprehensive,
         "recommendations": recommendations or None,
     }
-    r_analysis = client.table("analysis_results").insert(analysis_row).execute()
-    if not r_analysis.data:
-        raise RuntimeError("analysis_results INSERT 결과 비어있음")
+    try:
+        r_analysis = client.table("analysis_results").insert(analysis_row).execute()
+        if not r_analysis.data:
+            raise RuntimeError("analysis_results INSERT 결과 비어있음")
+    except Exception:
+        try:
+            client.table("checkup_records").delete().eq("record_id", record_id).execute()
+        except Exception as cleanup_err:
+            logger.error(
+                "고아 행 보상 삭제 실패 (record_id=%s): %s", record_id, cleanup_err
+            )
+        raise
     analysis_id = r_analysis.data[0]["analysis_id"]
 
     return [record_id, analysis_id]

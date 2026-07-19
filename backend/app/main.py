@@ -4,12 +4,16 @@
     uv run uvicorn app.main:app --reload --reload-dir app
 
 라우터:
-  health    GET /, GET /health
-  users     GET /users, GET /users/{id}, POST /users, PATCH /users/{id}, DELETE /users/{id}
-  analysis  POST /analyze, GET /reports/...
-  uploads   POST /uploads (이미지 → OCR JSON)
+  health      GET /, GET /health
+  users       GET /users, GET /users/{id}, POST /users, PATCH /users/{id}, DELETE /users/{id}
+  analysis    POST /analyze, GET /reports/...
+  uploads     POST /uploads (이미지 → OCR JSON)
+  medication  복약 이력
+  timeseries  시계열 비교
+  renal       신장 기능(eGFR)
+  reference   기준값 조회
 
-총 12개 엔드포인트.
+총 20개 엔드포인트.
 """
 from __future__ import annotations
 

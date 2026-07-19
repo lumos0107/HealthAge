@@ -206,8 +206,6 @@ def _fetch_history(
 
     return history, latest_basic_report
 
-    return history, latest_basic_report
-
 
 def _save_timeseries(
     client: Client,

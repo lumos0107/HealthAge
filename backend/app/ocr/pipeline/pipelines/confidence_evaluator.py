@@ -120,17 +120,6 @@ class ConfidenceEvaluator:
         elapsed = call_meta.get("elapsed_sec", 0)
         print(f"[ConfidenceEvaluator] 평가 응답 수신 ({elapsed}초)")
         
-        # [step12-debug] 임시 디버그: LLM 원본 응답과 파싱 결과 출력
-        # 평가 결과가 모두 동일한 값으로 나오는 등 의심스러울 때 진단용
-        # — 정상 동작 확인 후 제거 권장
-        raw = call_meta.get("raw_response", "<no raw_response>")
-        raw_preview = raw[:2000] if isinstance(raw, str) else str(raw)[:2000]
-        print(f"[ConfidenceEvaluator-DEBUG] === LLM raw response (앞 2000자) ===")
-        print(raw_preview)
-        print(f"[ConfidenceEvaluator-DEBUG] === parsed dict ===")
-        print(parsed)
-        print(f"[ConfidenceEvaluator-DEBUG] === end ===")
-        
         return _parse_response(parsed, measurements, lifestyle)
 
 

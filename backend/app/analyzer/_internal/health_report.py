@@ -3,6 +3,7 @@
 - OCR로 추출한 검진 결과 dict를 받아서 종합 분석 반환
 """
 from .peer_compare import compare_to_peers, age_to_code
+from .thresholds import evaluate_value
 
 
 # OCR 결과 키 → 표준 컬럼명 매핑
@@ -57,19 +58,17 @@ KEY_NORMALIZATION = {
 }
 
 
-# 임상 정상 범위 (의학 기준)
-CLINICAL_THRESHOLDS = {
-    "BMI": {"normal": (18.5, 22.9), "warning": (23.0, 24.9), "high": 25.0},
-    "수축기혈압": {"normal": (90, 119), "warning": (120, 139), "high": 140},
-    "이완기혈압": {"normal": (60, 79), "warning": (80, 89), "high": 90},
-    "식전혈당(공복혈당)": {"normal": (70, 99), "warning": (100, 125), "high": 126},
-    "총콜레스테롤": {"normal": (0, 199), "warning": (200, 239), "high": 240},
-    "LDL콜레스테롤": {"normal": (0, 129), "warning": (130, 159), "high": 160},
-    "HDL콜레스테롤": {"normal": (60, 999), "warning": (40, 59), "high": 39},  # 낮을수록 나쁨
-    "트리글리세라이드": {"normal": (0, 149), "warning": (150, 199), "high": 200},
-    "혈청지오티(AST)": {"normal": (0, 40), "warning": (41, 80), "high": 81},
-    "혈청지피티(ALT)": {"normal": (0, 40), "warning": (41, 80), "high": 81},
-    "감마지티피": {"normal": (0, 50), "warning": (51, 100), "high": 101},
+# thresholds.evaluate_value 의 status → 리포트 3단계 임상판정
+STATUS_TO_CLINICAL = {
+    "normal": "정상",
+    "normal_good": "정상",
+    "low": "주의",
+    "caution": "주의",
+    "high": "주의",
+    "very_low": "위험",
+    "very_high": "위험",
+    "extremely_low": "위험",
+    "extremely_high": "위험",
 }
 
 
@@ -113,34 +112,25 @@ def interpret_urine_protein(code) -> dict:
     return {"text": text, "clinical": clinical}
 
 
-def classify_clinical(metric: str, value: float) -> str:
-    """임상 분류: 정상 / 주의 / 위험 / 참고"""
+def classify_clinical(
+    metric: str,
+    value: float,
+    gender: int = 1,
+    age: int = None,
+    medications: dict = None,
+) -> str:
+    """임상 분류: 정상 / 주의 / 위험 / 참고
+
+    약대 자문 v2 임계값(thresholds.evaluate_value)을 단일 근거로 삼는다.
+    (구 CLINICAL_THRESHOLDS 삭제 — AST/ALT·GGT 기준이 자문 전 값이라 불일치했음)
+    """
     # 요단백은 별도 처리
     if metric == "요단백":
         return interpret_urine_protein(value)["clinical"]
-    
-    th = CLINICAL_THRESHOLDS.get(metric)
-    if not th:
-        return "참고"
-    
-    # HDL은 낮을수록 위험 (반대 방향)
-    if metric == "HDL콜레스테롤":
-        if value < th["high"]:
-            return "위험"
-        elif value < th["normal"][0]:
-            return "주의"
-        else:
-            return "정상"
-    
-    # 나머지는 높을수록 위험
-    if value >= th["high"]:
-        return "위험"
-    elif th["warning"][0] <= value <= th["warning"][1]:
-        return "주의"
-    elif th["normal"][0] <= value <= th["normal"][1]:
-        return "정상"
-    else:
-        return "참고"
+
+    result = evaluate_value(metric, value, gender, age, medications)
+    status = result.get("status")
+    return STATUS_TO_CLINICAL.get(status, "참고")
 
 
 def check_metabolic_syndrome(checkup: dict, gender: int) -> dict:
@@ -249,7 +239,7 @@ def generate_report(
             continue
         
         peer_result = compare_to_peers(metric, value, gender, age, year)
-        clinical = classify_clinical(metric, value)
+        clinical = classify_clinical(metric, value, gender, age)
         
         item = {
             "항목": metric,
