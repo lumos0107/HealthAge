@@ -2,6 +2,10 @@
 **/.env
 **/.env.local
 **/.env.*.local
+**/.env.production
+
+# 로컬 도구 바이너리 (cloudflared 등)
+.tools/
 
 # Python
 **/__pycache__/
