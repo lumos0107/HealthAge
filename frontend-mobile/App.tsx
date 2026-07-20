@@ -38,13 +38,13 @@ const TABS: Array<{ key: AppTab; label: string; icon: keyof typeof Ionicons.glyp
   { key: 'upload', label: '업로드', icon: 'cloud-upload-outline', activeIcon: 'cloud-upload' },
 ];
 
-// 모든 Text 의 기본 글꼴을 Pretendard 로 주입 (명시적 fontFamily 는 그대로 우선, 미로드 시 시스템 폰트로 폴백)
+// 모든 Text 의 기본 글꼴을 Pretendard 로 주입 (입력 style 단계에서 최하위로 넣어 web/native 모두 안전.
+// 명시적 fontFamily 는 그대로 우선, 폰트 미로드 시 시스템 폰트로 폴백)
 const AnyText = Text as any;
 if (AnyText.render && !AnyText.__pretendardPatched) {
   const _origRender = AnyText.render;
-  AnyText.render = function (...args: any[]) {
-    const el = _origRender.apply(this, args);
-    return React.cloneElement(el, { style: [{ fontFamily: 'Pretendard' }, el.props?.style] });
+  AnyText.render = function (props: any, ref: any) {
+    return _origRender.call(this, { ...props, style: [{ fontFamily: 'Pretendard' }, props?.style] }, ref);
   };
   AnyText.__pretendardPatched = true;
 }
