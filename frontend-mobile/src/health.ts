@@ -127,6 +127,39 @@ export type RealComboGroup = {
   } | null;
 };
 
+// FLI/HSI 지방간 보조지표 — clinical_targets.fatty_liver_indices 결과.
+// 값·구간(level)·해석 문구를 백엔드가 만들어 내려준다(프론트에서 새 해석을 만들지 않는다).
+export type RealFattyLiverIndex = {
+  value: number;
+  level: 'low' | 'intermediate' | 'high';
+  interpretation: string;
+  cutoffs?: string;
+  formula?: string;
+} | null;
+
+// 단일 집단군 판정(13개) — user_group_analysis.GROUP_INFO 순서. applies가 null이면 판정 불가(입력값 없음).
+export type RealSingleGroup = {
+  key: string;
+  name: string;
+  category: string;
+  desc?: string | null;
+  applies: boolean | null;
+};
+
+// ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님). ascvd.run_ascvd_simulation 결과.
+export type RealAscvdSimulation = {
+  available: boolean;
+  is_simulation: boolean;
+  reason?: string;
+  risk_percent?: number;
+  risk_level?: string;
+  risk_label?: string;
+  scenarios?: { name: string; risk_percent: number; delta: number }[];
+  method?: string;
+  limitations?: string[];
+  how_to_read?: string;
+};
+
 export type RealComboAnalysis = {
   combo_groups?: {
     matched: RealComboGroup[];
@@ -144,7 +177,18 @@ export type RealComboAnalysis = {
     basis: string;
     cardiometabolic_factors: string[];
     note?: string;
+    // FLI/HSI 보조지표 — applicable 여부와 무관하게 계산 가능하면 항상 담겨 온다.
+    indices?: {
+      fli: RealFattyLiverIndex;
+      hsi: RealFattyLiverIndex;
+      unavailable: string[];
+      disclaimer: string;
+      error?: string;
+    } | null;
   } | null;
+  // ⚠️ 아래 두 필드는 이번(08 이후) 분석부터 저장된다 — 구버전 분석에는 없다 → null 처리.
+  single_groups?: RealSingleGroup[] | null;
+  ascvd_simulation?: RealAscvdSimulation | null;
   disclaimer?: string;
   error?: string;
 };
@@ -393,14 +437,23 @@ export type RealEgfr = {
   description: string;
   severity: string;
   method: string;
+  // 체중을 함께 보낸 경우에만 계산된다(약물 용량 참고용, Cockcroft-Gault). 없으면 null.
+  crcl?: number | null;
+  crcl_label?: string | null;
+  crcl_note?: string | null;
+  crcl_method?: string;
 };
 
-/** 혈청 크레아티닌 값이 그 해에 실제로 측정된 경우에만 호출한다 — 없는 값으로 추정해서 보여주지 않는다. */
-export async function fetchEgfr(serumCr: number, age: number, sex: 1 | 2): Promise<RealEgfr | null> {
+/** 혈청 크레아티닌 값이 그 해에 실제로 측정된 경우에만 호출한다 — 없는 값으로 추정해서 보여주지 않는다.
+ *  체중(weightKg)을 주면 약물 용량 참고용 CrCl도 함께 내려온다. */
+export async function fetchEgfr(serumCr: number, age: number, sex: 1 | 2, weightKg?: number | null): Promise<RealEgfr | null> {
   try {
     return await apiFetch('/renal/egfr', {
       method: 'POST',
-      body: JSON.stringify({ serum_cr: serumCr, age, sex: sex === 2 ? 'female' : 'male' }),
+      body: JSON.stringify({
+        serum_cr: serumCr, age, sex: sex === 2 ? 'female' : 'male',
+        ...(typeof weightKg === 'number' && weightKg > 0 ? { weight_kg: weightKg } : {}),
+      }),
     });
   } catch {
     return null;

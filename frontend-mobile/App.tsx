@@ -117,7 +117,9 @@ export default function App() {
         if (typeof cr === 'number' && profile.birth_year) {
           const age = latestRaw.year - profile.birth_year;
           const sex: 1 | 2 = profile.gender === 2 ? 2 : 1;
-          setEgfr(await fetchEgfr(cr, age, sex));
+          // 체중이 그 해 검진에 기록돼 있으면 함께 보내 약물 용량 참고용 CrCl도 받아온다.
+          const weight = latestRaw?.checkup?.weight_kg;
+          setEgfr(await fetchEgfr(cr, age, sex, typeof weight === 'number' ? weight : null));
         } else {
           setEgfr(null);
         }

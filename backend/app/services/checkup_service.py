@@ -123,6 +123,13 @@ async def analyze_and_save(
     # 그룹 분석(대사증후군 세부 + 조합 그룹)은 그동안 계산만 하고 버려지고 있었다.
     group_analysis = result.get("group_analysis") or {}
     combo_analysis = group_analysis.get("combo_analysis") or {}
+    # 단일그룹 판정(13개)·ASCVD 참고 시뮬도 combo_analysis(jsonb)에 함께 담아
+    # 저장·조회 API로 내려준다. 구버전 저장 행에는 이 필드가 없다 → 프론트 null 처리.
+    if combo_analysis and group_analysis:
+        combo_analysis["single_groups"] = _single_groups_for_display(
+            group_analysis.get("user_groups") or {}
+        )
+        combo_analysis["ascvd_simulation"] = group_analysis.get("ascvd_simulation")
     if "warnings" in result:
         warnings.extend(result.get("warnings", []))
 
@@ -258,6 +265,30 @@ def _fetch_medications_from_hira(
 
 def _empty_medications() -> dict[str, bool]:
     return {"hypertension": False, "diabetes": False, "dyslipidemia": False}
+
+
+# ──────────────────────────────────────────────────────────────────
+# 보조 함수: 단일그룹 표시용 변환
+# ──────────────────────────────────────────────────────────────────
+
+def _single_groups_for_display(user_groups: dict[str, Any]) -> list[dict[str, Any]]:
+    """classify_user_groups 결과(g_* → bool)를 표시용 목록으로 변환.
+
+    GROUP_INFO(13개) 순서대로 이름·분류·기준을 붙인다.
+    판정 불가(입력값 없음)한 그룹은 applies=None.
+    """
+    from app.analyzer._internal.user_group_analysis import GROUP_INFO
+
+    return [
+        {
+            "key": key,
+            "name": info.get("name", key),
+            "category": info.get("category", ""),
+            "desc": info.get("desc"),
+            "applies": user_groups.get(key),
+        }
+        for key, info in GROUP_INFO.items()
+    ]
 
 
 # ──────────────────────────────────────────────────────────────────

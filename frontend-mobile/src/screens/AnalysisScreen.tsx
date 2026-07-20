@@ -17,6 +17,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 조합 그룹은 07 마이그레이션 이후 분석에만 있다 — 없으면 카드 자체를 그리지 않는다.
   const comboGroups = comboAnalysis?.combo_groups ?? null;
   const fattyLiver = comboAnalysis?.fatty_liver ?? null;
+  // FLI/HSI·단일그룹·ASCVD는 그 이후(08) 분석부터 담겨 온다 — 마찬가지로 없으면 그리지 않는다.
+  const flIndices = fattyLiver?.indices ?? null;
+  const singleGroups = comboAnalysis?.single_groups ?? null;
+  const ascvd = comboAnalysis?.ascvd_simulation ?? null;
+  // FLI/HSI level → 상태색 (백엔드 interpretation 문구를 그대로 쓰고, 색만 구간에 맞춘다)
+  const levelColor = (level: string) => level === 'low' ? T.success : level === 'high' ? T.danger : T.warn;
+  const levelBg = (level: string) => level === 'low' ? T.successBg : level === 'high' ? T.dangerBg : T.warnBg;
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
   const report = reports[yearIdx];
 
@@ -180,6 +187,22 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           </View>
           <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{egfr.description}</Text>
+          {/* CrCl — 그 해 검진에 체중이 기록된 경우에만 백엔드가 함께 계산해 준다(약물 용량 참고용) */}
+          {egfr.crcl != null && (
+            <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>약물 용량 참고 (CrCl)</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: T.text1 }}>{egfr.crcl}</Text>
+                <Text style={{ fontSize: 12, color: T.text3 }}>mL/min · {egfr.crcl_method ?? 'Cockcroft-Gault'}</Text>
+                {!!egfr.crcl_label && (
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: T.text2, backgroundColor: T.cardAlt, paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>{egfr.crcl_label}</Text>
+                )}
+              </View>
+              {!!egfr.crcl_note && (
+                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>{egfr.crcl_note}</Text>
+              )}
+            </View>
+          )}
         </View>
         </FadeInUp>
       )}
@@ -244,6 +267,117 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
               {comboGroups.caveats.map((c, i) => (
                 <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· {c}</Text>
+              ))}
+            </View>
+          )}
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* ③-3 지방간 보조지표(FLI·HSI) — 검진 수치로 계산되는 선별용 지표.
+          값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
+      {flIndices && (flIndices.fli || flIndices.hsi) && (
+        <FadeInUp delay={215}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>지방간 보조지표</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표예요.</Text>
+          {([
+            { title: 'FLI', idx: flIndices.fli },
+            { title: 'HSI', idx: flIndices.hsi },
+          ] as const).filter((r) => r.idx).map((r, i) => (
+            <View key={r.title} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{r.title}</Text>
+                  {!!r.idx!.formula && <Text style={{ fontSize: 11, color: T.text3, flexShrink: 1 }}>{r.idx!.formula}</Text>}
+                </View>
+                <View style={{ backgroundColor: levelBg(r.idx!.level), paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: levelColor(r.idx!.level) }}>{r.idx!.interpretation}</Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{r.idx!.value}</Text>
+              {!!r.idx!.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {r.idx!.cutoffs}</Text>}
+            </View>
+          ))}
+          {!!flIndices.unavailable?.length && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>· 계산 불가: {flIndices.unavailable.join(' / ')}</Text>
+          )}
+          {!!flIndices.disclaimer && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{flIndices.disclaimer}</Text>
+          )}
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* ③-4 집단군 판정(13개) — 백엔드가 검진 수치·약물로 판정한 단일 집단군 목록.
+          판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
+      {!!singleGroups?.length && (
+        <FadeInUp delay={218}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>집단군 판정</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
+          {(['임상', '생활습관'] as const).map((cat) => {
+            const rows = singleGroups.filter((g) => g.category === cat);
+            if (!rows.length) return null;
+            return (
+              <View key={cat} style={{ marginTop: 10 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text3, marginBottom: 4 }}>{cat}</Text>
+                {rows.map((g, i) => (
+                  <View key={g.key} style={[{ paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
+                      {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
+                    </View>
+                    <View style={{ backgroundColor: g.applies == null ? T.cardAlt : g.applies ? T.dangerBg : T.successBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: g.applies == null ? T.text3 : g.applies ? T.danger : T.success }}>
+                        {g.applies == null ? '판정 불가' : g.applies ? '해당' : '비해당'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
+          계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
+      {ascvd?.available && ascvd.risk_percent != null && (
+        <FadeInUp delay={221}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>심혈관 위험 참고 시뮬레이션</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산이에요.</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{ascvd.risk_percent}%</Text>
+            {!!ascvd.risk_label && (
+              <View style={{ marginLeft: 2, backgroundColor: ascvd.risk_level === 'low' ? T.successBg : ascvd.risk_level === 'high' ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: ascvd.risk_level === 'low' ? T.success : ascvd.risk_level === 'high' ? T.danger : T.warn }}>{ascvd.risk_label}</Text>
+              </View>
+            )}
+          </View>
+          {!!ascvd.how_to_read && (
+            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginBottom: 10 }}>{ascvd.how_to_read}</Text>
+          )}
+          {/* what-if — 절대값보다 "무엇을 바꾸면 얼마나 달라지는가"를 보여준다 */}
+          {!!ascvd.scenarios?.length && (
+            <View style={{ paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider, gap: 8 }}>
+              {ascvd.scenarios.map((s) => (
+                <View key={s.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{s.name}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>
+                    {s.risk_percent}%{' '}
+                    <Text style={{ color: s.delta < 0 ? T.success : T.text3, fontSize: 12 }}>({s.delta > 0 ? '+' : ''}{s.delta}%p)</Text>
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {!!ascvd.limitations?.length && (
+            <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
+              {ascvd.limitations.map((l, i) => (
+                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· {l}</Text>
               ))}
             </View>
           )}
