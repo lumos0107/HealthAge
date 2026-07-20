@@ -222,7 +222,14 @@ def parse_ocr_json(ocr_data: dict) -> dict:
         if code is not None:
             lifestyle["음주여부"] = code
             checkup["음주여부"] = code
-    
+
+    # 음주량(주당 순알코올 g) — 있으면 MASLD/ALD 정식 판정에 사용 (없으면 잠정)
+    if "alcohol_weekly_g" in lifestyle_raw:
+        g = clean_number(lifestyle_raw["alcohol_weekly_g"])
+        if g is not None:
+            lifestyle["주당순알코올(g)"] = g
+            checkup["주당순알코올(g)"] = g
+
     return {
         "checkup": checkup,
         "gender": gender,

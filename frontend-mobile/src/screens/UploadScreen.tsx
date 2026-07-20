@@ -3,13 +3,17 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { Chip, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, ocrTemplate } from '../data';
 import type { MedicationItem, OcrField, TabKey, UserProfile } from '../data';
 import { analyzeCheckup, fieldsToOcrResult, ocrResultToFields, uploadCheckupImage, uploadMedicationFile } from '../health';
 import type { RealOcrResult } from '../health';
 
 const HIRA_URL = 'https://www.hira.or.kr/rb/dur/form.do?pgmid=HIRAA050300000100';
+
+// 술 종류별 1잔 순알코올(g) 근사 — 순알코올 g ≈ 용량(ml) × 도수 × 0.789
+const GRAMS_PER_GLASS: Record<string, number> = { 소주: 7, 맥주: 7, 막걸리: 9, 와인: 14, 양주: 13 };
+const DRINK_TYPES = ['소주', '맥주', '막걸리', '와인', '양주'] as const;
 
 // 외부 링크를 안전하게 연다 — 실패해도 조용히 죽지 않고 안내를 띄운다.
 async function openExternalUrl(url: string) {
@@ -40,6 +44,12 @@ export default function UploadScreen({ profile, onTab, onSaved }: { profile: Use
   const [usingExample, setUsingExample] = useState(false);
   // 방금 저장한 분석이 복약 정보를 반영했는지 여부 — false면 "약을 안 드시는 것으로 가정"했다는 뜻이라 안내를 띄운다.
   const [medsKnown, setMedsKnown] = useState<boolean | null>(null);
+  // 문진(생활습관) — 검진 수치만으로 알 수 없어 직접 받는다. 흡연/음주 그룹 + 지방간 유형(MASLD/ALD) + ASCVD 에 쓰인다.
+  const [smoking, setSmoking] = useState<'never' | 'former' | 'current' | null>(null);
+  const [drinking, setDrinking] = useState<'no' | 'yes' | null>(null);
+  const [drinkFreq, setDrinkFreq] = useState(2);      // 주 몇 회
+  const [drinkGlasses, setDrinkGlasses] = useState(3); // 1회 몇 잔
+  const [drinkType, setDrinkType] = useState<(typeof DRINK_TYPES)[number]>('소주');
 
   const loadMedExample = () => {
     setMedItems(medicationTemplate.map((m) => ({ ...m })));
@@ -102,6 +112,8 @@ export default function UploadScreen({ profile, onTab, onSaved }: { profile: Use
   }, [medItems]);
 
   const missing = fields.filter((f) => f.required && !f.value.trim());
+  const weeklyAlcoholG = drinking === 'yes' ? Math.round(drinkFreq * drinkGlasses * GRAMS_PER_GLASS[drinkType]) : 0;
+  const alcoholLimit = profile.gender === 2 ? 140 : 210;
 
   // 예시 결과 — 실제 OCR을 호출하지 않고 화면 형태만 미리 보여줄 때 사용한다(더미 데이터임을 명확히 표시).
   const loadExample = (src = 'sample-checkup-photo.jpg') => {
@@ -167,7 +179,12 @@ export default function UploadScreen({ profile, onTab, onSaved }: { profile: Use
     setIsError(false);
     setStatusMsg('검진 결과를 분석하고 저장하는 중이에요...');
     try {
-      const ocrToSend = fieldsToOcrResult(fields, ocrRaw);
+      const base = fieldsToOcrResult(fields, ocrRaw);
+      const lifestyle: Record<string, any> = { ...(base.lifestyle ?? {}) };
+      if (smoking) lifestyle.smoking = smoking;
+      if (drinking) lifestyle.drinking = drinking;
+      if (drinking === 'yes') lifestyle.alcohol_weekly_g = weeklyAlcoholG;
+      const ocrToSend = { ...base, lifestyle };
       const result = await analyzeCheckup(ocrToSend, true);
       setSaved(true);
       // 백엔드가 이 분석에 복약 정보를 반영했는지 — false면 아래에서 복약자료 업로드를 안내한다.
@@ -302,6 +319,44 @@ export default function UploadScreen({ profile, onTab, onSaved }: { profile: Use
                     })}
                   </View>
                 ))}
+
+                {/* 문진: 생활습관 — 검진 수치로 알 수 없는 흡연/음주를 직접 확인. 지방간 유형·심혈관 위험 분석에 쓰인다 */}
+                <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>생활습관 문진</Text>
+                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 18 }}>검진 수치만으로 알 수 없는 흡연·음주를 확인합니다. 지방간 유형(MASLD/ALD)·심혈관 위험 분석에 쓰입니다.</Text>
+
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 10 }}>흡연</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                    <Chip active={smoking === 'never'} label="비흡연" onPress={() => setSmoking('never')} />
+                    <Chip active={smoking === 'former'} label="과거 흡연" onPress={() => setSmoking('former')} />
+                    <Chip active={smoking === 'current'} label="현재 흡연" onPress={() => setSmoking('current')} />
+                  </View>
+
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 10 }}>음주</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    <Chip active={drinking === 'no'} label="안 마심" onPress={() => setDrinking('no')} />
+                    <Chip active={drinking === 'yes'} label="마심" onPress={() => setDrinking('yes')} />
+                  </View>
+
+                  {drinking === 'yes' && (
+                    <View style={{ marginTop: 18, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 16 }}>
+                      <Stepper label="주 몇 회" value={drinkFreq} min={1} max={7} onChange={setDrinkFreq} suffix="회" />
+                      <Stepper label="1회 몇 잔" value={drinkGlasses} min={1} max={20} onChange={setDrinkGlasses} suffix="잔" />
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2, marginTop: 4, marginBottom: 10 }}>주로 마시는 술</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                        {DRINK_TYPES.map((t) => (
+                          <Chip key={t} active={drinkType === t} label={t} onPress={() => setDrinkType(t)} />
+                        ))}
+                      </View>
+                      <View style={{ backgroundColor: T.bg, borderRadius: T.radiusSm, padding: 14 }}>
+                        <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+                          주당 순알코올 약 <Text style={{ fontWeight: '700', color: weeklyAlcoholG > alcoholLimit ? T.danger : T.text1 }}>{weeklyAlcoholG}g</Text>
+                          <Text style={{ color: T.text3 }}>  · 지방간 기준 {profile.gender === 2 ? '여성' : '남성'} {alcoholLimit}g</Text>
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
 
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
                   <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
@@ -502,5 +557,22 @@ function UploadTile({ title, icon, primary, onPress, disabled }: { title: string
       <Ionicons name={icon} size={28} color={primary ? '#fff' : T.text2} />
       <Text style={{ fontSize: 13, fontWeight: '700', color: primary ? '#fff' : T.text1 }}>{title}</Text>
     </Pressable>
+  );
+}
+
+function Stepper({ label, value, min, max, onChange, suffix }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void; suffix: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+      <Text style={{ fontSize: 14, color: T.text2, fontWeight: '600' }}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Pressable onPress={() => onChange(Math.max(min, value - 1))} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="remove" size={18} color={T.text2} />
+        </Pressable>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, minWidth: 46, textAlign: 'center' }}>{value}{suffix}</Text>
+        <Pressable onPress={() => onChange(Math.min(max, value + 1))} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="add" size={18} color={T.text2} />
+        </Pressable>
+      </View>
+    </View>
   );
 }
