@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Activity } from 'lucide-react';
 import {
   CartesianGrid,
@@ -10,6 +10,9 @@ import {
   YAxis,
 } from 'recharts';
 import { getAccessToken, supabase, supabaseConfigured } from './api/supabaseClient';
+import { healthApi, type ApiComboAnalysis, type ApiComprehensiveReport, type ApiEvaluation } from './api/healthApi';
+import { evaluationByMetric, getUserId, normalizeReport } from './api/reportMapper';
+import type { HealthRecord } from './data/mockData';
 
 type TabKey = 'dashboard' | 'records' | 'history' | 'analysis' | 'upload';
 type Status = '정상 기준 안' | '관리 참고' | '추적 확인';
@@ -101,81 +104,10 @@ const initialSettings: UserSettings = {
   simpleWords: true,
 };
 
-const reports: Report[] = [
-  {
-    year: 2021,
-    date: '2021-09-15',
-    hospital: '서울대병원 강남센터',
-    status: '관리 참고',
-    summary: '혈압, 지질 수치를 생활습관과 함께 확인합니다.',
-    score: 68,
-    values: {
-      sbp: 128,
-      dbp: 82,
-      glucose: 95,
-      bmi: 23.5,
-      waist: 84,
-      ldl: 125,
-      hdl: 48,
-      triglyceride: 130,
-      ast: 28,
-      alt: 31,
-      ggt: 42,
-      hemoglobin: 14.7,
-      creatinine: 0.88,
-    },
-  },
-  {
-    year: 2023,
-    date: '2023-09-15',
-    hospital: '서울대병원 강남센터',
-    status: '관리 참고',
-    summary: '혈당, BMI, 중성지방 흐름을 이어서 확인합니다.',
-    score: 56,
-    values: {
-      sbp: 134,
-      dbp: 84,
-      glucose: 103,
-      bmi: 25.1,
-      waist: 89,
-      ldl: 139,
-      hdl: 42,
-      triglyceride: 161,
-      ast: 32,
-      alt: 39,
-      ggt: 55,
-      hemoglobin: 15.1,
-      creatinine: 0.94,
-    },
-  },
-  {
-    year: 2024,
-    date: '2024-03-15',
-    hospital: '서울대병원 강남센터',
-    status: '추적 확인',
-    summary: '대사증후군 관련 항목이 여러 개 겹쳐 추적 확인이 필요합니다.',
-    score: 22,
-    values: {
-      sbp: 138,
-      dbp: 88,
-      glucose: 112,
-      bmi: 26.3,
-      waist: 93,
-      ldl: 145,
-      hdl: 39,
-      triglyceride: 178,
-      ast: 34,
-      alt: 45,
-      ggt: 68,
-      hemoglobin: 15.4,
-      creatinine: 1.01,
-    },
-  },
-];
+// (목업 reports/latest 제거됨 — 실 데이터는 HealthContext 로 주입한다.)
 
-const latest = reports.at(-1)!;
-
-const metricDefinitions: MetricDefinition[] = [
+// 정적 지표 메타(설명·단위·정상기준·연령평균 폴백). 실 상태·연령평균은 API로 덮어씀.
+const metricMeta: MetricDefinition[] = [
   {
     key: 'sbp',
     category: '혈압',
@@ -346,6 +278,151 @@ const metricDefinitions: MetricDefinition[] = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────
+// 실 API 데이터 계층 (목업 대체)
+// App 지표키 ↔ API HealthRecord 필드. hemoglobin 은 API 모델에 없어 있으면만 읽힘.
+const apiFieldByMetric: Record<MetricKey, string> = {
+  sbp: 'sbp', dbp: 'dbp', glucose: 'fbs', bmi: 'bmi', waist: 'waist',
+  ldl: 'ldl', hdl: 'hdl', triglyceride: 'tg', ast: 'ast', alt: 'alt',
+  ggt: 'ggt', hemoglobin: 'hemoglobin', creatinine: 'creatinine',
+};
+
+function recordToValues(record: HealthRecord): Record<MetricKey, number> {
+  const raw = record as unknown as Record<string, unknown>;
+  const out = {} as Record<MetricKey, number>;
+  (Object.keys(apiFieldByMetric) as MetricKey[]).forEach((key) => {
+    const value = Number(raw[apiFieldByMetric[key]]);
+    out[key] = Number.isFinite(value) ? value : 0;
+  });
+  return out;
+}
+
+// 값 → App 3단계 상태. clinical 지침 임계값을 App 카테고리로 축약.
+function clinicalStatus(key: MetricKey, value: number, sex: 'M' | 'F'): Status {
+  if (!Number.isFinite(value) || value <= 0) return '정상 기준 안';
+  const male = sex !== 'F';
+  switch (key) {
+    case 'sbp': return value < 120 ? '정상 기준 안' : value < 140 ? '관리 참고' : '추적 확인';
+    case 'dbp': return value < 80 ? '정상 기준 안' : value < 90 ? '관리 참고' : '추적 확인';
+    case 'glucose': return value < 100 ? '정상 기준 안' : value < 126 ? '관리 참고' : '추적 확인';
+    case 'bmi': return value < 23 ? '정상 기준 안' : value < 25 ? '관리 참고' : '추적 확인';
+    case 'waist': return value < (male ? 90 : 85) ? '정상 기준 안' : '관리 참고';
+    case 'ldl': return value < 130 ? '정상 기준 안' : value < 160 ? '관리 참고' : '추적 확인';
+    case 'hdl': return value >= (male ? 40 : 50) ? '정상 기준 안' : '관리 참고';
+    case 'triglyceride': return value < 150 ? '정상 기준 안' : value < 200 ? '관리 참고' : '추적 확인';
+    case 'ast':
+    case 'alt': return value < 40 ? '정상 기준 안' : value <= 80 ? '관리 참고' : '추적 확인';
+    case 'ggt': return value <= (male ? 63 : 35) ? '정상 기준 안' : value >= 75 ? '추적 확인' : '관리 참고';
+    case 'hemoglobin': return value >= (male ? 13 : 12) ? '정상 기준 안' : '관리 참고';
+    case 'creatinine': return value <= 1.3 ? '정상 기준 안' : '관리 참고';
+    default: return '정상 기준 안';
+  }
+}
+
+function reportScore(values: Record<MetricKey, number>, sex: 'M' | 'F'): number {
+  let score = 100;
+  (Object.keys(values) as MetricKey[]).forEach((key) => {
+    const v = values[key];
+    if (!Number.isFinite(v) || v <= 0) return;
+    const s = clinicalStatus(key, v, sex);
+    if (s === '관리 참고') score -= 6;
+    else if (s === '추적 확인') score -= 12;
+  });
+  return Math.max(0, score);
+}
+
+function worstStatus(values: Record<MetricKey, number>, sex: 'M' | 'F'): Status {
+  let hasCaution = false;
+  for (const key of Object.keys(values) as MetricKey[]) {
+    const v = values[key];
+    if (!Number.isFinite(v) || v <= 0) continue;
+    const s = clinicalStatus(key, v, sex);
+    if (s === '추적 확인') return '추적 확인';
+    if (s === '관리 참고') hasCaution = true;
+  }
+  return hasCaution ? '관리 참고' : '정상 기준 안';
+}
+
+function recordSex(record: HealthRecord): 'M' | 'F' {
+  return record.sex === 'F' ? 'F' : 'M';
+}
+
+function recordToReport(record: HealthRecord): Report {
+  const values = recordToValues(record);
+  const sex = recordSex(record);
+  return {
+    year: record.year,
+    date: record.examDate,
+    hospital: record.hospital,
+    status: worstStatus(values, sex),
+    summary: record.summary || '저장된 검진 결과입니다.',
+    score: reportScore(values, sex),
+    values,
+  };
+}
+
+// 정적 메타 + API(상태·연령평균)로 런타임 MetricDefinition 생성.
+function buildMetricDefinitions(
+  latest: Report | null,
+  sex: 'M' | 'F',
+  comprehensive: ApiComprehensiveReport | null,
+): MetricDefinition[] {
+  return metricMeta.map((meta) => {
+    const value = latest?.values[meta.key];
+    const status: Status = value != null ? clinicalStatus(meta.key, value, sex) : '정상 기준 안';
+    const evalItem: ApiEvaluation | null = comprehensive
+      ? evaluationByMetric(comprehensive, meta.name) ?? evaluationByMetric(comprehensive, meta.shortName)
+      : null;
+    const peerMean = typeof evalItem?.peer_mean === 'number' ? evalItem.peer_mean : meta.peerMean;
+    return { ...meta, status, peerMean };
+  });
+}
+
+export type HealthData = {
+  reports: Report[];
+  latest: Report | null;
+  metricDefinitions: MetricDefinition[];
+  combo: ApiComboAnalysis | null;
+  hasData: boolean;
+};
+
+const emptyHealthData: HealthData = {
+  reports: [],
+  latest: null,
+  metricDefinitions: metricMeta.map((meta) => ({ ...meta, status: '정상 기준 안' as Status })),
+  combo: null,
+  hasData: false,
+};
+
+const HealthContext = createContext<HealthData>(emptyHealthData);
+const useHealth = () => useContext(HealthContext);
+
+// 로그인 사용자의 검진 데이터를 실 API 로 로드해 HealthData 로 조립.
+async function loadHealthData(preferredUserId?: string): Promise<HealthData> {
+  const token = await getAccessToken();
+  if (!token) return emptyHealthData;
+  const users = await healthApi.getUsers().catch(() => []);
+  const userId = preferredUserId || (users[0] ? getUserId(users[0]) : '');
+  if (!userId) return emptyHealthData;
+
+  const list = await healthApi.getReportList(userId).catch(() => null);
+  const years = list?.years ?? [];
+  const rawReports = await Promise.all(years.map((year) => healthApi.getReport(userId, year).catch(() => null)));
+  const records = rawReports
+    .map((raw, index) => (raw ? normalizeReport(raw, years[index], index) : null))
+    .filter((record): record is HealthRecord => record !== null)
+    .sort((a, b) => a.year - b.year);
+
+  const reports = records.map(recordToReport);
+  const latest = reports.at(-1) ?? null;
+  const latestRecord = records.at(-1) ?? null;
+  const sex: 'M' | 'F' = latestRecord ? recordSex(latestRecord) : 'M';
+  const comprehensive = await healthApi.getComprehensive(userId).catch(() => null);
+  const metricDefinitions = buildMetricDefinitions(latest, sex, comprehensive);
+
+  return { reports, latest, metricDefinitions, combo: null, hasData: reports.length > 0 };
+}
+
 const tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'dashboard', label: '대시보드' },
   { key: 'records', label: '검진결과 조회' },
@@ -375,8 +452,8 @@ const externalActions: Array<
   },
 ];
 
-function currentValue(metric: MetricDefinition) {
-  return latest.values[metric.key];
+function currentValue(latest: Report | null, metric: MetricDefinition) {
+  return latest?.values[metric.key] ?? 0;
 }
 
 function formatValue(value: number, unit: string) {
@@ -612,15 +689,25 @@ function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) {
+  const { metricDefinitions, latest, reports, hasData } = useHealth();
   const counts = useMemo(
     () => ({
       normal: metricDefinitions.filter((metric) => metric.status === '정상 기준 안').length,
       caution: metricDefinitions.filter((metric) => metric.status === '관리 참고').length,
       follow: metricDefinitions.filter((metric) => metric.status === '추적 확인').length,
     }),
-    [],
+    [metricDefinitions],
   );
   const topItems = metricDefinitions.filter((metric) => metric.status !== '정상 기준 안').slice(0, 5);
+
+  if (!hasData || !latest) {
+    return (
+      <>
+        <PageHeader title="대시보드" subtitle="최근 검진 결과에서 먼저 확인할 항목만 요약합니다." />
+        <EmptyBoard message="아직 저장된 검진 결과가 없습니다. '결과지 업로드'에서 결과지를 올리면 여기에 요약이 표시됩니다." onAction={() => onTabChange('upload')} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -644,7 +731,7 @@ function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) 
               >
                 <div className="font-black text-[#1d2b3a]">{metric.name}</div>
                 <div className="text-[#526273]">
-                  {formatValue(currentValue(metric), metric.unit)} · 정상 기준 {metric.normalText}
+                  {formatValue(currentValue(latest, metric), metric.unit)} · 정상 기준 {metric.normalText}
                 </div>
                 <StatusBadge status={metric.status} />
               </button>
@@ -673,8 +760,18 @@ function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) 
 }
 
 function RecordsView() {
+  const { reports, hasData } = useHealth();
   const [yearFilter, setYearFilter] = useState('전체');
   const filteredReports = yearFilter === '전체' ? reports : reports.filter((report) => String(report.year) === yearFilter);
+
+  if (!hasData) {
+    return (
+      <>
+        <PageHeader title="검진결과 조회" subtitle="검진기록과 결과조회 기능을 하나로 합쳐 연도별 결과와 상세 항목을 확인합니다." />
+        <EmptyBoard message="아직 저장된 검진 기록이 없습니다. '결과지 업로드'에서 결과지를 올려주세요." />
+      </>
+    );
+  }
 
   return (
     <>
@@ -702,6 +799,7 @@ function RecordsView() {
 }
 
 function HistoryView() {
+  const { metricDefinitions, reports, hasData } = useHealth();
   const chartGroups = [
     { title: '혈압 변화', keys: ['sbp', 'dbp'] as MetricKey[] },
     { title: '혈당·체중 변화', keys: ['glucose', 'bmi', 'waist'] as MetricKey[] },
@@ -710,18 +808,27 @@ function HistoryView() {
     { title: '혈액·신장 변화', keys: ['hemoglobin', 'creatinine'] as MetricKey[] },
   ];
 
+  if (!hasData) {
+    return (
+      <>
+        <PageHeader title="히스토리" subtitle="검진 항목별 연도 변화와 항목 설명을 함께 확인합니다." />
+        <EmptyBoard message="히스토리를 그리려면 검진 기록이 필요합니다. '결과지 업로드'에서 결과지를 올려주세요." />
+      </>
+    );
+  }
+
   return (
     <>
       <PageHeader title="히스토리" subtitle="검진 항목별 연도 변화와 항목 설명을 함께 확인합니다." />
       <Notice>수치 변화는 생활습관, 복용 약, 검사 당시 상태에 따라 달라질 수 있습니다. 같은 항목이 반복해서 기준을 벗어나면 의료진과 상담해 보세요.</Notice>
       <div className="mt-7 grid grid-cols-2 gap-7">
         {chartGroups.map((group) => {
-          const hasBadMetric = group.keys.some((key) => isBadStatus(metricByKey(key).status));
+          const hasBadMetric = group.keys.some((key) => isBadStatus(metricByKey(metricDefinitions, key).status));
           return (
             <Board key={group.title} title={group.title} tone={hasBadMetric ? 'attention' : 'default'}>
               {hasBadMetric && <p className="mb-3 text-sm font-bold text-[#b51d46]">관리 참고 항목이 포함된 그래프입니다.</p>}
               <ChartBox height={260}>
-                <LineChart data={historyRows(group.keys)}>
+                <LineChart data={historyRows(reports, metricDefinitions, group.keys)}>
                   <CartesianGrid stroke="#dfe8f1" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="year" tick={{ fill: '#526273', fontSize: 12 }} />
                   <YAxis tick={{ fill: '#526273', fontSize: 12 }} />
@@ -730,7 +837,7 @@ function HistoryView() {
                     <Line
                       key={key}
                       type="monotone"
-                      dataKey={metricByKey(key).shortName}
+                      dataKey={metricByKey(metricDefinitions, key).shortName}
                       stroke={lineColors[index % lineColors.length]}
                       strokeWidth={3}
                       dot={{ r: 3 }}
@@ -759,10 +866,20 @@ function HistoryView() {
 }
 
 function AnalysisView() {
-  const groups = useMemo(() => computeGroups(), []);
+  const { metricDefinitions, latest, hasData } = useHealth();
+  const groups = useMemo(() => computeGroups(metricDefinitions), [metricDefinitions]);
   const [selectedGroupName, setSelectedGroupName] = useState(groups[0]?.name ?? '');
   const selectedGroup = groups.find((group) => group.name === selectedGroupName) ?? groups[0];
-  const selectedMetrics = selectedGroup.keys.map(metricByKey);
+  const selectedMetrics = selectedGroup.keys.map((key) => metricByKey(metricDefinitions, key));
+
+  if (!hasData || !latest) {
+    return (
+      <>
+        <PageHeader title="건강분석" subtitle="검사항목별 내 수치, 정상 기준, 연령대 평균을 한 줄에서 비교합니다." />
+        <EmptyBoard message="건강분석을 하려면 검진 기록이 필요합니다. '결과지 업로드'에서 결과지를 올려주세요." />
+      </>
+    );
+  }
 
   return (
     <>
@@ -827,10 +944,44 @@ function AnalysisView() {
   );
 }
 
-function UploadView({ profile, onTabChange }: { profile: UserProfile; onTabChange: (tab: TabKey) => void }) {
+// 실제 OCR(POST /uploads) 응답 → 검수 필드. 백엔드 키 변형을 관대하게 읽는다.
+function ocrRawToFields(raw: unknown): OcrField[] {
+  const root = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const checkup = (root.checkup && typeof root.checkup === 'object' ? root.checkup : root) as Record<string, unknown>;
+  const read = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = checkup[key];
+      if (value !== undefined && value !== null && String(value).trim() !== '') return String(value);
+    }
+    return '';
+  };
+  return [
+    { id: 'exam_date', label: '검진일', value: read('exam_date', 'examDate', 'date'), required: true, confidence: 0.9, section: '기본 정보' },
+    { id: 'hospital', label: '검진기관', value: read('hospital', 'institution', 'organization'), required: true, confidence: 0.6, section: '기본 정보' },
+    { id: 'height', label: '키', value: read('height_cm', 'height'), unit: 'cm', confidence: 0.9, section: '검사 수치' },
+    { id: 'weight', label: '몸무게', value: read('weight_kg', 'weight'), unit: 'kg', confidence: 0.9, section: '검사 수치' },
+    { id: 'waist', label: '허리둘레', value: read('waist_cm', 'waist'), unit: 'cm', confidence: 0.9, section: '검사 수치' },
+    { id: 'sbp', label: '수축기 혈압', value: read('sbp', 'systolic_bp'), unit: 'mmHg', required: true, confidence: 0.9, section: '검사 수치' },
+    { id: 'dbp', label: '이완기 혈압', value: read('dbp', 'diastolic_bp'), unit: 'mmHg', required: true, confidence: 0.9, section: '검사 수치' },
+    { id: 'hb', label: '혈색소', value: read('hemoglobin', 'hb'), unit: 'g/dL', confidence: 0.9, section: '검사 수치' },
+    { id: 'fbs', label: '공복혈당', value: read('fbs', 'fasting_glucose'), unit: 'mg/dL', required: true, confidence: 0.9, section: '검사 수치' },
+    { id: 'total_cholesterol', label: '총콜레스테롤', value: read('total_cholesterol'), unit: 'mg/dL', confidence: 0.9, section: '검사 수치' },
+    { id: 'hdl', label: 'HDL 콜레스테롤', value: read('hdl'), unit: 'mg/dL', confidence: 0.9, section: '검사 수치' },
+    { id: 'tg', label: '중성지방', value: read('tg', 'triglyceride'), unit: 'mg/dL', confidence: 0.9, section: '검사 수치' },
+    { id: 'ldl', label: 'LDL 콜레스테롤', value: read('ldl'), unit: 'mg/dL', confidence: 0.9, section: '검사 수치' },
+    { id: 'creatinine', label: '혈청 크레아티닌', value: read('creatinine', 'serum_creatinine'), unit: 'mg/dL', confidence: 0.9, section: '검사 수치' },
+    { id: 'urine_protein', label: '요단백', value: read('urine_protein'), confidence: 0.9, section: '검사 수치' },
+    { id: 'ast', label: 'AST(SGOT)', value: read('ast'), unit: 'IU/L', confidence: 0.9, section: '검사 수치' },
+    { id: 'alt', label: 'ALT(SGPT)', value: read('alt'), unit: 'IU/L', confidence: 0.9, section: '검사 수치' },
+    { id: 'ggt', label: '감마-GTP', value: read('ggt', 'gamma_gtp'), unit: 'IU/L', confidence: 0.9, section: '검사 수치' },
+  ];
+}
+
+function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; onTabChange: (tab: TabKey) => void; onSaved: () => void }) {
   const [uploadMode, setUploadMode] = useState<'checkup' | 'medication'>('checkup');
   const [uploadState, setUploadState] = useState<UploadState>({ loading: false, message: '', error: '', ocr: null, analysis: null, medication: null });
   const [ocrFields, setOcrFields] = useState<OcrField[]>([]);
+  const [ocrRaw, setOcrRaw] = useState<unknown>(null);
   const [uploadedSource, setUploadedSource] = useState('');
   const [touchedSave, setTouchedSave] = useState(false);
   const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
@@ -842,8 +993,31 @@ function UploadView({ profile, onTabChange }: { profile: UserProfile; onTabChang
 
   const uploadCheckup = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) return;
-    runDummyCheckupOcr(file.name);
+    setUploadedSource(file.name);
+    setTouchedSave(false);
+    setConfirmSaveOpen(false);
+    setUploadState((current) => ({ ...current, loading: true, error: '', message: '결과지를 읽고 있습니다…', ocr: null, analysis: null }));
+    try {
+      const result = await healthApi.uploadFile(file);
+      setOcrRaw(result.ocr);
+      setOcrFields(ocrRawToFields(result.ocr));
+      setUploadState((current) => ({
+        ...current,
+        loading: false,
+        error: '',
+        message: '사진에서 읽은 결과가 준비되었습니다. 검진표와 다른 값이 있으면 수정한 뒤 저장하세요.',
+        ocr: result.ocr,
+        analysis: null,
+      }));
+    } catch (error) {
+      setUploadState((current) => ({
+        ...current,
+        loading: false,
+        error: `OCR 인식에 실패했습니다. 아래 '예시 결과 불러오기'로도 진행할 수 있습니다. (${error instanceof Error ? error.message : '오류'})`,
+      }));
+    }
   };
 
   const runDummyCheckupOcr = (source: string) => {
@@ -870,6 +1044,7 @@ function UploadView({ profile, onTabChange }: { profile: UserProfile; onTabChang
     setUploadedSource(source);
     setTouchedSave(false);
     setConfirmSaveOpen(false);
+    setOcrRaw(null);
     setOcrFields(dummyFields);
     setUploadState((current) => ({
       ...current,
@@ -886,35 +1061,7 @@ function UploadView({ profile, onTabChange }: { profile: UserProfile; onTabChang
   };
 
   const requiredMissing = ocrFields.filter((field) => field.required && !field.value.trim());
-  const buildReviewedOcr = () => {
-    const optionalEmpty = (value: string) => {
-      const trimmed = value.trim();
-      if (!trimmed || trimmed === '비해당' || trimmed === '해당없음' || trimmed === '미측정') return null;
-      return trimmed;
-    };
-    const numericValue = (field: OcrField) => {
-      const value = optionalEmpty(field.value);
-      if (value === null) return null;
-      const number = Number(value);
-      return Number.isFinite(number) ? number : value;
-    };
-    const fieldMap = Object.fromEntries(ocrFields.map((field) => [field.id, field]));
-    const measurements = Object.fromEntries(
-      ocrFields
-        .filter((field) => field.section === '검사 수치')
-        .map((field) => [field.id, { value: numericValue(field), ...(field.unit ? { unit: field.unit } : {}) }]),
-    );
-    return {
-      meta: {
-        patient_name: profile.name,
-        exam_date: optionalEmpty(fieldMap.exam_date?.value ?? ''),
-        hospital: optionalEmpty(fieldMap.hospital?.value ?? ''),
-        patient_gender: profile.gender === 1 ? 'M' : 'F',
-      },
-      measurements,
-      lifestyle: {},
-    };
-  };
+  // (목업 buildReviewedOcr 제거됨 — saveReviewedOcr 가 실 /analyze 페이로드를 직접 구성)
 
   const scrollToFirstMissing = () => {
     window.setTimeout(() => {
@@ -937,15 +1084,51 @@ function UploadView({ profile, onTabChange }: { profile: UserProfile; onTabChang
     setConfirmSaveOpen(true);
   };
 
-  const saveReviewedOcr = () => {
-    const reviewed = buildReviewedOcr();
+  const saveReviewedOcr = async () => {
     setConfirmSaveOpen(false);
-    setUploadState((current) => ({
-      ...current,
-      error: '',
-      message: '확인한 검진표 값이 저장되었습니다.',
-      analysis: { reviewed, source: uploadedSource, checked_at: new Date().toISOString() },
-    }));
+    setUploadState((current) => ({ ...current, loading: true, error: '', message: '분석하고 저장하는 중입니다…' }));
+    const pick = (id: string) => {
+      const value = (ocrFields.find((field) => field.id === id)?.value ?? '').trim();
+      if (!value || ['비해당', '해당없음', '미측정', '정상'].includes(value)) return undefined;
+      return value;
+    };
+    const measurements = {
+      height: pick('height'), weight: pick('weight'), waist: pick('waist'),
+      sbp: pick('sbp'), dbp: pick('dbp'), fbs: pick('fbs'), hemoglobin: pick('hb'),
+      total_cholesterol: pick('total_cholesterol'), ldl: pick('ldl'), hdl: pick('hdl'), tg: pick('tg'),
+      ast: pick('ast'), alt: pick('alt'), ggt: pick('ggt'), creatinine: pick('creatinine'),
+    };
+    const payload = {
+      save: true,
+      ...(profile.id ? { user_id: profile.id } : {}),
+      ocr: {
+        ...(ocrRaw && typeof ocrRaw === 'object' ? (ocrRaw as Record<string, unknown>) : {}),
+        meta: {
+          patient_name: profile.name,
+          exam_date: pick('exam_date'),
+          hospital: pick('hospital'),
+          patient_gender: profile.gender === 1 ? 'M' : 'F',
+        },
+        measurements,
+      },
+    };
+    try {
+      const result = await healthApi.analyzeOcr(payload);
+      setUploadState((current) => ({
+        ...current,
+        loading: false,
+        error: '',
+        message: '분석 결과가 저장되었습니다. 대시보드와 검진기록에서 확인할 수 있습니다.',
+        analysis: result,
+      }));
+      onSaved();
+    } catch (error) {
+      setUploadState((current) => ({
+        ...current,
+        loading: false,
+        error: error instanceof Error ? error.message : '분석 저장에 실패했습니다.',
+      }));
+    }
   };
 
   const uploadMedication = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -1152,6 +1335,7 @@ function ResultTable({ data }: { data: Report[] }) {
 }
 
 function MetricTable() {
+  const { metricDefinitions, latest } = useHealth();
   return (
     <table className="w-full border-collapse text-left text-[15px]">
       <thead className="bg-[#f2f6fa] text-[#1d2b3a]">
@@ -1170,7 +1354,7 @@ function MetricTable() {
           <tr key={metric.key}>
             <Td>{metric.category}</Td>
             <Td strong>{metric.name}</Td>
-            <Td>{formatValue(currentValue(metric), metric.unit)}</Td>
+            <Td>{formatValue(currentValue(latest, metric), metric.unit)}</Td>
             <Td>{metric.normalText}</Td>
             <Td>{metric.peerMean == null ? '평균 비교 제외' : formatValue(metric.peerMean, metric.unit)}</Td>
             <Td>{metric.description}</Td>
@@ -1183,7 +1367,8 @@ function MetricTable() {
 }
 
 function MetricComparisonRow({ metric }: { metric: MetricDefinition }) {
-  const mine = currentValue(metric);
+  const { latest } = useHealth();
+  const mine = currentValue(latest, metric);
   const max = Math.max(mine, metric.normalValue, metric.peerMean ?? 0, 1);
   const bars = [
     { label: '내 수치', value: mine, text: formatValue(mine, metric.unit), color: metricAccentColor(metric) },
@@ -1249,10 +1434,11 @@ function ChartBox({ children, height = 330 }: { children: ReactNode; height?: nu
 }
 
 function ChartLegend({ keys }: { keys: MetricKey[] }) {
+  const { metricDefinitions } = useHealth();
   return (
     <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#526273]">
       {keys.map((key, index) => {
-        const metric = metricByKey(key);
+        const metric = metricByKey(metricDefinitions, key);
         return (
           <span key={key} className={`inline-flex items-center gap-2 ${isBadStatus(metric.status) ? 'font-black text-[#b51d46]' : ''}`}>
             <span className="h-2.5 w-2.5" style={{ backgroundColor: lineColors[index % lineColors.length] }} />
@@ -1290,6 +1476,19 @@ function Notice({ children }: { children: ReactNode }) {
   return <div className="border border-[#b8cee5] bg-[#eef6ff] px-5 py-4 text-[15px] leading-7 text-[#1d4f7c]">{children}</div>;
 }
 
+function EmptyBoard({ message, onAction }: { message: string; onAction?: () => void }) {
+  return (
+    <div className="border border-[#ccd7e2] bg-white px-6 py-12 text-center">
+      <p className="mx-auto max-w-xl text-[16px] leading-7 text-[#526273]">{message}</p>
+      {onAction && (
+        <button type="button" onClick={onAction} className="mt-5 h-11 bg-[#0b5cad] px-6 font-black text-white hover:bg-[#084f8a]">
+          결과지 업로드로 이동
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Th({ children }: { children: ReactNode }) {
   return <th className="border border-[#ccd7e2] px-4 py-3 font-black">{children}</th>;
 }
@@ -1300,19 +1499,19 @@ function Td({ children, strong }: { children: ReactNode; strong?: boolean }) {
 
 const lineColors = ['#0b5cad', '#0c8a6a', '#c98a18', '#7c8794'];
 
-function metricByKey(key: MetricKey) {
-  return metricDefinitions.find((metric) => metric.key === key)!;
+function metricByKey(defs: MetricDefinition[], key: MetricKey) {
+  return defs.find((metric) => metric.key === key)!;
 }
 
-function historyRows(keys: MetricKey[]) {
+function historyRows(reports: Report[], defs: MetricDefinition[], keys: MetricKey[]) {
   return reports.map((report) => ({
     year: report.year,
-    ...Object.fromEntries(keys.map((key) => [metricByKey(key).shortName, report.values[key]])),
+    ...Object.fromEntries(keys.map((key) => [metricByKey(defs, key).shortName, report.values[key]])),
   }));
 }
 
-function computeGroups() {
-  const find = (key: MetricKey) => metricDefinitions.find((metric) => metric.key === key)!;
+function computeGroups(defs: MetricDefinition[]) {
+  const find = (key: MetricKey) => defs.find((metric) => metric.key === key)!;
   const groupDefs = [
     {
       name: '대사 관리 참고군',
@@ -1629,6 +1828,15 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [healthData, setHealthData] = useState<HealthData>(emptyHealthData);
+
+  const loadHealth = async (userId?: string) => {
+    try {
+      setHealthData(await loadHealthData(userId));
+    } catch {
+      setHealthData(emptyHealthData);
+    }
+  };
 
   const loadProfile = async (quiet = false) => {
     const token = await getAccessToken();
@@ -1705,6 +1913,7 @@ export default function App() {
       setAuthOpen(false);
       setMessage('로그인되었습니다.');
       await loadProfile(true);
+      await loadHealth();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '로그인에 실패했습니다.');
     } finally {
@@ -1761,6 +1970,7 @@ export default function App() {
           birth_md: Number(saved.birth_md) || nextProfile.birth_md,
         });
         setMessage('회원가입과 프로필 저장이 완료되었습니다.');
+        await loadHealth();
       } else {
         setProfile(nextProfile);
         setMessage('회원가입이 완료되었습니다. 이메일 인증 후 로그인하면 프로필을 저장합니다.');
@@ -1776,11 +1986,13 @@ export default function App() {
   const logout = async () => {
     if (supabaseConfigured) await supabase.auth.signOut().catch(() => undefined);
     setProfile(initialProfile);
+    setHealthData(emptyHealthData);
     setMessage('로그아웃되었습니다.');
   };
 
   useEffect(() => {
     void loadProfile(true);
+    void loadHealth();
   }, []);
 
   useEffect(() => {
@@ -1801,13 +2013,15 @@ export default function App() {
         onLogout={() => void logout()}
         onAuth={() => setAuthOpen(true)}
       />
-      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-        {activeTab === 'dashboard' && <DashboardView onTabChange={setActiveTab} />}
-        {activeTab === 'records' && <RecordsView />}
-        {activeTab === 'history' && <HistoryView />}
-        {activeTab === 'analysis' && <AnalysisView />}
-        {activeTab === 'upload' && <UploadView profile={profile} onTabChange={setActiveTab} />}
-      </Layout>
+      <HealthContext.Provider value={healthData}>
+        <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+          {activeTab === 'dashboard' && <DashboardView onTabChange={setActiveTab} />}
+          {activeTab === 'records' && <RecordsView />}
+          {activeTab === 'history' && <HistoryView />}
+          {activeTab === 'analysis' && <AnalysisView />}
+          {activeTab === 'upload' && <UploadView profile={profile} onTabChange={setActiveTab} onSaved={() => void loadHealth()} />}
+        </Layout>
+      </HealthContext.Provider>
       {message && (
         <div className="fixed bottom-5 right-5 z-50 border border-[#b8cee5] bg-white px-5 py-3 text-[15px] font-bold text-[#1d4f7c] shadow-[0_10px_24px_rgba(29,43,58,0.16)]">
           {message}
