@@ -82,7 +82,7 @@ export const T = {
   },
 
   // Display font — 큰 제목·브랜드 영역에만 사용해 본문 가독성은 시스템 글꼴로 지킨다.
-  fontDisplay: 'DoHyeon_400Regular',
+  fontDisplay: 'Pretendard',
 
   // Eyebrow label — 무신사 특유의 "자간 넓은 작은 대문자 라벨"을 큰 제목 위에 얹는 리듬
   eyebrow: { fontSize: 11, fontWeight: '700' as const, color: '#9A9A9A', letterSpacing: 1.6, textTransform: 'uppercase' as const },

@@ -1,5 +1,5 @@
 ﻿import { Ionicons } from '@expo/vector-icons';
-import { DoHyeon_400Regular, useFonts } from '@expo-google-fonts/do-hyeon';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -38,10 +38,20 @@ const TABS: Array<{ key: AppTab; label: string; icon: keyof typeof Ionicons.glyp
   { key: 'upload', label: '업로드', icon: 'cloud-upload-outline', activeIcon: 'cloud-upload' },
 ];
 
+// 모든 Text 의 기본 글꼴을 Pretendard 로 주입 (명시적 fontFamily 는 그대로 우선, 미로드 시 시스템 폰트로 폴백)
+const AnyText = Text as any;
+if (AnyText.render && !AnyText.__pretendardPatched) {
+  const _origRender = AnyText.render;
+  AnyText.render = function (...args: any[]) {
+    const el = _origRender.apply(this, args);
+    return React.cloneElement(el, { style: [{ fontFamily: 'Pretendard' }, el.props?.style] });
+  };
+  AnyText.__pretendardPatched = true;
+}
+
 export default function App() {
-  // 배달의민족(배민)이 실제로 쓰는 자체 제작 글꼴 "BM 도현체" 계열 — 큰 제목·브랜드 영역에만 입혀
-  // 본문은 가독성을 위해 시스템 글꼴을 그대로 두는 배민 자신의 방식과 동일하게 적용한다.
-  const [fontsLoaded] = useFonts({ DoHyeon_400Regular });
+  // 전체 글꼴을 Pretendard(가변)로 통일. 아래 Text 패치가 모든 텍스트에 기본 적용한다.
+  const [fontsLoaded] = useFonts({ Pretendard: require('./assets/fonts/PretendardVariable.ttf') });
 
   const [loggedIn, setLoggedIn] = useState(false);
   // root/1234 데모(개발자) 계정 여부 — Supabase 설정과 무관하게 더미 데이터로 시연할 때 쓴다.
