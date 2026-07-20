@@ -10,7 +10,16 @@ import {
   YAxis,
 } from 'recharts';
 import { getAccessToken, supabase, supabaseConfigured } from './api/supabaseClient';
-import { healthApi, type ApiComboAnalysis, type ApiComprehensiveReport, type ApiEvaluation } from './api/healthApi';
+import {
+  healthApi,
+  type ApiComboAnalysis,
+  type ApiComprehensiveReport,
+  type ApiEgfrResponse,
+  type ApiEvaluation,
+  type ApiMedicationItem,
+  type ApiProfilePayload,
+  type ApiRecommendations,
+} from './api/healthApi';
 import { evaluationByMetric, getUserId, normalizeReport } from './api/reportMapper';
 import type { HealthRecord } from './data/mockData';
 
@@ -74,6 +83,19 @@ type OcrField = {
   section: '기본 정보' | '검사 수치';
 };
 
+// 생활습관 문진 값 — 모바일 LifestyleForm과 동일 구조. 프로필(profiles)에 저장돼 분석에 자동 사용된다.
+type Lifestyle = {
+  smoking: 'never' | 'former' | 'current' | null;
+  drinking: 'no' | 'yes' | null;
+  alcohol_weekly_g: number;
+};
+
+const EMPTY_LIFESTYLE: Lifestyle = { smoking: null, drinking: null, alcohol_weekly_g: 0 };
+
+// 술 종류별 1잔 순알코올(g) 근사 — 순알코올 g ≈ 용량(ml) × 도수 × 0.789 (모바일과 동일 상수)
+const GRAMS_PER_GLASS: Record<string, number> = { 소주: 7, 맥주: 7, 막걸리: 9, 와인: 14, 양주: 13 };
+const DRINK_TYPES = ['소주', '맥주', '막걸리', '와인', '양주'] as const;
+
 type UserProfile = {
   id?: string;
   email?: string;
@@ -81,6 +103,9 @@ type UserProfile = {
   gender: 1 | 2;
   birth_year: number;
   birth_md?: number;
+  smoking?: Lifestyle['smoking'];
+  drinking?: Lifestyle['drinking'];
+  alcohol_weekly_g?: number | null;
 };
 
 type UserSettings = {
@@ -383,6 +408,10 @@ export type HealthData = {
   latest: Report | null;
   metricDefinitions: MetricDefinition[];
   combo: ApiComboAnalysis | null;
+  recommendations: ApiRecommendations | null;
+  egfr: ApiEgfrResponse | null;
+  highlights: { metric: string; type: string; severity: string; message: string }[] | null;
+  medications: ApiMedicationItem[];
   hasData: boolean;
 };
 
@@ -391,6 +420,10 @@ const emptyHealthData: HealthData = {
   latest: null,
   metricDefinitions: metricMeta.map((meta) => ({ ...meta, status: '정상 기준 안' as Status })),
   combo: null,
+  recommendations: null,
+  egfr: null,
+  highlights: null,
+  medications: [],
   hasData: false,
 };
 
@@ -404,23 +437,62 @@ async function loadHealthData(preferredUserId?: string): Promise<HealthData> {
   const users = await healthApi.getUsers().catch(() => []);
   const userId = preferredUserId || (users[0] ? getUserId(users[0]) : '');
   if (!userId) return emptyHealthData;
+  const me = users[0] ?? null;
 
   const list = await healthApi.getReportList(userId).catch(() => null);
   const years = list?.years ?? [];
   const rawReports = await Promise.all(years.map((year) => healthApi.getReport(userId, year).catch(() => null)));
-  const records = rawReports
-    .map((raw, index) => (raw ? normalizeReport(raw, years[index], index) : null))
-    .filter((record): record is HealthRecord => record !== null)
-    .sort((a, b) => a.year - b.year);
+  const pairs = rawReports
+    .map((raw, index) => {
+      const record = raw ? normalizeReport(raw, years[index], index) : null;
+      return record ? { record, raw: raw as Record<string, unknown> } : null;
+    })
+    .filter((pair): pair is { record: HealthRecord; raw: Record<string, unknown> } => pair !== null)
+    .sort((a, b) => a.record.year - b.record.year);
+  const records = pairs.map((pair) => pair.record);
 
   const reports = records.map(recordToReport);
   const latest = reports.at(-1) ?? null;
   const latestRecord = records.at(-1) ?? null;
+  const latestRaw = pairs.at(-1)?.raw ?? null;
   const sex: 'M' | 'F' = latestRecord ? recordSex(latestRecord) : 'M';
   const comprehensive = await healthApi.getComprehensive(userId).catch(() => null);
   const metricDefinitions = buildMetricDefinitions(latest, sex, comprehensive);
 
-  return { reports, latest, metricDefinitions, combo: null, hasData: reports.length > 0 };
+  // 최신 연도 분석에 저장돼 있는 조합그룹·권장사항 — 구버전 분석에는 없어 null 이 정상이다.
+  const combo = (latestRaw?.combo_analysis as ApiComboAnalysis | null | undefined) ?? null;
+  const recommendations = (latestRaw?.recommendations as ApiRecommendations | null | undefined) ?? null;
+
+  // eGFR — 최신 연도에 혈청 크레아티닌이 "실제로" 측정된 경우에만 계산을 요청한다.
+  // 체중이 함께 기록돼 있으면 약물 용량 참고용 CrCl 도 같이 받아온다.
+  let egfr: ApiEgfrResponse | null = null;
+  const checkup = (latestRaw?.checkup ?? {}) as Record<string, unknown>;
+  const serumCr = Number(checkup.creatinine);
+  const birthYear = Number(me?.birth_year);
+  if (latest && Number.isFinite(serumCr) && serumCr > 0 && Number.isFinite(birthYear) && birthYear > 0) {
+    const weight = Number(checkup.weight_kg);
+    egfr = await healthApi
+      .calculateEgfr({
+        serum_cr: serumCr,
+        age: latest.year - birthYear,
+        sex: Number(me?.gender) === 2 ? 'F' : 'M',
+        ...(Number.isFinite(weight) && weight > 0 ? { weight_kg: weight } : {}),
+      })
+      .catch(() => null);
+  }
+
+  // 시계열 하이라이트 — 기록 삭제 직후에는 캐시 무효화로 404 가 날 수 있어 재생성 후 재조회한다.
+  let timeseries = await healthApi.getTimeseriesFull(userId).catch(() => null);
+  if (!timeseries && reports.length >= 2) {
+    await healthApi.refreshTimeseries().catch(() => undefined);
+    timeseries = await healthApi.getTimeseriesFull(userId).catch(() => null);
+  }
+  const highlights = timeseries?.highlights ?? null;
+
+  // 저장된 복약 정보 — 업로드한 HIRA 복약이력을 기록 화면에 표시한다.
+  const medications = await healthApi.getMedications(userId).catch(() => [] as ApiMedicationItem[]);
+
+  return { reports, latest, metricDefinitions, combo, recommendations, egfr, highlights, medications, hasData: reports.length > 0 };
 }
 
 const tabs: Array<{ key: TabKey; label: string }> = [
@@ -527,6 +599,7 @@ function Header({
   onReloadProfile,
   onLogout,
   onAuth,
+  onDeleteAccount,
 }: {
   activeTab: TabKey;
   onTabChange: (tab: TabKey) => void;
@@ -536,6 +609,7 @@ function Header({
   onReloadProfile: () => void;
   onLogout: () => void;
   onAuth: () => void;
+  onDeleteAccount: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -625,6 +699,16 @@ function Header({
                   }}
                 >
                   로그아웃
+                </button>
+                <button
+                  type="button"
+                  className="block w-full border-t border-[#E5E5E5] px-4 py-3 text-left text-[15px] font-bold text-[#F44336] hover:bg-[#EFEFEF]"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDeleteAccount();
+                  }}
+                >
+                  회원탈퇴
                 </button>
               </div>
             )}
@@ -739,16 +823,33 @@ function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) 
   );
 }
 
-function RecordsView() {
-  const { reports, hasData } = useHealth();
+function RecordsView({ userId, onChanged }: { userId?: string; onChanged: () => void }) {
+  const { reports, medications, hasData } = useHealth();
   const [yearFilter, setYearFilter] = useState('전체');
+  const [deletingYear, setDeletingYear] = useState<number | null>(null);
   const filteredReports = yearFilter === '전체' ? reports : reports.filter((report) => String(report.year) === yearFilter);
+
+  // 연도 기록 삭제 — 서버에서 검진·분석 결과를 지우고 화면을 다시 불러온다.
+  const deleteYear = async (year: number) => {
+    if (!userId) return;
+    if (!window.confirm(`${year}년 검진 기록을 삭제할까요?\n삭제하면 되돌릴 수 없습니다.`)) return;
+    setDeletingYear(year);
+    try {
+      await healthApi.deleteReport(userId, year);
+      onChanged();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : '삭제에 실패했습니다.');
+    } finally {
+      setDeletingYear(null);
+    }
+  };
 
   if (!hasData) {
     return (
       <>
         <PageHeader title="검진결과 조회" subtitle="검진기록과 결과조회 기능을 하나로 합쳐 연도별 결과와 상세 항목을 확인합니다." />
         <EmptyBoard message="아직 저장된 검진 기록이 없습니다. '결과지 업로드'에서 결과지를 올려주세요." />
+        {medications.length > 0 && <MedicationBoard medications={medications} />}
       </>
     );
   }
@@ -768,18 +869,51 @@ function RecordsView() {
       </SearchBox>
 
       <Board title="검진기록 목록">
-        <ResultTable data={filteredReports} />
+        <ResultTable data={filteredReports} deletingYear={deletingYear} onDelete={userId ? deleteYear : undefined} />
       </Board>
 
       <Board title="최근 검진 상세 항목">
         <MetricTable />
       </Board>
+
+      {medications.length > 0 && <MedicationBoard medications={medications} />}
     </>
   );
 }
 
+/** 저장된 복약 정보 — 업로드한 HIRA 복약이력을 표로 보여준다(모바일 기록 화면 복약 탭과 동일 데이터). */
+function MedicationBoard({ medications }: { medications: ApiMedicationItem[] }) {
+  return (
+    <Board title="저장된 복약 정보">
+      <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">
+        '내가 먹는 약! 한눈에'에서 업로드한 복약이력입니다. 분석 시 복용 약물이 자동 반영됩니다.
+      </p>
+      <table className="w-full border-collapse text-left text-[15px]">
+        <thead className="bg-[#F5F5F5] text-[#191919]">
+          <tr>
+            <Th>조제일</Th>
+            <Th>약품명</Th>
+            <Th>효능 분류</Th>
+            <Th>투약일수</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {medications.map((item, index) => (
+            <tr key={index}>
+              <Td>{item.dispensed_date ?? '-'}</Td>
+              <Td strong>{item.product_name ?? '-'}</Td>
+              <Td>{item.efficacy_class ?? '-'}</Td>
+              <Td>{item.total_days != null ? `${item.total_days}일` : '-'}</Td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Board>
+  );
+}
+
 function HistoryView() {
-  const { metricDefinitions, reports, hasData } = useHealth();
+  const { metricDefinitions, reports, highlights, hasData } = useHealth();
   const chartGroups = [
     { title: '혈압 변화', keys: ['sbp', 'dbp'] as MetricKey[] },
     { title: '혈당·체중 변화', keys: ['glucose', 'bmi', 'waist'] as MetricKey[] },
@@ -801,6 +935,21 @@ function HistoryView() {
     <>
       <PageHeader title="히스토리" subtitle="검진 항목별 연도 변화와 항목 설명을 함께 확인합니다." />
       <Notice>수치 변화는 생활습관, 복용 약, 검사 당시 상태에 따라 달라질 수 있습니다. 같은 항목이 반복해서 기준을 벗어나면 의료진과 상담해 보세요.</Notice>
+      {/* 시계열 하이라이트 — 백엔드가 여러 해 기록을 비교해 실제로 생성한 주목 변화만 보여준다(2년 이상일 때) */}
+      {Boolean(highlights?.length) && (
+        <div className="mt-7">
+          <Board title="주목할 변화">
+            <div className="divide-y divide-[#E5E5E5]">
+              {highlights!.map((item, index) => (
+                <p key={index} className="flex items-start gap-3 py-2.5 text-[15px] leading-7">
+                  <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.severity === 'high' ? 'bg-[#F44336]' : item.severity === 'medium' ? 'bg-[#FF8A3D]' : 'bg-[#3CB371]'}`} />
+                  <span className="text-[#191919]"><span className="font-black">{item.metric}</span> · {item.message}</span>
+                </p>
+              ))}
+            </div>
+          </Board>
+        </div>
+      )}
       <div className="mt-7 grid grid-cols-2 gap-7">
         {chartGroups.map((group) => {
           const hasBadMetric = group.keys.some((key) => isBadStatus(metricByKey(metricDefinitions, key).status));
@@ -920,6 +1069,263 @@ function AnalysisView() {
           ))}
         </div>
       </Board>
+
+      <BackendAnalysisBoards />
+    </>
+  );
+}
+
+// 구간(level/severity) → 상태 글자색. 백엔드 해석 문구는 그대로 쓰고 색만 구간에 맞춘다.
+function levelTextClass(level: string) {
+  if (level === 'low' || level === 'normal') return 'text-[#3CB371]';
+  if (level === 'high' || level === 'danger') return 'text-[#F44336]';
+  return 'text-[#FF8A3D]';
+}
+
+/** 백엔드 분석 모듈 카드 모음 — 모바일 분석 탭과 동일 항목(eGFR·CrCl, 조합그룹, 지방간 유형,
+ *  FLI/HSI, 집단군 판정 13, ASCVD 참고 시뮬, 맞춤 권장사항). 데이터가 없으면 카드 자체를 그리지 않는다. */
+function BackendAnalysisBoards() {
+  const { combo, egfr, recommendations } = useHealth();
+  const comboGroups = combo?.combo_groups ?? null;
+  const fattyLiver = combo?.fatty_liver ?? null;
+  const flIndices = fattyLiver?.indices ?? null;
+  const singleGroups = combo?.single_groups ?? null;
+  const ascvd = combo?.ascvd_simulation ?? null;
+  const recs = recommendations?.recommendations;
+
+  return (
+    <>
+      {/* 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
+      {egfr && (
+        <Board title="신장 기능 (eGFR)">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">혈청 크레아티닌 수치를 바탕으로 추정한 신장 여과 기능입니다.</p>
+          <p className="flex items-baseline gap-2">
+            <span className="text-[34px] font-black tracking-[-0.03em] text-[#191919]">{egfr.egfr}</span>
+            <span className="text-[14px] text-[#9A9A9A]">{egfr.unit}</span>
+            <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[13px] font-semibold ${levelTextClass(egfr.severity)}`}>{egfr.stage} · {egfr.label}</span>
+          </p>
+          <p className="mt-2 text-[15px] leading-7 text-[#5C5C5C]">{egfr.description}</p>
+          {/* CrCl — 그 해 검진에 체중이 기록된 경우에만 함께 계산된다(약물 용량 참고용) */}
+          {egfr.crcl != null && (
+            <div className="mt-4 border-t border-[#E5E5E5] pt-4">
+              <p className="font-black text-[#191919]">약물 용량 참고 (CrCl)</p>
+              <p className="mt-1 flex items-baseline gap-2">
+                <span className="text-[22px] font-black text-[#191919]">{egfr.crcl}</span>
+                <span className="text-[13px] text-[#9A9A9A]">mL/min · {egfr.crcl_method ?? 'Cockcroft-Gault'}</span>
+                {egfr.crcl_label && <span className="rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold text-[#5C5C5C]">{egfr.crcl_label}</span>}
+              </p>
+              {egfr.crcl_note && <p className="mt-1 text-[14px] leading-6 text-[#9A9A9A]">{egfr.crcl_note}</p>}
+            </div>
+          )}
+        </Board>
+      )}
+
+      {/* 복합 위험 패턴(조합 그룹) — 공단 표본에서 이 조합이 얼마나 함께 나타나는지 O/E비와 함께 보여준다 */}
+      {comboGroups && comboGroups.matched_count > 0 && (
+        <Board title="복합 위험 패턴">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">
+            여러 위험 요인이 함께 나타나는 조합입니다. 같은 조합인 분들이 국민건강보험공단 표본
+            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교했습니다.
+          </p>
+          <div className="divide-y divide-[#E5E5E5]">
+            {comboGroups.matched.slice(0, 4).map((c) => (
+              <div key={c.combo_name} className="py-3">
+                <p className="flex items-center gap-2">
+                  <span className="font-black text-[#191919]">{c.combo_name}</span>
+                  {c.is_ascvd_risk && <span className="rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold text-[#F44336]">심혈관 고위험</span>}
+                </p>
+                <p className="mt-1 text-[14px] leading-6 text-[#5C5C5C]">{c.meaning}</p>
+                {c.population && (
+                  <p className="mt-1 text-[13px] leading-6 text-[#9A9A9A]">
+                    같은 조합 {c.population.n_in_combo.toLocaleString()}명 (표본의 {c.population.pct_of_total}%)
+                    {c.population.observed_to_expected >= 1.2 && (
+                      <span className="font-black text-[#FF8A3D]"> · 따로 나타날 때보다 {c.population.observed_to_expected}배 자주 동반</span>
+                    )}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          {comboGroups.matched.length > 4 && (
+            <p className="mt-2 text-[13px] text-[#9A9A9A]">외 {comboGroups.matched.length - 4}개 조합에 더 해당합니다.</p>
+          )}
+          {/* 지방간 유형 — 음주량이 없으면 잠정 분류임을 반드시 밝힌다 */}
+          {fattyLiver?.applicable && fattyLiver.type && (
+            <div className="mt-4 border-t border-[#E5E5E5] pt-4">
+              <p className="font-black text-[#191919]">지방간 유형 {fattyLiver.provisional ? '(잠정)' : ''}</p>
+              <p className="mt-1 text-[15px] leading-7 text-[#5C5C5C]">{fattyLiver.type}</p>
+              <p className="mt-1 text-[13px] leading-6 text-[#9A9A9A]">{fattyLiver.basis}</p>
+              {fattyLiver.note && <p className="mt-1 text-[13px] leading-6 text-[#9A9A9A]">{fattyLiver.note}</p>}
+            </div>
+          )}
+          {/* 해석의 한계 — 숨기지 않고 그대로 노출한다 */}
+          {Boolean(comboGroups.caveats?.length) && (
+            <div className="mt-4 border-t border-[#E5E5E5] pt-3">
+              {comboGroups.caveats.map((caveat, index) => (
+                <p key={index} className="text-[12px] leading-6 text-[#9A9A9A]">· {caveat}</p>
+              ))}
+            </div>
+          )}
+        </Board>
+      )}
+
+      {/* 지방간 보조지표(FLI·HSI) — 값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다 */}
+      {flIndices && (flIndices.fli || flIndices.hsi) && (
+        <Board title="지방간 보조지표">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표입니다.</p>
+          <div className="divide-y divide-[#E5E5E5]">
+            {([
+              { title: 'FLI', idx: flIndices.fli },
+              { title: 'HSI', idx: flIndices.hsi },
+            ] as const).filter((row) => row.idx).map((row) => (
+              <div key={row.title} className="py-3">
+                <p className="flex items-center justify-between gap-3">
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-black text-[#191919]">{row.title}</span>
+                    {row.idx!.formula && <span className="text-[12px] text-[#9A9A9A]">{row.idx!.formula}</span>}
+                  </span>
+                  <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(row.idx!.level)}`}>{row.idx!.interpretation}</span>
+                </p>
+                <p className="mt-1 text-[24px] font-black text-[#191919]">{row.idx!.value}</p>
+                {row.idx!.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {row.idx!.cutoffs}</p>}
+              </div>
+            ))}
+          </div>
+          {Boolean(flIndices.unavailable?.length) && (
+            <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {flIndices.unavailable.join(' / ')}</p>
+          )}
+          {flIndices.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{flIndices.disclaimer}</p>}
+        </Board>
+      )}
+
+      {/* 집단군 판정(13개) — 판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다 */}
+      {Boolean(singleGroups?.length) && (
+        <Board title="집단군 판정">
+          <p className="mb-2 text-[15px] leading-7 text-[#5C5C5C]">검진 수치와 복용 약물을 함께 반영해 판정한 결과입니다.</p>
+          {(['임상', '생활습관'] as const).map((category) => {
+            const rows = singleGroups!.filter((group) => group.category === category);
+            if (!rows.length) return null;
+            return (
+              <div key={category} className="mt-3">
+                <p className="mb-1 text-[13px] font-black text-[#9A9A9A]">{category}</p>
+                <div className="divide-y divide-[#E5E5E5]">
+                  {rows.map((group) => (
+                    <div key={group.key} className="flex items-center justify-between gap-4 py-2.5">
+                      <div>
+                        <p className="font-bold text-[#191919]">{group.name}</p>
+                        {group.desc && <p className="mt-0.5 text-[12px] leading-5 text-[#9A9A9A]">{group.desc}</p>}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${
+                          group.applies == null ? 'text-[#9A9A9A]' : group.applies ? 'text-[#F44336]' : 'text-[#3CB371]'
+                        }`}
+                      >
+                        {group.applies == null ? '판정 불가' : group.applies ? '해당' : '비해당'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </Board>
+      )}
+
+      {/* ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님). 계산 불가면 카드를 그리지 않는다 */}
+      {ascvd?.available && ascvd.risk_percent != null && (
+        <Board title="심혈관 위험 참고 시뮬레이션">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산입니다.</p>
+          <p className="flex items-baseline gap-2">
+            <span className="text-[34px] font-black tracking-[-0.03em] text-[#191919]">{ascvd.risk_percent}%</span>
+            {ascvd.risk_label && (
+              <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[13px] font-semibold ${
+                ascvd.risk_level === 'low' ? 'text-[#3CB371]' : ascvd.risk_level === 'high' ? 'text-[#F44336]' : 'text-[#FF8A3D]'
+              }`}>{ascvd.risk_label}</span>
+            )}
+          </p>
+          {ascvd.how_to_read && <p className="mt-2 text-[14px] leading-6 text-[#5C5C5C]">{ascvd.how_to_read}</p>}
+          {Boolean(ascvd.scenarios?.length) && (
+            <div className="mt-3 divide-y divide-[#E5E5E5] border-t border-[#E5E5E5]">
+              {ascvd.scenarios!.map((scenario) => (
+                <p key={scenario.name} className="flex items-center justify-between py-2.5 text-[14px]">
+                  <span className="text-[#191919]">{scenario.name}</span>
+                  <span className="font-black text-[#191919]">
+                    {scenario.risk_percent}%{' '}
+                    <span className={`text-[13px] ${scenario.delta < 0 ? 'text-[#3CB371]' : 'text-[#9A9A9A]'}`}>
+                      ({scenario.delta > 0 ? '+' : ''}{scenario.delta}%p)
+                    </span>
+                  </span>
+                </p>
+              ))}
+            </div>
+          )}
+          {Boolean(ascvd.limitations?.length) && (
+            <div className="mt-3 border-t border-[#E5E5E5] pt-3">
+              {ascvd.limitations!.map((limitation, index) => (
+                <p key={index} className="text-[12px] leading-6 text-[#9A9A9A]">· {limitation}</p>
+              ))}
+            </div>
+          )}
+        </Board>
+      )}
+
+      {/* 맞춤 권장사항 — 백엔드가 최신 분석 결과로 실제 생성해 보내준 문구만 그대로 보여준다 */}
+      {recommendations && (recommendations.priority_messages?.length || recs) && (
+        <Board title="맞춤 권장사항">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보입니다.</p>
+          {Boolean(recommendations.priority_messages?.length) && (
+            <div className="mb-4 space-y-1">
+              {recommendations.priority_messages!.map((message, index) => (
+                <p key={index} className="text-[15px] font-black leading-7 text-[#191919]">{message}</p>
+              ))}
+            </div>
+          )}
+          {recs?.common?.map((item, index) => (
+            <div key={`common-${index}`} className="mb-3">
+              <p className="font-black text-[#191919]">{item.category}</p>
+              {item.items?.map((line, lineIndex) => (
+                <p key={lineIndex} className="text-[14px] leading-6 text-[#5C5C5C]">· {line}</p>
+              ))}
+            </div>
+          ))}
+          {recs?.metabolic_factors?.map((item, index) => (
+            <div key={`mf-${index}`} className="mb-3 border-t border-[#E5E5E5] pt-3">
+              <p className="font-black text-[#191919]">{item.title}{item.target ? ` · 목표 ${item.target}` : ''}</p>
+              {item.details?.map((line, lineIndex) => (
+                <p key={lineIndex} className="text-[14px] leading-6 text-[#5C5C5C]">· {line}</p>
+              ))}
+              {item.by_medication && item.reason && <p className="mt-1 text-[12px] text-[#9A9A9A]">※ {item.reason}</p>}
+            </div>
+          ))}
+          {recs?.group_specific?.map((item, index) => (
+            <div key={`gs-${index}`} className="mb-3 border-t border-[#E5E5E5] pt-3">
+              <p className="font-black text-[#191919]">{item.title}</p>
+              {item.details?.map((line, lineIndex) => (
+                <p key={lineIndex} className="text-[14px] leading-6 text-[#5C5C5C]">· {line}</p>
+              ))}
+            </div>
+          ))}
+          {Boolean(recs?.medication_notes?.length) && (
+            <div className="mb-3 border-t border-[#E5E5E5] pt-3">
+              <p className="font-black text-[#191919]">복용 약 관련 안내</p>
+              {recs!.medication_notes!.map((item, index) => (
+                <p key={index} className="text-[14px] leading-6 text-[#5C5C5C]">· [{item.medication}] {item.note}</p>
+              ))}
+            </div>
+          )}
+          {Boolean(recs?.elderly_notes?.length) && (
+            <div className="border-t border-[#E5E5E5] pt-3">
+              <p className="font-black text-[#191919]">고령 기준 추가 안내</p>
+              {recs!.elderly_notes!.map((item, index) => (
+                <p key={index} className="text-[14px] leading-6 text-[#5C5C5C]">· {typeof item === 'string' ? item : item.note ?? item.title ?? ''}</p>
+              ))}
+            </div>
+          )}
+          {recommendations._meta?.disclaimer && (
+            <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{recommendations._meta.disclaimer}</p>
+          )}
+        </Board>
+      )}
     </>
   );
 }
@@ -957,7 +1363,7 @@ function ocrRawToFields(raw: unknown): OcrField[] {
   ];
 }
 
-function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; onTabChange: (tab: TabKey) => void; onSaved: () => void }) {
+function UploadView({ profile, onTabChange, onSaved, onSaveLifestyle }: { profile: UserProfile; onTabChange: (tab: TabKey) => void; onSaved: () => void; onSaveLifestyle: (lifestyle: Lifestyle) => void }) {
   const [uploadMode, setUploadMode] = useState<'checkup' | 'medication'>('checkup');
   const [uploadState, setUploadState] = useState<UploadState>({ loading: false, message: '', error: '', ocr: null, analysis: null, medication: null });
   const [ocrFields, setOcrFields] = useState<OcrField[]>([]);
@@ -965,6 +1371,17 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
   const [uploadedSource, setUploadedSource] = useState('');
   const [touchedSave, setTouchedSave] = useState(false);
   const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
+  // 생활습관 — 프로필 저장값을 기본으로 보여주고, 여기서 고치면 저장 시 프로필도 함께 갱신한다(모바일 업로드 탭과 동일).
+  const [lifestyle, setLifestyle] = useState<Lifestyle>({
+    smoking: profile.smoking ?? null,
+    drinking: profile.drinking ?? null,
+    alcohol_weekly_g: profile.alcohol_weekly_g ?? 0,
+  });
+  const lifestyleTouched = useRef(false);
+  const changeLifestyle = (next: Lifestyle) => {
+    lifestyleTouched.current = true;
+    setLifestyle(next);
+  };
 
   const changeUploadMode = (mode: 'checkup' | 'medication') => {
     setUploadMode(mode);
@@ -1078,6 +1495,15 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
       total_cholesterol: pick('total_cholesterol'), ldl: pick('ldl'), hdl: pick('hdl'), tg: pick('tg'),
       ast: pick('ast'), alt: pick('alt'), ggt: pick('ggt'), creatinine: pick('creatinine'),
     };
+    // 생활습관 — 입력된 값이 있으면 분석에 반영하고, 수정했다면 프로필에도 저장한다.
+    const lifestylePayload =
+      lifestyle.smoking || lifestyle.drinking
+        ? {
+            ...(lifestyle.smoking ? { smoking: lifestyle.smoking } : {}),
+            ...(lifestyle.drinking ? { drinking: lifestyle.drinking } : {}),
+            ...(lifestyle.drinking === 'yes' ? { alcohol_weekly_g: lifestyle.alcohol_weekly_g } : {}),
+          }
+        : null;
     const payload = {
       save: true,
       ...(profile.id ? { user_id: profile.id } : {}),
@@ -1090,10 +1516,12 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
           patient_gender: profile.gender === 1 ? 'M' : 'F',
         },
         measurements,
+        ...(lifestylePayload ? { lifestyle: lifestylePayload } : {}),
       },
     };
     try {
       const result = await healthApi.analyzeOcr(payload);
+      if (lifestyleTouched.current && lifestylePayload) onSaveLifestyle(lifestyle);
       setUploadState((current) => ({
         ...current,
         loading: false,
@@ -1217,6 +1645,17 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
                 </div>
               ))}
 
+              {/* 생활습관 문진 — 프로필 저장값 prefill. 여기서 고치면 저장 시 프로필도 함께 갱신된다. */}
+              <div className="mb-5 border border-[#E5E5E5]">
+                <div className="border-b border-[#E5E5E5] bg-[#F5F5F5] px-4 py-3 text-[17px] font-black text-[#191919]">생활습관 (분석에 반영)</div>
+                <div className="px-4 py-4">
+                  <p className="mb-3 text-[14px] leading-6 text-[#9A9A9A]">
+                    프로필에 저장된 값이 자동으로 채워집니다. 바뀐 내용이 있으면 수정하세요 — 지방간 유형(MASLD 등) 판정에 사용됩니다.
+                  </p>
+                  <LifestyleFormWeb value={lifestyle} onChange={changeLifestyle} gender={profile.gender} />
+                </div>
+              </div>
+
               <div className="mb-3 border border-[#E5E5E5] bg-[#F5F5F5] px-4 py-3 text-[15px] leading-7 text-[#5C5C5C]">
                 저장하기 전에 측정값과 검진기관, 검진일이 실제 검진표와 같은지 다시 한 번 확인해주세요.
               </div>
@@ -1287,7 +1726,7 @@ function SearchBox({ children }: { children: ReactNode }) {
   );
 }
 
-function ResultTable({ data }: { data: Report[] }) {
+function ResultTable({ data, deletingYear, onDelete }: { data: Report[]; deletingYear?: number | null; onDelete?: (year: number) => void }) {
   return (
     <table className="w-full border-collapse text-left text-[15px]">
       <thead className="bg-[#F5F5F5] text-[#191919]">
@@ -1297,6 +1736,7 @@ function ResultTable({ data }: { data: Report[] }) {
           <Th>검진기관</Th>
           <Th>상태</Th>
           <Th>검진결과 요약</Th>
+          {onDelete && <Th>관리</Th>}
         </tr>
       </thead>
       <tbody>
@@ -1307,6 +1747,18 @@ function ResultTable({ data }: { data: Report[] }) {
             <Td>{report.hospital}</Td>
             <Td><StatusBadge status={report.status} /></Td>
             <Td>{report.summary}</Td>
+            {onDelete && (
+              <Td>
+                <button
+                  type="button"
+                  className="border border-[#E5E5E5] px-3 py-1.5 text-[13px] font-black text-[#F44336] hover:bg-[#F5F5F5] disabled:text-[#9A9A9A]"
+                  disabled={deletingYear === report.year}
+                  onClick={() => onDelete(report.year)}
+                >
+                  {deletingYear === report.year ? '삭제 중' : '삭제'}
+                </button>
+              </Td>
+            )}
           </tr>
         ))}
       </tbody>
@@ -1539,6 +1991,121 @@ function computeGroups(defs: MetricDefinition[]) {
     .sort((a, b) => b.matches - a.matches);
 }
 
+function ChipButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-4 py-2 text-[14px] font-bold ${
+        active ? 'border-[#1A1A1A] bg-[#1A1A1A] text-white' : 'border-[#E5E5E5] bg-white text-[#5C5C5C] hover:bg-[#F5F5F5]'
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function StepperInput({ label, value, min, max, suffix, onChange }: { label: string; value: number; min: number; max: number; suffix: string; onChange: (v: number) => void }) {
+  return (
+    <div className="mb-3 flex items-center justify-between">
+      <span className="text-[14px] font-bold text-[#5C5C5C]">{label}</span>
+      <div className="flex items-center gap-3">
+        <button type="button" className="h-9 w-9 rounded-full border border-[#E5E5E5] font-black text-[#5C5C5C] hover:bg-[#F5F5F5]" onClick={() => onChange(Math.max(min, value - 1))}>−</button>
+        <span className="min-w-[52px] text-center text-[16px] font-black text-[#191919]">{value}{suffix}</span>
+        <button type="button" className="h-9 w-9 rounded-full border border-[#E5E5E5] font-black text-[#5C5C5C] hover:bg-[#F5F5F5]" onClick={() => onChange(Math.min(max, value + 1))}>＋</button>
+      </div>
+    </div>
+  );
+}
+
+/** 흡연/음주/음주량 문진 폼 — 회원가입·프로필·업로드에서 공용(모바일 LifestyleForm과 동일 로직).
+ *  최종값은 {smoking, drinking, alcohol_weekly_g} 만 프로필에 저장한다. */
+function LifestyleFormWeb({ value, onChange, gender }: { value: Lifestyle; onChange: (v: Lifestyle) => void; gender: 1 | 2 }) {
+  // 음주량 세부(주횟수/잔수/술종류)는 로컬. 기존 g가 있으면 대략 역산해 초기값을 잡는다.
+  const [freq, setFreq] = useState(() => (value.alcohol_weekly_g > 0 ? Math.min(7, Math.max(1, Math.round(value.alcohol_weekly_g / 21))) : 2));
+  const [glasses, setGlasses] = useState(3);
+  const [drinkType, setDrinkType] = useState<(typeof DRINK_TYPES)[number]>('소주');
+  const limit = gender === 2 ? 140 : 210;
+
+  const emit = (patch: Partial<Lifestyle>) => onChange({ ...value, ...patch });
+  const recalc = (f: number, g: number, t: string) => emit({ alcohol_weekly_g: Math.round(f * g * GRAMS_PER_GLASS[t]) });
+  const grams = value.drinking === 'yes' ? value.alcohol_weekly_g : 0;
+
+  return (
+    <div>
+      <p className="mb-2 text-[14px] font-black text-[#5C5C5C]">흡연</p>
+      <div className="mb-5 flex flex-wrap gap-2">
+        <ChipButton active={value.smoking === 'never'} label="비흡연" onClick={() => emit({ smoking: 'never' })} />
+        <ChipButton active={value.smoking === 'former'} label="과거 흡연" onClick={() => emit({ smoking: 'former' })} />
+        <ChipButton active={value.smoking === 'current'} label="현재 흡연" onClick={() => emit({ smoking: 'current' })} />
+      </div>
+
+      <p className="mb-2 text-[14px] font-black text-[#5C5C5C]">음주</p>
+      <div className="flex flex-wrap gap-2">
+        <ChipButton active={value.drinking === 'no'} label="안 마심" onClick={() => emit({ drinking: 'no', alcohol_weekly_g: 0 })} />
+        <ChipButton
+          active={value.drinking === 'yes'}
+          label="마심"
+          onClick={() => emit({ drinking: 'yes', alcohol_weekly_g: Math.round(freq * glasses * GRAMS_PER_GLASS[drinkType]) })}
+        />
+      </div>
+
+      {value.drinking === 'yes' && (
+        <div className="mt-4 border-t border-[#E5E5E5] pt-4">
+          <StepperInput label="주 몇 회" value={freq} min={1} max={7} suffix="회" onChange={(v) => { setFreq(v); recalc(v, glasses, drinkType); }} />
+          <StepperInput label="1회 몇 잔" value={glasses} min={1} max={20} suffix="잔" onChange={(v) => { setGlasses(v); recalc(freq, v, drinkType); }} />
+          <p className="mb-2 mt-1 text-[14px] font-black text-[#5C5C5C]">주로 마시는 술</p>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {DRINK_TYPES.map((t) => (
+              <ChipButton key={t} active={drinkType === t} label={t} onClick={() => { setDrinkType(t); recalc(freq, glasses, t); }} />
+            ))}
+          </div>
+          <div className="bg-[#F5F5F5] px-4 py-3 text-[14px] leading-6 text-[#5C5C5C]">
+            주당 순알코올 약 <span className={`font-black ${grams > limit ? 'text-[#F44336]' : 'text-[#191919]'}`}>{grams}g</span>
+            <span className="text-[#9A9A9A]"> · 지방간 기준 {gender === 2 ? '여성' : '남성'} {limit}g</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 회원가입 직후 1회 노출되는 생활습관 문진 모달 — 건너뛸 수 있고, 이후 프로필 수정에서 변경한다. */
+function LifestyleModal({
+  gender,
+  loading,
+  onSkip,
+  onSave,
+}: {
+  gender: 1 | 2;
+  loading: boolean;
+  onSkip: () => void;
+  onSave: (lifestyle: Lifestyle) => void;
+}) {
+  const [lifestyle, setLifestyle] = useState<Lifestyle>(EMPTY_LIFESTYLE);
+  return (
+    <Dialog title="생활습관 문진" onClose={onSkip}>
+      <p className="mb-5 text-[15px] leading-7 text-[#5C5C5C]">
+        흡연·음주 정보를 알려주시면 검진 분석(지방간 유형 등)이 더 정확해집니다. 지금 건너뛰고 나중에 프로필에서 입력할 수도 있습니다.
+      </p>
+      <LifestyleFormWeb value={lifestyle} onChange={setLifestyle} gender={gender} />
+      <div className="mt-6 flex justify-end gap-2">
+        <button type="button" className="h-11 border border-[#E5E5E5] px-5 font-black text-[#5C5C5C] hover:bg-[#F5F5F5]" onClick={onSkip}>
+          건너뛰기
+        </button>
+        <button
+          type="button"
+          className="h-11 bg-[#1A1A1A] px-5 font-black text-white disabled:bg-[#9A9A9A]"
+          disabled={loading || (!lifestyle.smoking && !lifestyle.drinking)}
+          onClick={() => onSave(lifestyle)}
+        >
+          {loading ? '저장 중' : '저장'}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
 function AuthModal({
   loading,
   onClose,
@@ -1667,6 +2234,12 @@ function ProfileModal({
     gender: String(profile.gender),
     birth_date: birthDateFromProfile(profile),
   });
+  // 생활습관 문진 — 프로필에 저장된 값으로 시작해 여기서 수정한다(모바일 내정보와 동일).
+  const [lifestyle, setLifestyle] = useState<Lifestyle>({
+    smoking: profile.smoking ?? null,
+    drinking: profile.drinking ?? null,
+    alcohol_weekly_g: profile.alcohol_weekly_g ?? 0,
+  });
 
   return (
     <Dialog title="프로필 수정" onClose={onClose}>
@@ -1681,6 +2254,9 @@ function ProfileModal({
             gender: Number(form.gender) === 2 ? 2 : 1,
             birth_year: profileBirthFromDate(form.birth_date).birth_year || profile.birth_year,
             birth_md: profileBirthFromDate(form.birth_date).birth_md ?? profile.birth_md,
+            smoking: lifestyle.smoking,
+            drinking: lifestyle.drinking,
+            alcohol_weekly_g: lifestyle.drinking === 'yes' ? lifestyle.alcohol_weekly_g : 0,
           });
         }}
       >
@@ -1718,6 +2294,10 @@ function ProfileModal({
               onChange={(event) => setForm((current) => ({ ...current, birth_date: event.target.value }))}
             />
           </Field>
+        </div>
+        <div className="border-t border-[#E5E5E5] pt-4">
+          <p className="mb-3 text-[15px] font-black text-[#191919]">생활습관 문진</p>
+          <LifestyleFormWeb value={lifestyle} onChange={setLifestyle} gender={Number(form.gender) === 2 ? 2 : 1} />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" className="h-11 border border-[#E5E5E5] px-5 font-black text-[#5C5C5C]" onClick={onClose}>
@@ -1807,6 +2387,8 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // 회원가입 직후 1회 노출하는 생활습관 문진 모달(건너뛰기 가능).
+  const [lifestyleOpen, setLifestyleOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [healthData, setHealthData] = useState<HealthData>(emptyHealthData);
@@ -1837,6 +2419,9 @@ export default function App() {
           gender: Number(first.gender) === 2 ? 2 : 1,
           birth_year: Number(first.birth_year) || initialProfile.birth_year,
           birth_md: Number(first.birth_md) || initialProfile.birth_md,
+          smoking: first.smoking ?? null,
+          drinking: first.drinking ?? null,
+          alcohol_weekly_g: first.alcohol_weekly_g ?? null,
         });
         if (!quiet) setMessage('프로필 정보를 불러왔습니다.');
       } else if (!quiet) {
@@ -1853,11 +2438,15 @@ export default function App() {
     setProfileLoading(true);
     try {
       const token = await getAccessToken();
-      const payload = {
+      const payload: ApiProfilePayload = {
         name: nextProfile.name,
         gender: nextProfile.gender,
         birth_year: nextProfile.birth_year,
         birth_md: nextProfile.birth_md,
+        // 생활습관 문진 — 저장하면 이후 검진 분석에 자동 반영된다(지방간 유형 정식 판정 등).
+        smoking: nextProfile.smoking ?? null,
+        drinking: nextProfile.drinking ?? null,
+        alcohol_weekly_g: nextProfile.alcohol_weekly_g ?? null,
       };
       if (token && nextProfile.id) {
         const saved = await apiFetch(`/users/${nextProfile.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
@@ -1869,6 +2458,9 @@ export default function App() {
           gender: Number(saved.gender) === 2 ? 2 : 1,
           birth_year: Number(saved.birth_year) || nextProfile.birth_year,
           birth_md: Number(saved.birth_md) || nextProfile.birth_md,
+          smoking: saved.smoking ?? nextProfile.smoking ?? null,
+          drinking: saved.drinking ?? nextProfile.drinking ?? null,
+          alcohol_weekly_g: saved.alcohol_weekly_g ?? nextProfile.alcohol_weekly_g ?? null,
         });
       } else {
       setProfile(nextProfile);
@@ -1879,6 +2471,46 @@ export default function App() {
       setMessage(error instanceof Error ? error.message : '프로필 저장에 실패했습니다.');
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  // 업로드 탭에서 수정한 생활습관을 프로필에도 반영한다(모바일과 동일 동작).
+  const saveLifestyleFromUpload = (lifestyle: Lifestyle) => {
+    void saveProfile({
+      ...profile,
+      smoking: lifestyle.smoking,
+      drinking: lifestyle.drinking,
+      alcohol_weekly_g: lifestyle.drinking === 'yes' ? lifestyle.alcohol_weekly_g : 0,
+    });
+  };
+
+  // 회원가입 문진 모달 저장/건너뛰기.
+  const saveLifestyleFromSignup = async (lifestyle: Lifestyle) => {
+    setLifestyleOpen(false);
+    await saveProfile({
+      ...profile,
+      smoking: lifestyle.smoking,
+      drinking: lifestyle.drinking,
+      alcohol_weekly_g: lifestyle.drinking === 'yes' ? lifestyle.alcohol_weekly_g : 0,
+    });
+  };
+
+  // 회원탈퇴 — 계정과 모든 데이터를 영구 삭제한다. 되돌릴 수 없으므로 두 번 확인한다.
+  const deleteAccount = async () => {
+    if (!profile.id) {
+      setMessage('로그인 후 이용할 수 있습니다.');
+      return;
+    }
+    if (!window.confirm('회원탈퇴하면 계정과 모든 검진·분석·복약 데이터가 영구 삭제됩니다.\n정말 탈퇴할까요?')) return;
+    if (!window.confirm('삭제된 데이터는 되돌릴 수 없습니다. 진행할까요?')) return;
+    try {
+      await healthApi.deleteAccount(profile.id);
+      if (supabaseConfigured) await supabase.auth.signOut().catch(() => undefined);
+      setProfile(initialProfile);
+      setHealthData(emptyHealthData);
+      setMessage('회원탈퇴가 완료되었습니다.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '회원탈퇴에 실패했습니다.');
     }
   };
 
@@ -1952,6 +2584,8 @@ export default function App() {
         });
         setMessage('회원가입과 프로필 저장이 완료되었습니다.');
         await loadHealth();
+        // 가입 완료 후 생활습관 문진(1회, 건너뛰기 가능)을 이어서 받는다.
+        setLifestyleOpen(true);
       } else {
         setProfile(nextProfile);
         setMessage('회원가입이 완료되었습니다. 이메일 인증 후 로그인하면 프로필을 저장합니다.');
@@ -1993,14 +2627,15 @@ export default function App() {
         onReloadProfile={() => void loadProfile()}
         onLogout={() => void logout()}
         onAuth={() => setAuthOpen(true)}
+        onDeleteAccount={() => void deleteAccount()}
       />
       <HealthContext.Provider value={healthData}>
         <Layout>
           {activeTab === 'dashboard' && <DashboardView onTabChange={setActiveTab} />}
-          {activeTab === 'records' && <RecordsView />}
+          {activeTab === 'records' && <RecordsView userId={profile.id} onChanged={() => void loadHealth()} />}
           {activeTab === 'history' && <HistoryView />}
           {activeTab === 'analysis' && <AnalysisView />}
-          {activeTab === 'upload' && <UploadView profile={profile} onTabChange={setActiveTab} onSaved={() => void loadHealth()} />}
+          {activeTab === 'upload' && <UploadView profile={profile} onTabChange={setActiveTab} onSaved={() => void loadHealth()} onSaveLifestyle={saveLifestyleFromUpload} />}
         </Layout>
       </HealthContext.Provider>
       {message && (
@@ -2009,6 +2644,14 @@ export default function App() {
         </div>
       )}
       {authOpen && <AuthModal loading={authLoading} onClose={() => setAuthOpen(false)} onLogin={login} onSignup={signup} />}
+      {lifestyleOpen && (
+        <LifestyleModal
+          gender={profile.gender}
+          loading={profileLoading}
+          onSkip={() => setLifestyleOpen(false)}
+          onSave={(lifestyle) => void saveLifestyleFromSignup(lifestyle)}
+        />
+      )}
       {profileOpen && <ProfileModal profile={profile} loading={profileLoading} onClose={() => setProfileOpen(false)} onSave={saveProfile} />}
       {settingsOpen && <SettingsModal settings={settings} onClose={() => setSettingsOpen(false)} onChange={setSettings} />}
     </div>

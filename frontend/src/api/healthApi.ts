@@ -132,6 +132,11 @@ export type ApiEgfrResponse = {
   description: string;
   severity: 'normal' | 'caution' | 'warning' | 'danger' | string;
   method: string;
+  // 체중(weight_kg)을 함께 보낸 경우에만 계산된다(약물 용량 참고용, Cockcroft-Gault). 없으면 null.
+  crcl?: number | null;
+  crcl_label?: string | null;
+  crcl_note?: string | null;
+  crcl_method?: string;
 };
 
 export type ApiMedicationUploadResponse = {
@@ -176,9 +181,32 @@ export type ApiTimeseriesFull = {
     good_changes?: number;
     neutral_or_stable?: number;
   };
+  // GET /timeseries/{userId} 실응답에 포함 — 주목할 변화 요약 문구.
+  highlights?: { metric: string; type: string; severity: string; message: string }[];
   _meta?: {
     analyzed_at?: string;
   };
+};
+
+// 저장된 복약 정보 한 건 (GET /medication/{userId}).
+export type ApiMedicationItem = {
+  dispensed_date?: string;
+  product_name?: string;
+  efficacy_class?: string;
+  ingredient_en?: string;
+  total_days?: number;
+  [key: string]: unknown;
+};
+
+// 프로필 저장 페이로드 — 기본 정보 + 생활습관 문진(smoking/drinking/alcohol_weekly_g).
+export type ApiProfilePayload = {
+  name?: string;
+  gender?: string | number;
+  birth_year?: number;
+  birth_md?: number;
+  smoking?: 'never' | 'former' | 'current' | null;
+  drinking?: 'no' | 'yes' | null;
+  alcohol_weekly_g?: number | null;
 };
 
 export type ApiReportList = {
@@ -210,6 +238,38 @@ export type ApiComboGroup = {
   } | null;
 };
 
+// FLI/HSI 지방간 보조지표 — 값·구간·해석·기준 문구 전부 백엔드가 만들어 내려준다.
+export type ApiFattyLiverIndex = {
+  value: number;
+  level: 'low' | 'intermediate' | 'high';
+  interpretation: string;
+  cutoffs?: string;
+  formula?: string;
+} | null;
+
+// 단일 집단군 판정(13개) — applies가 null이면 판정 불가(그 해 입력값 없음).
+export type ApiSingleGroup = {
+  key: string;
+  name: string;
+  category: string;
+  desc?: string | null;
+  applies: boolean | null;
+};
+
+// ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
+export type ApiAscvdSimulation = {
+  available: boolean;
+  is_simulation: boolean;
+  reason?: string;
+  risk_percent?: number;
+  risk_level?: string;
+  risk_label?: string;
+  scenarios?: { name: string; risk_percent: number; delta: number }[];
+  method?: string;
+  limitations?: string[];
+  how_to_read?: string;
+};
+
 export type ApiComboAnalysis = {
   combo_groups?: {
     matched: ApiComboGroup[];
@@ -227,7 +287,17 @@ export type ApiComboAnalysis = {
     basis: string;
     cardiometabolic_factors: string[];
     note?: string;
+    indices?: {
+      fli: ApiFattyLiverIndex;
+      hsi: ApiFattyLiverIndex;
+      unavailable: string[];
+      disclaimer: string;
+      error?: string;
+    } | null;
   } | null;
+  // ⚠️ 아래 두 필드는 최신(08 이후) 분석부터 저장된다 — 구버전 분석에는 없다 → null 처리.
+  single_groups?: ApiSingleGroup[] | null;
+  ascvd_simulation?: ApiAscvdSimulation | null;
   disclaimer?: string;
   error?: string;
 };
@@ -313,12 +383,21 @@ export const healthApi = {
   getReferenceItems: () => fetchJson<{ items: string[] }>('/reference/items'),
   evaluateReference: (body: { sex: 'M' | 'F'; items: ApiReferenceItem[] }) =>
     fetchJson<ApiReferenceEvaluateResponse>('/reference/evaluate', { method: 'POST', body: JSON.stringify(body) }),
-  calculateEgfr: (body: { serum_cr: number; age: number; sex: 'M' | 'F' }) =>
+  calculateEgfr: (body: { serum_cr: number; age: number; sex: 'M' | 'F'; weight_kg?: number }) =>
     fetchJson<ApiEgfrResponse>('/renal/egfr', { method: 'POST', body: JSON.stringify(body) }),
-  upsertProfile: (body: Pick<ApiUser, 'name' | 'gender' | 'birth_year' | 'birth_md'>) =>
+  upsertProfile: (body: ApiProfilePayload) =>
     fetchJson<ApiUser>('/users', { method: 'POST', body: JSON.stringify(body) }),
-  updateProfile: (userId: string, body: Pick<ApiUser, 'name' | 'gender' | 'birth_year' | 'birth_md'>) =>
+  updateProfile: (userId: string, body: ApiProfilePayload) =>
     fetchJson<ApiUser>(`/users/${userId}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  getMedications: (userId: string) => fetchJson<ApiMedicationItem[]>(`/medication/${userId}`),
+  // 회원탈퇴 — 계정과 모든 연관 데이터를 영구 삭제한다(백엔드 204). 되돌릴 수 없다.
+  deleteAccount: async (userId: string) => {
+    const response = await fetch(withBase(`/users/${userId}`), { method: 'DELETE', headers: await authHeaders(true) });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new Error(`${response.status} ${response.statusText}${detail ? ` - ${detail}` : ''}`);
+    }
+  },
   uploadFile: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
