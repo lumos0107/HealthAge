@@ -73,10 +73,15 @@ STATUS_TO_CLINICAL = {
 
 
 # 요단백 코드 → 텍스트
+# ⚠️ OCR 파이프라인(schemas.URINE_PROTEIN_CODE_MAP)은 3단계로 코드를 낸다:
+#   1=정상, 2=경계, 3=단백뇨 의심(모든 양성 +,++,+++,++++ 통합).
+# 과거 6단계 매핑(3=경계, 4~6=의심)은 OCR의 3단계와 어긋나 단백뇨 의심(OCR 3)을
+# '경계/주의'로 축소 해석하는 버그가 있었다. OCR 3단계에 맞춰 정정.
+# 4~6은 구 데이터(구버전 저장분) 호환용으로만 남겨 둔다(모두 단백뇨 의심).
 URINE_PROTEIN_TEXT = {
     1: "정상",
-    2: "정상 (±)",
-    3: "경계",
+    2: "경계",
+    3: "단백뇨 의심",
     4: "단백뇨 의심",
     5: "단백뇨 의심",
     6: "단백뇨 의심",
@@ -85,30 +90,28 @@ URINE_PROTEIN_TEXT = {
 
 def interpret_urine_protein(code) -> dict:
     """
-    요단백 코드 → 텍스트 + 임상 판정
-    
+    요단백 코드 → 텍스트 + 임상 판정 (OCR 3단계 기준)
+
     Returns:
         {"text": "정상", "clinical": "정상"}
     """
     if code is None:
         return {"text": None, "clinical": "참고"}
-    
+
     try:
         code = int(code)
     except (ValueError, TypeError):
         return {"text": str(code), "clinical": "참고"}
-    
+
     text = URINE_PROTEIN_TEXT.get(code, "참고")
-    
+
     if code == 1:
         clinical = "정상"
-    elif code == 2:
-        clinical = "정상"
-    elif code == 3:
+    elif code == 2:  # 경계
         clinical = "주의"
-    else:  # 4, 5, 6
+    else:  # 3(단백뇨 의심) ~ 6(구 데이터 호환)
         clinical = "위험"
-    
+
     return {"text": text, "clinical": clinical}
 
 
