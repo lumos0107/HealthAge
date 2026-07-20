@@ -461,9 +461,9 @@ function formatValue(value: number, unit: string) {
 }
 
 function statusClass(status: Status) {
-  if (status === '정상 기준 안') return 'border-[#2f8fd0] bg-[#eef8ff] text-[#0a5f9c]';
-  if (status === '관리 참고') return 'border-[#e5a100] bg-[#fff9e8] text-[#8a5b00]';
-  return 'border-[#d93c65] bg-[#fff1f4] text-[#b51d46]';
+  if (status === '정상 기준 안') return 'text-[#3CB371]';
+  if (status === '관리 참고') return 'text-[#FF8A3D]';
+  return 'text-[#F44336]';
 }
 
 function isBadStatus(status: Status) {
@@ -471,13 +471,13 @@ function isBadStatus(status: Status) {
 }
 
 function metricAccentColor(metric: MetricDefinition) {
-  if (metric.status === '추적 확인') return '#c0392b';
-  if (metric.status === '관리 참고') return '#c0392b';
-  return '#0b5cad';
+  if (metric.status === '추적 확인') return '#F44336';
+  if (metric.status === '관리 참고') return '#F44336';
+  return '#1A1A1A';
 }
 
 function StatusBadge({ status }: { status: Status }) {
-  return <span className={`inline-flex h-auto w-fit self-start justify-self-start whitespace-nowrap border px-3 py-1 text-sm font-bold leading-5 ${statusClass(status)}`}>{status}</span>;
+  return <span className={`inline-flex w-fit items-center self-start justify-self-start whitespace-nowrap rounded-full bg-[#EFEFEF] px-3 py-1 text-[13px] font-semibold ${statusClass(status)}`}>{status}</span>;
 }
 
 function statusToLabel(status: string) {
@@ -551,34 +551,34 @@ function Header({
 
   return (
     <header className="bg-white">
-      <div className="border-b border-[#d8e0e8] bg-[#f4f7fb]">
-        <div className="mx-auto flex h-9 max-w-[1280px] items-center px-6 text-[13px] text-[#2f3b4a]">
+      <div className="border-b border-[#E5E5E5] bg-[#FFFFFF]">
+        <div className="mx-auto flex h-9 max-w-[1280px] items-center px-6 text-[13px] text-[#5C5C5C]">
           건강검진 기록과 분석 결과를 한곳에서 확인합니다.
         </div>
       </div>
 
-      <div className="border-b border-[#d8e0e8]">
+      <div className="border-b border-[#E5E5E5]">
         <div className="mx-auto flex h-[78px] max-w-[1280px] items-center justify-between px-6">
           <button type="button" className="flex items-center gap-3" onClick={() => onTabChange('dashboard')}>
-            <Activity className="h-10 w-10 text-[#0b5cad]" />
-            <span>
-              <span className="block text-[25px] font-black tracking-[-0.04em] text-[#1d2b3a]">헬스케어</span>
-              <span className="block text-xs font-bold text-[#60809f]">Health Checkup Management</span>
+            <Activity className="h-8 w-8 text-[#1A1A1A]" />
+            <span className="text-left">
+              <span className="block text-[11px] font-bold uppercase tracking-[0.16em] text-[#9A9A9A]">WITHUS</span>
+              <span className="block text-[22px] font-extrabold leading-none tracking-[-0.03em] text-[#191919]">HealthAge</span>
             </span>
           </button>
           <div className="relative" ref={menuRef}>
             <button
               type="button"
-              className="border border-[#c9d5e2] bg-white px-4 py-2 text-[15px] font-black text-[#1d2b3a] hover:bg-[#f6f9fc]"
+              className="rounded-full border border-[#E5E5E5] bg-white px-4 py-2 text-[14px] font-semibold text-[#191919] hover:bg-[#F5F5F5]"
               onClick={() => setMenuOpen((current) => !current)}
             >
               {profile.name} 님
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-[46px] z-20 w-[220px] border border-[#c9d5e2] bg-white shadow-[0_10px_24px_rgba(29,43,58,0.12)]">
+              <div className="absolute right-0 top-[46px] z-20 w-[220px] border border-[#E5E5E5] bg-white shadow-[0_10px_24px_rgba(29,43,58,0.12)]">
                 <button
                   type="button"
-                  className="block w-full px-4 py-3 text-left text-[15px] font-bold text-[#1d2b3a] hover:bg-[#eef6ff]"
+                  className="block w-full px-4 py-3 text-left text-[15px] font-bold text-[#191919] hover:bg-[#F5F5F5]"
                   onClick={() => {
                     setMenuOpen(false);
                     onAuth();
@@ -588,7 +588,7 @@ function Header({
                 </button>
                 <button
                   type="button"
-                  className="block w-full border-t border-[#e4eaf0] px-4 py-3 text-left text-[15px] font-bold text-[#1d2b3a] hover:bg-[#eef6ff]"
+                  className="block w-full border-t border-[#E5E5E5] px-4 py-3 text-left text-[15px] font-bold text-[#191919] hover:bg-[#F5F5F5]"
                   onClick={() => {
                     setMenuOpen(false);
                     onEditProfile();
@@ -598,7 +598,7 @@ function Header({
                 </button>
                 <button
                   type="button"
-                  className="block w-full border-t border-[#e4eaf0] px-4 py-3 text-left text-[15px] font-bold text-[#1d2b3a] hover:bg-[#eef6ff]"
+                  className="block w-full border-t border-[#E5E5E5] px-4 py-3 text-left text-[15px] font-bold text-[#191919] hover:bg-[#F5F5F5]"
                   onClick={() => {
                     setMenuOpen(false);
                     onOpenSettings();
@@ -608,7 +608,7 @@ function Header({
                 </button>
                 <button
                   type="button"
-                  className="block w-full border-t border-[#e4eaf0] px-4 py-3 text-left text-[15px] font-bold text-[#1d2b3a] hover:bg-[#eef6ff]"
+                  className="block w-full border-t border-[#E5E5E5] px-4 py-3 text-left text-[15px] font-bold text-[#191919] hover:bg-[#F5F5F5]"
                   onClick={() => {
                     setMenuOpen(false);
                     onReloadProfile();
@@ -618,7 +618,7 @@ function Header({
                 </button>
                 <button
                   type="button"
-                  className="block w-full border-t border-[#e4eaf0] px-4 py-3 text-left text-[15px] font-bold text-[#b51d46] hover:bg-[#fff1f4]"
+                  className="block w-full border-t border-[#E5E5E5] px-4 py-3 text-left text-[15px] font-bold text-[#F44336] hover:bg-[#EFEFEF]"
                   onClick={() => {
                     setMenuOpen(false);
                     onLogout();
@@ -632,14 +632,14 @@ function Header({
         </div>
       </div>
 
-      <nav className="border-b border-[#d8e0e8]">
-        <div className="mx-auto grid h-[58px] max-w-[1280px] grid-cols-5 px-6 text-center text-[17px] font-black text-[#1d2b3a]">
+      <nav className="border-b border-[#E5E5E5]">
+        <div className="mx-auto grid h-[58px] max-w-[1280px] grid-cols-5 px-6 text-center text-[17px] font-black text-[#191919]">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               type="button"
               onClick={() => onTabChange(tab.key)}
-              className={activeTab === tab.key ? 'border-b-4 border-[#0b5cad] text-[#0b5cad]' : 'hover:text-[#0b5cad]'}
+              className={activeTab === tab.key ? 'border-b-4 border-[#1A1A1A] text-[#1A1A1A]' : 'hover:text-[#1A1A1A]'}
             >
               {tab.label}
             </button>
@@ -650,29 +650,9 @@ function Header({
   );
 }
 
-function Layout({ activeTab, onTabChange, children }: { activeTab: TabKey; onTabChange: (tab: TabKey) => void; children: ReactNode }) {
+function Layout({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto grid max-w-[1280px] grid-cols-[240px_1fr] gap-8 px-6 py-8">
-      <aside>
-        <div className="sticky top-6 border border-[#ccd7e2] bg-white">
-          <div className="bg-[#0b5cad] px-5 py-5 text-[21px] font-black text-white">나의 건강관리</div>
-          <ul className="divide-y divide-[#e4eaf0]">
-            {tabs.map((tab) => (
-              <li key={tab.key}>
-                <button
-                  type="button"
-                  onClick={() => onTabChange(tab.key)}
-                  className={`w-full px-5 py-4 text-left text-[15px] ${
-                    activeTab === tab.key ? 'bg-[#eef6ff] font-black text-[#0b5cad]' : 'font-bold text-[#425466] hover:bg-[#f6f9fc]'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
+    <main className="mx-auto max-w-[920px] px-6 py-10">
       <section>{children}</section>
     </main>
   );
@@ -680,10 +660,10 @@ function Layout({ activeTab, onTabChange, children }: { activeTab: TabKey; onTab
 
 function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="mb-6 border-b-2 border-[#1d2b3a] pb-5">
-      <div className="mb-3 text-[14px] text-[#66788a]">홈 &gt; 나의 건강관리 &gt; {title}</div>
-      <h1 className="text-[34px] font-black tracking-[-0.04em] text-[#1d2b3a]">{title}</h1>
-      <p className="mt-2 text-[17px] leading-7 text-[#526273]">{subtitle}</p>
+    <div className="mb-6">
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#9A9A9A]">WITHUS · HEALTHAGE</p>
+      <h1 className="mt-2 text-[32px] font-extrabold tracking-[-0.02em] text-[#191919]">{title}</h1>
+      <p className="mt-2 text-[14px] leading-6 text-[#9A9A9A]">{subtitle}</p>
     </div>
   );
 }
@@ -712,7 +692,7 @@ function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) 
   return (
     <>
       <PageHeader title="대시보드" subtitle="최근 검진 결과에서 먼저 확인할 항목만 요약합니다." />
-      <div className="mb-7 grid grid-cols-4 border border-[#ccd7e2] bg-white">
+      <div className="mb-7 grid grid-cols-4 border border-[#E5E5E5] bg-white">
         <SummaryCell label="최근 검진일" value={latest.date} note={latest.hospital} />
         <SummaryCell label="검진 기록" value={`${reports.length}건`} note={`${reports[0].year}~${latest.year}`} />
         <SummaryCell label="참고 점수" value={`${latest.score}/100`} note="검진 수치 기반 참고 정보" />
@@ -721,7 +701,7 @@ function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) 
 
       <div className="grid grid-cols-[1fr_320px] gap-7">
         <Board title="우선 확인 항목">
-          <div className="divide-y divide-[#e1e8ef]">
+          <div className="divide-y divide-[#E5E5E5]">
             {topItems.map((metric) => (
               <button
                 key={metric.key}
@@ -729,8 +709,8 @@ function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) 
                 onClick={() => onTabChange('analysis')}
                 className="grid w-full grid-cols-[160px_1fr_110px] items-center gap-4 py-4 text-left"
               >
-                <div className="font-black text-[#1d2b3a]">{metric.name}</div>
-                <div className="text-[#526273]">
+                <div className="font-black text-[#191919]">{metric.name}</div>
+                <div className="text-[#5C5C5C]">
                   {formatValue(currentValue(latest, metric), metric.unit)} · 정상 기준 {metric.normalText}
                 </div>
                 <StatusBadge status={metric.status} />
@@ -749,7 +729,7 @@ function DashboardView({ onTabChange }: { onTabChange: (tab: TabKey) => void }) 
                 }}
               >
                 <span className="block">{item.title}</span>
-                <span className="mt-1 block text-sm font-normal leading-6 text-[#66788a]">{item.description}</span>
+                <span className="mt-1 block text-sm font-normal leading-6 text-[#9A9A9A]">{item.description}</span>
               </ActionButton>
             ))}
           </div>
@@ -777,14 +757,14 @@ function RecordsView() {
     <>
       <PageHeader title="검진결과 조회" subtitle="검진기록과 결과조회 기능을 하나로 합쳐 연도별 결과와 상세 항목을 확인합니다." />
       <SearchBox>
-        <label className="font-black text-[#1d2b3a]">검진연도</label>
-        <select className="h-10 border border-[#b9c8d6] bg-white px-3" value={yearFilter} onChange={(event) => setYearFilter(event.target.value)}>
+        <label className="font-black text-[#191919]">검진연도</label>
+        <select className="h-10 border border-[#E5E5E5] bg-white px-3" value={yearFilter} onChange={(event) => setYearFilter(event.target.value)}>
           <option>전체</option>
           {reports.map((report) => (
             <option key={report.year}>{report.year}</option>
           ))}
         </select>
-        <span className="text-sm text-[#66788a]">선택한 연도의 기록만 아래 표에 표시됩니다.</span>
+        <span className="text-sm text-[#9A9A9A]">선택한 연도의 기록만 아래 표에 표시됩니다.</span>
       </SearchBox>
 
       <Board title="검진기록 목록">
@@ -826,12 +806,12 @@ function HistoryView() {
           const hasBadMetric = group.keys.some((key) => isBadStatus(metricByKey(metricDefinitions, key).status));
           return (
             <Board key={group.title} title={group.title} tone={hasBadMetric ? 'attention' : 'default'}>
-              {hasBadMetric && <p className="mb-3 text-sm font-bold text-[#b51d46]">관리 참고 항목이 포함된 그래프입니다.</p>}
+              {hasBadMetric && <p className="mb-3 text-sm font-bold text-[#F44336]">관리 참고 항목이 포함된 그래프입니다.</p>}
               <ChartBox height={260}>
                 <LineChart data={historyRows(reports, metricDefinitions, group.keys)}>
-                  <CartesianGrid stroke="#dfe8f1" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="year" tick={{ fill: '#526273', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#526273', fontSize: 12 }} />
+                  <CartesianGrid stroke="#E5E5E5" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="year" tick={{ fill: '#5C5C5C', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#5C5C5C', fontSize: 12 }} />
                   <Tooltip />
                   {group.keys.map((key, index) => (
                     <Line
@@ -852,11 +832,11 @@ function HistoryView() {
       </div>
 
       <Board title="항목별 쉬운 설명">
-        <div className="grid grid-cols-2 gap-x-8 divide-y divide-[#e1e8ef]">
+        <div className="grid grid-cols-2 gap-x-8 divide-y divide-[#E5E5E5]">
           {metricDefinitions.map((metric) => (
             <div key={metric.key} className="py-4">
-              <p className="font-black text-[#1d2b3a]">{metric.name}</p>
-              <p className="mt-1 text-[15px] leading-7 text-[#526273]">{metric.description}</p>
+              <p className="font-black text-[#191919]">{metric.name}</p>
+              <p className="mt-1 text-[15px] leading-7 text-[#5C5C5C]">{metric.description}</p>
             </div>
           ))}
         </div>
@@ -888,11 +868,11 @@ function AnalysisView() {
 
       <div className="mt-7 grid grid-cols-[1fr_320px] gap-7">
         <Board title="나의 가까운 관리 참고군">
-          <div className="mb-4 border-b border-[#d8e0e8] pb-4">
-            <p className="text-[25px] font-black text-[#1d2b3a]">{selectedGroup.name}</p>
-            <p className="mt-2 text-[#526273]">{selectedGroup.description}</p>
-            <p className="mt-2 text-[15px] leading-7 text-[#425466]">{selectedGroup.meaning}</p>
-            <p className="mt-1 text-[15px] leading-7 text-[#66788a]">관련해서 볼 수 있는 항목: {selectedGroup.related}</p>
+          <div className="mb-4 border-b border-[#E5E5E5] pb-4">
+            <p className="text-[25px] font-black text-[#191919]">{selectedGroup.name}</p>
+            <p className="mt-2 text-[#5C5C5C]">{selectedGroup.description}</p>
+            <p className="mt-2 text-[15px] leading-7 text-[#5C5C5C]">{selectedGroup.meaning}</p>
+            <p className="mt-1 text-[15px] leading-7 text-[#9A9A9A]">관련해서 볼 수 있는 항목: {selectedGroup.related}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {groups.map((group) => (
@@ -900,24 +880,24 @@ function AnalysisView() {
                 key={group.name}
                 type="button"
                 onClick={() => setSelectedGroupName(group.name)}
-                className={`border px-4 py-3 text-left hover:bg-[#eef6ff] ${
-                  selectedGroup.name === group.name ? 'border-[#0b5cad] bg-[#eef6ff]' : 'border-[#d8e0e8]'
+                className={`border px-4 py-3 text-left hover:bg-[#F5F5F5] ${
+                  selectedGroup.name === group.name ? 'border-[#1A1A1A] bg-[#F5F5F5]' : 'border-[#E5E5E5]'
                 }`}
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="font-black text-[#1d2b3a]">{group.name}</span>
-                  <span className="font-black text-[#0b5cad]">{group.matches}개 해당</span>
+                  <span className="font-black text-[#191919]">{group.name}</span>
+                  <span className="font-black text-[#1A1A1A]">{group.matches}개 해당</span>
                 </div>
-                <p className="mt-1 text-sm text-[#526273]">{group.meaning}</p>
-                <p className="mt-1 text-sm text-[#66788a]">해당 항목: {group.metrics.join(', ') || '현재 뚜렷한 해당 항목 없음'}</p>
+                <p className="mt-1 text-sm text-[#5C5C5C]">{group.meaning}</p>
+                <p className="mt-1 text-sm text-[#9A9A9A]">해당 항목: {group.metrics.join(', ') || '현재 뚜렷한 해당 항목 없음'}</p>
               </button>
             ))}
           </div>
         </Board>
 
         <Board title="점수 기준">
-          <p className="text-[48px] font-black tracking-[-0.05em] text-[#1d2b3a]">{latest.score}<span className="text-[22px] text-[#9aa6b2]">/100</span></p>
-          <div className="mt-3 space-y-2 leading-7 text-[#526273]">
+          <p className="text-[48px] font-black tracking-[-0.05em] text-[#191919]">{latest.score}<span className="text-[22px] text-[#9A9A9A]">/100</span></p>
+          <div className="mt-3 space-y-2 leading-7 text-[#5C5C5C]">
             <p>검진 수치가 정상 기준에서 얼마나 벗어났는지, 관리 참고 항목이 몇 개인지 함께 반영한 참고 점수입니다.</p>
             <p>질환 여부를 판단하는 점수가 아니라, 어떤 항목을 먼저 살펴볼지 정리하기 위한 값입니다.</p>
             <ul className="list-disc pl-5 text-[15px]">
@@ -931,10 +911,10 @@ function AnalysisView() {
       </div>
 
       <Board title={`${selectedGroup.name} 관련 검사항목 비교`}>
-        <p className="mb-4 text-[15px] leading-7 text-[#526273]">
+        <p className="mb-4 text-[15px] leading-7 text-[#5C5C5C]">
           선택한 참고군을 이해하는 데 필요한 검사 항목만 모았습니다. 같은 항목이라도 증상, 복용 약, 과거력에 따라 해석이 달라질 수 있습니다.
         </p>
-        <div className="divide-y divide-[#e1e8ef]">
+        <div className="divide-y divide-[#E5E5E5]">
           {selectedMetrics.map((metric) => (
             <MetricComparisonRow key={metric.key} metric={metric} />
           ))}
@@ -1148,10 +1128,10 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
   return (
     <>
       <PageHeader title="결과지 업로드" subtitle="업로드할 자료 종류를 먼저 선택한 뒤 내용을 확인하고 저장합니다." />
-      <div className="mb-6 grid grid-cols-2 border border-[#c9d5e2] bg-white">
+      <div className="mb-6 grid grid-cols-2 border border-[#E5E5E5] bg-white">
         <button
           type="button"
-          className={`px-5 py-4 text-left ${uploadMode === 'checkup' ? 'bg-[#eef6ff] text-[#0b5cad]' : 'text-[#526273] hover:bg-[#f7fafc]'}`}
+          className={`px-5 py-4 text-left ${uploadMode === 'checkup' ? 'bg-[#F5F5F5] text-[#1A1A1A]' : 'text-[#5C5C5C] hover:bg-[#F5F5F5]'}`}
           onClick={() => changeUploadMode('checkup')}
         >
           <span className="block text-[18px] font-black">건강검진 결과지</span>
@@ -1159,7 +1139,7 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
         </button>
         <button
           type="button"
-          className={`border-l border-[#c9d5e2] px-5 py-4 text-left ${uploadMode === 'medication' ? 'bg-[#eef6ff] text-[#0b5cad]' : 'text-[#526273] hover:bg-[#f7fafc]'}`}
+          className={`border-l border-[#E5E5E5] px-5 py-4 text-left ${uploadMode === 'medication' ? 'bg-[#F5F5F5] text-[#1A1A1A]' : 'text-[#5C5C5C] hover:bg-[#F5F5F5]'}`}
           onClick={() => changeUploadMode('medication')}
         >
           <span className="block text-[18px] font-black">처방전·복약자료</span>
@@ -1170,38 +1150,38 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
       {uploadMode === 'checkup' && (
         <Board title="건강검진 결과지 확인">
           <div className="grid grid-cols-2 gap-4">
-            <label className="block cursor-pointer border border-[#0b5cad] bg-[#eef6ff] px-5 py-5 hover:bg-[#dfefff]">
-              <span className="block text-[20px] font-black text-[#0b5cad]">카메라로 촬영</span>
-              <span className="mt-2 block text-[15px] leading-7 text-[#526273]">카메라로 결과지를 촬영한 뒤 읽힌 값을 확인합니다.</span>
-              <span className="mt-4 inline-flex h-10 items-center bg-[#0b5cad] px-4 text-sm font-black text-white">촬영하기</span>
+            <label className="block cursor-pointer border border-[#1A1A1A] bg-[#F5F5F5] px-5 py-5 hover:bg-[#EFEFEF]">
+              <span className="block text-[20px] font-black text-[#1A1A1A]">카메라로 촬영</span>
+              <span className="mt-2 block text-[15px] leading-7 text-[#5C5C5C]">카메라로 결과지를 촬영한 뒤 읽힌 값을 확인합니다.</span>
+              <span className="mt-4 inline-flex h-10 items-center bg-[#1A1A1A] px-4 text-sm font-black text-white">촬영하기</span>
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={uploadCheckup} />
             </label>
-            <label className="block cursor-pointer border border-[#c9d5e2] bg-[#f7fafc] px-5 py-5 hover:bg-[#eef6ff]">
-              <span className="block text-[20px] font-black text-[#1d2b3a]">갤러리에서 선택</span>
-              <span className="mt-2 block text-[15px] leading-7 text-[#526273]">이미 저장된 건강검진 결과지 사진을 선택하는 흐름입니다.</span>
-              <span className="mt-4 inline-flex h-10 items-center bg-[#1d2b3a] px-4 text-sm font-black text-white">사진 선택</span>
+            <label className="block cursor-pointer border border-[#E5E5E5] bg-[#F5F5F5] px-5 py-5 hover:bg-[#F5F5F5]">
+              <span className="block text-[20px] font-black text-[#191919]">갤러리에서 선택</span>
+              <span className="mt-2 block text-[15px] leading-7 text-[#5C5C5C]">이미 저장된 건강검진 결과지 사진을 선택하는 흐름입니다.</span>
+              <span className="mt-4 inline-flex h-10 items-center bg-[#191919] px-4 text-sm font-black text-white">사진 선택</span>
               <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={uploadCheckup} />
             </label>
           </div>
 
-          <button type="button" className="mt-4 h-11 border border-[#0b5cad] px-5 font-black text-[#0b5cad] hover:bg-[#eef6ff]" onClick={() => runDummyCheckupOcr('sample-checkup-photo.jpg')}>
+          <button type="button" className="mt-4 h-11 border border-[#1A1A1A] px-5 font-black text-[#1A1A1A] hover:bg-[#F5F5F5]" onClick={() => runDummyCheckupOcr('sample-checkup-photo.jpg')}>
             예시 결과 불러오기
           </button>
 
           {ocrFields.length > 0 && (
             <div className="mt-6">
-              <div className="mb-3 flex flex-wrap items-center gap-2 text-[15px] text-[#526273]">
-                {uploadedSource && <span className="font-bold text-[#1d2b3a]">선택한 파일: {uploadedSource}</span>}
+              <div className="mb-3 flex flex-wrap items-center gap-2 text-[15px] text-[#5C5C5C]">
+                {uploadedSource && <span className="font-bold text-[#191919]">선택한 파일: {uploadedSource}</span>}
                 <span>확인 필요 {requiredMissing.length}개</span>
               </div>
-              <div className="mb-5 border border-[#d8e0e8] bg-[#f7fafc] px-4 py-3 text-[15px] leading-7 text-[#425466]">
+              <div className="mb-5 border border-[#E5E5E5] bg-[#F5F5F5] px-4 py-3 text-[15px] leading-7 text-[#5C5C5C]">
                 이름과 성별은 회원정보의 {profile.name} / {profile.gender === 1 ? '남성' : '여성'} 정보가 자동으로 적용됩니다.
               </div>
 
               {(['기본 정보', '검사 수치'] as OcrField['section'][]).map((section) => (
-                <div key={section} className="mb-5 border border-[#d8e0e8]">
-                  <div className="border-b border-[#d8e0e8] bg-[#f2f6fa] px-4 py-3 text-[17px] font-black text-[#1d2b3a]">{section}</div>
-                  <div className="divide-y divide-[#e1e8ef]">
+                <div key={section} className="mb-5 border border-[#E5E5E5]">
+                  <div className="border-b border-[#E5E5E5] bg-[#F5F5F5] px-4 py-3 text-[17px] font-black text-[#191919]">{section}</div>
+                  <div className="divide-y divide-[#E5E5E5]">
                     {ocrFields
                       .filter((field) => field.section === section)
                       .map((field) => {
@@ -1210,25 +1190,25 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
                           <div
                             key={field.id}
                             data-ocr-missing={missing ? 'true' : undefined}
-                            className={`grid grid-cols-[170px_1fr] items-center gap-4 px-4 py-3 ${missing ? 'bg-[#fff1f4]' : ''}`}
+                            className={`grid grid-cols-[170px_1fr] items-center gap-4 px-4 py-3 ${missing ? 'bg-[#EFEFEF]' : ''}`}
                           >
                             <div>
-                              <p className="font-black text-[#1d2b3a]">
+                              <p className="font-black text-[#191919]">
                                 {field.label}
-                                {field.required && <span className="ml-1 text-[#b51d46]">*</span>}
+                                {field.required && <span className="ml-1 text-[#F44336]">*</span>}
                               </p>
-                              {missing && <p className="mt-1 text-xs font-bold text-[#b51d46]">사진이나 검진표 확인 필요</p>}
+                              {missing && <p className="mt-1 text-xs font-bold text-[#F44336]">사진이나 검진표 확인 필요</p>}
                             </div>
                             <div className="flex items-center gap-2">
                               <input
-                                className={`h-11 w-full border px-3 text-[15px] outline-none focus:border-[#0b5cad] ${
-                                  missing ? 'border-[#d93c65] bg-white' : 'border-[#c9d5e2]'
+                                className={`h-11 w-full border px-3 text-[15px] outline-none focus:border-[#1A1A1A] ${
+                                  missing ? 'border-[#F44336] bg-white' : 'border-[#E5E5E5]'
                                 }`}
                                 value={field.value}
                                 onChange={(event) => updateOcrField(field.id, event.target.value)}
                                 placeholder={field.required ? '필수 입력' : '미측정 또는 직접 입력'}
                               />
-                              {field.unit && <span className="w-[72px] text-sm font-bold text-[#66788a]">{field.unit}</span>}
+                              {field.unit && <span className="w-[72px] text-sm font-bold text-[#9A9A9A]">{field.unit}</span>}
                             </div>
                           </div>
                         );
@@ -1237,14 +1217,14 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
                 </div>
               ))}
 
-              <div className="mb-3 border border-[#d8e0e8] bg-[#f7fafc] px-4 py-3 text-[15px] leading-7 text-[#425466]">
+              <div className="mb-3 border border-[#E5E5E5] bg-[#F5F5F5] px-4 py-3 text-[15px] leading-7 text-[#5C5C5C]">
                 저장하기 전에 측정값과 검진기관, 검진일이 실제 검진표와 같은지 다시 한 번 확인해주세요.
               </div>
-              <button type="button" className="h-12 w-full bg-[#0b5cad] px-5 font-black text-white hover:bg-[#084f8a]" onClick={requestSaveReviewedOcr}>
+              <button type="button" className="h-12 w-full bg-[#1A1A1A] px-5 font-black text-white hover:bg-[#000000]" onClick={requestSaveReviewedOcr}>
                 확인한 값 저장
               </button>
               {Boolean(uploadState.analysis) && (
-                <button type="button" className="mt-3 h-12 w-full border border-[#0b5cad] bg-white px-5 font-black text-[#0b5cad] hover:bg-[#eef6ff]" onClick={() => onTabChange('records')}>
+                <button type="button" className="mt-3 h-12 w-full border border-[#1A1A1A] bg-white px-5 font-black text-[#1A1A1A] hover:bg-[#F5F5F5]" onClick={() => onTabChange('records')}>
                   검진기록에서 확인하기
                 </button>
               )}
@@ -1263,7 +1243,7 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
           />
           <button
             type="button"
-            className="mt-4 h-11 border border-[#0b5cad] px-5 font-black text-[#0b5cad] hover:bg-[#eef6ff]"
+            className="mt-4 h-11 border border-[#1A1A1A] px-5 font-black text-[#1A1A1A] hover:bg-[#F5F5F5]"
             onClick={() => window.open('/hira-medication-guide.html', '_blank', 'noopener,noreferrer')}
           >
             자료 발급 방법 안내 보기
@@ -1272,22 +1252,22 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
       )}
 
       {(uploadState.message || uploadState.error) && (
-        <div className={`mt-6 border px-5 py-4 text-[15px] ${uploadState.error ? 'border-[#d93c65] bg-[#fff1f4] text-[#b51d46]' : 'border-[#b8cee5] bg-[#eef6ff] text-[#1d4f7c]'}`}>
+        <div className={`mt-6 border px-5 py-4 text-[15px] ${uploadState.error ? 'border-[#F44336] bg-[#EFEFEF] text-[#F44336]' : 'border-[#E5E5E5] bg-[#F5F5F5] text-[#191919]'}`}>
           {uploadState.error || uploadState.message}
         </div>
       )}
       {confirmSaveOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#102033]/45 px-4">
-          <div className="w-full max-w-md border border-[#c9d5e2] bg-white p-6 shadow-[0_18px_48px_rgba(16,32,51,0.25)]">
-            <h3 className="text-[24px] font-black text-[#1d2b3a]">이 값으로 저장할까요?</h3>
-            <p className="mt-3 text-[15px] leading-7 text-[#526273]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/45 px-4">
+          <div className="w-full max-w-md border border-[#E5E5E5] bg-white p-6 shadow-[0_18px_48px_rgba(16,32,51,0.25)]">
+            <h3 className="text-[24px] font-black text-[#191919]">이 값으로 저장할까요?</h3>
+            <p className="mt-3 text-[15px] leading-7 text-[#5C5C5C]">
               저장 후에는 검진기록에서 확인할 수 있습니다. 검진일, 검진기관, 주요 측정값이 실제 검진표와 같은지 마지막으로 확인해주세요.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <button type="button" className="h-11 border border-[#c9d5e2] bg-white font-black text-[#526273] hover:bg-[#f7fafc]" onClick={() => setConfirmSaveOpen(false)}>
+              <button type="button" className="h-11 border border-[#E5E5E5] bg-white font-black text-[#5C5C5C] hover:bg-[#F5F5F5]" onClick={() => setConfirmSaveOpen(false)}>
                 다시 확인
               </button>
-              <button type="button" className="h-11 bg-[#0b5cad] font-black text-white hover:bg-[#084f8a]" onClick={saveReviewedOcr}>
+              <button type="button" className="h-11 bg-[#1A1A1A] font-black text-white hover:bg-[#000000]" onClick={saveReviewedOcr}>
                 저장하기
               </button>
             </div>
@@ -1301,7 +1281,7 @@ function UploadView({ profile, onTabChange, onSaved }: { profile: UserProfile; o
 
 function SearchBox({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-7 border border-[#c9d5e2] bg-[#f7fafc] p-5">
+    <div className="mb-7 border border-[#E5E5E5] bg-[#F5F5F5] p-5">
       <div className="grid grid-cols-[110px_200px_1fr] items-center gap-3 text-[15px]">{children}</div>
     </div>
   );
@@ -1310,7 +1290,7 @@ function SearchBox({ children }: { children: ReactNode }) {
 function ResultTable({ data }: { data: Report[] }) {
   return (
     <table className="w-full border-collapse text-left text-[15px]">
-      <thead className="bg-[#f2f6fa] text-[#1d2b3a]">
+      <thead className="bg-[#F5F5F5] text-[#191919]">
         <tr>
           <Th>검진연도</Th>
           <Th>검진일</Th>
@@ -1338,7 +1318,7 @@ function MetricTable() {
   const { metricDefinitions, latest } = useHealth();
   return (
     <table className="w-full border-collapse text-left text-[15px]">
-      <thead className="bg-[#f2f6fa] text-[#1d2b3a]">
+      <thead className="bg-[#F5F5F5] text-[#191919]">
         <tr>
           <Th>구분</Th>
           <Th>항목명</Th>
@@ -1372,26 +1352,26 @@ function MetricComparisonRow({ metric }: { metric: MetricDefinition }) {
   const max = Math.max(mine, metric.normalValue, metric.peerMean ?? 0, 1);
   const bars = [
     { label: '내 수치', value: mine, text: formatValue(mine, metric.unit), color: metricAccentColor(metric) },
-    { label: '정상 기준', value: metric.normalValue, text: metric.normalText, color: '#2f8fd0' },
+    { label: '정상 기준', value: metric.normalValue, text: metric.normalText, color: '#3CB371' },
     ...(metric.peerMean == null
-      ? [{ label: '연령대 평균', value: 0, text: '평균 비교 제외', color: '#9aa6b2' }]
-      : [{ label: '연령대 평균', value: metric.peerMean, text: formatValue(metric.peerMean, metric.unit), color: '#7c8794' }]),
+      ? [{ label: '연령대 평균', value: 0, text: '평균 비교 제외', color: '#9A9A9A' }]
+      : [{ label: '연령대 평균', value: metric.peerMean, text: formatValue(metric.peerMean, metric.unit), color: '#9A9A9A' }]),
   ];
 
   return (
     <div className="grid grid-cols-[170px_1fr_auto] items-start gap-5 py-5">
       <div>
-        <p className="font-black text-[#1d2b3a]">{metric.name}</p>
-        <p className="mt-1 text-sm text-[#66788a]">{metric.description}</p>
+        <p className="font-black text-[#191919]">{metric.name}</p>
+        <p className="mt-1 text-sm text-[#9A9A9A]">{metric.description}</p>
       </div>
       <div className="space-y-2">
         {bars.map((bar) => (
           <div key={bar.label} className="grid grid-cols-[90px_1fr_120px] items-center gap-3">
-            <span className="text-sm font-bold text-[#526273]">{bar.label}</span>
-            <span className="h-2 bg-[#edf2f7]">
+            <span className="text-sm font-bold text-[#5C5C5C]">{bar.label}</span>
+            <span className="h-2 bg-[#E5E5E5]">
               <span className="block h-2" style={{ width: `${bar.value ? Math.max((bar.value / max) * 100, 6) : 0}%`, backgroundColor: bar.color }} />
             </span>
-            <span className="text-sm font-bold text-[#1d2b3a]">{bar.text}</span>
+            <span className="text-sm font-bold text-[#191919]">{bar.text}</span>
           </div>
         ))}
       </div>
@@ -1404,21 +1384,22 @@ function MetricComparisonRow({ metric }: { metric: MetricDefinition }) {
 
 function SummaryCell({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="border-r border-[#ccd7e2] px-5 py-5 last:border-r-0">
-      <p className="text-sm font-black text-[#526273]">{label}</p>
-      <p className="mt-2 text-[24px] font-black tracking-[-0.03em] text-[#1d2b3a]">{value}</p>
-      <p className="mt-1 text-sm text-[#66788a]">{note}</p>
+    <div className="border-r border-[#E5E5E5] px-5 py-5 last:border-r-0">
+      <p className="text-sm font-black text-[#5C5C5C]">{label}</p>
+      <p className="mt-2 text-[24px] font-black tracking-[-0.03em] text-[#191919]">{value}</p>
+      <p className="mt-1 text-sm text-[#9A9A9A]">{note}</p>
     </div>
   );
 }
 
 function Board({ title, children, tone = 'default' }: { title: string; children: ReactNode; tone?: 'default' | 'attention' }) {
-  const borderClass = tone === 'attention' ? 'border-[#d93c65]' : 'border-[#ccd7e2]';
-  const headerClass = tone === 'attention' ? 'border-[#f0b8c5] bg-[#fff7f9]' : 'border-[#ccd7e2] bg-[#f8fafc]';
   return (
-    <section className={`mb-7 border ${borderClass} bg-white`}>
-      <h2 className={`border-b ${headerClass} px-5 py-4 text-[20px] font-black text-[#1d2b3a]`}>{title}</h2>
-      <div className="p-5">{children}</div>
+    <section className={`mb-4 rounded border ${tone === 'attention' ? 'border-[#F44336]' : 'border-[#E5E5E5]'} bg-white p-5`}>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-[17px] font-bold text-[#191919]">{title}</h2>
+        {tone === 'attention' && <span className="rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold text-[#F44336]">주의 포함</span>}
+      </div>
+      {children}
     </section>
   );
 }
@@ -1436,11 +1417,11 @@ function ChartBox({ children, height = 330 }: { children: ReactNode; height?: nu
 function ChartLegend({ keys }: { keys: MetricKey[] }) {
   const { metricDefinitions } = useHealth();
   return (
-    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#526273]">
+    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#5C5C5C]">
       {keys.map((key, index) => {
         const metric = metricByKey(metricDefinitions, key);
         return (
-          <span key={key} className={`inline-flex items-center gap-2 ${isBadStatus(metric.status) ? 'font-black text-[#b51d46]' : ''}`}>
+          <span key={key} className={`inline-flex items-center gap-2 ${isBadStatus(metric.status) ? 'font-black text-[#F44336]' : ''}`}>
             <span className="h-2.5 w-2.5" style={{ backgroundColor: lineColors[index % lineColors.length] }} />
             <span>
               {metric.shortName}
@@ -1455,10 +1436,10 @@ function ChartLegend({ keys }: { keys: MetricKey[] }) {
 
 function UploadBox({ title, description, accept, onChange }: { title: string; description: string; accept: string; onChange: (event: ChangeEvent<HTMLInputElement>) => void }) {
   return (
-    <label className="block cursor-pointer border border-[#c9d5e2] bg-[#f7fafc] px-5 py-5 hover:bg-[#eef6ff]">
-      <span className="block text-[18px] font-black text-[#1d2b3a]">{title}</span>
-      <span className="mt-2 block text-[15px] leading-7 text-[#526273]">{description}</span>
-      <span className="mt-4 inline-flex h-10 items-center bg-[#1d2b3a] px-4 text-sm font-black text-white">파일 선택</span>
+    <label className="block cursor-pointer border border-[#E5E5E5] bg-[#F5F5F5] px-5 py-5 hover:bg-[#F5F5F5]">
+      <span className="block text-[18px] font-black text-[#191919]">{title}</span>
+      <span className="mt-2 block text-[15px] leading-7 text-[#5C5C5C]">{description}</span>
+      <span className="mt-4 inline-flex h-10 items-center bg-[#191919] px-4 text-sm font-black text-white">파일 선택</span>
       <input type="file" accept={accept} className="hidden" onChange={onChange} />
     </label>
   );
@@ -1466,22 +1447,22 @@ function UploadBox({ title, description, accept, onChange }: { title: string; de
 
 function ActionButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="block w-full border border-[#c9d5e2] px-4 py-3 text-left font-black text-[#1d2b3a] hover:bg-[#eef6ff]">
+    <button type="button" onClick={onClick} className="block w-full border border-[#E5E5E5] px-4 py-3 text-left font-black text-[#191919] hover:bg-[#F5F5F5]">
       {children}
     </button>
   );
 }
 
 function Notice({ children }: { children: ReactNode }) {
-  return <div className="border border-[#b8cee5] bg-[#eef6ff] px-5 py-4 text-[15px] leading-7 text-[#1d4f7c]">{children}</div>;
+  return <div className="border border-[#E5E5E5] bg-[#F5F5F5] px-5 py-4 text-[15px] leading-7 text-[#191919]">{children}</div>;
 }
 
 function EmptyBoard({ message, onAction }: { message: string; onAction?: () => void }) {
   return (
-    <div className="border border-[#ccd7e2] bg-white px-6 py-12 text-center">
-      <p className="mx-auto max-w-xl text-[16px] leading-7 text-[#526273]">{message}</p>
+    <div className="border border-[#E5E5E5] bg-white px-6 py-12 text-center">
+      <p className="mx-auto max-w-xl text-[16px] leading-7 text-[#5C5C5C]">{message}</p>
       {onAction && (
-        <button type="button" onClick={onAction} className="mt-5 h-11 bg-[#0b5cad] px-6 font-black text-white hover:bg-[#084f8a]">
+        <button type="button" onClick={onAction} className="mt-5 h-11 bg-[#1A1A1A] px-6 font-black text-white hover:bg-[#000000]">
           결과지 업로드로 이동
         </button>
       )}
@@ -1490,14 +1471,14 @@ function EmptyBoard({ message, onAction }: { message: string; onAction?: () => v
 }
 
 function Th({ children }: { children: ReactNode }) {
-  return <th className="border border-[#ccd7e2] px-4 py-3 font-black">{children}</th>;
+  return <th className="border border-[#E5E5E5] px-4 py-3 font-black">{children}</th>;
 }
 
 function Td({ children, strong }: { children: ReactNode; strong?: boolean }) {
-  return <td className={`border border-[#e1e8ef] px-4 py-3 align-top ${strong ? 'font-black text-[#1d2b3a]' : 'text-[#425466]'}`}>{children}</td>;
+  return <td className={`border border-[#E5E5E5] px-4 py-3 align-top ${strong ? 'font-black text-[#191919]' : 'text-[#5C5C5C]'}`}>{children}</td>;
 }
 
-const lineColors = ['#0b5cad', '#0c8a6a', '#c98a18', '#7c8794'];
+const lineColors = ['#1A1A1A', '#3CB371', '#FF8A3D', '#9A9A9A'];
 
 function metricByKey(defs: MetricDefinition[], key: MetricKey) {
   return defs.find((metric) => metric.key === key)!;
@@ -1580,11 +1561,11 @@ function AuthModal({
 
   return (
     <Dialog title={mode === 'signup' ? '회원가입' : '로그인'} onClose={onClose}>
-      <div className="mb-5 grid grid-cols-2 border border-[#c9d5e2] text-center text-[15px] font-black">
-        <button type="button" className={`py-3 ${mode === 'signup' ? 'bg-[#eef6ff] text-[#0b5cad]' : 'text-[#425466]'}`} onClick={() => setMode('signup')}>
+      <div className="mb-5 grid grid-cols-2 border border-[#E5E5E5] text-center text-[15px] font-black">
+        <button type="button" className={`py-3 ${mode === 'signup' ? 'bg-[#F5F5F5] text-[#1A1A1A]' : 'text-[#5C5C5C]'}`} onClick={() => setMode('signup')}>
           회원가입
         </button>
-        <button type="button" className={`border-l border-[#c9d5e2] py-3 ${mode === 'login' ? 'bg-[#eef6ff] text-[#0b5cad]' : 'text-[#425466]'}`} onClick={() => setMode('login')}>
+        <button type="button" className={`border-l border-[#E5E5E5] py-3 ${mode === 'login' ? 'bg-[#F5F5F5] text-[#1A1A1A]' : 'text-[#5C5C5C]'}`} onClick={() => setMode('login')}>
           로그인
         </button>
       </div>
@@ -1608,7 +1589,7 @@ function AuthModal({
         <Field label="이메일">
           <input
             type="email"
-            className="h-11 w-full border border-[#c9d5e2] px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+            className="h-11 w-full border border-[#E5E5E5] px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
             value={form.email}
             onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
             required
@@ -1618,7 +1599,7 @@ function AuthModal({
           <>
             <Field label="이름">
               <input
-                className="h-11 w-full border border-[#c9d5e2] px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+                className="h-11 w-full border border-[#E5E5E5] px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
                 value={form.name}
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                 required
@@ -1628,7 +1609,7 @@ function AuthModal({
               <Field label="생년월일">
                 <input
                   type="date"
-                  className="h-11 w-full border border-[#c9d5e2] px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+                  className="h-11 w-full border border-[#E5E5E5] px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
                   value={form.birth_date}
                   onChange={(event) => setForm((current) => ({ ...current, birth_date: event.target.value }))}
                   required
@@ -1636,7 +1617,7 @@ function AuthModal({
               </Field>
               <Field label="성별">
                 <select
-                  className="h-11 w-full border border-[#c9d5e2] bg-white px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+                  className="h-11 w-full border border-[#E5E5E5] bg-white px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
                   value={form.gender}
                   onChange={(event) => setForm((current) => ({ ...current, gender: event.target.value }))}
                 >
@@ -1650,17 +1631,17 @@ function AuthModal({
         <Field label="비밀번호">
           <input
             type="password"
-            className="h-11 w-full border border-[#c9d5e2] px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+            className="h-11 w-full border border-[#E5E5E5] px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
             value={form.password}
             onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
             required
           />
         </Field>
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" className="h-11 border border-[#c9d5e2] px-5 font-black text-[#425466]" onClick={onClose}>
+          <button type="button" className="h-11 border border-[#E5E5E5] px-5 font-black text-[#5C5C5C]" onClick={onClose}>
             취소
           </button>
-          <button type="submit" className="h-11 bg-[#0b5cad] px-5 font-black text-white disabled:bg-[#9aa6b2]" disabled={loading}>
+          <button type="submit" className="h-11 bg-[#1A1A1A] px-5 font-black text-white disabled:bg-[#9A9A9A]" disabled={loading}>
             {loading ? '처리 중' : mode === 'signup' ? '회원가입' : '로그인'}
           </button>
         </div>
@@ -1705,7 +1686,7 @@ function ProfileModal({
       >
         <Field label="이메일">
           <input
-            className="h-11 w-full border border-[#c9d5e2] px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+            className="h-11 w-full border border-[#E5E5E5] px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
             value={form.email}
             onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
             placeholder="name@example.com"
@@ -1713,7 +1694,7 @@ function ProfileModal({
         </Field>
         <Field label="이름">
           <input
-            className="h-11 w-full border border-[#c9d5e2] px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+            className="h-11 w-full border border-[#E5E5E5] px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
             value={form.name}
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
           />
@@ -1721,7 +1702,7 @@ function ProfileModal({
         <div className="grid grid-cols-2 gap-4">
           <Field label="성별">
             <select
-              className="h-11 w-full border border-[#c9d5e2] bg-white px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+              className="h-11 w-full border border-[#E5E5E5] bg-white px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
               value={form.gender}
               onChange={(event) => setForm((current) => ({ ...current, gender: event.target.value }))}
             >
@@ -1732,17 +1713,17 @@ function ProfileModal({
           <Field label="생년월일">
             <input
               type="date"
-              className="h-11 w-full border border-[#c9d5e2] px-3 text-[15px] outline-none focus:border-[#0b5cad]"
+              className="h-11 w-full border border-[#E5E5E5] px-3 text-[15px] outline-none focus:border-[#1A1A1A]"
               value={form.birth_date}
               onChange={(event) => setForm((current) => ({ ...current, birth_date: event.target.value }))}
             />
           </Field>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" className="h-11 border border-[#c9d5e2] px-5 font-black text-[#425466]" onClick={onClose}>
+          <button type="button" className="h-11 border border-[#E5E5E5] px-5 font-black text-[#5C5C5C]" onClick={onClose}>
             취소
           </button>
-          <button type="submit" className="h-11 bg-[#0b5cad] px-5 font-black text-white disabled:bg-[#9aa6b2]" disabled={loading}>
+          <button type="submit" className="h-11 bg-[#1A1A1A] px-5 font-black text-white disabled:bg-[#9A9A9A]" disabled={loading}>
             {loading ? '저장 중' : '저장'}
           </button>
         </div>
@@ -1768,16 +1749,16 @@ function SettingsModal({
 
   return (
     <Dialog title="설정" onClose={onClose}>
-      <div className="divide-y divide-[#e1e8ef]">
+      <div className="divide-y divide-[#E5E5E5]">
         {items.map((item) => (
           <label key={item.key} className="flex cursor-pointer items-start justify-between gap-5 py-4">
             <span>
-              <span className="block font-black text-[#1d2b3a]">{item.title}</span>
-              <span className="mt-1 block text-[15px] leading-6 text-[#66788a]">{item.description}</span>
+              <span className="block font-black text-[#191919]">{item.title}</span>
+              <span className="mt-1 block text-[15px] leading-6 text-[#9A9A9A]">{item.description}</span>
             </span>
             <input
               type="checkbox"
-              className="mt-1 h-5 w-5 accent-[#0b5cad]"
+              className="mt-1 h-5 w-5 accent-[#1A1A1A]"
               checked={settings[item.key]}
               onChange={(event) => onChange({ ...settings, [item.key]: event.target.checked })}
             />
@@ -1785,7 +1766,7 @@ function SettingsModal({
         ))}
       </div>
       <div className="mt-5 flex justify-end">
-        <button type="button" className="h-11 bg-[#0b5cad] px-5 font-black text-white" onClick={onClose}>
+        <button type="button" className="h-11 bg-[#1A1A1A] px-5 font-black text-white" onClick={onClose}>
           확인
         </button>
       </div>
@@ -1795,11 +1776,11 @@ function SettingsModal({
 
 function Dialog({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#1d2b3a]/35 px-4">
-      <div className="w-full max-w-[520px] border border-[#c9d5e2] bg-white shadow-[0_18px_48px_rgba(29,43,58,0.24)]">
-        <div className="flex items-center justify-between border-b border-[#d8e0e8] px-6 py-4">
-          <h2 className="text-[22px] font-black text-[#1d2b3a]">{title}</h2>
-          <button type="button" className="text-[24px] font-black text-[#66788a]" onClick={onClose} aria-label="닫기">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#191919]/35 px-4">
+      <div className="w-full max-w-[520px] border border-[#E5E5E5] bg-white shadow-[0_18px_48px_rgba(29,43,58,0.24)]">
+        <div className="flex items-center justify-between border-b border-[#E5E5E5] px-6 py-4">
+          <h2 className="text-[22px] font-black text-[#191919]">{title}</h2>
+          <button type="button" className="text-[24px] font-black text-[#9A9A9A]" onClick={onClose} aria-label="닫기">
             ×
           </button>
         </div>
@@ -1812,7 +1793,7 @@ function Dialog({ title, children, onClose }: { title: string; children: ReactNo
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[14px] font-black text-[#425466]">{label}</span>
+      <span className="mb-1.5 block text-[14px] font-black text-[#5C5C5C]">{label}</span>
       {children}
     </label>
   );
@@ -2002,7 +1983,7 @@ export default function App() {
   }, [message]);
 
   return (
-    <div className="min-h-screen bg-white text-[#1d2b3a]">
+    <div className="min-h-screen bg-white text-[#191919]">
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -2014,7 +1995,7 @@ export default function App() {
         onAuth={() => setAuthOpen(true)}
       />
       <HealthContext.Provider value={healthData}>
-        <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+        <Layout>
           {activeTab === 'dashboard' && <DashboardView onTabChange={setActiveTab} />}
           {activeTab === 'records' && <RecordsView />}
           {activeTab === 'history' && <HistoryView />}
@@ -2023,7 +2004,7 @@ export default function App() {
         </Layout>
       </HealthContext.Provider>
       {message && (
-        <div className="fixed bottom-5 right-5 z-50 border border-[#b8cee5] bg-white px-5 py-3 text-[15px] font-bold text-[#1d4f7c] shadow-[0_10px_24px_rgba(29,43,58,0.16)]">
+        <div className="fixed bottom-5 right-5 z-50 border border-[#E5E5E5] bg-white px-5 py-3 text-[15px] font-bold text-[#191919] shadow-[0_10px_24px_rgba(29,43,58,0.16)]">
           {message}
         </div>
       )}
