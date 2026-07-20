@@ -76,6 +76,17 @@ async def analyze_and_save(
     if user_info is None:
         user_info = _fetch_user_info(user_client, user_id, warnings)
 
+    # 1-b. 프로필에 저장된 생활습관(흡연/음주/음주량)을 분석 입력(lifestyle)에 주입.
+    #      검진 업로드 때 매번 묻지 않고, 회원가입/내정보에서 받은 값을 자동 사용한다.
+    #      (ocr에 lifestyle이 이미 있으면 그 값을 우선한다.)
+    _lifestyle = ocr_json.setdefault("lifestyle", {})
+    if user_info.get("smoking") and "smoking" not in _lifestyle:
+        _lifestyle["smoking"] = user_info["smoking"]
+    if user_info.get("drinking") and "drinking" not in _lifestyle:
+        _lifestyle["drinking"] = user_info["drinking"]
+    if user_info.get("alcohol_weekly_g") is not None and "alcohol_weekly_g" not in _lifestyle:
+        _lifestyle["alcohol_weekly_g"] = user_info["alcohol_weekly_g"]
+
     # 2. age 계산 (분석 모듈이 노인층 경고에 사용)
     age = _compute_age(user_info, ocr_json)
     if age is not None:
@@ -165,7 +176,7 @@ def _fetch_user_info(
     try:
         resp = (
             client.table("profiles")
-            .select("name, gender, birth_year, birth_md")
+            .select("name, gender, birth_year, birth_md, smoking, drinking, alcohol_weekly_g")
             .eq("id", user_id)
             .maybe_single()
             .execute()

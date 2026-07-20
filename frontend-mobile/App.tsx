@@ -17,6 +17,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/api';
 import { C, Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
+import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem } from './src/data';
 import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, latestRecommendations, latestComboAnalysis, fetchEgfr, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
@@ -61,6 +62,8 @@ export default function App() {
   const [settings, setSettings] = useState<UserSettings>(initialSettings);
   const [authOpen, setAuthOpen] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [lifestylePrompt, setLifestylePrompt] = useState(false);
+  const [lsDraft, setLsDraft] = useState<Lifestyle>(EMPTY_LIFESTYLE);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -162,7 +165,7 @@ export default function App() {
       const first = Array.isArray(users) ? users[0] : null;
       if (first) {
         const id = first.id ?? first.user_id;
-        setProfile({ id, email: first.email, name: first.name ?? initialProfile.name, gender: Number(first.gender) === 2 ? 2 : 1, birth_year: Number(first.birth_year) || initialProfile.birth_year, birth_md: Number(first.birth_md) || initialProfile.birth_md });
+        setProfile({ id, email: first.email, name: first.name ?? initialProfile.name, gender: Number(first.gender) === 2 ? 2 : 1, birth_year: Number(first.birth_year) || initialProfile.birth_year, birth_md: Number(first.birth_md) || initialProfile.birth_md, smoking: first.smoking ?? null, drinking: first.drinking ?? null, alcohol_weekly_g: first.alcohol_weekly_g ?? null });
         if (!quiet) showToast('프로필 정보를 불러왔습니다.');
         await loadHealthData(id);
       }
@@ -172,7 +175,7 @@ export default function App() {
   const saveProfile = async (next: UserProfile) => {
     try {
       const token = await getAccessToken();
-      const payload = { name: next.name, gender: next.gender, birth_year: next.birth_year, birth_md: next.birth_md };
+      const payload = { name: next.name, gender: next.gender, birth_year: next.birth_year, birth_md: next.birth_md, smoking: next.smoking ?? null, drinking: next.drinking ?? null, alcohol_weekly_g: next.alcohol_weekly_g ?? null };
       if (token && next.id) {
         const saved = await apiFetch(`/users/${next.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
         setProfile({ ...next, id: saved.id ?? next.id, name: saved.name ?? next.name });
@@ -235,7 +238,8 @@ export default function App() {
           const saved = await apiFetch('/users', { method: 'POST', body: JSON.stringify({ name: next.name, gender: next.gender, birth_year: next.birth_year, birth_md: next.birth_md }) });
           setProfile({ ...next, id: saved.id ?? data.user?.id, name: saved.name ?? next.name });
         } catch { setProfile(next); }
-        showToast('회원가입과 프로필 저장이 완료되었습니다.');
+        showToast('회원가입이 완료되었습니다.');
+        setLsDraft(EMPTY_LIFESTYLE); setLifestylePrompt(true);
       } else { setProfile(next); showToast('이메일 인증 후 로그인해주세요.'); }
       setLoggedIn(true); setAuthOpen(false);
     } catch (e) {
@@ -338,7 +342,7 @@ export default function App() {
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
           : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : null} egfr={usingRealData ? egfr : null} comboAnalysis={usingRealData ? comboAnalysis : null} />)}
-        {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} />}
+        {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} />}
         {tab === 'profile' && loggedIn && (
           <ProfileScreen
             profile={profile}
@@ -386,6 +390,31 @@ export default function App() {
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <Text style={{ fontSize: 22, fontWeight: '700', color: T.text1, marginBottom: 20 }}>로그인 / 회원가입</Text>
                 <AuthForm loading={authLoading} onLogin={login} onSignup={signup} onClose={() => setAuthOpen(false)} errorMessage={authError} />
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 회원가입 후 생활습관 문진 — 건너뛰기 가능. 나중에 내정보/업로드에서 수정 가능 */}
+      <Modal transparent visible={lifestylePrompt} animationType="slide" onRequestClose={() => setLifestylePrompt(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+          <Pressable style={s.modalOverlay} onPress={() => setLifestylePrompt(false)}>
+            <Pressable style={s.modalSheet} onPress={(e) => e.stopPropagation()}>
+              <View style={s.modalHandle} />
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                <Text style={{ fontSize: 22, fontWeight: '700', color: T.text1, marginBottom: 6 }}>생활습관 문진</Text>
+                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginBottom: 20 }}>흡연·음주는 검진 수치로 알 수 없어 한 번만 확인합니다. 나중에 내정보에서 바꿀 수 있어요.</Text>
+                <LifestyleForm value={lsDraft} onChange={setLsDraft} gender={profile.gender} />
+                <Pressable
+                  style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
+                  onPress={() => { saveProfile({ ...profile, ...lsDraft }); setLifestylePrompt(false); }}
+                >
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>저장</Text>
+                </Pressable>
+                <Pressable style={{ height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 8 }} onPress={() => setLifestylePrompt(false)}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: T.text3 }}>나중에 하기 (건너뛰기)</Text>
+                </Pressable>
               </ScrollView>
             </Pressable>
           </Pressable>

@@ -57,6 +57,10 @@ export type UserProfile = {
   gender: 1 | 2;
   birth_year: number;
   birth_md?: number;
+  // 생활습관 문진 (회원가입 시 1회, 내정보/업로드에서 수정). 검진 분석에 자동 사용.
+  smoking?: 'never' | 'former' | 'current' | null;
+  drinking?: 'no' | 'yes' | null;
+  alcohol_weekly_g?: number | null;
 };
 
 export type UserSettings = {

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { Eyebrow, FadeInUp, FieldInput, T } from '../components/UI';
+import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { birthDateFromProfile, profileBirthFromDate } from '../data';
 import type { UserProfile, UserSettings } from '../data';
 
@@ -32,6 +33,7 @@ export default function ProfileScreen({
     gender: String(profile.gender),
   });
   const [localSettings, setLocalSettings] = useState(settings);
+  const [lifestyle, setLifestyle] = useState<Lifestyle>({ smoking: profile.smoking ?? null, drinking: profile.drinking ?? null, alcohol_weekly_g: profile.alcohol_weekly_g ?? 0 });
 
   const verifyPassword = () => {
     if (!pwInput.trim()) { setPwError('비밀번호를 입력해주세요.'); return; }
@@ -52,6 +54,9 @@ export default function ProfileScreen({
       gender: Number(form.gender) === 2 ? 2 : 1,
       birth_year: birth.birth_year ?? profile.birth_year,
       birth_md: birth.birth_md ?? profile.birth_md,
+      smoking: lifestyle.smoking,
+      drinking: lifestyle.drinking,
+      alcohol_weekly_g: lifestyle.drinking === 'yes' ? lifestyle.alcohol_weekly_g : 0,
     });
     setEditState('locked');
     Alert.alert('저장 완료', '프로필이 업데이트되었습니다.');
@@ -120,7 +125,9 @@ export default function ProfileScreen({
             <>
               <InfoRow label="이름" value={profile.name} />
               <InfoRow label="성별" value={profile.gender === 1 ? '남성' : '여성'} />
-              <InfoRow label="생년월일" value={birthDateFromProfile(profile)} last />
+              <InfoRow label="생년월일" value={birthDateFromProfile(profile)} />
+              <InfoRow label="흡연" value={smokingLabel(profile.smoking)} />
+              <InfoRow label="음주" value={drinkingLabel(profile.drinking, profile.alcohol_weekly_g)} last />
             </>
           ) : (
             <View style={{ paddingTop: 14 }}>
@@ -153,8 +160,10 @@ export default function ProfileScreen({
                 hint="YYYY-MM-DD 형식으로 입력해주세요."
                 keyboardType="numbers-and-punctuation"
               />
+              <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginTop: 8, marginBottom: 14 }}>생활습관</Text>
+              <LifestyleForm value={lifestyle} onChange={setLifestyle} gender={Number(form.gender) === 2 ? 2 : 1} />
               <Pressable
-                style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}
+                style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 16 }}
                 onPress={handleSave}
               >
                 <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>저장하기</Text>
@@ -301,4 +310,13 @@ function InfoRow({ label, value, last }: { label: string; value: string; last?: 
       <Text style={valueStyle}>{value}</Text>
     </View>
   );
+}
+
+function smokingLabel(s?: string | null) {
+  return s === 'never' ? '비흡연' : s === 'former' ? '과거 흡연' : s === 'current' ? '현재 흡연' : '미입력';
+}
+function drinkingLabel(d?: string | null, g?: number | null) {
+  if (d === 'yes') return `주당 약 ${g ?? 0}g`;
+  if (d === 'no') return '안 마심';
+  return '미입력';
 }
