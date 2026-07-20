@@ -28,23 +28,32 @@ from typing import Any, Optional
 # 위험도가 높을수록 목표가 낮아진다.
 
 LDL_TARGETS: dict[str, dict[str, Any]] = {
+    # 초고위험/고위험은 병력(관상동맥질환 등)이 있어야 판정되는데 검진 데이터로는
+    # 그 병력을 알 수 없다. 따라서 검진만으로 도달 가능한 등급은
+    # diabetes(<100)·moderate(<130)·low(<160)이며, very_high/high는 참고용으로만 둔다.
     "very_high": {
         "target": 55,
         "label": "초고위험군",
-        "desc": "관상동맥질환, 죽상경화성 뇌경색·일과성뇌허혈, 말초동맥질환 등",
+        "desc": "관상동맥질환 (병력 확인 필요 — 검진만으로는 판정 불가)",
     },
     "high": {
         "target": 70,
         "label": "고위험군",
-        "desc": "경동맥 죽상경화, 복부대동맥류, 당뇨병(표적장기 손상 동반)",
+        "desc": "뇌경색·TIA·말초동맥·경동맥질환·복부대동맥류, 또는 당뇨병+"
+                "(표적장기손상·유병10년↑·위험인자 동반) (병력 확인 필요)",
+    },
+    "diabetes": {
+        "target": 100,
+        "label": "당뇨병(합병증 없음)",
+        "desc": "당뇨병, 유병기간 10년 미만·주요 위험인자 없음",
     },
     "moderate": {
-        "target": 100,
+        "target": 130,
         "label": "중등도위험군",
-        "desc": "당뇨병(합병증 없음) 또는 주요 위험인자 2개 이상",
+        "desc": "주요 위험인자 2개 이상 (비당뇨)",
     },
     "low": {
-        "target": 130,
+        "target": 160,
         "label": "저위험군",
         "desc": "주요 위험인자 1개 이하",
     },
@@ -104,11 +113,13 @@ def classify_ldl_risk(
     has_diabetes = bool(user_groups.get("g_diabetes"))
     n_factors, factor_names = _count_risk_factors(checkup, gender, age, user_groups)
 
-    # 등급 판정 (검진 데이터로 도달 가능한 범위)
+    # 등급 판정 (검진 데이터로 도달 가능한 범위, 2022 이상지질혈증 지침 표2-4)
+    #   - 당뇨병: 합병증·유병기간 정보가 없으므로 '당뇨병(무합병증)' 등급 <100로 본다.
+    #     (지침상 유병 10년↑·위험인자 동반 시 고위험<70이나, 검진만으론 판정 불가)
+    #   - 비당뇨: 주요 위험인자 2개 이상=중등도<130, 1개 이하=저위험<160
     if has_diabetes:
-        # 당뇨는 합병증 정보가 없으면 중등도위험군으로 본다.
-        risk_level = "moderate"
-        basis = "당뇨병 (합병증·표적장기 손상 정보 없음)"
+        risk_level = "diabetes"
+        basis = "당뇨병 (유병기간·합병증 정보 없음 → 무합병증 기준 적용)"
     elif n_factors >= 2:
         risk_level = "moderate"
         basis = f"주요 위험인자 {n_factors}개: {', '.join(factor_names)}"

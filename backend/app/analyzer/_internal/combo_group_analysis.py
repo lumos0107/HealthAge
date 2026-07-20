@@ -301,13 +301,70 @@ def _caveats() -> list[str]:
 #   따라서 210g/140g 기준을 곧바로 적용할 수 없어, 음주량이 주어지면 정식 판정하고
 #   없으면 음주 여부만으로 '잠정' 판정한다(provisional=True).
 
-ALCOHOL_WEEKLY_G_THRESHOLD = {1: 210, 2: 140}  # 1=남, 2=여
+# 음주량 3구간 경계 (2025 MASLD 지침 그림2 알고리즘, 주당 순알코올 g).
+#   MASLD:  남 ≤210 / 여 ≤140   (하한 이하)
+#   MetALD: 남 210~420 / 여 140~350   (하한 초과 ~ 상한 이하)
+#   ALD:    남 >420 / 여 >350   (상한 초과)
+# ⚠️ 210/140은 2013 ALD 지침 값이 아니라 2021 NAFLD/2025 MASLD의 MASLD↔MetALD 경계다.
+ALCOHOL_WEEKLY_G_LOWER = {1: 210, 2: 140}  # MASLD ↔ MetALD 경계 (1=남, 2=여)
+ALCOHOL_WEEKLY_G_UPPER = {1: 420, 2: 350}  # MetALD ↔ ALD 경계
 
-# MASLD 심대사 위험인자 (하나라도 있으면 대사이상 동반으로 봄)
-_CARDIOMETABOLIC_GROUPS = (
-    "g_obesity", "g_diabetes", "g_pre_diabetes",
-    "g_hypertension", "g_metabolic_syndrome", "g_dyslipidemia",
-)
+
+def _masld_cardiometabolic_factors(
+    checkup: dict[str, Any],
+    gender: int,
+    user_groups: dict[str, bool],
+) -> list[str]:
+    """2025 MASLD 지침(p18)의 심장대사 위험인자 5종을 검진값에서 직접 판정.
+
+    지침 5개 인자 (하나라도 있으면 대사이상 동반):
+      1) 비만: BMI≥23(한국) 또는 허리둘레 남≥90/여≥85
+      2) 혈당: 공복혈당≥100 또는 HbA1c≥5.7 또는 당뇨(수치·약물)
+      3) 혈압: ≥130/85 또는 고혈압약
+      4) 중성지방: ≥150 또는 이상지질약
+      5) HDL: 남≤40/여≤50 또는 이상지질약
+    ⚠️ 대사증후군은 이 5개 인자의 복합 결과이지 독립 인자가 아니므로 제외한다.
+    """
+    factors: list[str] = []
+
+    # 1) 비만
+    bmi = checkup.get("BMI")
+    if bmi is None:
+        h, w = checkup.get("신장"), checkup.get("체중")
+        if isinstance(h, (int, float)) and isinstance(w, (int, float)) and h > 0:
+            bmi = w / ((h / 100) ** 2)
+    waist = checkup.get("허리둘레")
+    waist_cut = 90 if gender == 1 else 85
+    if (isinstance(bmi, (int, float)) and bmi >= 23) or (
+        isinstance(waist, (int, float)) and waist >= waist_cut
+    ):
+        factors.append("비만/복부비만")
+
+    # 2) 혈당 (당뇨/당뇨전단계 그룹은 수치·HbA1c·약물을 이미 반영)
+    fbs = checkup.get("식전혈당(공복혈당)")
+    if (isinstance(fbs, (int, float)) and fbs >= 100) or \
+            user_groups.get("g_diabetes") or user_groups.get("g_pre_diabetes"):
+        factors.append("혈당 이상")
+
+    # 3) 혈압
+    sbp, dbp = checkup.get("수축기혈압"), checkup.get("이완기혈압")
+    if (isinstance(sbp, (int, float)) and sbp >= 130) or \
+            (isinstance(dbp, (int, float)) and dbp >= 85) or \
+            user_groups.get("g_hypertension"):
+        factors.append("혈압 이상")
+
+    # 4) 중성지방
+    tg = checkup.get("트리글리세라이드")
+    if isinstance(tg, (int, float)) and tg >= 150:
+        factors.append("고중성지방")
+
+    # 5) 낮은 HDL
+    hdl = checkup.get("HDL콜레스테롤")
+    hdl_cut = 40 if gender == 1 else 50
+    if isinstance(hdl, (int, float)) and hdl <= hdl_cut:
+        factors.append("낮은 HDL")
+
+    return factors
 
 
 def classify_fatty_liver_type(
@@ -315,17 +372,16 @@ def classify_fatty_liver_type(
     gender: int,
     user_groups: dict[str, bool],
 ) -> dict[str, Any]:
-    """지방간 의심자의 유형(MASLD / ALD / MetALD)을 구분.
+    """지방간 의심자의 유형(MASLD / MetALD / ALD)을 구분 (2025 MASLD 지침).
+
+    음주량 3구간(주당 순알코올):
+      MASLD  남≤210/여≤140,  MetALD 남210~420/여140~350,  ALD 남>420/여>350
+    음주량이 없으면 음주 여부만으로 잠정 판정(provisional=True).
 
     Args:
-        checkup: 표준 키 검진 dict. 음주량이 있으면 "주당알코올ग" 대신
-                 "주당순알코올(g)" 키로 전달 (없으면 음주여부로 잠정 판정).
+        checkup: 표준 키 검진 dict. 음주량은 "주당순알코올(g)" 키로 전달.
         gender: 1=남, 2=여
         user_groups: classify_user_groups 결과
-
-    Returns:
-        {"applicable": bool, "type": str|None, "provisional": bool,
-         "basis": str, "cardiometabolic_factors": [...], "note": str}
     """
     if not user_groups.get("g_fatty_liver_suspect"):
         return {
@@ -336,28 +392,28 @@ def classify_fatty_liver_type(
             "cardiometabolic_factors": [],
         }
 
-    # 동반된 심대사 위험인자
-    factors = [
-        GROUP_LABELS.get(g, g)
-        for g in _CARDIOMETABOLIC_GROUPS
-        if user_groups.get(g)
-    ]
+    factors = _masld_cardiometabolic_factors(checkup, gender, user_groups)
     has_cardiometabolic = bool(factors)
 
-    # 음주량 (있으면 정식 기준, 없으면 여부로 잠정)
+    lower = ALCOHOL_WEEKLY_G_LOWER.get(gender, 210)
+    upper = ALCOHOL_WEEKLY_G_UPPER.get(gender, 420)
     weekly_g = checkup.get("주당순알코올(g)")
-    threshold = ALCOHOL_WEEKLY_G_THRESHOLD.get(gender, 210)
 
     if isinstance(weekly_g, (int, float)):
-        heavy_drinking = weekly_g > threshold
+        # 정식 3구간 판정
+        if weekly_g > upper:
+            alcohol_band = "high"      # ALD 구간
+        elif weekly_g > lower:
+            alcohol_band = "moderate"  # MetALD 구간
+        else:
+            alcohol_band = "low"       # MASLD 구간
         provisional = False
         basis = (
             f"주당 순알코올 {weekly_g}g "
-            f"({'남' if gender == 1 else '여'} 기준 {threshold}g "
-            f"{'초과' if heavy_drinking else '이하'})"
+            f"({'남' if gender == 1 else '여'} 경계 {lower}/{upper}g)"
         )
     else:
-        # 음주량 미수집 → 음주 여부만으로 잠정 판정
+        # 음주량 미수집 → 음주 여부만으로 잠정 (여부만으론 상·하한 구분 불가)
         drinker = user_groups.get("g_drinker")
         if drinker is None:
             return {
@@ -366,23 +422,26 @@ def classify_fatty_liver_type(
                 "provisional": True,
                 "basis": "음주 정보가 없어 유형을 구분할 수 없습니다.",
                 "cardiometabolic_factors": factors,
-                "note": "음주량을 입력하시면 MASLD/ALD 구분이 가능합니다.",
+                "note": "음주량(주당 순알코올)을 입력하시면 MASLD/MetALD/ALD 구분이 가능합니다.",
             }
-        heavy_drinking = bool(drinker)
+        # 음주자면 최소 MetALD 이상 가능성(잠정), 비음주면 low
+        alcohol_band = "moderate" if drinker else "low"
         provisional = True
         basis = (
             f"음주 여부만 확인됨({'음주' if drinker else '비음주'}) — "
-            f"음주량 미수집으로 {threshold}g 기준을 적용하지 못했습니다."
+            f"음주량 미수집으로 {lower}/{upper}g 구간을 적용하지 못했습니다."
         )
 
-    if heavy_drinking and has_cardiometabolic:
-        fl_type = "MetALD 의심 (대사이상 + 알코올 동반)"
-    elif heavy_drinking:
+    if alcohol_band == "high":
         fl_type = "ALD 의심 (알코올 관련 지방간)"
+    elif alcohol_band == "moderate" and has_cardiometabolic:
+        fl_type = "MetALD 의심 (대사이상 + 유의한 음주 동반)"
+    elif alcohol_band == "moderate":
+        fl_type = "알코올 관련 지방간 가능 (대사 위험인자 미확인)"
     elif has_cardiometabolic:
         fl_type = "MASLD 의심 (대사이상 관련 지방간)"
     else:
-        fl_type = "분류 미상 (대사 위험인자·음주 모두 확인되지 않음)"
+        fl_type = "분류 미상 (대사 위험인자·유의한 음주 모두 확인되지 않음)"
 
     result = {
         "applicable": True,
@@ -393,9 +452,9 @@ def classify_fatty_liver_type(
     }
     if provisional:
         result["note"] = (
-            "음주량(주당 순알코올)이 없어 잠정 분류입니다. "
-            f"정식 기준은 남 {ALCOHOL_WEEKLY_G_THRESHOLD[1]}g/주, "
-            f"여 {ALCOHOL_WEEKLY_G_THRESHOLD[2]}g/주 초과 시 알코올 관련으로 봅니다."
+            "음주량(주당 순알코올)이 없어 잠정 분류입니다. 정식 기준(2025 MASLD 지침): "
+            f"MASLD 남≤{ALCOHOL_WEEKLY_G_LOWER[1]}/여≤{ALCOHOL_WEEKLY_G_LOWER[2]}g·주, "
+            f"MetALD 그 사이, ALD 남>{ALCOHOL_WEEKLY_G_UPPER[1]}/여>{ALCOHOL_WEEKLY_G_UPPER[2]}g·주."
         )
     return result
 

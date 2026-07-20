@@ -64,6 +64,10 @@ THRESHOLDS = {
         "caution": 120,
         "high": 130,
         "very_high": 140,
+        # 노인 위험(고혈압) 임계 상향 — 2026 고혈압 지침 + 약대 자문(p1):
+        #   "65세 이상 SBP≥140, 80세 이상 SBP≥160". 65-79세는 일반과 동일(140),
+        #   80세 이상만 160으로 올려 노인 과다경고를 방지한다.
+        "very_high_elderly_80": 160,
         "unit": "mmHg",
         "meaning_low": "저혈압 - 어지러움, 실신, 낙상 위험",
         "meaning_caution": "주의 혈압 - 생활습관 교정 필요",
@@ -321,7 +325,7 @@ def evaluate_value(
     elif direction == "low_bad":
         result = _evaluate_low_bad(metric, value, config, gender)
     elif direction == "both":
-        result = _evaluate_both(metric, value, config, gender)
+        result = _evaluate_both(metric, value, config, gender, age)
     elif direction == "u_shape":
         result = _evaluate_u_shape(metric, value, config)
     else:
@@ -446,13 +450,13 @@ def _evaluate_low_bad(metric, value, config, gender):
     return result
 
 
-def _evaluate_both(metric, value, config, gender):
+def _evaluate_both(metric, value, config, gender, age=None):
     """양방향 위험"""
     if metric == "혈색소":
         return _evaluate_hemoglobin(value, config, gender)
-    
+
     if metric == "수축기혈압":
-        return _evaluate_sbp(value, config)
+        return _evaluate_sbp(value, config, age)
     
     # 일반 both
     very_low = _get_gender_val(config, "very_low", gender)
@@ -510,26 +514,34 @@ def _evaluate_hemoglobin(value, config, gender):
     return _make_result("혈색소", value, status, None, config, "both")
 
 
-def _evaluate_sbp(value, config):
-    """수축기혈압 평가 - 주의 구간(120-129) 처리"""
+def _evaluate_sbp(value, config, age=None):
+    """수축기혈압 평가 - 주의 구간(120-129) 처리 + 노인(80+) 위험 임계 상향."""
     very_low = config.get("very_low", 90)
     caution = config.get("caution", 120)
     high = config.get("high", 130)
     very_high = config.get("very_high", 140)
-    
+
+    # 80세 이상은 위험(고혈압) 임계를 160으로 상향 (2026 지침 + 약대 자문).
+    # 130-139 전단계·120-129 주의 구간은 그대로 두고, 140-159는 노인에서
+    # '위험'이 아니라 '전단계(high)'로 완화해 과다경고를 막는다.
+    elderly_applied = False
+    if age is not None and age >= 80:
+        very_high = config.get("very_high_elderly_80", 160)
+        elderly_applied = True
+
     if value < very_low:
         status = "very_low"
     elif value >= very_high:
         status = "very_high"
     elif value >= high:
-        status = "high"  # 고혈압 전단계 (130-139)
+        status = "high"  # 고혈압 전단계 (130-139), 노인은 140-159도 여기
     elif value >= caution:
         status = "caution"  # 주의 혈압 (120-129)
     else:
         status = "normal"
-    
+
     result = _make_result("수축기혈압", value, status, None, config, "both")
-    
+
     meaning_map = {
         "very_low": config.get("meaning_low"),
         "caution": config.get("meaning_caution"),
@@ -538,7 +550,10 @@ def _evaluate_sbp(value, config):
     }
     if status in meaning_map and meaning_map[status]:
         result["meaning"] = meaning_map[status]
-    
+
+    if elderly_applied and status in ("high", "caution"):
+        result["meaning"] += " ※ 80세 이상 - 위험 기준을 160으로 상향 적용"
+
     return result
 
 
