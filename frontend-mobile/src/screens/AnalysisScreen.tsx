@@ -21,9 +21,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const flIndices = fattyLiver?.indices ?? null;
   const singleGroups = comboAnalysis?.single_groups ?? null;
   const ascvd = comboAnalysis?.ascvd_simulation ?? null;
-  // FLI/HSI level → 상태색 (백엔드 interpretation 문구를 그대로 쓰고, 색만 구간에 맞춘다)
-  const levelColor = (level: string) => level === 'low' ? T.success : level === 'high' ? T.danger : T.warn;
-  const levelBg = (level: string) => level === 'low' ? T.successBg : level === 'high' ? T.dangerBg : T.warnBg;
+  const calculators = comboAnalysis?.calculators ?? null;
+  // FLI/HSI·계산기 level → 상태색 (백엔드 interpretation 문구를 그대로 쓰고, 색만 구간에 맞춘다)
+  const levelColor = (level: string) => level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
+  const levelBg = (level: string) => level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
   const report = reports[yearIdx];
 
@@ -207,15 +208,15 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* ③-2 복합 위험 패턴(조합 그룹) — 공단 표본에서 이 조합이 얼마나 함께 나타나는지 보여준다.
-          O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도다. */}
+      {/* ③-2 함께 나타나는 조합(조합 그룹) — 공단 표본 기준 '동반 경향(기술통계)'이며 위험도가 아니다.
+          O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>복합 위험 패턴</Text>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>함께 나타나는 조합 (동반 경향)</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
-            여러 위험 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
-            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교했어요.
+            여러 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
+            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 동반 경향(통계)이며, 위험도 자체는 아니에요. 위험 정량은 아래 계산기(ASCVD 등)를 참고하세요.
           </Text>
 
           {comboGroups.matched.slice(0, 4).map((c, i) => (
@@ -223,8 +224,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{c.combo_name}</Text>
                 {c.is_ascvd_risk && (
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.danger, backgroundColor: '#FFF0F0', paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                    심혈관 고위험
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.text3, backgroundColor: '#EFEFEF', paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                    심혈관 지표 참고
                   </Text>
                 )}
               </View>
@@ -304,6 +305,44 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           )}
           {!!flIndices.disclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{flIndices.disclaimer}</Text>
+          )}
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* ③-3b 수치 계산기(TyG·Non-HDL-C·BARD) — 검진 기본검사로 산출하는 검증된 정량 지표.
+          값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
+      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && (
+        <FadeInUp delay={216}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>대사·지질·간 계산기</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
+          {([
+            { title: 'TyG 지수', sub: '인슐린저항성', idx: calculators.tyg },
+            { title: 'Non-HDL 콜레스테롤', sub: '죽상형성 지단백', idx: calculators.non_hdl_c },
+            { title: 'BARD 점수', sub: '간섬유화 배제', idx: calculators.bard },
+          ] as const).filter((r) => r.idx).map((r, i) => (
+            <View key={r.title} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{r.title}</Text>
+                  <Text style={{ fontSize: 11, color: T.text3, flexShrink: 1 }}>{r.sub}</Text>
+                </View>
+                <View style={{ backgroundColor: levelBg(r.idx!.level), paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: levelColor(r.idx!.level) }}>{r.idx!.interpretation}</Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{r.idx!.value}</Text>
+              {!!r.idx!.formula && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{r.idx!.formula}</Text>}
+              {!!r.idx!.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {r.idx!.cutoffs}</Text>}
+              {!!r.idx!.note && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{r.idx!.note}</Text>}
+            </View>
+          ))}
+          {!!calculators.unavailable?.length && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>· 계산 불가: {calculators.unavailable.join(' / ')}</Text>
+          )}
+          {!!calculators.disclaimer && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{calculators.disclaimer}</Text>
           )}
         </View>
         </FadeInUp>

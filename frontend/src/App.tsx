@@ -1078,7 +1078,7 @@ function AnalysisView() {
 // 구간(level/severity) → 상태 글자색. 백엔드 해석 문구는 그대로 쓰고 색만 구간에 맞춘다.
 function levelTextClass(level: string) {
   if (level === 'low' || level === 'normal') return 'text-[#3CB371]';
-  if (level === 'high' || level === 'danger') return 'text-[#F44336]';
+  if (level === 'high' || level === 'danger' || level === 'very_high') return 'text-[#F44336]';
   return 'text-[#FF8A3D]';
 }
 
@@ -1091,6 +1091,7 @@ function BackendAnalysisBoards() {
   const flIndices = fattyLiver?.indices ?? null;
   const singleGroups = combo?.single_groups ?? null;
   const ascvd = combo?.ascvd_simulation ?? null;
+  const calculators = combo?.calculators ?? null;
   const recs = recommendations?.recommendations;
 
   return (
@@ -1120,19 +1121,20 @@ function BackendAnalysisBoards() {
         </Board>
       )}
 
-      {/* 복합 위험 패턴(조합 그룹) — 공단 표본에서 이 조합이 얼마나 함께 나타나는지 O/E비와 함께 보여준다 */}
+      {/* 함께 나타나는 조합(조합 그룹) — 공단 표본 기준 '동반 경향(기술통계)'이며 위험도가 아니다.
+          위험 정량 해석은 아래 계산기(ASCVD 등)가 담당한다 — 여기서는 얼마나 자주 동반하는지만 보여준다 */}
       {comboGroups && comboGroups.matched_count > 0 && (
-        <Board title="복합 위험 패턴">
+        <Board title="함께 나타나는 조합 (동반 경향)">
           <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">
-            여러 위험 요인이 함께 나타나는 조합입니다. 같은 조합인 분들이 국민건강보험공단 표본
-            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교했습니다.
+            여러 요인이 함께 나타나는 조합입니다. 같은 조합인 분들이 국민건강보험공단 표본
+            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 <span className="font-bold">동반 경향(통계)</span>이며, 위험도 자체는 아니에요. 위험 정량은 아래 계산기(ASCVD 등)를 참고하세요.
           </p>
           <div className="divide-y divide-[#E5E5E5]">
             {comboGroups.matched.slice(0, 4).map((c) => (
               <div key={c.combo_name} className="py-3">
                 <p className="flex items-center gap-2">
                   <span className="font-black text-[#191919]">{c.combo_name}</span>
-                  {c.is_ascvd_risk && <span className="rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold text-[#F44336]">심혈관 고위험</span>}
+                  {c.is_ascvd_risk && <span className="rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold text-[#9A9A9A]">심혈관 지표 참고</span>}
                 </p>
                 <p className="mt-1 text-[14px] leading-6 text-[#5C5C5C]">{c.meaning}</p>
                 {c.population && (
@@ -1195,6 +1197,38 @@ function BackendAnalysisBoards() {
             <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {flIndices.unavailable.join(' / ')}</p>
           )}
           {flIndices.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{flIndices.disclaimer}</p>}
+        </Board>
+      )}
+
+      {/* 수치 계산기(TyG·Non-HDL-C·BARD) — 검진 수치로 산출하는 검증된 정량 지표. 값·구간·해석 전부 백엔드가 만들어 보내준다 */}
+      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && (
+        <Board title="대사·지질·간 계산기">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 기본검사 수치만으로 산출하는 검증된 참고 지표입니다.</p>
+          <div className="divide-y divide-[#E5E5E5]">
+            {([
+              { title: 'TyG 지수', sub: '인슐린저항성', idx: calculators.tyg },
+              { title: 'Non-HDL 콜레스테롤', sub: '죽상형성 지단백', idx: calculators.non_hdl_c },
+              { title: 'BARD 점수', sub: '간섬유화 배제', idx: calculators.bard },
+            ] as const).filter((row) => row.idx).map((row) => (
+              <div key={row.title} className="py-3">
+                <p className="flex items-center justify-between gap-3">
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-black text-[#191919]">{row.title}</span>
+                    <span className="text-[12px] text-[#9A9A9A]">{row.sub}</span>
+                  </span>
+                  <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(row.idx!.level)}`}>{row.idx!.interpretation}</span>
+                </p>
+                <p className="mt-1 text-[24px] font-black text-[#191919]">{row.idx!.value}</p>
+                {row.idx!.formula && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.formula}</p>}
+                {row.idx!.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {row.idx!.cutoffs}</p>}
+                {row.idx!.note && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.note}</p>}
+              </div>
+            ))}
+          </div>
+          {Boolean(calculators.unavailable?.length) && (
+            <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {calculators.unavailable.join(' / ')}</p>
+          )}
+          {calculators.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{calculators.disclaimer}</p>}
         </Board>
       )}
 

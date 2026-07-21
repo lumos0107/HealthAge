@@ -160,6 +160,26 @@ export type RealAscvdSimulation = {
   how_to_read?: string;
 };
 
+// 추가 수치 계산기(TyG·Non-HDL-C·BARD) — 값·구간·해석·기준 전부 백엔드가 내려준다.
+export type RealCalcResult = {
+  value: number;
+  level: 'low' | 'intermediate' | 'borderline' | 'high' | 'very_high';
+  interpretation: string;
+  cutoffs?: string;
+  formula?: string;
+  note?: string;
+  components?: string[];
+} | null;
+
+export type RealCalculators = {
+  tyg: RealCalcResult;
+  non_hdl_c: RealCalcResult;
+  bard: RealCalcResult;
+  unavailable: string[];
+  disclaimer: string;
+  error?: string;
+} | null;
+
 export type RealComboAnalysis = {
   combo_groups?: {
     matched: RealComboGroup[];
@@ -186,9 +206,10 @@ export type RealComboAnalysis = {
       error?: string;
     } | null;
   } | null;
-  // ⚠️ 아래 두 필드는 이번(08 이후) 분석부터 저장된다 — 구버전 분석에는 없다 → null 처리.
+  // ⚠️ 아래 필드들은 최신 분석부터 저장된다 — 구버전 분석에는 없다 → null 처리.
   single_groups?: RealSingleGroup[] | null;
   ascvd_simulation?: RealAscvdSimulation | null;
+  calculators?: RealCalculators;
   disclaimer?: string;
   error?: string;
 };
