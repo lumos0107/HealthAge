@@ -1082,8 +1082,20 @@ function levelTextClass(level: string) {
   return 'text-[#FF8A3D]';
 }
 
+/** 도메인 섹션 헤더 — 분석 카드를 신장/간/대사·지질/심혈관 등 도메인으로 묶어 읽히게 한다.
+ *  카드를 부수지 않고 헤더만 얹는 가벼운 그룹핑. 해당 도메인 카드가 없으면 헤더도 그리지 않는다. */
+function DomainHeader({ icon, title }: { icon: string; title: string }) {
+  return (
+    <div className="mb-1 mt-4 flex items-center gap-2 px-1 first:mt-0">
+      <span className="text-[17px]">{icon}</span>
+      <h3 className="text-[15px] font-black tracking-[-0.02em] text-[#191919]">{title}</h3>
+    </div>
+  );
+}
+
 /** 백엔드 분석 모듈 카드 모음 — 모바일 분석 탭과 동일 항목(eGFR·CrCl, 조합그룹, 지방간 유형,
- *  FLI/HSI, 집단군 판정 13, ASCVD 참고 시뮬, 맞춤 권장사항). 데이터가 없으면 카드 자체를 그리지 않는다. */
+ *  FLI/HSI, 집단군 판정 13, ASCVD 참고 시뮬, 맞춤 권장사항). 데이터가 없으면 카드 자체를 그리지 않는다.
+ *  도메인(신장/간/대사·지질/심혈관/통계참고)별 섹션 헤더로 묶어 배치한다. */
 function BackendAnalysisBoards() {
   const { combo, egfr, recommendations } = useHealth();
   const comboGroups = combo?.combo_groups ?? null;
@@ -1096,6 +1108,8 @@ function BackendAnalysisBoards() {
 
   return (
     <>
+      {/* 🩺 신장 — eGFR·CrCl */}
+      {egfr && <DomainHeader icon="🩺" title="신장 기능" />}
       {/* 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
       {egfr && (
         <Board title="신장 기능 (eGFR)">
@@ -1121,13 +1135,82 @@ function BackendAnalysisBoards() {
         </Board>
       )}
 
+      {/* 🫁 간 — FLI/HSI 보조지표 */}
+      {flIndices && (flIndices.fli || flIndices.hsi) && <DomainHeader icon="🫁" title="간" />}
+      {/* 지방간 보조지표(FLI·HSI) — 값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다 */}
+      {flIndices && (flIndices.fli || flIndices.hsi) && (
+        <Board title="지방간 보조지표">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표입니다.</p>
+          <div className="divide-y divide-[#E5E5E5]">
+            {([
+              { title: 'FLI', idx: flIndices.fli },
+              { title: 'HSI', idx: flIndices.hsi },
+            ] as const).filter((row) => row.idx).map((row) => (
+              <div key={row.title} className="py-3">
+                <p className="flex items-center justify-between gap-3">
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-black text-[#191919]">{row.title}</span>
+                    {row.idx!.formula && <span className="text-[12px] text-[#9A9A9A]">{row.idx!.formula}</span>}
+                  </span>
+                  <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(row.idx!.level)}`}>{row.idx!.interpretation}</span>
+                </p>
+                <p className="mt-1 text-[24px] font-black text-[#191919]">{row.idx!.value}</p>
+                {row.idx!.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {row.idx!.cutoffs}</p>}
+              </div>
+            ))}
+          </div>
+          {Boolean(flIndices.unavailable?.length) && (
+            <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {flIndices.unavailable.join(' / ')}</p>
+          )}
+          {flIndices.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{flIndices.disclaimer}</p>}
+        </Board>
+      )}
+
+      {/* ⚖️ 대사·지질 — 검증된 수치 계산기 */}
+      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && <DomainHeader icon="⚖️" title="대사·지질" />}
+      {/* 수치 계산기(TyG·Non-HDL-C·BARD) — 검진 수치로 산출하는 검증된 정량 지표. 값·구간·해석 전부 백엔드가 만들어 보내준다 */}
+      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && (
+        <Board title="대사·지질·간 계산기">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 기본검사 수치만으로 산출하는 검증된 참고 지표입니다.</p>
+          <div className="divide-y divide-[#E5E5E5]">
+            {([
+              { title: 'TyG 지수', sub: '인슐린저항성', idx: calculators.tyg },
+              { title: 'Non-HDL 콜레스테롤', sub: '죽상형성 지단백', idx: calculators.non_hdl_c },
+              { title: 'BARD 점수', sub: '간섬유화 배제', idx: calculators.bard },
+            ] as const).filter((row) => row.idx).map((row) => (
+              <div key={row.title} className="py-3">
+                <p className="flex items-center justify-between gap-3">
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-black text-[#191919]">{row.title}</span>
+                    <span className="text-[12px] text-[#9A9A9A]">{row.sub}</span>
+                  </span>
+                  <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(row.idx!.level)}`}>{row.idx!.interpretation}</span>
+                </p>
+                <p className="mt-1 text-[24px] font-black text-[#191919]">{row.idx!.value}</p>
+                {row.idx!.formula && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.formula}</p>}
+                {row.idx!.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {row.idx!.cutoffs}</p>}
+                {row.idx!.note && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.note}</p>}
+              </div>
+            ))}
+          </div>
+          {Boolean(calculators.unavailable?.length) && (
+            <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {calculators.unavailable.join(' / ')}</p>
+          )}
+          {calculators.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{calculators.disclaimer}</p>}
+        </Board>
+      )}
+
+      {/* 📊 함께 나타나는 패턴 · 집단군 (통계 참고) — 위험 정량이 아닌 동반·판정 통계 묶음 */}
+      {((comboGroups && comboGroups.matched_count > 0) || Boolean(singleGroups?.length)) && (
+        <DomainHeader icon="📊" title="함께 나타나는 패턴 · 집단군 (통계 참고)" />
+      )}
       {/* 함께 나타나는 조합(조합 그룹) — 공단 표본 기준 '동반 경향(기술통계)'이며 위험도가 아니다.
-          위험 정량 해석은 아래 계산기(ASCVD 등)가 담당한다 — 여기서는 얼마나 자주 동반하는지만 보여준다 */}
+          위험 정량 해석은 계산기(ASCVD 등)가 담당한다 — 여기서는 얼마나 자주 동반하는지만 보여준다 */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <Board title="함께 나타나는 조합 (동반 경향)">
           <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">
             여러 요인이 함께 나타나는 조합입니다. 같은 조합인 분들이 국민건강보험공단 표본
-            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 <span className="font-bold">동반 경향(통계)</span>이며, 위험도 자체는 아니에요. 위험 정량은 아래 계산기(ASCVD 등)를 참고하세요.
+            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 <span className="font-bold">동반 경향(통계)</span>이며, 위험도 자체는 아니에요. 위험 정량은 위 계산기(ASCVD 등)를 참고하세요.
           </p>
           <div className="divide-y divide-[#E5E5E5]">
             {comboGroups.matched.slice(0, 4).map((c) => (
@@ -1171,67 +1254,6 @@ function BackendAnalysisBoards() {
         </Board>
       )}
 
-      {/* 지방간 보조지표(FLI·HSI) — 값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다 */}
-      {flIndices && (flIndices.fli || flIndices.hsi) && (
-        <Board title="지방간 보조지표">
-          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표입니다.</p>
-          <div className="divide-y divide-[#E5E5E5]">
-            {([
-              { title: 'FLI', idx: flIndices.fli },
-              { title: 'HSI', idx: flIndices.hsi },
-            ] as const).filter((row) => row.idx).map((row) => (
-              <div key={row.title} className="py-3">
-                <p className="flex items-center justify-between gap-3">
-                  <span className="flex items-baseline gap-2">
-                    <span className="font-black text-[#191919]">{row.title}</span>
-                    {row.idx!.formula && <span className="text-[12px] text-[#9A9A9A]">{row.idx!.formula}</span>}
-                  </span>
-                  <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(row.idx!.level)}`}>{row.idx!.interpretation}</span>
-                </p>
-                <p className="mt-1 text-[24px] font-black text-[#191919]">{row.idx!.value}</p>
-                {row.idx!.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {row.idx!.cutoffs}</p>}
-              </div>
-            ))}
-          </div>
-          {Boolean(flIndices.unavailable?.length) && (
-            <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {flIndices.unavailable.join(' / ')}</p>
-          )}
-          {flIndices.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{flIndices.disclaimer}</p>}
-        </Board>
-      )}
-
-      {/* 수치 계산기(TyG·Non-HDL-C·BARD) — 검진 수치로 산출하는 검증된 정량 지표. 값·구간·해석 전부 백엔드가 만들어 보내준다 */}
-      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && (
-        <Board title="대사·지질·간 계산기">
-          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 기본검사 수치만으로 산출하는 검증된 참고 지표입니다.</p>
-          <div className="divide-y divide-[#E5E5E5]">
-            {([
-              { title: 'TyG 지수', sub: '인슐린저항성', idx: calculators.tyg },
-              { title: 'Non-HDL 콜레스테롤', sub: '죽상형성 지단백', idx: calculators.non_hdl_c },
-              { title: 'BARD 점수', sub: '간섬유화 배제', idx: calculators.bard },
-            ] as const).filter((row) => row.idx).map((row) => (
-              <div key={row.title} className="py-3">
-                <p className="flex items-center justify-between gap-3">
-                  <span className="flex items-baseline gap-2">
-                    <span className="font-black text-[#191919]">{row.title}</span>
-                    <span className="text-[12px] text-[#9A9A9A]">{row.sub}</span>
-                  </span>
-                  <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(row.idx!.level)}`}>{row.idx!.interpretation}</span>
-                </p>
-                <p className="mt-1 text-[24px] font-black text-[#191919]">{row.idx!.value}</p>
-                {row.idx!.formula && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.formula}</p>}
-                {row.idx!.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {row.idx!.cutoffs}</p>}
-                {row.idx!.note && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.note}</p>}
-              </div>
-            ))}
-          </div>
-          {Boolean(calculators.unavailable?.length) && (
-            <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {calculators.unavailable.join(' / ')}</p>
-          )}
-          {calculators.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{calculators.disclaimer}</p>}
-        </Board>
-      )}
-
       {/* 집단군 판정(13개) — 판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다 */}
       {Boolean(singleGroups?.length) && (
         <Board title="집단군 판정">
@@ -1265,6 +1287,8 @@ function BackendAnalysisBoards() {
         </Board>
       )}
 
+      {/* 🫀 심혈관 — ASCVD 위험 계산기 */}
+      {ascvd?.available && ascvd.risk_percent != null && <DomainHeader icon="🫀" title="심혈관" />}
       {/* ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님). 계산 불가면 카드를 그리지 않는다 */}
       {ascvd?.available && ascvd.risk_percent != null && (
         <Board title="심혈관 위험 참고 시뮬레이션">
