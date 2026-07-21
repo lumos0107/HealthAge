@@ -336,6 +336,14 @@ def run_group_analysis(
     if isinstance(combo_result.get("fatty_liver"), dict):
         combo_result["fatty_liver"]["indices"] = fl_indices
 
+    # 5-2. 추가 수치 계산기 (TyG·Non-HDL-C·BARD) — FLI/HSI와 같은 축의 참고 지표.
+    from .calculators import additional_calculators
+
+    try:
+        extra_calc = additional_calculators(checkup, user_groups)
+    except Exception as e:
+        extra_calc = {"error": f"추가 계산기 실패: {type(e).__name__}: {e}"}
+
     # 6. ASCVD 10년 위험도 — 참고용 시뮬레이션 (한국인 미검증, 진단 아님)
     from .ascvd import run_ascvd_simulation
 
@@ -368,6 +376,7 @@ def run_group_analysis(
         "rarity": rarity,
         "combo_analysis": combo_result,
         "ldl_target": ldl_target,
+        "calculators": extra_calc,
         "ascvd_simulation": ascvd,
         "_meta": {
             "analyzed_at": datetime.now().isoformat(timespec="seconds"),

@@ -130,6 +130,7 @@ async def analyze_and_save(
             group_analysis.get("user_groups") or {}
         )
         combo_analysis["ascvd_simulation"] = group_analysis.get("ascvd_simulation")
+        combo_analysis["calculators"] = group_analysis.get("calculators")
     if "warnings" in result:
         warnings.extend(result.get("warnings", []))
 
