@@ -340,7 +340,7 @@ def run_group_analysis(
     from .calculators import additional_calculators
 
     try:
-        extra_calc = additional_calculators(checkup, user_groups)
+        extra_calc = additional_calculators(checkup, gender, age, user_groups, medications)
     except Exception as e:
         extra_calc = {"error": f"추가 계산기 실패: {type(e).__name__}: {e}"}
 
