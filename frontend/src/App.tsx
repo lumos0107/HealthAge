@@ -12,6 +12,7 @@ import {
 import { getAccessToken, supabase, supabaseConfigured } from './api/supabaseClient';
 import {
   healthApi,
+  type ApiCalcItem,
   type ApiComboAnalysis,
   type ApiComprehensiveReport,
   type ApiEgfrResponse,
@@ -1077,9 +1078,34 @@ function AnalysisView() {
 
 // 구간(level/severity) → 상태 글자색. 백엔드 해석 문구는 그대로 쓰고 색만 구간에 맞춘다.
 function levelTextClass(level: string) {
+  if (level === 'info') return 'text-[#9A9A9A]';
   if (level === 'low' || level === 'normal') return 'text-[#3CB371]';
   if (level === 'high' || level === 'danger' || level === 'very_high') return 'text-[#F44336]';
   return 'text-[#FF8A3D]';
+}
+
+/** 계산기 item 리스트를 공통 행 스타일로 렌더 — 값·상태뱃지·공식·기준·비고. 30년 위험은 함께 표기. */
+function CalcRows({ items }: { items: ApiCalcItem[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="divide-y divide-[#E5E5E5]">
+      {items.map((it) => (
+        <div key={it.key} className="py-3">
+          <p className="flex items-center justify-between gap-3">
+            <span className="font-black text-[#191919]">{it.title}</span>
+            <span className={`shrink-0 rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(it.level)}`}>{it.interpretation}</span>
+          </p>
+          <p className="mt-1 text-[24px] font-black text-[#191919]">
+            {it.value}{it.unit ?? ''}
+            {it.value_30yr != null && <span className="text-[14px] font-bold text-[#9A9A9A]"> · 30년 {it.value_30yr}%</span>}
+          </p>
+          {it.formula && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{it.formula}</p>}
+          {it.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {it.cutoffs}</p>}
+          {it.note && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{it.note}</p>}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /** 도메인 섹션 헤더 — 분석 카드를 신장/간/대사·지질/심혈관 등 도메인으로 묶어 읽히게 한다.
@@ -1103,7 +1129,13 @@ function BackendAnalysisBoards() {
   const flIndices = fattyLiver?.indices ?? null;
   const singleGroups = combo?.single_groups ?? null;
   const ascvd = combo?.ascvd_simulation ?? null;
-  const calculators = combo?.calculators ?? null;
+  // 계산기 items를 도메인 카테고리로 나눠 각 섹션에 배치한다.
+  const calcItems = combo?.calculators?.items ?? [];
+  const calcOf = (cats: string[]) => calcItems.filter((it) => cats.includes(it.category));
+  const metabolicCalcs = calcOf(['lipid', 'insulin', 'adiposity', 'bp']);
+  const liverCalcs = calcOf(['liver']);
+  const cvCalcs = calcOf(['cardiovascular']);
+  const calcDisclaimer = combo?.calculators?.disclaimer;
   const recs = recommendations?.recommendations;
 
   return (
@@ -1135,8 +1167,8 @@ function BackendAnalysisBoards() {
         </Board>
       )}
 
-      {/* 🫁 간 — FLI/HSI 보조지표 */}
-      {flIndices && (flIndices.fli || flIndices.hsi) && <DomainHeader icon="🫁" title="간" />}
+      {/* 🫁 간 — FLI/HSI 보조지표 + 간 계산기(BARD·De Ritis) */}
+      {((flIndices && (flIndices.fli || flIndices.hsi)) || liverCalcs.length > 0) && <DomainHeader icon="🫁" title="간" />}
       {/* 지방간 보조지표(FLI·HSI) — 값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다 */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <Board title="지방간 보조지표">
@@ -1166,37 +1198,20 @@ function BackendAnalysisBoards() {
         </Board>
       )}
 
-      {/* ⚖️ 대사·지질 — 검증된 수치 계산기 */}
-      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && <DomainHeader icon="⚖️" title="대사·지질" />}
-      {/* 수치 계산기(TyG·Non-HDL-C·BARD) — 검진 수치로 산출하는 검증된 정량 지표. 값·구간·해석 전부 백엔드가 만들어 보내준다 */}
-      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && (
-        <Board title="대사·지질·간 계산기">
+      {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
+      {liverCalcs.length > 0 && (
+        <Board title="간 계산기">
+          <CalcRows items={liverCalcs} />
+        </Board>
+      )}
+
+      {/* ⚖️ 대사·지질 — 검증된 수치 계산기(지질비·인슐린저항성·내장지방·혈압) */}
+      {metabolicCalcs.length > 0 && <DomainHeader icon="⚖️" title="대사·지질" />}
+      {metabolicCalcs.length > 0 && (
+        <Board title="대사·지질 계산기">
           <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 기본검사 수치만으로 산출하는 검증된 참고 지표입니다.</p>
-          <div className="divide-y divide-[#E5E5E5]">
-            {([
-              { title: 'TyG 지수', sub: '인슐린저항성', idx: calculators.tyg },
-              { title: 'Non-HDL 콜레스테롤', sub: '죽상형성 지단백', idx: calculators.non_hdl_c },
-              { title: 'BARD 점수', sub: '간섬유화 배제', idx: calculators.bard },
-            ] as const).filter((row) => row.idx).map((row) => (
-              <div key={row.title} className="py-3">
-                <p className="flex items-center justify-between gap-3">
-                  <span className="flex items-baseline gap-2">
-                    <span className="font-black text-[#191919]">{row.title}</span>
-                    <span className="text-[12px] text-[#9A9A9A]">{row.sub}</span>
-                  </span>
-                  <span className={`rounded-full bg-[#EFEFEF] px-3 py-1 text-[12px] font-semibold ${levelTextClass(row.idx!.level)}`}>{row.idx!.interpretation}</span>
-                </p>
-                <p className="mt-1 text-[24px] font-black text-[#191919]">{row.idx!.value}</p>
-                {row.idx!.formula && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.formula}</p>}
-                {row.idx!.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {row.idx!.cutoffs}</p>}
-                {row.idx!.note && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{row.idx!.note}</p>}
-              </div>
-            ))}
-          </div>
-          {Boolean(calculators.unavailable?.length) && (
-            <p className="mt-2 text-[12px] leading-6 text-[#9A9A9A]">· 계산 불가: {calculators.unavailable.join(' / ')}</p>
-          )}
-          {calculators.disclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{calculators.disclaimer}</p>}
+          <CalcRows items={metabolicCalcs} />
+          {calcDisclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{calcDisclaimer}</p>}
         </Board>
       )}
 
@@ -1287,8 +1302,8 @@ function BackendAnalysisBoards() {
         </Board>
       )}
 
-      {/* 🫀 심혈관 — ASCVD 위험 계산기 */}
-      {ascvd?.available && ascvd.risk_percent != null && <DomainHeader icon="🫀" title="심혈관" />}
+      {/* 🫀 심혈관 — ASCVD(PCE) + PREVENT·Framingham 등 위험엔진 */}
+      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader icon="🫀" title="심혈관" />}
       {/* ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님). 계산 불가면 카드를 그리지 않는다 */}
       {ascvd?.available && ascvd.risk_percent != null && (
         <Board title="심혈관 위험 참고 시뮬레이션">
@@ -1324,6 +1339,14 @@ function BackendAnalysisBoards() {
               ))}
             </div>
           )}
+        </Board>
+      )}
+
+      {/* 심혈관 위험엔진 (PREVENT·Framingham) — ASCVD(PCE)와 함께 여러 검증 엔진을 나란히 제시 */}
+      {cvCalcs.length > 0 && (
+        <Board title="심혈관 위험엔진">
+          <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검증된 위험 계산식으로 산출한 10년(일부 30년) 심혈관 위험입니다. 서구 코호트 기반 참고용입니다.</p>
+          <CalcRows items={cvCalcs} />
         </Board>
       )}
 

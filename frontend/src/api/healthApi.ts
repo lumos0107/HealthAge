@@ -270,21 +270,25 @@ export type ApiAscvdSimulation = {
   how_to_read?: string;
 };
 
-// 추가 수치 계산기(TyG·Non-HDL-C·BARD) — 값·구간·해석·기준 전부 백엔드가 내려준다.
-export type ApiCalcResult = {
+// 추가 수치 계산기 — 값·구간·해석·기준 전부 백엔드가 내려준다.
+// category: lipid / insulin / adiposity / liver / bp / cardiovascular
+export type ApiCalcItem = {
+  key: string;
+  title: string;
+  category: 'lipid' | 'insulin' | 'adiposity' | 'liver' | 'bp' | 'cardiovascular';
   value: number;
-  level: 'low' | 'intermediate' | 'borderline' | 'high' | 'very_high';
+  unit?: string;
+  level: 'low' | 'intermediate' | 'borderline' | 'high' | 'very_high' | 'info';
   interpretation: string;
   cutoffs?: string;
   formula?: string;
   note?: string;
+  value_30yr?: number;
   components?: string[];
-} | null;
+};
 
 export type ApiCalculators = {
-  tyg: ApiCalcResult;
-  non_hdl_c: ApiCalcResult;
-  bard: ApiCalcResult;
+  items: ApiCalcItem[];
   unavailable: string[];
   disclaimer: string;
   error?: string;

@@ -4,7 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { computeGroupsForReport, directionLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import type { RealRecommendations, RealEgfr, RealComboAnalysis } from '../health';
+import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem } from '../health';
 
 /** 도메인 섹션 헤더 — 분석 카드를 신장/간/대사·지질/심혈관/통계참고로 묶어 읽히게 한다.
  *  카드를 부수지 않고 헤더만 얹는 가벼운 그룹핑. 해당 카드가 없으면 헤더도 그리지 않는다. */
@@ -14,6 +14,35 @@ function DomainHeader({ icon, title }: { icon: string; title: string }) {
       <Text style={{ fontSize: 15 }}>{icon}</Text>
       <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>{title}</Text>
     </View>
+  );
+}
+
+// 계산기 level → 상태색 (info=중립 회색, 나머지는 구간색)
+const calcLevelColor = (level: string) => level === 'info' ? T.text3 : level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
+const calcLevelBg = (level: string) => level === 'info' ? '#EFEFEF' : level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
+
+/** 계산기 item 리스트를 공통 행으로 렌더 — 값·상태뱃지·공식·기준·비고. 30년 위험 함께 표기. */
+function CalcRows({ items }: { items: RealCalcItem[] }) {
+  if (!items.length) return null;
+  return (
+    <>
+      {items.map((it, i) => (
+        <View key={it.key} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{it.title}</Text>
+            <View style={{ backgroundColor: calcLevelBg(it.level), paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: calcLevelColor(it.level) }}>{it.interpretation}</Text>
+            </View>
+          </View>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>
+            {it.value}{it.unit ?? ''}{it.value_30yr != null ? `  ·  30년 ${it.value_30yr}%` : ''}
+          </Text>
+          {!!it.formula && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{it.formula}</Text>}
+          {!!it.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {it.cutoffs}</Text>}
+          {!!it.note && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{it.note}</Text>}
+        </View>
+      ))}
+    </>
   );
 }
 
@@ -32,8 +61,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const flIndices = fattyLiver?.indices ?? null;
   const singleGroups = comboAnalysis?.single_groups ?? null;
   const ascvd = comboAnalysis?.ascvd_simulation ?? null;
-  const calculators = comboAnalysis?.calculators ?? null;
-  // FLI/HSI·계산기 level → 상태색 (백엔드 interpretation 문구를 그대로 쓰고, 색만 구간에 맞춘다)
+  // 계산기 items를 도메인 카테고리로 나눠 각 섹션에 배치한다.
+  const calcItems = comboAnalysis?.calculators?.items ?? [];
+  const calcOf = (cats: string[]) => calcItems.filter((it) => cats.includes(it.category));
+  const metabolicCalcs = calcOf(['lipid', 'insulin', 'adiposity', 'bp']);
+  const liverCalcs = calcOf(['liver']);
+  const cvCalcs = calcOf(['cardiovascular']);
+  const calcDisclaimer = comboAnalysis?.calculators?.disclaimer;
+  // FLI/HSI level → 상태색 (백엔드 interpretation 문구를 그대로 쓰고, 색만 구간에 맞춘다)
   const levelColor = (level: string) => level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
   const levelBg = (level: string) => level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
@@ -221,8 +256,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* 🫁 간 — FLI/HSI 보조지표 */}
-      {flIndices && (flIndices.fli || flIndices.hsi) && <DomainHeader icon="🫁" title="간" />}
+      {/* 🫁 간 — FLI/HSI 보조지표 + 간 계산기(BARD·De Ritis) */}
+      {((flIndices && (flIndices.fli || flIndices.hsi)) || liverCalcs.length > 0) && <DomainHeader icon="🫁" title="간" />}
       {/* ③-3 지방간 보조지표(FLI·HSI) — 검진 수치로 계산되는 선별용 지표.
           값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
@@ -258,41 +293,26 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* ⚖️ 대사·지질 — 검증된 수치 계산기 */}
-      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && <DomainHeader icon="⚖️" title="대사·지질" />}
-      {/* ③-3b 수치 계산기(TyG·Non-HDL-C·BARD) — 검진 기본검사로 산출하는 검증된 정량 지표.
-          값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
-      {calculators && (calculators.tyg || calculators.non_hdl_c || calculators.bard) && (
+      {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
+      {liverCalcs.length > 0 && (
+        <FadeInUp delay={217}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>간 계산기</Text>
+          <CalcRows items={liverCalcs} />
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* ⚖️ 대사·지질 — 검증된 수치 계산기(지질비·인슐린저항성·내장지방·혈압) */}
+      {metabolicCalcs.length > 0 && <DomainHeader icon="⚖️" title="대사·지질" />}
+      {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>대사·지질·간 계산기</Text>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>대사·지질 계산기</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
-          {([
-            { title: 'TyG 지수', sub: '인슐린저항성', idx: calculators.tyg },
-            { title: 'Non-HDL 콜레스테롤', sub: '죽상형성 지단백', idx: calculators.non_hdl_c },
-            { title: 'BARD 점수', sub: '간섬유화 배제', idx: calculators.bard },
-          ] as const).filter((r) => r.idx).map((r, i) => (
-            <View key={r.title} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{r.title}</Text>
-                  <Text style={{ fontSize: 11, color: T.text3, flexShrink: 1 }}>{r.sub}</Text>
-                </View>
-                <View style={{ backgroundColor: levelBg(r.idx!.level), paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: levelColor(r.idx!.level) }}>{r.idx!.interpretation}</Text>
-                </View>
-              </View>
-              <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{r.idx!.value}</Text>
-              {!!r.idx!.formula && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{r.idx!.formula}</Text>}
-              {!!r.idx!.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {r.idx!.cutoffs}</Text>}
-              {!!r.idx!.note && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{r.idx!.note}</Text>}
-            </View>
-          ))}
-          {!!calculators.unavailable?.length && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>· 계산 불가: {calculators.unavailable.join(' / ')}</Text>
-          )}
-          {!!calculators.disclaimer && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{calculators.disclaimer}</Text>
+          <CalcRows items={metabolicCalcs} />
+          {!!calcDisclaimer && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{calcDisclaimer}</Text>
           )}
         </View>
         </FadeInUp>
@@ -403,7 +423,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       {/* 🫀 심혈관 — ASCVD 위험 계산기 */}
-      {ascvd?.available && ascvd.risk_percent != null && <DomainHeader icon="🫀" title="심혈관" />}
+      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader icon="🫀" title="심혈관" />}
       {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
       {ascvd?.available && ascvd.risk_percent != null && (
