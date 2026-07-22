@@ -71,6 +71,8 @@ def calculate_tyg(
         "interpretation": interp,
         "inputs": {"tg": tg, "fbs": fbs},
         "cutoffs": "<8.5 낮음 / 8.5~8.9 경계 / ≥9.0 높음 (연구별 상이, 참고용)",
+        "note": "국제 단일 진단 컷오프는 미확립이나, 한국 성인 대사증후군 스크리닝용으로 "
+                "~8.8이 반복 검증됨(Shin 2019 등). 한국인 국가검진 55세 남성 중앙값도 8.80.",
         "formula": "TyG = ln(TG × 공복혈당 / 2)  [Simental-Mendía 2008]",
     }
 

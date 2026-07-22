@@ -1133,6 +1133,14 @@ function BackendAnalysisBoards() {
   const calcItems = combo?.calculators?.items ?? [];
   const calcOf = (cats: string[]) => calcItems.filter((it) => cats.includes(it.category));
   const metabolicCalcs = calcOf(['lipid', 'insulin', 'adiposity', 'bp']);
+  // D(상관구조) 분석: 대사·지질 지표는 사실상 3개 축으로 압축된다.
+  //  ① 인슐린저항성·내장지방 축(TyG·METS-IR·AIP·LAP·VAI 서로 r 0.64~0.96) → 대표 TyG
+  //  ② 콜레스테롤 축(Non-HDL·Castelli-I·II 서로 r 0.79~0.94) → 대표 Non-HDL
+  //  ③ 혈압 축(MAP) — 고유 정보
+  // 대표(TyG·Non-HDL·MAP)만 펼치고, 강상관 중복 지표는 접어 인지부하를 줄인다.
+  const METAB_PRIMARY = new Set(['tyg', 'non_hdl_c', 'map']);
+  const metabolicPrimary = metabolicCalcs.filter((it) => METAB_PRIMARY.has(it.key));
+  const metabolicRedundant = metabolicCalcs.filter((it) => !METAB_PRIMARY.has(it.key));
   const liverCalcs = calcOf(['liver']);
   const cvCalcs = calcOf(['cardiovascular']);
   const calcDisclaimer = combo?.calculators?.disclaimer;
@@ -1210,7 +1218,15 @@ function BackendAnalysisBoards() {
       {metabolicCalcs.length > 0 && (
         <Board title="대사·지질 계산기">
           <p className="mb-3 text-[15px] leading-7 text-[#5C5C5C]">검진 기본검사 수치만으로 산출하는 검증된 참고 지표입니다.</p>
-          <CalcRows items={metabolicCalcs} />
+          <CalcRows items={metabolicPrimary} />
+          {metabolicRedundant.length > 0 && (
+            <details className="mt-3 border-t border-[#E5E5E5] pt-3">
+              <summary className="cursor-pointer list-none text-[13px] font-semibold text-[#5C5C5C]">
+                관련 지표 {metabolicRedundant.length}종 더보기 <span className="font-normal text-[#9A9A9A]">(위 대표 지표와 강한 상관 — 같은 정보)</span>
+              </summary>
+              <CalcRows items={metabolicRedundant} />
+            </details>
+          )}
           {calcDisclaimer && <p className="mt-3 text-[12px] leading-6 text-[#9A9A9A]">{calcDisclaimer}</p>}
         </Board>
       )}
