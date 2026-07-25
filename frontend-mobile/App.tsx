@@ -20,6 +20,7 @@ import { C, Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem } from './src/data';
+import { dummyComboAnalysis, dummyRecommendations, dummyHighlights } from './src/dummyAnalysis';
 import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, latestRecommendations, latestComboAnalysis, fetchEgfr, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
 import type { RealTimeseries, RealRecommendations, RealEgfr, RealComboAnalysis } from './src/health';
 import AnalysisScreen from './src/screens/AnalysisScreen';
@@ -340,10 +341,10 @@ export default function App() {
           : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} onDeleted={() => loadHealthData(profile.id)} medications={medications} />)}
         {tab === 'history' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : null} />)}
+          : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} />)}
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : null} egfr={usingRealData ? egfr : null} comboAnalysis={usingRealData ? comboAnalysis : null} />)}
+          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : (isDemoAccount ? dummyRecommendations : null)} egfr={usingRealData ? egfr : null} comboAnalysis={usingRealData ? comboAnalysis : (isDemoAccount ? dummyComboAnalysis : null)} />)}
         {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} />}
         {tab === 'profile' && loggedIn && (
           <ProfileScreen

@@ -391,6 +391,22 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </Text>
           )}
 
+          {/* 판정 불가 조합 — 입력값이 없어 판정 못 한 조합을 지어내지 않고 그대로 밝힌다(정직성). */}
+          {!!comboGroups.not_evaluable?.length && (
+            <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 2 }}>판정 불가 (데이터 부족)</Text>
+              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 8 }}>입력값이 없어 지어내지 않고 '판정 불가'로 둔 조합이에요.</Text>
+              {comboGroups.not_evaluable.map((n, i) => (
+                <View key={n.combo_name} style={[{ paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{n.combo_name}</Text>
+                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+                    {n.reason}{n.missing?.length ? ` (부족: ${n.missing.join('·')})` : ''}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* 지방간 유형 — 음주량이 없으면 잠정 분류임을 반드시 밝힌다 */}
           {fattyLiver?.applicable && fattyLiver.type && (
             <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
