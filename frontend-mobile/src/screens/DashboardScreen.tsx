@@ -15,10 +15,12 @@ async function openExternalUrl(url: string) {
 }
 
 const QUICK_LINKS = [
-  { label: '검진기관\n찾기', icon: 'search-circle-outline' as const, color: T.primary, bg: T.primaryLight, url: 'https://www.nhis.or.kr/nhis/healthin/retrieveMdcAdminSknsClinic.do' },
-  { label: '근처\n병원', icon: 'medical-outline' as const, color: T.danger, bg: T.dangerBg, url: 'https://www.e-gen.or.kr/egen/search_hospital.do' },
-  { label: '약국\n찾기', icon: 'bandage-outline' as const, color: T.success, bg: T.successBg, url: 'https://www.hira.or.kr/ra/hosp/getHealthMap.do?pgmid=HIRAA030002010000' },
-  { label: '결과지\n업로드', icon: 'cloud-upload-outline' as const, color: T.warn, bg: T.warnBg, url: null },
+  // 유틸리티 이동 링크는 '상태'가 아니므로 상태색(빨강/초록/주황)을 쓰지 않고
+  // 앱의 무채색 원칙대로 아이콘을 검정 톤으로 통일한다. (근처 병원은 병원 느낌의 medkit 아이콘)
+  { label: '검진기관\n찾기', icon: 'search-outline' as const, color: T.primary, bg: T.primaryLight, url: 'https://www.nhis.or.kr/nhis/healthin/retrieveMdcAdminSknsClinic.do' },
+  { label: '근처\n병원', icon: 'medkit-outline' as const, color: T.primary, bg: T.primaryLight, url: 'https://www.e-gen.or.kr/egen/search_hospital.do' },
+  { label: '약국\n찾기', icon: 'bandage-outline' as const, color: T.primary, bg: T.primaryLight, url: 'https://www.hira.or.kr/ra/hosp/getHealthMap.do?pgmid=HIRAA030002010000' },
+  { label: '결과지\n업로드', icon: 'cloud-upload-outline' as const, color: T.primary, bg: T.primaryLight, url: null },
 ];
 
 export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin }: {

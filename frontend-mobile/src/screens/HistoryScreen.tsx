@@ -138,17 +138,20 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   // 그래프나 범례에 끼워 넣으면 사실과 다른 정보가 된다.
   const presentKeys = group.keys.filter((k) => !!metricByKeyForYear(k));
   const hasBad = presentKeys.some((k) => isBadStatus(metricByKeyForYear(k)!.status));
+  // 항상 빨간 테두리는 과하다 — 원래대로 전체 테두리를 쓰되, 색만 상태에 맞춘다(위험=빨강/주의=주황).
+  const hasDanger = presentKeys.some((k) => metricByKeyForYear(k)!.status === '위험');
+  const accent = hasDanger ? T.danger : T.warn;
 
   return (
     <View style={[
       { backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 },
-      hasBad && { borderWidth: 1.5, borderColor: T.danger },
+      hasBad && { borderWidth: 1.5, borderColor: accent },
     ]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1 }}>{group.title}</Text>
         {hasBad && (
-          <View style={{ backgroundColor: T.dangerBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: T.danger }}>주의 포함</Text>
+          <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: accent }}>{hasDanger ? '위험 포함' : '주의 포함'}</Text>
           </View>
         )}
       </View>

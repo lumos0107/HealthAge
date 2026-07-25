@@ -117,24 +117,54 @@ function makeReport(base: Pick<Report, 'year' | 'date' | 'hospital' | 'summary' 
   return { ...base, score, manageCount, trackCount, status };
 }
 
+// 건강검진은 2년에 한 번(만 40세 이상 일반검진 기준) — 2년 단위로 6개년치를 둔다.
+// 홍길동(1974년생, 남)이 40세→50세에 걸쳐 대사 지표가 서서히 악화되는 흐름:
+// 참고 점수 100 → 88 → 82 → 64 → 40 → 28. 시계열·검진패턴·추세가 한 흐름으로 읽힌다.
 export const reports: Report[] = [
   makeReport({
-    year: 2021,
-    date: '2021-09-15',
-    hospital: '서울대병원 강남센터',
-    summary: '혈압, 체중 변화를 생활습관과 함께 확인합니다.',
-    values: { sbp: 128, dbp: 82, glucose: 95, bmi: 23.5, waist: 84, ldl: 125, hdl: 48, triglyceride: 130, ast: 28, alt: 31, ggt: 42, hemoglobin: 14.7, creatinine: 0.88 },
+    year: 2014,
+    date: '2014-05-20',
+    hospital: '한국건강관리협회 서울강남지부',
+    summary: '전 항목이 정상 범위로, 현재의 생활습관을 유지하면 좋습니다.',
+    values: { sbp: 116, dbp: 74, glucose: 86, bmi: 22.5, waist: 80, ldl: 112, hdl: 54, triglyceride: 104, ast: 23, alt: 25, ggt: 28, hemoglobin: 14.9, creatinine: 0.84 },
+    // 감점 없음 → 100
+    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+  }),
+  makeReport({
+    year: 2016,
+    date: '2016-06-11',
+    hospital: '한국건강관리협회 서울강남지부',
+    summary: '혈압과 체중이 정상 상단에 걸치기 시작해 흐름을 지켜봅니다.',
+    values: { sbp: 121, dbp: 77, glucose: 91, bmi: 23.3, waist: 82, ldl: 120, hdl: 51, triglyceride: 122, ast: 24, alt: 27, ggt: 33, hemoglobin: 15.0, creatinine: 0.85 },
+    // 100 - 6×2 = 88
+    statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+  }),
+  makeReport({
+    year: 2018,
+    date: '2018-05-30',
+    hospital: '한국건강관리협회 서울강남지부',
+    summary: '혈압이 이완기까지 올라오고 체중 관리가 필요한 시점입니다.',
+    values: { sbp: 125, dbp: 80, glucose: 96, bmi: 23.9, waist: 85, ldl: 129, hdl: 48, triglyceride: 140, ast: 26, alt: 30, ggt: 41, hemoglobin: 15.1, creatinine: 0.87 },
     // 100 - 6×3 = 82
     statusByKey: { sbp: '주의', dbp: '주의', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
   }),
   makeReport({
-    year: 2023,
-    date: '2023-09-15',
+    year: 2020,
+    date: '2020-07-08',
     hospital: '서울대병원 강남센터',
-    summary: '혈압, 혈당, 지질 항목이 함께 올라 흐름을 이어서 확인합니다.',
-    values: { sbp: 134, dbp: 84, glucose: 103, bmi: 25.1, waist: 89, ldl: 139, hdl: 42, triglyceride: 161, ast: 32, alt: 39, ggt: 55, hemoglobin: 15.1, creatinine: 0.94 },
+    summary: '혈당·지질까지 함께 올라 대사 지표를 묶어서 확인합니다.',
+    values: { sbp: 129, dbp: 82, glucose: 102, bmi: 24.4, waist: 87, ldl: 134, hdl: 45, triglyceride: 152, ast: 29, alt: 35, ggt: 50, hemoglobin: 15.2, creatinine: 0.89 },
     // 100 - 6×6 = 64
     statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+  }),
+  makeReport({
+    year: 2022,
+    date: '2022-06-15',
+    hospital: '서울대병원 강남센터',
+    summary: '비만·복부비만이 위험 수준에 들어 대사증후군 위험이 커집니다.',
+    values: { sbp: 133, dbp: 85, glucose: 107, bmi: 25.2, waist: 90, ldl: 140, hdl: 42, triglyceride: 166, ast: 31, alt: 41, ggt: 59, hemoglobin: 15.3, creatinine: 0.95 },
+    // 100 - 6×6 - 12×2 = 40
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
   }),
   makeReport({
     year: 2024,
