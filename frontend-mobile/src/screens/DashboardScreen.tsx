@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import Svg, { G, Path } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T } from '../components/UI';
 import { computeScore } from '../data';
 import type { MetricDefinition, Report, TabKey } from '../data';
@@ -14,13 +15,34 @@ async function openExternalUrl(url: string) {
   }
 }
 
-const QUICK_LINKS = [
+// 약국 아이콘: 아래 반쪽은 검정으로 채우고 위 반쪽은 흰색인 투톤 캡슐(알약).
+// 단색 폰트 아이콘으로는 두 색을 못 내서 SVG로 직접 그린다.
+function PillIcon({ size = 26, fill = T.primary, outline = T.primary }: { size?: number; fill?: string; outline?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <G rotation={-45} originX={12} originY={12}>
+        {/* 좌하 반쪽 — 초록 채움 */}
+        <Path d="M12 8 L7 8 A4 4 0 0 0 7 16 L12 16 Z" fill={fill} stroke={outline} strokeWidth={1.6} strokeLinejoin="round" />
+        {/* 우상 반쪽 — 흰색 */}
+        <Path d="M12 8 L17 8 A4 4 0 0 1 17 16 L12 16 Z" fill="#fff" stroke={outline} strokeWidth={1.6} strokeLinejoin="round" />
+      </G>
+    </Svg>
+  );
+}
+
+// svgPill이면 위 PillIcon(투톤 알약)을 렌더한다.
+const QUICK_LINKS: {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  svgPill?: boolean;
+  color: string; bg: string; url: string | null;
+}[] = [
   // 유틸리티 이동 링크는 '상태'가 아니므로 상태색(빨강/초록/주황)을 쓰지 않고
   // 앱의 무채색 원칙대로 아이콘을 검정 톤으로 통일한다. (근처 병원은 병원 느낌의 medkit 아이콘)
-  { label: '검진기관\n찾기', icon: 'search-outline' as const, color: T.primary, bg: T.primaryLight, url: 'https://www.nhis.or.kr/nhis/healthin/retrieveMdcAdminSknsClinic.do' },
-  { label: '근처\n병원', icon: 'medkit-outline' as const, color: T.primary, bg: T.primaryLight, url: 'https://www.e-gen.or.kr/egen/search_hospital.do' },
-  { label: '약국\n찾기', icon: 'bandage-outline' as const, color: T.primary, bg: T.primaryLight, url: 'https://www.hira.or.kr/ra/hosp/getHealthMap.do?pgmid=HIRAA030002010000' },
-  { label: '결과지\n업로드', icon: 'cloud-upload-outline' as const, color: T.primary, bg: T.primaryLight, url: null },
+  { label: '검진기관\n찾기', icon: 'search-outline', color: T.primary, bg: T.primaryLight, url: 'https://www.nhis.or.kr/nhis/healthin/retrieveMdcAdminSknsClinic.do' },
+  { label: '근처\n병원', icon: 'medkit-outline', color: T.primary, bg: T.primaryLight, url: 'https://www.e-gen.or.kr/egen/search_hospital.do' },
+  { label: '약국\n찾기', icon: 'bandage-outline', svgPill: true, color: T.primary, bg: T.primaryLight, url: 'https://www.hira.or.kr/ra/hosp/getHealthMap.do?pgmid=HIRAA030002010000' },
+  { label: '결과지\n업로드', icon: 'cloud-upload-outline', color: T.primary, bg: T.primaryLight, url: null },
 ];
 
 export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin }: {
@@ -114,7 +136,9 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
               }}
             >
               <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name={link.icon} size={26} color={link.color} />
+                {link.svgPill
+                  ? <PillIcon size={26} />
+                  : <Ionicons name={link.icon} size={26} color={link.color} />}
               </View>
               <Text style={{ fontSize: 11, color: T.text2, fontWeight: '500', textAlign: 'center', lineHeight: 15 }}>{link.label}</Text>
             </Pressable>
