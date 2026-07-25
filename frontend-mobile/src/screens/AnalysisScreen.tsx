@@ -37,6 +37,11 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
           <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>
             {it.value}{it.unit ?? ''}{it.value_30yr != null ? `  ·  30년 ${it.value_30yr}%` : ''}
           </Text>
+          {!!it.peer_label && (
+            <View style={{ alignSelf: 'flex-start', marginTop: 6, backgroundColor: '#111827', paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>또래비교 · {it.peer_label}</Text>
+            </View>
+          )}
           {!!it.formula && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{it.formula}</Text>}
           {!!it.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {it.cutoffs}</Text>}
           {!!it.note && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{it.note}</Text>}
@@ -65,6 +70,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const calcItems = comboAnalysis?.calculators?.items ?? [];
   const calcOf = (cats: string[]) => calcItems.filter((it) => cats.includes(it.category));
   const metabolicCalcs = calcOf(['lipid', 'insulin', 'adiposity', 'bp']);
+  // D(상관구조): 대사·지질 지표는 사실상 3개 축으로 압축된다.
+  //  ① 인슐린저항성·내장지방(TyG·METS-IR·AIP·LAP·VAI, 서로 r 0.64~0.96) → 대표 TyG
+  //  ② 콜레스테롤(Non-HDL·Castelli-I·II, r 0.79~0.94) → 대표 Non-HDL / ③ 혈압(MAP) 고유
+  // 대표(TyG·Non-HDL·MAP)만 펼치고 강상관 중복은 접어 인지부하를 줄인다.
+  const METAB_PRIMARY = ['tyg', 'non_hdl_c', 'map'];
+  const metabolicPrimary = metabolicCalcs.filter((it) => METAB_PRIMARY.includes(it.key));
+  const metabolicRedundant = metabolicCalcs.filter((it) => !METAB_PRIMARY.includes(it.key));
   const liverCalcs = calcOf(['liver']);
   const cvCalcs = calcOf(['cardiovascular']);
   const calcDisclaimer = comboAnalysis?.calculators?.disclaimer;
@@ -72,6 +84,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const levelColor = (level: string) => level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
   const levelBg = (level: string) => level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
+  const [showRedundant, setShowRedundant] = useState(false);
   const report = reports[yearIdx];
 
   // 참고 점수: 그 해 검진 결과에 기록된 값을 그대로 보여준다(대시보드·기록 화면과 항상 일치).
@@ -310,7 +323,22 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>대사·지질 계산기</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
-          <CalcRows items={metabolicCalcs} />
+          <CalcRows items={metabolicPrimary} />
+          {metabolicRedundant.length > 0 && (
+            <>
+              <Pressable
+                onPress={() => setShowRedundant((v) => !v)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 11, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 2 }}
+              >
+                <Ionicons name={showRedundant ? 'chevron-up' : 'chevron-down'} size={16} color={T.text2} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>
+                  {showRedundant ? '관련 지표 접기' : `관련 지표 ${metabolicRedundant.length}종 더보기`}
+                </Text>
+                <Text style={{ fontSize: 12, color: T.text3 }}>(대표 지표와 강한 상관)</Text>
+              </Pressable>
+              {showRedundant && <CalcRows items={metabolicRedundant} />}
+            </>
+          )}
           {!!calcDisclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{calcDisclaimer}</Text>
           )}

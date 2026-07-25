@@ -175,6 +175,11 @@ export type RealCalcItem = {
   note?: string;
   value_30yr?: number;
   components?: string[];
+  // 컷오프 미확립 5종(TyG·METS-IR·AIP·LAP·VAI)에만: 한국인 또래 백분위 (2017 국가검진 기준)
+  peer_label?: string;
+  percentile?: number;
+  peer_n?: number;
+  peer_year?: number;
 };
 
 export type RealCalculators = {
@@ -268,7 +273,7 @@ export function adaptEvaluation(ev: RealEvaluation): MetricDefinition & {
   const key = METRIC_NAME_TO_KEY[ev.metric];
   const fallback = key ? dummyMetricDefinitions.find((m) => m.key === key) : undefined;
   return {
-    key: key ?? (fallback?.key ?? 'sbp'),
+    key: (key ?? (ev.metric as MetricKey)),
     category: fallback?.category ?? '기타',
     name: ev.metric,
     shortName: fallback?.shortName ?? ev.metric,

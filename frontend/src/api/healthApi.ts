@@ -285,6 +285,11 @@ export type ApiCalcItem = {
   note?: string;
   value_30yr?: number;
   components?: string[];
+  // 컷오프 미확립 5종(TyG·METS-IR·AIP·LAP·VAI)에만: 한국인 또래 백분위 (2017 국가검진 기준)
+  peer_label?: string;
+  percentile?: number;
+  peer_n?: number;
+  peer_year?: number;
 };
 
 export type ApiCalculators = {

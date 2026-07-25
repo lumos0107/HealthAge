@@ -497,13 +497,19 @@ def additional_calculators(
          "SCORE2 (나이 40~89·총콜레스테롤·HDL·혈압 필요)"),
     ]
 
+    from .calculator_percentile import peer_percentile
     items: list[dict[str, Any]] = []
     missing: list[str] = []
     for key, title, category, result, miss_label in specs:
         if result is None:
             missing.append(miss_label)
             continue
-        items.append({"key": key, "title": title, "category": category, **result})
+        item = {"key": key, "title": title, "category": category, **result}
+        # 컷오프 미확립 5종(TyG·METS-IR·AIP·LAP·VAI)에 한국인 또래 백분위 부착
+        peer = peer_percentile(key, result.get("value"), gender, age)
+        if peer:
+            item.update(peer)
+        items.append(item)
 
     return {
         "items": items,

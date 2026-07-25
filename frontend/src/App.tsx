@@ -1099,6 +1099,11 @@ function CalcRows({ items }: { items: ApiCalcItem[] }) {
             {it.value}{it.unit ?? ''}
             {it.value_30yr != null && <span className="text-[14px] font-bold text-[#9A9A9A]"> · 30년 {it.value_30yr}%</span>}
           </p>
+          {it.peer_label && (
+            <p className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-[#111827] px-2.5 py-1 text-[12px] font-bold text-white">
+              또래비교 · {it.peer_label}
+            </p>
+          )}
           {it.formula && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{it.formula}</p>}
           {it.cutoffs && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">기준: {it.cutoffs}</p>}
           {it.note && <p className="mt-0.5 text-[12px] text-[#9A9A9A]">{it.note}</p>}
