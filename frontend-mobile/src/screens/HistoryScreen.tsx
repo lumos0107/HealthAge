@@ -7,6 +7,7 @@ import type { MetricDefinition, MetricKey, Report } from '../data';
 import type { RealTimeseries } from '../health';
 
 type Highlight = NonNullable<RealTimeseries['highlights']>[number];
+type Insight = NonNullable<RealTimeseries['insight']>;
 
 const SCREEN_W = Dimensions.get('window').width;
 const CHART_W = SCREEN_W - 32 - 40; // 16px card margin + 20px card padding, each side
@@ -28,11 +29,12 @@ const chartGroups: { title: string; keys: MetricKey[] }[] = [
   { title: '혈액·신장', keys: ['hemoglobin', 'creatinine'] },
 ];
 
-export default function HistoryScreen({ reports, metricDefinitions, usingRealData, highlights }: {
+export default function HistoryScreen({ reports, metricDefinitions, usingRealData, highlights, insight }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
   highlights?: Highlight[] | null;
+  insight?: Insight | null;
 }) {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
@@ -51,6 +53,37 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
           수치 변화는 생활습관, 복용 약, 검사 당시 상태에 따라 달라질 수 있습니다. 같은 항목이 반복해서 기준을 벗어나면 의료진과 상담해 보세요.
         </Text>
       </View>
+
+      {/* 종합 인사이트 — 여러 해 기록을 종합한 요약 + 주요 우려 Top 3 (insight_generator) */}
+      {!!insight?.summary && (
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 6 }}>한눈에 요약</Text>
+          <Text style={{ fontSize: 14, color: T.text2, lineHeight: 22 }}>{insight.summary}</Text>
+          {!!insight.top_concerns?.length && (
+            <View style={{ marginTop: 12 }}>
+              {insight.top_concerns.map((c, i) => {
+                const col = c.level === 'high' ? T.danger : T.warn;
+                const bg = c.level === 'high' ? T.dangerBg : T.warnBg;
+                return (
+                  <View key={i} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                      <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: col }}>주의 {i + 1}</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, flex: 1 }}>{c.title}</Text>
+                      {!!c.current_value && <Text style={{ fontSize: 12, color: T.text3 }}>{c.current_value}</Text>}
+                    </View>
+                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{c.details}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+          {insight.next_exam_year != null && (
+            <Text style={{ fontSize: 12, color: T.text3, marginTop: 10 }}>다음 검진 권장: {insight.next_exam_year}년</Text>
+          )}
+        </View>
+      )}
 
       {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만 보여준다(2년 미만 기록이면 비어있음) */}
       {!!highlights?.length && (

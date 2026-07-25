@@ -219,6 +219,22 @@ export type RealComboAnalysis = {
   single_groups?: RealSingleGroup[] | null;
   ascvd_simulation?: RealAscvdSimulation | null;
   calculators?: RealCalculators;
+  // LDL 위험도별 개인 목표치(초고위험<55 … 저위험<160). clinical_targets.classify_ldl_risk 결과.
+  ldl_target?: {
+    risk_level: string;
+    label: string;
+    target_ldl: number;
+    target_text: string;
+    current_ldl: number | null;
+    achieved: boolean | null;
+    gap: number | null;
+    risk_factors: string[];
+    basis: string;
+    on_medication: boolean;
+    limitations: string[];
+    reference: string;
+    error?: string;
+  } | null;
   disclaimer?: string;
   error?: string;
 };
@@ -322,6 +338,12 @@ export type RealTimeseries = {
     comparison?: string;
   }>;
   highlights?: { metric: string; type: string; severity: string; message: string }[];
+  // 자연어 종합 인사이트 — insight_generator.generate_insight 결과(요약 + 주요 우려 Top 3).
+  insight?: {
+    summary: string;
+    top_concerns: { title: string; metric: string; level: string; current_value: string; details: string }[];
+    next_exam_year?: number | null;
+  } | null;
 };
 
 export async function fetchTimeseries(userId: string): Promise<RealTimeseries | null> {

@@ -131,6 +131,8 @@ async def analyze_and_save(
         )
         combo_analysis["ascvd_simulation"] = group_analysis.get("ascvd_simulation")
         combo_analysis["calculators"] = group_analysis.get("calculators")
+        # LDL 위험도별 개인 목표치(초고위험<55 … 저위험<160)도 함께 내려 화면에 표시한다.
+        combo_analysis["ldl_target"] = group_analysis.get("ldl_target")
     if "warnings" in result:
         warnings.extend(result.get("warnings", []))
 

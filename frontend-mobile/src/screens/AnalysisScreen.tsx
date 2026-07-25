@@ -66,6 +66,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const flIndices = fattyLiver?.indices ?? null;
   const singleGroups = comboAnalysis?.single_groups ?? null;
   const ascvd = comboAnalysis?.ascvd_simulation ?? null;
+  const ldlTarget = comboAnalysis?.ldl_target && !comboAnalysis.ldl_target.error ? comboAnalysis.ldl_target : null;
   // 계산기 items를 도메인 카테고리로 나눠 각 섹션에 배치한다.
   const calcItems = comboAnalysis?.calculators?.items ?? [];
   const calcOf = (cats: string[]) => calcItems.filter((it) => cats.includes(it.category));
@@ -342,6 +343,36 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {!!calcDisclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{calcDisclaimer}</Text>
           )}
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* LDL 개인 목표 — 같은 LDL이라도 위험군에 따라 목표가 다르다(초고위험<55 … 저위험<160). */}
+      {ldlTarget && (
+        <FadeInUp delay={205}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>LDL 콜레스테롤 개인 목표</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>같은 LDL 수치라도 위험군에 따라 목표가 달라져요. 내 위험군 기준 목표예요.</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{ldlTarget.target_text}</Text>
+            {ldlTarget.achieved != null && (
+              <View style={{ backgroundColor: ldlTarget.achieved ? T.successBg : T.warnBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: ldlTarget.achieved ? T.success : T.warn }}>
+                  {ldlTarget.achieved ? '목표 달성' : `목표 초과${ldlTarget.gap != null ? ` +${ldlTarget.gap}` : ''}`}
+                </Text>
+              </View>
+            )}
+          </View>
+          {ldlTarget.current_ldl != null && (
+            <Text style={{ fontSize: 13, color: T.text2, marginBottom: 4 }}>현재 LDL {ldlTarget.current_ldl}mg/dL · 위험군: {ldlTarget.label}</Text>
+          )}
+          {!!ldlTarget.risk_factors?.length && (
+            <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>반영된 위험인자: {ldlTarget.risk_factors.join(' · ')}</Text>
+          )}
+          {!!ldlTarget.limitations?.length && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· {ldlTarget.limitations[0]}</Text>
+          )}
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>기준: {ldlTarget.reference}</Text>
         </View>
         </FadeInUp>
       )}

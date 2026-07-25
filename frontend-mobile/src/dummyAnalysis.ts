@@ -1,7 +1,7 @@
 // 자동 생성(백엔드 analyze() 실산출) — root 데모 계정용 풀 분석 더미.
 // 홍길동 2024년 검진값(sbp138·bmi26.3·waist93·glucose112·ldl145·hdl39·tg178 등, 50세 남)을
 // 백엔드에 넣어 나온 실제 combo_analysis·recommendations를 그대로 임베드했다(수치·정합성 실제와 동일).
-// highlights(시계열)만 6개년 악화 스토리에 맞춰 수작업.
+// highlights·insight(시계열)만 6개년 악화 스토리에 맞춰 수작업.
 import type { RealComboAnalysis, RealRecommendations, RealTimeseries } from './health';
 
 export const dummyComboAnalysis = ({
@@ -676,6 +676,26 @@ export const dummyComboAnalysis = ({
     ],
     "unavailable": [],
     "disclaimer": "검진 수치로 산출하는 선별용 참고 지표입니다. 진단을 대체하지 않으며, 컷오프는 연구·위험군에 따라 달라질 수 있습니다. 위험엔진(PREVENT·Framingham)은 서구 코호트 기반 참고용 시뮬레이션입니다."
+  },
+  "ldl_target": {
+    "risk_level": "moderate",
+    "label": "중등도위험군",
+    "target_ldl": 130,
+    "target_text": "LDL 130mg/dL 미만",
+    "current_ldl": 145.0,
+    "achieved": false,
+    "gap": 15.0,
+    "risk_factors": [
+      "낮은 HDL(<40)",
+      "연령(남 45세 이상)"
+    ],
+    "basis": "주요 위험인자 2개: 낮은 HDL(<40), 연령(남 45세 이상)",
+    "on_medication": false,
+    "limitations": [
+      "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
+      "고위험군·초고위험군 판정에는 관상동맥질환 등 병력 확인이 필요합니다."
+    ],
+    "reference": "2022 한국지질·동맥경화학회 이상지질혈증 진료지침"
   }
 }) as unknown as RealComboAnalysis;
 
@@ -819,7 +839,7 @@ export const dummyRecommendations = ({
     "elderly_notes": []
   },
   "_meta": {
-    "generated_at": "2026-07-25T20:53:44",
+    "generated_at": "2026-07-25T21:15:58",
     "version": "v1 (약대 자문)",
     "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
   }
@@ -831,3 +851,13 @@ export const dummyHighlights: NonNullable<RealTimeseries['highlights']> = [
   { metric: '공복혈당', type: '구간 상승', severity: 'warn', message: '86에서 112mg/dL로 오르며 당뇨병 전단계(100~125) 구간에 진입했어요.' },
   { metric: 'HDL 콜레스테롤', type: '구간 하락', severity: 'warn', message: '54에서 39mg/dL로 낮아져 관리가 필요한 구간에 들어섰어요(높을수록 좋은 지표).' },
 ];
+
+export const dummyInsight: NonNullable<RealTimeseries['insight']> = {
+  summary: '지난 10년간 대사 지표가 전반적으로 악화됐어요. 특히 체중·허리둘레·혈당이 정상에서 위험 구간으로 올라섰고, 대사증후군 5개 기준을 모두 충족하는 상태예요. 지금이 생활습관을 바꿔 흐름을 되돌릴 중요한 시점이에요.',
+  top_concerns: [
+    { title: '대사증후군 (5개 기준 모두 충족)', metric: '대사증후군', level: 'high', current_value: '5/5', details: '허리·혈압·혈당·중성지방·HDL 5개를 모두 충족해 심혈관 위험이 높아요. 의료진 상담을 권장해요.' },
+    { title: '비만·복부비만 진행', metric: 'BMI·허리둘레', level: 'high', current_value: 'BMI 26.3 · 허리 93cm', details: '10년간 정상에서 위험 구간으로 올라섰어요. 체중 5~10% 감량만으로도 대사 지표가 크게 개선돼요.' },
+    { title: '공복혈당 상승 (당뇨 전단계)', metric: '공복혈당', level: 'warn', current_value: '112mg/dL', details: '당뇨병 전단계(100~125)에 진입했어요. HbA1c 추가 검사로 3개월 평균 혈당 확인을 권장해요.' },
+  ],
+  next_exam_year: 2026,
+};
