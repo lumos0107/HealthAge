@@ -30,14 +30,17 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:80
 const METRIC_NAME_TO_KEY: Record<string, MetricKey> = {
   '수축기혈압': 'sbp', '수축기 혈압': 'sbp',
   '이완기혈압': 'dbp', '이완기 혈압': 'dbp',
-  '공복혈당': 'glucose',
+  // ⚠️ 백엔드가 실제로 내려주는 명칭을 반드시 포함해야 한다. 아래 4개(식전혈당(공복혈당)·
+  // 트리글리세라이드·혈청지오티(AST)·혈청지피티(ALT))가 빠져 있어서 실계정에서는 이 항목들이
+  // 화면에 아예 안 뜨고 있었다(더미는 data.ts 키를 직접 써서 문제가 가려졌다).
+  '공복혈당': 'glucose', '식전혈당(공복혈당)': 'glucose',
   '체질량지수': 'bmi', 'BMI': 'bmi',
   '허리둘레': 'waist',
   'LDL콜레스테롤': 'ldl', 'LDL-C': 'ldl', 'LDL 콜레스테롤': 'ldl',
   'HDL콜레스테롤': 'hdl', 'HDL-C': 'hdl', 'HDL 콜레스테롤': 'hdl',
-  '중성지방': 'triglyceride',
-  'AST': 'ast', 'AST(SGOT)': 'ast',
-  'ALT': 'alt', 'ALT(SGPT)': 'alt',
+  '중성지방': 'triglyceride', '트리글리세라이드': 'triglyceride',
+  'AST': 'ast', 'AST(SGOT)': 'ast', '혈청지오티(AST)': 'ast',
+  'ALT': 'alt', 'ALT(SGPT)': 'alt', '혈청지피티(ALT)': 'alt',
   '감마지티피': 'ggt', '감마-GTP': 'ggt',
   '혈색소': 'hemoglobin',
   '혈청크레아티닌': 'creatinine', '혈청 크레아티닌': 'creatinine',
@@ -483,6 +486,42 @@ export function fieldsToOcrResult(fields: OcrField[], original: RealOcrResult['o
     measurements[f.id] = { ...(measurements[f.id] ?? {}), value: num, unit: f.unit ?? measurements[f.id]?.unit };
   }
   return { ...original, meta, measurements };
+}
+
+// ---- What-if 재계산 (POST /analyze/simulate) --------------------------------
+// ⚠️ 생활습관 변화의 효과를 예측하는 게 아니다. 검진값을 직접 바꿔 넣었을 때
+//    공식(계산기·대사증후군 5기준·집단군·LDL 목표)이 산출하는 값을 다시 계산한 결과다.
+export type SimulateChanges = {
+  weight?: number; waist?: number; sbp?: number; dbp?: number;
+  fbs?: number; tg?: number; hdl?: number; ldl?: number;
+};
+
+export type RealSimulation = {
+  changes_applied: { key: string; label: string; before: number | null; after: number }[];
+  metabolic_syndrome: {
+    before: { count: number | null; evaluable: number | null; is_metabolic_syndrome: boolean | null; met_factors: string[] };
+    after: { count: number | null; evaluable: number | null; is_metabolic_syndrome: boolean | null; met_factors: string[] };
+  };
+  calculators: {
+    key: string; title: string; category: string;
+    before: number | null; after: number | null; delta: number | null; changed: boolean;
+    before_level?: string; after_level?: string; after_interpretation?: string;
+    before_percentile?: number | null; after_percentile?: number | null; after_peer_label?: string | null;
+  }[];
+  groups: { resolved: string[]; added: string[] };
+  ldl_target: {
+    target_ldl: number | null; label: string | null;
+    before_ldl: number | null; after_ldl: number | null;
+    before_achieved: boolean | null; after_achieved: boolean | null;
+  };
+  unchanged: string[];
+  limitations: string[];
+  baseline_year?: number | null;
+  error?: string;
+};
+
+export async function simulateCheckup(changes: SimulateChanges): Promise<RealSimulation> {
+  return apiFetch('/analyze/simulate', { method: 'POST', body: JSON.stringify(changes) });
 }
 
 /** 검수 완료된 OCR JSON을 분석 + (옵션) 저장 요청한다. */

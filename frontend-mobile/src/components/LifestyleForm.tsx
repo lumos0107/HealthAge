@@ -17,14 +17,14 @@ export const EMPTY_LIFESTYLE: Lifestyle = { smoking: null, drinking: null, alcoh
 
 const stepBtn = { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: T.border, alignItems: 'center' as const, justifyContent: 'center' as const };
 
-function Stepper({ label, value, min, max, onChange, suffix }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void; suffix: string }) {
+export function Stepper({ label, value, min, max, onChange, suffix, step = 1 }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void; suffix: string; step?: number }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
       <Text style={{ fontSize: 14, color: T.text2, fontWeight: '600' }}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Pressable onPress={() => onChange(Math.max(min, value - 1))} style={stepBtn}><Ionicons name="remove" size={18} color={T.text2} /></Pressable>
+        <Pressable onPress={() => onChange(Math.max(min, Math.round((value - step) * 10) / 10))} style={stepBtn}><Ionicons name="remove" size={18} color={T.text2} /></Pressable>
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, minWidth: 46, textAlign: 'center' }}>{value}{suffix}</Text>
-        <Pressable onPress={() => onChange(Math.min(max, value + 1))} style={stepBtn}><Ionicons name="add" size={18} color={T.text2} /></Pressable>
+        <Pressable onPress={() => onChange(Math.min(max, Math.round((value + step) * 10) / 10))} style={stepBtn}><Ionicons name="add" size={18} color={T.text2} /></Pressable>
       </View>
     </View>
   );

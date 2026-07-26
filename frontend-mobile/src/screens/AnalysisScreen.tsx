@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { WhatIfSimulator } from '../components/WhatIfSimulator';
 import { computeGroupsForReport, directionLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem } from '../health';
@@ -386,6 +387,19 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           )}
           <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>기준: {ldlTarget.reference}</Text>
         </View>
+        </FadeInUp>
+      )}
+
+      {/* 이 수치가 바뀌면? — 검진값을 바꿔 넣고 공식을 다시 계산(예측 아님).
+          ⚠️ 서버는 '가장 최근' 저장 검진값을 기준선으로 쓴다. 그래서 위 연도 선택과
+          무관하게 최신 회차를 넘겨야 스테퍼에 보이는 값과 계산 기준이 어긋나지 않는다. */}
+      {reports.length > 0 && (
+        <FadeInUp delay={215}>
+          <WhatIfSimulator
+            latest={reports[reports.length - 1]}
+            disabled={!usingRealData}
+            disabledReason="데모 계정은 저장된 검진값이 없어 재계산을 할 수 없어요. 실제 결과지를 업로드하면 사용할 수 있어요."
+          />
         </FadeInUp>
       )}
 

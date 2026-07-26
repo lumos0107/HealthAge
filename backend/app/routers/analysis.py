@@ -18,6 +18,7 @@ from app.services.checkup_service import (
     get_latest_comprehensive,
     get_report_by_year,
     list_report_years,
+    simulate_latest,
 )
 from app.services.user_service import require_same_user
 
@@ -80,6 +81,37 @@ async def analyze_endpoint(
         user_info=payload.user_info,
         save=payload.save,
     )
+
+
+# ──────────────────────────────────────────────────────────────────
+# POST /analyze/simulate — 검진값 What-if 재계산
+# ──────────────────────────────────────────────────────────────────
+
+class SimulateRequest(BaseModel):
+    """바꿔볼 검진값. 지정한 항목만 교체하고 나머지는 최근 검진값을 그대로 쓴다.
+
+    ⚠️ 생활습관 변화의 효과를 추정하는 게 아니다 — 검진값을 직접 바꿔 넣었을 때
+       공식이 산출하는 값을 다시 계산할 뿐이다(무엇을 못 하는지는 응답 limitations).
+    """
+    weight: float | None = Field(default=None, description="체중 kg (BMI도 함께 재계산)")
+    waist: float | None = Field(default=None, description="허리둘레 cm")
+    sbp: float | None = Field(default=None, description="수축기혈압 mmHg")
+    dbp: float | None = Field(default=None, description="이완기혈압 mmHg")
+    fbs: float | None = Field(default=None, description="공복혈당 mg/dL")
+    tg: float | None = Field(default=None, description="중성지방 mg/dL")
+    hdl: float | None = Field(default=None, description="HDL 콜레스테롤 mg/dL")
+    ldl: float | None = Field(default=None, description="LDL 콜레스테롤 mg/dL")
+
+
+@router.post("/analyze/simulate")
+def simulate_endpoint(
+    payload: SimulateRequest,
+    user: CurrentUser = Depends(get_current_user),
+) -> dict:
+    """최근 검진값 + 지정한 변경 → 지표 재계산 결과(전/후 비교). 저장하지 않는다."""
+    client = get_user_client(user.access_token)
+    changes = {k: v for k, v in payload.model_dump().items() if v is not None}
+    return simulate_latest(client, user.id, changes)
 
 
 # ──────────────────────────────────────────────────────────────────

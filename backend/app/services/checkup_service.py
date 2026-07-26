@@ -538,6 +538,43 @@ def get_latest_comprehensive(client: Client, user_id: str) -> dict[str, Any]:
     }
 
 
+def simulate_latest(
+    client: Client,
+    user_id: str,
+    changes: dict[str, Any],
+) -> dict[str, Any]:
+    """가장 최근 검진값에 변경을 적용해 지표를 다시 계산한다(What-if).
+
+    저장된 basic_report에서 검진값을 꺼내 쓰므로, 화면에 보이는 값과 기준선이
+    항상 일치한다. 저장은 하지 않는다 — 순수 재계산.
+    """
+    latest = get_latest_comprehensive(client, user_id)
+    basic = latest.get("basic_report") or {}
+
+    checkup: dict[str, Any] = {}
+    for item in basic.get("전체결과") or []:
+        metric, value = item.get("항목"), item.get("값")
+        if metric is not None and value is not None:
+            checkup[metric] = value
+    if not checkup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="재계산할 검진값이 없습니다.",
+        )
+
+    meta = basic.get("_meta") or {}
+    info = basic.get("기본정보") or {}
+    gender = meta.get("gender") or (1 if info.get("성별") == "남" else 2)
+    age = meta.get("age") or info.get("나이")
+    medications = meta.get("medications") or {}
+
+    from app.analyzer._internal.what_if import simulate_checkup
+
+    result = simulate_checkup(checkup, gender, age, changes, medications)
+    result["baseline_year"] = meta.get("exam_year") or info.get("비교연도")
+    return result
+
+
 # ──────────────────────────────────────────────────────────────────
 # 리포트 삭제 (기존 기능, 변경 없음)
 # ──────────────────────────────────────────────────────────────────
