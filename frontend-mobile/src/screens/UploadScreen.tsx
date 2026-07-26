@@ -7,7 +7,7 @@ import { Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, ocrTemplate } from '../data';
 import type { MedicationItem, OcrField, TabKey, UserProfile } from '../data';
-import { analyzeCheckup, fieldsToOcrResult, ocrResultToFields, uploadCheckupImage, uploadMedicationFile } from '../health';
+import { analyzeCheckup, fieldsToOcrResult, ocrFlagText, ocrResultToFields, OCR_LOW_CONFIDENCE, uploadCheckupImage, uploadMedicationFile } from '../health';
 import type { RealOcrResult } from '../health';
 
 const HIRA_URL = 'https://www.hira.or.kr/rb/dur/form.do?pgmid=HIRAA050300000100';
@@ -39,6 +39,9 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
   const [ocrLoading, setOcrLoading] = useState(false);
   const [analyzeLoading, setAnalyzeLoading] = useState(false);
   const [usingExample, setUsingExample] = useState(false);
+  // 검진지 없이 직접 입력하는 모드. 빈 폼으로 시작하므로 필수항목이 비어 있는 게
+  // 아직 오류가 아니다 — 저장을 시도(touched)하기 전에는 "확인 필요" 경고를 띄우지 않는다.
+  const [manualEntry, setManualEntry] = useState(false);
   // 방금 저장한 분석이 복약 정보를 반영했는지 여부 — false면 "약을 안 드시는 것으로 가정"했다는 뜻이라 안내를 띄운다.
   const [medsKnown, setMedsKnown] = useState<boolean | null>(null);
   // 문진(생활습관) — 프로필값을 prefill. 여기서 바꾸면 저장 시 프로필도 갱신된다.
@@ -105,13 +108,27 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
   }, [medItems]);
 
   const missing = fields.filter((f) => f.required && !f.value.trim());
+  // OCR이 스스로 확신하지 못한 항목 — 사진 인식으로 채운 경우에만 값이 있다.
+  // 멘토 3차 자문("100% 자동저장 대신 검수")에 따라 눈에 띄게 표시해 사용자가 직접 확인하게 한다.
+  const lowConf = fields.filter((f) => f.confidence != null && f.confidence < OCR_LOW_CONFIDENCE);
 
   // 예시 결과 — 실제 OCR을 호출하지 않고 화면 형태만 미리 보여줄 때 사용한다(더미 데이터임을 명확히 표시).
   const loadExample = (src = 'sample-checkup-photo.jpg') => {
     setFields(ocrTemplate.map((f) => ({ ...f })));
-    setOcrRaw(null); setUsingExample(true); setMedsKnown(null);
+    setOcrRaw(null); setUsingExample(true); setManualEntry(false); setMedsKnown(null);
     setSource(src); setTouched(false); setSaved(false); setIsError(false);
     setStatusMsg('예시 결과입니다. 실제 사진은 "카메라 촬영" 또는 "갤러리 선택"으로 업로드해 주세요.');
+  };
+
+  // 검진지 사진 없이 값을 직접 입력하는 경로.
+  // 저장 흐름은 OCR과 완전히 같다 — 빈 ocr 골격을 만들어 두면 fieldsToOcrResult가
+  // 사용자가 채운 값으로 measurements를 구성하므로 분석·저장 코드를 새로 쓸 필요가 없다.
+  const startManualEntry = () => {
+    setFields(ocrTemplate.map((f) => ({ ...f, value: '', confidence: undefined, flags: undefined })));
+    setOcrRaw({ meta: {}, measurements: {}, lifestyle: {} });
+    setUsingExample(false); setManualEntry(true); setMedsKnown(null);
+    setSource('직접 입력'); setTouched(false); setSaved(false); setIsError(false);
+    setStatusMsg('검진표를 보면서 값을 직접 입력하세요. 별표(*) 항목만 채워도 분석할 수 있어요.');
   };
 
   // 실제 검진지 사진 → 백엔드 OCR(POST /uploads) 호출 → 인식 결과로 항목을 채운다.
@@ -149,7 +166,10 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
     if (!result.canceled) await runOcr(result.assets[0]);
   };
 
-  const updateField = (id: string, value: string) => setFields((p) => p.map((f) => f.id === id ? { ...f, value } : f));
+  // 사용자가 직접 고친 값에는 OCR 확신도가 더 이상 해당되지 않으므로 confidence·flags를 지운다
+  // (고쳐 놓고도 "확신 62%"가 계속 붙어 있으면 잘못된 근거가 된다).
+  const updateField = (id: string, value: string) =>
+    setFields((p) => p.map((f) => f.id === id ? { ...f, value, confidence: undefined, flags: undefined } : f));
 
   const requestSave = () => {
     setTouched(true);
@@ -194,7 +214,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
 
   const changeMode = (m: 'checkup' | 'medication') => {
     setMode(m); setFields([]); setSource(''); setTouched(false); setSaved(false); setStatusMsg(''); setIsError(false);
-    setMedItems([]); setMedUsingExample(false); setMedResult(null); setOcrRaw(null); setUsingExample(false); setMedsKnown(null);
+    setMedItems([]); setMedUsingExample(false); setMedResult(null); setOcrRaw(null); setUsingExample(false); setManualEntry(false); setMedsKnown(null);
   };
 
   const getPlaceholder = (field: OcrField) => {
@@ -255,6 +275,14 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 <UploadTile title={ocrLoading ? '인식하는 중...' : '카메라 촬영'} icon="camera" primary onPress={takePhoto} disabled={ocrLoading} />
                 <UploadTile title={ocrLoading ? '인식하는 중...' : '갤러리 선택'} icon="images" onPress={pickImage} disabled={ocrLoading} />
               </View>
+              {/* 사진이 없거나 인식이 안 될 때 — 검진표를 보며 직접 입력. 저장 경로는 OCR과 동일하다. */}
+              <Pressable
+                onPress={startManualEntry}
+                disabled={ocrLoading}
+                style={{ paddingVertical: 14, borderRadius: T.radiusSm, alignItems: 'center', borderWidth: 1, borderColor: T.border, marginBottom: 8, opacity: ocrLoading ? 0.5 : 1 }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>검진지 없이 직접 입력</Text>
+              </Pressable>
               <Pressable
                 onPress={() => loadExample()}
                 disabled={ocrLoading}
@@ -266,10 +294,23 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
 
             {fields.length > 0 && (
               <>
-                {missing.length > 0 && (
+                {missing.length > 0 && (!manualEntry || touched) && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 14, marginHorizontal: 16, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
                     <Ionicons name="alert-circle-outline" size={20} color={T.danger} />
                     <Text style={{ fontSize: 13, color: T.danger, fontWeight: '700' }}>확인 필요 {missing.length}개 항목이 있습니다.</Text>
+                  </View>
+                )}
+
+                {/* OCR이 확신하지 못한 항목 안내 — 사진으로 읽은 경우에만 뜬다(직접 입력·예시엔 확신도가 없음). */}
+                {lowConf.length > 0 && (
+                  <View style={{ backgroundColor: T.warnBg, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 18, paddingVertical: 14, marginBottom: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <Ionicons name="eye-outline" size={18} color={T.warn} />
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: T.warn }}>사진에서 흐릿하게 읽힌 항목 {lowConf.length}개</Text>
+                    </View>
+                    <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>
+                      {lowConf.map((f) => f.label).join(' · ')} — 검진표와 같은지 꼭 확인해주세요. 자동 저장하지 않고 확인을 받는 이유예요.
+                    </Text>
                   </View>
                 )}
 
@@ -278,20 +319,29 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                     <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>{section}</Text>
                     {fields.filter((f) => f.section === section).map((field, fi, arr) => {
                       const bad = touched && !!field.required && !field.value.trim();
+                      // 확신도가 낮은 항목은 주의색 테두리로 눈에 띄게 한다(필수 누락은 여전히 빨강이 우선).
+                      const uncertain = field.confidence != null && field.confidence < OCR_LOW_CONFIDENCE;
+                      const flagText = ocrFlagText(field.flags);
                       return (
                         <View key={field.id} style={[{ paddingBottom: 14 }, fi < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider, marginBottom: 14 }]}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                             <Text style={{ fontSize: 14, fontWeight: '600', color: bad ? T.danger : T.text2 }}>
                               {field.label}{field.required ? <Text style={{ color: T.danger }}> *</Text> : null}
                             </Text>
-                            {bad && <Text style={{ fontSize: 12, color: T.danger, fontWeight: '600' }}>확인 필요</Text>}
+                            {bad ? (
+                              <Text style={{ fontSize: 12, color: T.danger, fontWeight: '600' }}>확인 필요</Text>
+                            ) : uncertain ? (
+                              <View style={{ backgroundColor: T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                                <Text style={{ fontSize: 11, fontWeight: '800', color: T.warn }}>확신 {Math.round(field.confidence! * 100)}%</Text>
+                              </View>
+                            ) : null}
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <TextInput
                               style={{
                                 flex: 1, height: 50,
                                 borderWidth: 1,
-                                borderColor: bad ? T.danger : T.border,
+                                borderColor: bad ? T.danger : uncertain ? T.warn : T.border,
                                 borderRadius: T.radiusSm,
                                 paddingHorizontal: 14,
                                 fontSize: 15, color: T.text1, backgroundColor: T.white,
@@ -303,6 +353,9 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                             />
                             {field.unit ? <Text style={{ fontSize: 13, color: T.text3, fontWeight: '500', width: 48 }}>{field.unit}</Text> : null}
                           </View>
+                          {uncertain && flagText && (
+                            <Text style={{ fontSize: 11, color: T.warn, marginTop: 5, lineHeight: 16 }}>· {flagText}</Text>
+                          )}
                           {field.id === 'exam_date' && (
                             <Text style={{ fontSize: 11, color: T.text3, marginTop: 5 }}>YYYY-MM-DD 형식으로 입력 (예: 2024-03-15)</Text>
                           )}

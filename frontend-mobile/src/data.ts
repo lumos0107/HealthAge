@@ -46,7 +46,12 @@ export type OcrField = {
   value: string;
   unit?: string;
   required?: boolean;
-  confidence: number;
+  // OCR이 이 값을 얼마나 확신하는지(0~1). 백엔드 measurements_confidence에서 온다.
+  // 사진 인식이 아닌 경우(직접 입력·예시)는 확신도라는 게 없으므로 undefined로 둔다 —
+  // 없는 숫자를 만들어 넣으면 검수 하이라이트가 거짓 근거로 뜨게 된다.
+  confidence?: number;
+  // 휴리스틱이 붙인 의심 표시: out_of_range_suspect(범위 밖) / low_llm_confidence.
+  flags?: string[];
   section: '기본 정보' | '검사 수치';
 };
 
@@ -290,25 +295,27 @@ export function computeGroups(defs: MetricDefinition[] = metricDefinitions): Gro
     .sort((a, b) => b.matches - a.matches);
 }
 
+// 검수 화면의 항목 틀(라벨·단위·필수여부·구분). 값과 confidence는 실제 OCR 응답으로 채운다.
+// ※ 예전에는 여기에 confidence가 하드코딩돼 있었으나 아무도 쓰지 않는 허구값이라 제거했다.
 export const ocrTemplate: OcrField[] = [
-  { id: 'exam_date', label: '검진일', value: '', required: true, confidence: 0.94, section: '기본 정보' },
-  { id: 'hospital', label: '검진기관', value: '', required: true, confidence: 0.42, section: '기본 정보' },
-  { id: 'height', label: '키', value: '165.9', unit: 'cm', confidence: 0.95, section: '검사 수치' },
-  { id: 'weight', label: '몸무게', value: '74.0', unit: 'kg', confidence: 0.95, section: '검사 수치' },
-  { id: 'waist', label: '허리둘레', value: '86.0', unit: 'cm', confidence: 0.92, section: '검사 수치' },
-  { id: 'sbp', label: '수축기 혈압', value: '135', unit: 'mmHg', required: true, confidence: 0.91, section: '검사 수치' },
-  { id: 'dbp', label: '이완기 혈압', value: '117', unit: 'mmHg', required: true, confidence: 0.9, section: '검사 수치' },
-  { id: 'hb', label: '혈색소', value: '15.9', unit: 'g/dL', confidence: 0.91, section: '검사 수치' },
-  { id: 'fbs', label: '공복혈당', value: '94', unit: 'mg/dL', required: true, confidence: 0.86, section: '검사 수치' },
-  { id: 'total_cholesterol', label: '총콜레스테롤', value: '비해당', unit: 'mg/dL', confidence: 0.89, section: '검사 수치' },
-  { id: 'hdl', label: 'HDL 콜레스테롤', value: '비해당', unit: 'mg/dL', confidence: 0.89, section: '검사 수치' },
-  { id: 'tg', label: '중성지방', value: '비해당', unit: 'mg/dL', confidence: 0.89, section: '검사 수치' },
-  { id: 'ldl', label: 'LDL 콜레스테롤', value: '비해당', unit: 'mg/dL', confidence: 0.89, section: '검사 수치' },
-  { id: 'creatinine', label: '혈청 크레아티닌', value: '0.9', unit: 'mg/dL', confidence: 0.84, section: '검사 수치' },
-  { id: 'urine_protein', label: '요단백', value: '정상', confidence: 0.82, section: '검사 수치' },
-  { id: 'ast', label: 'AST(SGOT)', value: '26', unit: 'IU/L', confidence: 0.9, section: '검사 수치' },
-  { id: 'alt', label: 'ALT(SGPT)', value: '36', unit: 'IU/L', confidence: 0.9, section: '검사 수치' },
-  { id: 'ggt', label: '감마-GTP', value: '35', unit: 'IU/L', confidence: 0.9, section: '검사 수치' },
+  { id: 'exam_date', label: '검진일', value: '', required: true, section: '기본 정보' },
+  { id: 'hospital', label: '검진기관', value: '', required: true, section: '기본 정보' },
+  { id: 'height', label: '키', value: '165.9', unit: 'cm', section: '검사 수치' },
+  { id: 'weight', label: '몸무게', value: '74.0', unit: 'kg', section: '검사 수치' },
+  { id: 'waist', label: '허리둘레', value: '86.0', unit: 'cm', section: '검사 수치' },
+  { id: 'sbp', label: '수축기 혈압', value: '135', unit: 'mmHg', required: true, section: '검사 수치' },
+  { id: 'dbp', label: '이완기 혈압', value: '117', unit: 'mmHg', required: true, section: '검사 수치' },
+  { id: 'hb', label: '혈색소', value: '15.9', unit: 'g/dL', section: '검사 수치' },
+  { id: 'fbs', label: '공복혈당', value: '94', unit: 'mg/dL', required: true, section: '검사 수치' },
+  { id: 'total_cholesterol', label: '총콜레스테롤', value: '비해당', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'hdl', label: 'HDL 콜레스테롤', value: '비해당', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'tg', label: '중성지방', value: '비해당', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'ldl', label: 'LDL 콜레스테롤', value: '비해당', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'creatinine', label: '혈청 크레아티닌', value: '0.9', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'urine_protein', label: '요단백', value: '정상', section: '검사 수치' },
+  { id: 'ast', label: 'AST(SGOT)', value: '26', unit: 'IU/L', section: '검사 수치' },
+  { id: 'alt', label: 'ALT(SGPT)', value: '36', unit: 'IU/L', section: '검사 수치' },
+  { id: 'ggt', label: '감마-GTP', value: '35', unit: 'IU/L', section: '검사 수치' },
 ];
 
 // ── 약 정보(처방전·복약자료 OCR) ──────────────────────────────────────────

@@ -398,6 +398,10 @@ export type RealOcrResult = {
     meta?: Record<string, any>;
     measurements?: Record<string, { value: any; unit?: string } | null>;
     lifestyle?: Record<string, any>;
+    // 항목별 OCR 확신도. 백엔드 page_merger.to_final_json이 항상 함께 내려준다
+    // (LLM self-report + 휴리스틱 결합). flags: out_of_range_suspect / low_llm_confidence.
+    measurements_confidence?: Record<string, { confidence?: number; flags?: string[] }>;
+    lifestyle_confidence?: Record<string, { confidence?: number; flags?: string[] }>;
     [key: string]: any;
   };
   warnings: string[];
@@ -438,13 +442,33 @@ export async function uploadCheckupImage(uri: string, fileName?: string, mimeTyp
 export function ocrResultToFields(ocr: RealOcrResult['ocr']): OcrField[] {
   const meta = ocr.meta ?? {};
   const measurements = ocr.measurements ?? {};
+  const conf = ocr.measurements_confidence ?? {};
   return ocrTemplate.map((tmpl) => {
+    // 검진일·검진기관은 meta에 있고 항목별 확신도가 따로 없다 → confidence 없음으로 둔다.
     if (tmpl.id === 'exam_date') return { ...tmpl, value: meta.exam_date != null ? String(meta.exam_date) : '' };
     if (tmpl.id === 'hospital') return { ...tmpl, value: meta.hospital != null ? String(meta.hospital) : '' };
     const m = measurements[tmpl.id];
     const v = m && typeof m === 'object' ? m.value : m;
-    return { ...tmpl, value: v != null ? String(v) : '' };
+    const c = conf[tmpl.id];
+    return {
+      ...tmpl,
+      value: v != null ? String(v) : '',
+      confidence: typeof c?.confidence === 'number' ? c.confidence : undefined,
+      flags: c?.flags?.length ? c.flags : undefined,
+    };
   });
+}
+
+/** 검수 하이라이트 기준 — 이 값 미만이면 "값을 꼭 확인하라"고 표시한다(표시 임계값, 의학 기준 아님). */
+export const OCR_LOW_CONFIDENCE = 0.7;
+
+/** confidence flag를 사용자가 읽을 수 있는 이유로 바꾼다. 모르는 flag는 그대로 노출하지 않는다. */
+export function ocrFlagText(flags?: string[]): string | null {
+  if (!flags?.length) return null;
+  const parts: string[] = [];
+  if (flags.includes('out_of_range_suspect')) parts.push('일반적인 범위를 벗어난 값이에요');
+  if (flags.includes('low_llm_confidence')) parts.push('글자가 흐릿해 판독이 불확실했어요');
+  return parts.length ? parts.join(' · ') : null;
 }
 
 /** 사용자가 검수·수정한 OcrField[] → 다시 백엔드 ocr JSON 모양으로 변환한다(원본 ocr의 lifestyle 등 다른 필드는 그대로 보존). */
