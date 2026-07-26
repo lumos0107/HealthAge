@@ -362,9 +362,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 </Text>
               </View>
             )}
+            {/* 중성지방이 높으면 LDL 계산값을 믿기 어려워 달성 여부를 단정하지 않는다. */}
+            {ldlTarget.ldl_reliable === false && (
+              <View style={{ backgroundColor: '#EFEFEF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: T.text3 }}>판정 보류</Text>
+              </View>
+            )}
           </View>
           {ldlTarget.current_ldl != null && (
             <Text style={{ fontSize: 13, color: T.text2, marginBottom: 4 }}>현재 LDL {ldlTarget.current_ldl}mg/dL · 위험군: {ldlTarget.label}</Text>
+          )}
+          {ldlTarget.ldl_reliable === false && !!ldlTarget.reliability_note && (
+            <View style={{ backgroundColor: T.warnBg, borderRadius: 10, padding: 12, marginTop: 8, marginBottom: 4 }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: T.warn, marginBottom: 4 }}>⚠️ LDL 수치 신뢰도 확인 필요</Text>
+              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>{ldlTarget.reliability_note}</Text>
+            </View>
           )}
           {!!ldlTarget.risk_factors?.length && (
             <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>반영된 위험인자: {ldlTarget.risk_factors.join(' · ')}</Text>

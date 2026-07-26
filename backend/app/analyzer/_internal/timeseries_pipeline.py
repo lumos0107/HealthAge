@@ -40,6 +40,7 @@ def run_timeseries_pipeline(
             "highlights": [...],
             "exam_pattern": {...},
             "full_timeseries": {...},                # analyze_full_timeseries 결과
+            "change_pace": [...],                    # 또래 대비 악화 속도 상위 5항목
             "insight": {...},                        # generate_insight 결과 (basic_report 있을 때만)
             "_meta": {
                 "user_id": str,
@@ -87,6 +88,8 @@ def run_timeseries_pipeline(
         "current_age": ts_result.get("current_age"),
         "metrics": ts_result.get("metrics"),
         "highlights": ts_result.get("highlights"),
+        # 또래 대비 악화 '속도'(배수) 상위 항목 — 화면의 "또래보다 빠른 변화" 카드용
+        "change_pace": ts_result.get("change_pace"),
         "exam_pattern": ts_result.get("exam_pattern"),
         "full_timeseries": full_result if not full_result.get("error") else None,
         "insight": insight_result if insight_result and not insight_result.get("error") else None,

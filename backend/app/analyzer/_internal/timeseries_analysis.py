@@ -152,6 +152,71 @@ def compare_change(user_change: float, pop_change: Optional[float],
 
 
 # ============================================================
+# 변화 '속도' 비교 (또래 대비 배수)
+# ============================================================
+# compare_change()는 "평균보다 빠른 악화" 같은 등급 텍스트만 준다.
+# 여기서는 같은 내용을 "또래의 몇 배"라는 크기로 환산해 화면에 쓸 수 있게 한다.
+#
+# ⚠️ 또래 평균 변화가 0에 가까우면 배수가 발산한다(0.05 대비 5.0 = 100배).
+#    그래서 |또래 변화| < PACE_MIN_POP_CHANGE 이면 배수를 내지 않고 서술만 한다.
+#    "또래는 거의 그대로인데 본인만 +5"가 "100배"보다 정직하고 잘 읽힌다.
+PACE_MIN_POP_CHANGE = 0.5
+
+
+def analyze_change_pace(metric: str, user_change: float,
+                        pop_change: Optional[float]) -> Optional[dict]:
+    """본인 변화 속도를 또래 평균과 비교. 배수는 의미 있을 때만 낸다.
+
+    Returns:
+        {"ratio": float|None, "direction": "악화"|"개선"|"변화 없음",
+         "text": str} 또는 비교 불가 시 None.
+    """
+    if pop_change is None:
+        return None
+
+    is_higher_better = (metric == "HDL콜레스테롤")
+    if user_change == 0:
+        direction = "변화 없음"
+    elif (user_change < 0) if is_higher_better else (user_change > 0):
+        direction = "악화"
+    else:
+        direction = "개선"
+
+    same_direction = (user_change * pop_change) > 0
+    ratio = None
+    if same_direction and abs(pop_change) >= PACE_MIN_POP_CHANGE:
+        ratio = round(abs(user_change) / abs(pop_change), 1)
+
+    if direction == "변화 없음":
+        text = f"또래 평균은 {pop_change:+.1f} 변했고, 본인은 그대로입니다"
+    elif ratio is not None:
+        text = (
+            f"또래 평균({pop_change:+.1f})의 {ratio}배 속도로 {direction} 중입니다 "
+            f"(본인 {user_change:+.1f})"
+        )
+    elif not same_direction:
+        peer_dir = "개선" if (
+            (pop_change > 0) if is_higher_better else (pop_change < 0)
+        ) else "악화"
+        text = (
+            f"또래 평균은 {peer_dir}({pop_change:+.1f}) 방향인데 "
+            f"본인은 {direction}({user_change:+.1f}) 중입니다"
+        )
+    else:
+        text = (
+            f"또래 평균은 거의 변화가 없는데({pop_change:+.1f}) "
+            f"본인은 {user_change:+.1f} {direction} 했습니다"
+        )
+
+    return {"ratio": ratio, "direction": direction, "text": text}
+
+
+def _pace_rank(entry: dict) -> float:
+    """악화 목록 정렬용 키 — 배수가 큰 것부터. 배수 없는 항목은 뒤로."""
+    return -(entry["pace"]["ratio"] or 0)
+
+
+# ============================================================
 # 메인 분석 함수
 # ============================================================
 def analyze_timeseries(user_info: dict, history: list) -> dict:
@@ -243,6 +308,8 @@ def analyze_timeseries(user_info: dict, history: list) -> dict:
         else:
             trend = "변화 없음"
         
+        pace = analyze_change_pace(metric, user_change, pop_change)
+
         metrics_analysis[metric] = {
             "values": values,
             "years": value_years,
@@ -252,6 +319,7 @@ def analyze_timeseries(user_info: dict, history: list) -> dict:
             "population_change": pop_change,
             "comparison": comparison,
             "trend": trend,
+            "pace": pace,
         }
         
         # Highlights
@@ -297,7 +365,21 @@ def analyze_timeseries(user_info: dict, history: list) -> dict:
                         f"({values[0]} → {values[-1]})"
                     )
                 })
-    
+
+    # 또래 대비 '악화 속도' 상위 항목만 뽑아 화면용 목록으로 준다.
+    # (개선 중인 항목은 highlights의 '지속 개선'이 이미 다루므로 여기선 악화만.)
+    change_pace = sorted(
+        [
+            {"metric": m, "pace": d["pace"],
+             "user_change": d["user_change"],
+             "population_change": d["population_change"],
+             "span_years": d["span_years"]}
+            for m, d in metrics_analysis.items()
+            if d.get("pace") and d["pace"]["direction"] == "악화"
+        ],
+        key=_pace_rank,
+    )[:5]
+
     return {
         "user_id": user_id,
         "user_name": user_info.get("name"),
@@ -308,6 +390,7 @@ def analyze_timeseries(user_info: dict, history: list) -> dict:
         "exam_pattern": exam_pattern,
         "metrics": metrics_analysis,
         "highlights": highlights,
+        "change_pace": change_pace,
         "_meta": {
             "analyzed_at": datetime.now().isoformat(timespec='seconds'),
             "history_count": len(history),

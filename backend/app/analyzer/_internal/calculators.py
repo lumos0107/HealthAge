@@ -260,6 +260,41 @@ def calculate_de_ritis(
 
 
 # ============================================================
+# 5-2. ALT/GGT 비 — 지방간 유형 감별 보조
+# ============================================================
+
+def calculate_alt_ggt_ratio(
+    alt: Optional[float],
+    ggt: Optional[float],
+) -> Optional[dict[str, Any]]:
+    """ALT/GGT 비 — 지방간의 '유형'을 가늠하는 보조 지표.
+
+    약대 자문(교수 주석 p4): "ALT/GGT 비율 >1이면 비알코올성, <1이면 알코올성."
+    De Ritis(AST/ALT)와 함께 보면 감별에 도움이 된다.
+
+    ⚠️ 높고 낮음이 좋고 나쁨을 뜻하지 않는다(유형 시사). 그래서 level은
+    중립값 'info'로 두어 화면에서 초록/빨강으로 물들지 않게 한다.
+    ⚠️ 음주량(주당 순알코올)이 있으면 훨씬 정확해지지만 현재는 미수집이다.
+    """
+    if not all(isinstance(v, (int, float)) and v > 0 for v in (alt, ggt)):
+        return None
+    ratio = round(alt / ggt, 2)
+    if ratio < 1.0:
+        interp = "알코올성 간질환 쪽 시사 (<1)"
+    else:
+        interp = "비알코올성(대사성) 지방간 쪽 시사 (≥1)"
+    return {
+        "value": ratio, "level": "info", "interpretation": interp,
+        "cutoffs": "<1 알코올성 쪽 / ≥1 비알코올성 쪽 (유형 감별 보조, 중증도 아님)",
+        "formula": "ALT / GGT",
+        "note": (
+            "유형을 가늠하는 보조 지표로, 진단이 아닙니다. "
+            "음주량(주당 순알코올)을 함께 보면 정확도가 올라갑니다."
+        ),
+    }
+
+
+# ============================================================
 # 6. 평균동맥압 MAP — SBP·DBP
 # ============================================================
 
@@ -450,6 +485,7 @@ def additional_calculators(
     fbs = checkup.get("식전혈당(공복혈당)")
     ast = checkup.get("혈청지오티(AST)")
     alt = checkup.get("혈청지피티(ALT)")
+    ggt = checkup.get("감마지티피")
     waist = checkup.get("허리둘레")
     sbp = checkup.get("수축기혈압")
     dbp = checkup.get("이완기혈압")
@@ -479,6 +515,8 @@ def additional_calculators(
         # 간
         ("de_ritis", "De Ritis 비 (AST/ALT)", "liver",
          calculate_de_ritis(ast, alt), "De Ritis (AST·ALT 필요)"),
+        ("alt_ggt", "ALT/GGT 비", "liver",
+         calculate_alt_ggt_ratio(alt, ggt), "ALT/GGT (ALT·감마지티피 필요)"),
         ("bard", "BARD 점수", "liver",
          calculate_bard(bmi, ast, alt, has_diabetes), "BARD (BMI·AST·ALT 필요)"),
         # 혈압

@@ -228,6 +228,10 @@ export type RealComboAnalysis = {
     current_ldl: number | null;
     achieved: boolean | null;
     gap: number | null;
+    // TG≥400이면 Friedewald 계산식 LDL의 신뢰도가 떨어져 achieved가 null로 온다(판정 보류).
+    ldl_reliable?: boolean;
+    reliability_note?: string | null;
+    tg_value?: number | null;
     risk_factors: string[];
     basis: string;
     on_medication: boolean;
@@ -338,6 +342,15 @@ export type RealTimeseries = {
     comparison?: string;
   }>;
   highlights?: { metric: string; type: string; severity: string; message: string }[];
+  // 또래 대비 악화 '속도' 상위 항목. ratio는 또래 변화가 ±0.5 이상일 때만 계산된다
+  // (0에 가까운 값으로 나누면 배수가 발산하므로, 그때는 text로만 서술한다).
+  change_pace?: {
+    metric: string;
+    pace: { ratio: number | null; direction: string; text: string };
+    user_change?: number;
+    population_change?: number | null;
+    span_years?: number;
+  }[] | null;
   // 자연어 종합 인사이트 — insight_generator.generate_insight 결과(요약 + 주요 우려 Top 3).
   insight?: {
     summary: string;
@@ -348,7 +361,14 @@ export type RealTimeseries = {
 
 export async function fetchTimeseries(userId: string): Promise<RealTimeseries | null> {
   try {
-    return await apiFetch(`/timeseries/${userId}`);
+    const row = await apiFetch(`/timeseries/${userId}`);
+    if (!row) return null;
+    // GET /timeseries/{id}는 timeseries_analyses의 DB 행을 그대로 반환한다.
+    // 분석 본문은 timeseries_data 컬럼 안에 있고 insight는 insights 컬럼에도 중복 저장된다.
+    // 언랩하지 않으면 highlights·insight·change_pace가 전부 undefined가 된다.
+    // (POST /timeseries/refresh는 분석 결과를 바로 주므로 두 형태를 모두 받아들인다.)
+    const body = row.timeseries_data ?? row;
+    return { ...body, insight: body.insight ?? row.insights ?? null };
   } catch (e) {
     // 분석 이력이 2년 미만이면 404가 날 수 있다 — 화면에서는 "데이터 부족"으로 처리.
     return null;

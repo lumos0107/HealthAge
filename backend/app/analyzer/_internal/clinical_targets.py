@@ -64,6 +64,12 @@ LDL_TARGETS: dict[str, dict[str, Any]] = {
 # ※ 가족력은 검진지에서 얻을 수 없어 제외 — 그래서 실제 위험도는
 #   여기서 산출한 값보다 높을 수 있다. 응답에 그 한계를 함께 적는다.
 
+# Friedewald 식(LDL = TC − HDL − TG/5)은 TG가 높으면 LDL을 과소평가한다.
+# 약대 자문(교수 주석 p9) + 2022 이상지질혈증 지침: TG 400mg/dL 이상이면 계산식 부적용.
+# 검진지로는 LDL이 계산값인지 직접측정값인지 알 수 없으므로, 목표 달성 여부를
+# 단정하지 않고(achieved=None) 확인 필요로 돌린다 — 지어내지 않는다는 원칙.
+FRIEDEWALD_TG_LIMIT = 400
+
 
 def _count_risk_factors(
     checkup: dict[str, Any],
@@ -139,6 +145,21 @@ def classify_ldl_risk(
         achieved = ldl < target
         gap = round(ldl - target, 1)
 
+    # TG가 높으면 LDL 계산값의 신뢰도가 떨어진다 → 달성 판정을 보류한다.
+    tg = checkup.get("트리글리세라이드")
+    ldl_reliable = True
+    reliability_note = None
+    if isinstance(tg, (int, float)) and tg >= FRIEDEWALD_TG_LIMIT:
+        ldl_reliable = False
+        achieved = None  # 단정하지 않는다 — 화면의 '달성/초과' 배지를 띄우지 않는다
+        reliability_note = (
+            f"중성지방이 {tg:g}mg/dL({FRIEDEWALD_TG_LIMIT} 이상)로, LDL을 계산식"
+            "(Friedewald)으로 구한 경우 실제보다 낮게 나올 수 있습니다. "
+            "검진 결과지만으로는 직접측정 여부를 알 수 없어 목표 달성 여부는 "
+            "판정을 보류했습니다. LDL 직접측정 또는 Non-HDL 콜레스테롤로 "
+            "확인하시길 권합니다."
+        )
+
     return {
         "risk_level": risk_level,
         "label": info["label"],
@@ -147,6 +168,9 @@ def classify_ldl_risk(
         "current_ldl": ldl,
         "achieved": achieved,
         "gap": gap,
+        "ldl_reliable": ldl_reliable,
+        "reliability_note": reliability_note,
+        "tg_value": tg if isinstance(tg, (int, float)) else None,
         "risk_factors": factor_names,
         "basis": basis,
         "on_medication": bool(medications.get("dyslipidemia")),

@@ -4,6 +4,7 @@
 // highlights·insight(시계열)만 6개년 악화 스토리에 맞춰 수작업.
 import type { RealComboAnalysis, RealRecommendations, RealTimeseries } from './health';
 
+
 export const dummyComboAnalysis = ({
   "combo_groups": {
     "matched": [
@@ -214,6 +215,57 @@ export const dummyComboAnalysis = ({
             }
           ]
         }
+      },
+      {
+        "combo_name": "음주+지방간의심",
+        "category": "간 질환",
+        "meaning": "알코올성 지방간 의심",
+        "components": [
+          "음주자",
+          "지방간 의심"
+        ],
+        "is_ascvd_risk": false,
+        "population": {
+          "n_in_combo": 145307,
+          "pct_of_total": 14.62,
+          "expected_n_if_independent": 126272,
+          "observed_to_expected": 1.15,
+          "top_metrics": [
+            {
+              "metric": "감마지티피",
+              "combo_mean": 93.18,
+              "non_combo_mean": 24.71,
+              "diff": 68.48,
+              "cohens_d": 1.605,
+              "single_means": {
+                "음주자": 23.49,
+                "지방간 의심": 64.94
+              }
+            },
+            {
+              "metric": "혈청지피티(ALT)",
+              "combo_mean": 53.53,
+              "non_combo_mean": 21.88,
+              "diff": 31.65,
+              "cohens_d": 1.512,
+              "single_means": {
+                "음주자": 19.77,
+                "지방간 의심": 56.97
+              }
+            },
+            {
+              "metric": "혈청지오티(AST)",
+              "combo_mean": 42.22,
+              "non_combo_mean": 24.32,
+              "diff": 17.91,
+              "cohens_d": 1.001,
+              "single_means": {
+                "음주자": 22.73,
+                "지방간 의심": 44.22
+              }
+            }
+          ]
+        }
       }
     ],
     "not_evaluable": [
@@ -229,30 +281,19 @@ export const dummyComboAnalysis = ({
         "reason": "현재 흡연자 정보가 없어 판정할 수 없습니다."
       },
       {
-        "combo_name": "음주+지방간의심",
-        "category": "간 질환",
-        "met": [
-          "지방간 의심"
-        ],
-        "missing": [
-          "음주자"
-        ],
-        "reason": "음주자 정보가 없어 판정할 수 없습니다."
-      },
-      {
         "combo_name": "흡연+음주+비만",
         "category": "생활습관 트리플",
         "met": [
+          "음주자",
           "비만"
         ],
         "missing": [
-          "현재 흡연자",
-          "음주자"
+          "현재 흡연자"
         ],
-        "reason": "현재 흡연자, 음주자 정보가 없어 판정할 수 없습니다."
+        "reason": "현재 흡연자 정보가 없어 판정할 수 없습니다."
       }
     ],
-    "matched_count": 4,
+    "matched_count": 5,
     "ascvd_risk_combos": [],
     "highest_synergy": {
       "combo_name": "비만+이상지질혈증+지방간의심",
@@ -322,9 +363,9 @@ export const dummyComboAnalysis = ({
   },
   "fatty_liver": {
     "applicable": true,
-    "type": null,
+    "type": "MetALD 의심 (대사이상 + 유의한 음주 동반)",
     "provisional": true,
-    "basis": "음주 정보가 없어 유형을 구분할 수 없습니다.",
+    "basis": "음주 여부만 확인됨(음주) — 음주량 미수집으로 210/420g 구간을 적용하지 못했습니다.",
     "cardiometabolic_factors": [
       "비만/복부비만",
       "혈당 이상",
@@ -332,7 +373,7 @@ export const dummyComboAnalysis = ({
       "고중성지방",
       "낮은 HDL"
     ],
-    "note": "음주량(주당 순알코올)을 입력하시면 MASLD/MetALD/ALD 구분이 가능합니다.",
+    "note": "음주량(주당 순알코올)이 없어 잠정 분류입니다. 정식 기준(2025 MASLD 지침): MASLD 남≤210/여≤140g·주, MetALD 그 사이, ALD 남>420/여>350g·주.",
     "indices": {
       "fli": {
         "value": 69.4,
@@ -436,14 +477,14 @@ export const dummyComboAnalysis = ({
       "name": "음주자",
       "category": "생활습관",
       "desc": null,
-      "applies": null
+      "applies": true
     },
     {
       "key": "g_non_drinker",
       "name": "비음주자",
       "category": "생활습관",
       "desc": null,
-      "applies": null
+      "applies": false
     }
   ],
   "ascvd_simulation": {
@@ -609,6 +650,17 @@ export const dummyComboAnalysis = ({
         "formula": "De Ritis = AST / ALT"
       },
       {
+        "key": "alt_ggt",
+        "title": "ALT/GGT 비",
+        "category": "liver",
+        "value": 0.66,
+        "level": "info",
+        "interpretation": "알코올성 간질환 쪽 시사 (<1)",
+        "cutoffs": "<1 알코올성 쪽 / ≥1 비알코올성 쪽 (유형 감별 보조, 중증도 아님)",
+        "formula": "ALT / GGT",
+        "note": "유형을 가늠하는 보조 지표로, 진단이 아닙니다. 음주량(주당 순알코올)을 함께 보면 정확도가 올라갑니다."
+      },
+      {
         "key": "bard",
         "title": "BARD 점수",
         "category": "liver",
@@ -685,6 +737,9 @@ export const dummyComboAnalysis = ({
     "current_ldl": 145.0,
     "achieved": false,
     "gap": 15.0,
+    "ldl_reliable": true,
+    "reliability_note": null,
+    "tg_value": 178.0,
     "risk_factors": [
       "낮은 HDL(<40)",
       "연령(남 45세 이상)"
@@ -700,8 +755,8 @@ export const dummyComboAnalysis = ({
 }) as unknown as RealComboAnalysis;
 
 export const dummyRecommendations = ({
-  "user_id": null,
-  "user_name": null,
+  "user_id": "demo-root",
+  "user_name": "홍길동",
   "age": 50,
   "priority_messages": [
     "🚨 대사증후군에 해당합니다 (5/5개 충족). 심혈관 질환 위험이 매우 높으니 의료진 상담을 권장합니다.",
@@ -833,13 +888,22 @@ export const dummyRecommendations = ({
           "간 초음파 등 추가 검사 권장.",
           "간 효소 수치를 3~6개월 후 재검사."
         ]
+      },
+      {
+        "group_id": "g_drinker",
+        "title": "음주 관리",
+        "details": [
+          "주 2회 이상 금주일 유지.",
+          "1회 음주량 제한.",
+          "간 효소 수치가 높다면 절주 우선."
+        ]
       }
     ],
     "medication_notes": [],
     "elderly_notes": []
   },
   "_meta": {
-    "generated_at": "2026-07-25T21:15:58",
+    "generated_at": "2026-07-26T15:58:58",
     "version": "v1 (약대 자문)",
     "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
   }
@@ -850,6 +914,16 @@ export const dummyHighlights: NonNullable<RealTimeseries['highlights']> = [
   { metric: '허리둘레', type: '구간 상승', severity: 'high', message: '80cm에서 93cm로 늘며 복부비만 위험 구간에 들어섰어요. 대사증후군과 함께 보는 지표예요.' },
   { metric: '공복혈당', type: '구간 상승', severity: 'warn', message: '86에서 112mg/dL로 오르며 당뇨병 전단계(100~125) 구간에 진입했어요.' },
   { metric: 'HDL 콜레스테롤', type: '구간 하락', severity: 'warn', message: '54에서 39mg/dL로 낮아져 관리가 필요한 구간에 들어섰어요(높을수록 좋은 지표).' },
+];
+
+// 백엔드 analyze_timeseries()에 위 6개년(data.ts reports)을 넣어 나온 실제 결과.
+// population_change는 공단 표본 change_stats.parquet 조회값이라 지어낸 수치가 아니다.
+export const dummyChangePace: NonNullable<RealTimeseries['change_pace']> = [
+  { metric: '수축기혈압', pace: { ratio: 19.0, direction: '악화', text: '또래 평균(+1.2)의 19.0배 속도로 악화 중입니다 (본인 +22.0)' }, user_change: 22.0, population_change: 1.16, span_years: 10 },
+  { metric: '이완기혈압', pace: { ratio: 13.7, direction: '악화', text: '또래 평균(+1.0)의 13.7배 속도로 악화 중입니다 (본인 +14.0)' }, user_change: 14.0, population_change: 1.02, span_years: 10 },
+  { metric: '식전혈당(공복혈당)', pace: { ratio: 11.7, direction: '악화', text: '또래 평균(+2.2)의 11.7배 속도로 악화 중입니다 (본인 +26.0)' }, user_change: 26.0, population_change: 2.23, span_years: 10 },
+  { metric: '트리글리세라이드', pace: { ratio: 9.2, direction: '악화', text: '또래 평균(+8.1)의 9.2배 속도로 악화 중입니다 (본인 +74.0)' }, user_change: 74.0, population_change: 8.07, span_years: 10 },
+  { metric: 'non_HDL', pace: { ratio: 7.3, direction: '악화', text: '또래 평균(+6.6)의 7.3배 속도로 악화 중입니다 (본인 +47.8)' }, user_change: 47.8, population_change: 6.58, span_years: 10 },
 ];
 
 export const dummyInsight: NonNullable<RealTimeseries['insight']> = {

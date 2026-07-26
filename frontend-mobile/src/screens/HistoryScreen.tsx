@@ -8,6 +8,28 @@ import type { RealTimeseries } from '../health';
 
 type Highlight = NonNullable<RealTimeseries['highlights']>[number];
 type Insight = NonNullable<RealTimeseries['insight']>;
+type ChangePace = NonNullable<RealTimeseries['change_pace']>[number];
+
+// 백엔드 시계열은 내부 검진항목 키를 그대로 쓴다(non_HDL, 식전혈당(공복혈당) 등).
+// 화면에는 사용자가 읽는 이름으로 바꿔 보여준다. 맵에 없으면 원래 키를 그대로 쓴다.
+const METRIC_LABEL: Record<string, string> = {
+  '수축기혈압': '수축기 혈압',
+  '이완기혈압': '이완기 혈압',
+  '식전혈당(공복혈당)': '공복혈당',
+  '트리글리세라이드': '중성지방',
+  'non_HDL': 'Non-HDL 콜레스테롤',
+  '총콜레스테롤': '총콜레스테롤',
+  'LDL콜레스테롤': 'LDL 콜레스테롤',
+  'HDL콜레스테롤': 'HDL 콜레스테롤',
+  '혈청지오티(AST)': 'AST',
+  '혈청지피티(ALT)': 'ALT',
+  '감마지티피': '감마-GTP',
+  '혈청크레아티닌': '크레아티닌',
+  'AST_ALT비': 'AST/ALT 비',
+  'BMI': '체질량지수(BMI)',
+  '맥압': '맥압',
+};
+const metricLabel = (m: string) => METRIC_LABEL[m] ?? m;
 
 const SCREEN_W = Dimensions.get('window').width;
 const CHART_W = SCREEN_W - 32 - 40; // 16px card margin + 20px card padding, each side
@@ -29,12 +51,13 @@ const chartGroups: { title: string; keys: MetricKey[] }[] = [
   { title: '혈액·신장', keys: ['hemoglobin', 'creatinine'] },
 ];
 
-export default function HistoryScreen({ reports, metricDefinitions, usingRealData, highlights, insight }: {
+export default function HistoryScreen({ reports, metricDefinitions, usingRealData, highlights, insight, changePace }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
   highlights?: Highlight[] | null;
   insight?: Insight | null;
+  changePace?: ChangePace[] | null;
 }) {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
@@ -85,6 +108,45 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
         </View>
       )}
 
+      {/* 또래 대비 변화 '속도' — 공단 표본의 같은 성별·연령대 평균 변화량과 내 변화 폭을 배수로 비교.
+          배수는 또래 변화가 뚜렷할 때만(±0.5 이상) 나온다 — 0에 가까운 값으로 나누면 배수가 발산하므로. */}
+      {!!changePace?.length && (
+        <FadeInUp delay={15}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>또래 대비 변화 속도</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요. 악화 방향만 모았어요.</Text>
+          <View style={{ gap: 8 }}>
+            {changePace!.map((p, i) => {
+              // 2배 이상이면 빨강, 그 아래는 주황. 배수를 못 낸 항목은 중립 회색으로 둔다.
+              const strong = (p.pace.ratio ?? 0) >= 2;
+              const badgeColor = p.pace.ratio == null ? T.text3 : strong ? T.danger : T.warn;
+              const badgeBg = p.pace.ratio == null ? '#EFEFEF' : strong ? T.dangerBg : T.warnBg;
+              return (
+                <View key={i} style={[{ paddingVertical: 10 }, i < changePace!.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: badgeColor }}>
+                        {p.pace.ratio != null ? `또래의 ${p.pace.ratio}배` : '또래와 다른 방향'}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>{metricLabel(p.metric)}</Text>
+                    {p.span_years != null && (
+                      <Text style={{ fontSize: 11, color: T.text3 }}>{p.span_years}년간</Text>
+                    )}
+                  </View>
+                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{p.pace.text}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
+            기준: 건강보험공단 검진 표본의 성별·연령대별 평균 변화량. 위험도 예측이 아니라 변화 폭 비교예요.
+            배수는 <Text style={{ fontWeight: '700' }}>평균과의 비교</Text>라서 또래 안에서도 개인차가 큰 점은 담기지 않아요.
+          </Text>
+        </View>
+        </FadeInUp>
+      )}
+
       {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만 보여준다(2년 미만 기록이면 비어있음) */}
       {!!highlights?.length && (
         <FadeInUp delay={20}>
@@ -101,7 +163,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
                     <View style={{ backgroundColor: sevBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
                       <Text style={{ fontSize: 11, fontWeight: '700', color: sevColor }}>{h.type}</Text>
                     </View>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>{h.metric}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>{metricLabel(h.metric)}</Text>
                   </View>
                   <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{h.message}</Text>
                 </View>
