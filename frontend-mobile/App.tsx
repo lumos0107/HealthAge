@@ -195,6 +195,10 @@ export default function App() {
     // 실서비스(Supabase 설정됨)에서 시연이 필요하면 EXPO_PUBLIC_ENABLE_DEMO=1 로 명시 활성화.
     const demoEnabled = !supabaseConfigured || process.env.EXPO_PUBLIC_ENABLE_DEMO === '1';
     if (demoEnabled && email === 'root' && password === '1234') {
+      // 직전에 실계정으로 로그인했다면 그 사람의 이름·성별·생년이 남아 있다.
+      // 데모는 홍길동 기준 더미를 보여주므로 프로필도 함께 초기화한다
+      // (안 하면 업로드 화면 안내·내보낸 PDF에 남의 이름이 찍힌다).
+      setProfile(initialProfile);
       setDemoMode(true); setLoggedIn(true); setAuthOpen(false);
       loadHealthData(); // 실제 데이터 초기화(더미로 표시되도록)
       showToast('데모 계정으로 로그인되었습니다.'); return;
@@ -338,7 +342,7 @@ export default function App() {
         {tab !== 'dashboard' && !loggedIn && <LockedNotice onPress={requireLogin} />}
         {tab === 'records' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} onDeleted={() => loadHealthData(profile.id)} medications={medications} />)}
+          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} onDeleted={() => loadHealthData(profile.id)} medications={medications} userName={profile.name} />)}
         {tab === 'history' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}
@@ -352,6 +356,7 @@ export default function App() {
             settings={settings}
             onSave={saveProfile}
             onSaveSettings={setSettings}
+            nextExamYear={usingRealData ? timeseries?.insight?.next_exam_year ?? null : (isDemoAccount ? dummyInsight.next_exam_year : null)}
             onLogout={logout}
             onDeleteAccount={handleDeleteAccount}
             onOpenAuth={() => setAuthOpen(true)}

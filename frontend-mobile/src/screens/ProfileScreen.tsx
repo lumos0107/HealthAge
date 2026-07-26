@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { Eyebrow, FadeInUp, FieldInput, T } from '../components/UI';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { birthDateFromProfile, profileBirthFromDate } from '../data';
 import type { UserProfile, UserSettings } from '../data';
+import { cancelCheckupReminder, getScheduledCheckupReminder, scheduleCheckupReminder } from '../notifications';
 
 type EditState = 'locked' | 'verifying' | 'unlocked';
 
@@ -13,6 +14,7 @@ export default function ProfileScreen({
   settings,
   onSave,
   onSaveSettings,
+  nextExamYear,
   onLogout,
   onDeleteAccount,
 }: {
@@ -20,6 +22,8 @@ export default function ProfileScreen({
   settings: UserSettings;
   onSave: (p: UserProfile) => void;
   onSaveSettings: (s: UserSettings) => void;
+  // 검진 알림을 언제 띄울지 정하는 근거. 백엔드 insight.next_exam_year(없으면 undefined).
+  nextExamYear?: number | null;
   onLogout: () => void;
   onDeleteAccount?: () => void;
   onOpenAuth?: () => void;
@@ -62,7 +66,31 @@ export default function ProfileScreen({
     Alert.alert('저장 완료', '프로필이 업데이트되었습니다.');
   };
 
-  const handleSettingChange = (key: keyof UserSettings, value: boolean) => {
+  // 검진 알림은 토글이 곧 실제 예약이다 — 예약된 시각을 화면에 보여줘서
+  // "켜 놓았는데 아무 일도 안 일어나는" 상태가 생기지 않게 한다.
+  const [reminderAt, setReminderAt] = useState<Date | null>(null);
+  useEffect(() => { getScheduledCheckupReminder().then(setReminderAt).catch(() => {}); }, []);
+
+  const handleSettingChange = async (key: keyof UserSettings, value: boolean) => {
+    if (key === 'checkupReminder') {
+      if (value) {
+        const at = await scheduleCheckupReminder(nextExamYear);
+        if (!at) {
+          // 권한 거부 또는 권장 연도를 알 수 없음 → 켠 척하지 않고 토글을 되돌린다.
+          Alert.alert(
+            '알림을 켤 수 없어요',
+            nextExamYear
+              ? '기기 설정에서 알림 권한을 허용해주세요.'
+              : '검진 기록이 있어야 다음 검진 시기를 알 수 있어요. 결과지를 먼저 등록해주세요.',
+          );
+          return;
+        }
+        setReminderAt(at);
+      } else {
+        await cancelCheckupReminder();
+        setReminderAt(null);
+      }
+    }
     const next = { ...localSettings, [key]: value };
     setLocalSettings(next);
     onSaveSettings(next);
@@ -195,6 +223,13 @@ export default function ProfileScreen({
                   thumbColor="#fff"
                 />
               </View>
+              {item.key === 'checkupReminder' && localSettings.checkupReminder && (
+                <Text style={{ fontSize: 12, color: reminderAt ? T.success : T.text3, marginTop: 8, lineHeight: 18 }}>
+                  {reminderAt
+                    ? `예약됨 · ${reminderAt.getFullYear()}년 ${reminderAt.getMonth() + 1}월 ${reminderAt.getDate()}일 ${String(reminderAt.getHours()).padStart(2, '0')}:${String(reminderAt.getMinutes()).padStart(2, '0')}`
+                    : '아직 예약된 알림이 없어요. 검진 기록을 등록하면 다음 검진 시기에 맞춰 알려드려요.'}
+                </Text>
+              )}
             </View>
           ))}
         </View>

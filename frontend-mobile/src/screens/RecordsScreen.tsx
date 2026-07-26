@@ -5,8 +5,9 @@ import { Collapsible, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, metricsForReport } from '../data';
 import type { MedicationItem, MetricDefinition, Report } from '../data';
 import { deleteReport } from '../health';
+import { exportReportPdf } from '../reportExport';
 
-export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, onDeleted, medications }: {
+export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, onDeleted, medications, userName }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
@@ -14,6 +15,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   onDeleted?: (year: number) => void;
   // 실제 저장된 복약 정보 — 있으면 이걸, 없으면(데모/프리뷰) 예시 템플릿을 보여준다.
   medications?: MedicationItem[];
+  // PDF 머리말에 넣을 이름.
+  userName?: string;
 }) {
   const [selectedYear, setSelectedYear] = useState<number>(reports[reports.length - 1].year);
   // 검사 항목 / 복용약 — 같은 연도 기록 안에서 전환해서 볼 수 있게 한다.
@@ -22,6 +25,18 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   const detailReport = reports.find((r) => r.year === selectedYear) ?? reports[reports.length - 1];
   // 그 해 검진의 실제 상태(statusByKey)를 그대로 반영한 항목 목록 — 점수와 항상 일치한다.
   const yearMetrics = useMemo(() => metricsForReport(detailReport, metricDefinitions), [detailReport, metricDefinitions]);
+
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await exportReportPdf(detailReport, yearMetrics, userName ?? '사용자');
+    } catch (e) {
+      Alert.alert('내보내기 실패', e instanceof Error ? e.message : 'PDF를 만들지 못했습니다.');
+    } finally {
+      setExporting(false);
+    }
+  };
   // 실제 사용자면 저장된 복약 정보를, 아니면(데모/프리뷰) 예시 템플릿을 효능군별로 묶는다.
   const medSource = usingRealData ? (medications ?? []) : medicationTemplate;
   const medGroups = useMemo(() => {
@@ -123,6 +138,18 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
         /* 상세 항목 — 선택한 연도의 statusByKey를 그대로 반영해, 위 점수와 항상 일치한다.
            연도를 바꾸면 살짝 페이드되며 갱신되어 변화가 자연스럽게 보인다 */
         <FadeIn key={`metrics-${detailReport.year}`}>
+        {/* 병원 지참·가족 공유용 PDF 내보내기 — 화면에 보이는 값만 옮겨 담는다(새 판단 없음). */}
+        <Pressable
+          onPress={exporting ? undefined : handleExport}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                   marginHorizontal: 16, marginBottom: 8, height: 50, borderRadius: T.radiusPill,
+                   borderWidth: 1, borderColor: T.border, backgroundColor: T.white, opacity: exporting ? 0.6 : 1 }}
+        >
+          <Ionicons name="share-outline" size={18} color={T.text1} />
+          <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
+            {exporting ? 'PDF를 만드는 중...' : `${detailReport.year}년 결과 PDF로 내보내기`}
+          </Text>
+        </Pressable>
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20 }}>
           <Collapsible
             title={`${detailReport.year}년 상세 항목`}
