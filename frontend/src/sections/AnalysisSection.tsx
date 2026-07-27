@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { AppData } from '../App';
 import type { RealComboAnalysis, RealRecommendations } from '../api/types';
 import { Card, EmptyState, KV, LevelBadge, SectionTitle } from '../components/UI';
+import { WhatIfPanel } from '../components/WhatIfPanel';
 import { fmt } from '../lib/format';
 
 const CALC_CATEGORY_LABEL: Record<string, string> = {
@@ -44,6 +45,9 @@ export function AnalysisSection({ data }: { data: AppData }) {
           </button>
         ))}
       </div>
+
+      {/* 서버가 최신 저장 검진값을 기준선으로 쓰므로 연도 선택과 무관하게 최신 회차를 넘긴다 */}
+      <WhatIfPanel latest={reports[reports.length - 1]} />
 
       {!combo && (
         <EmptyState title="이 회차는 분석 데이터가 없어요" desc="종합 분석은 새로 저장된 검진부터 제공돼요." />
