@@ -87,6 +87,27 @@ class TestHealth:
 
 
 # ══════════════════════════════════════════════════════════════════
+# Auth — /auth/me
+# ══════════════════════════════════════════════════════════════════
+
+class TestAuthMe:
+    def test_me_without_token_returns_401(self, client: TestClient):
+        r = client.get("/auth/me")
+        assert r.status_code in (401, 403)
+
+    def test_me_returns_id_and_email(
+        self, client: TestClient, auth_headers: dict, user_id: str
+    ):
+        """토큰의 sub/email이 그대로 응답에 담긴다. access_token은 노출하지 않는다."""
+        r = client.get("/auth/me", headers=auth_headers)
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["id"] == user_id
+        assert body["email"] == "test@example.com"
+        assert "access_token" not in body
+
+
+# ══════════════════════════════════════════════════════════════════
 # Users — 인증 필수
 # ══════════════════════════════════════════════════════════════════
 
