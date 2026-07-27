@@ -1,10 +1,14 @@
 // 7개 섹션을 실계정으로 순회하며 스크린샷을 남긴다.
-// 사용: node capture_sections.mjs  (dev 서버와 백엔드가 켜져 있어야 함)
+// 사용: DEMO_EMAIL=... DEMO_PASSWORD=... node capture_sections.mjs  (dev 서버와 백엔드가 켜져 있어야 함)
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 
-const EMAIL = process.env.DEMO_EMAIL ?? 'webdemo40680@example.com';
-const PASSWORD = process.env.DEMO_PASSWORD ?? '';
+const EMAIL = process.env.DEMO_EMAIL;
+const PASSWORD = process.env.DEMO_PASSWORD;
+if (!EMAIL || !PASSWORD) {
+  console.error('DEMO_EMAIL / DEMO_PASSWORD 환경변수가 필요합니다. 예: DEMO_EMAIL=... DEMO_PASSWORD=... node capture_sections.mjs');
+  process.exit(1);
+}
 const SECTIONS = ['대시보드', '종합 분석', '히스토리', '검진 기록', '업로드·입력', '도구·참고', '내 정보'];
 
 mkdirSync('screenshots', { recursive: true });

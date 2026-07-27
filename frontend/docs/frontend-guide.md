@@ -191,10 +191,10 @@ reload()
 npm test
 ```
 
-섹션별 스크린샷(dev 서버 + 백엔드가 켜져 있어야 함, 실계정 `webdemo40680@example.com` 사용):
+섹션별 스크린샷(dev 서버 + 백엔드가 켜져 있어야 함, `DEMO_EMAIL`/`DEMO_PASSWORD` 환경변수 필수 — 기본값 없음):
 
 ```powershell
-node capture_sections.mjs
+$env:DEMO_EMAIL = "..."; $env:DEMO_PASSWORD = "..."; node capture_sections.mjs
 ```
 
-`screenshots/01-대시보드.png` ~ `07-내정보.png` 7장이 생성됩니다. 계정/비밀번호는 `DEMO_EMAIL`/`DEMO_PASSWORD` 환경변수로 바꿀 수 있습니다.
+`screenshots/01-대시보드.png` ~ `07-내정보.png` 7장이 생성됩니다.

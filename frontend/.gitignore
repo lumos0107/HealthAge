@@ -5,11 +5,5 @@ dist
 *.log
 vite-dev.log
 vite-dev.err.log
-.task5-verify/
-.task6-verify/
-.task7-verify/
-.task8-verify/
-.task9-verify/
-.task10-verify/
-.task11-verify/
-.task12-verify/
+.task*-verify/
+screenshots/

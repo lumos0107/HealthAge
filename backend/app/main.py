@@ -14,7 +14,7 @@
   renal       신장 기능(eGFR)
   reference   기준값 조회
 
-총 21개 엔드포인트.
+총 22개 엔드포인트.
 """
 from __future__ import annotations
 
