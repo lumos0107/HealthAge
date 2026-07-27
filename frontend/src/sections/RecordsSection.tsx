@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { AppData } from '../App';
 import * as api from '../api/endpoints';
-import { Card, EmptyState, KV, SectionTitle, StatusBadge } from '../components/UI';
+import { Card, EmptyState, ErrorBox, KV, SectionTitle, StatusBadge } from '../components/UI';
 import { fmt } from '../lib/format';
 
 /** 상세 패널 표시 항목 — 브리프 지정 순서 고정. checkup(DB 컬럼) 키와 1:1. */
@@ -40,6 +40,8 @@ export function RecordsSection({ data }: { data: AppData }) {
   const { userId, reports, raw, reload } = data;
   const [openYear, setOpenYear] = useState<number | null>(null);
   const [busyYear, setBusyYear] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const [errorYear, setErrorYear] = useState<number | null>(null);
 
   if (reports.length === 0) {
     return (
@@ -55,10 +57,15 @@ export function RecordsSection({ data }: { data: AppData }) {
   const handleDelete = async (year: number) => {
     if (!window.confirm(`${year}년 검진 기록을 삭제할까요? 되돌릴 수 없어요.`)) return;
     setBusyYear(year);
+    setError('');
+    setErrorYear(null);
     try {
       await api.deleteReport(userId, year);
       if (openYear === year) setOpenYear(null);
       await reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '삭제에 실패했어요.');
+      setErrorYear(year);
     } finally {
       setBusyYear(null);
     }
@@ -66,9 +73,18 @@ export function RecordsSection({ data }: { data: AppData }) {
 
   return (
     <>
-      <SectionTitle sub="저장된 회차의 원본 값입니다.">검진 기록</SectionTitle>
+      {/* 인쇄는 상세가 열려있으면 상세+면책 3줄만, 닫혀있으면 표를 그대로 내보낸다. */}
+      <div className={openReport ? 'print-hide' : ''}>
+        <SectionTitle sub="저장된 회차의 원본 값입니다.">검진 기록</SectionTitle>
+      </div>
 
-      <Card>
+      {error && (
+        <div className="mb-4 print-hide">
+          <ErrorBox message={error} onRetry={errorYear != null ? () => void handleDelete(errorYear) : undefined} />
+        </div>
+      )}
+
+      <Card className={openReport ? 'print-hide' : ''}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
