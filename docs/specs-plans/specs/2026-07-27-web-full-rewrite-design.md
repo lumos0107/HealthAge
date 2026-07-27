@@ -99,4 +99,11 @@ What-if·reference·medication·egfr → 섹션 내 개별 호출 (전역 상태
 - react-router / 상태관리 라이브러리 도입 안 함.
 - 웹용 더미(오프라인) 모드 안 만듦.
 - 모바일 반응형은 최소한만 (주 대상 = 데스크톱 큰 화면).
-- 백엔드 수정 없음 (rarity는 이미 응답에 내려옴 — 프론트에서 읽기만).
+
+## 백엔드 수정 (최소 1건)
+
+`rarity`·`metabolic_syndrome_detail`은 `group_analysis` 안에만 있고 DB에 저장되는 건 `combo_analysis`뿐이라
+`GET /reports/…`로 내려오지 않는다 (24번 §5 "combo_analysis 미주입"의 실체).
+→ `checkup_service.py:128-135`의 기존 주입 블록(`single_groups`·`ascvd_simulation`·`calculators`·`ldl_target`)에
+**같은 패턴으로 2줄 추가**한다. 그 외 백엔드 수정 없음.
+⚠️ 주입 후 새로 저장된 분석에만 담긴다 — 기존 저장 행에는 없으므로 프론트는 null 처리 필수.
