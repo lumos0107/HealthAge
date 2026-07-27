@@ -129,7 +129,11 @@ export default function App() {
         <div className="mx-auto max-w-6xl">
           {loading && !appData && <Loading />}
           {error && <ErrorBox message={error} onRetry={() => void load()} />}
-          {appData && <Section data={appData} />}
+          {appData && (
+            section === 'upload'
+              ? <UploadSection data={appData} onSaved={() => setSection('dashboard')} />
+              : <Section data={appData} />
+          )}
         </div>
       </main>
     </div>

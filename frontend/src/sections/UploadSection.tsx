@@ -68,7 +68,7 @@ function validate(fields: Record<string, string>): string | null {
   return null;
 }
 
-export function UploadSection({ data }: { data: AppData }) {
+export function UploadSection({ data, onSaved }: { data: AppData; onSaved?: () => void }) {
   const [tab, setTab] = useState<'upload' | 'manual'>('upload');
   const [fields, setFields] = useState<Record<string, string>>(emptyFields);
   const [confidence, setConfidence] = useState<Confidence>({});
@@ -142,18 +142,30 @@ export function UploadSection({ data }: { data: AppData }) {
     }
     setSaveBusy(true);
     try {
+      // 검진 저장을 먼저 확정한다 — 생활습관 patch가 검진 저장보다 먼저 성공해버리면
+      // 검진 저장이 실패했을 때 생활습관만 반영된 부분 상태가 남는다.
+      const result = await analyzeCheckup(buildOcr(fields), true);
+      const warnings = [...(result.warnings ?? [])];
+
       const lifestyleBody: Partial<Profile> = {};
       if (smoking) lifestyleBody.smoking = smoking;
       if (drinking) {
         lifestyleBody.drinking = drinking;
         lifestyleBody.alcohol_weekly_g = drinking === 'yes' ? alcoholG : 0;
       }
-      if (Object.keys(lifestyleBody).length) await patchUser(data.userId, lifestyleBody);
+      if (Object.keys(lifestyleBody).length) {
+        try {
+          await patchUser(data.userId, lifestyleBody);
+        } catch {
+          // 검진 저장은 이미 성공했으므로 이건 저장 실패로 취급하지 않고 경고만 남긴다.
+          warnings.push('생활습관 저장 실패');
+        }
+      }
 
-      const result = await analyzeCheckup(buildOcr(fields), true);
-      setSaveWarnings(result.warnings ?? []);
+      setSaveWarnings(warnings);
       setSaved(true);
       await data.reload();
+      onSaved?.();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : '저장에 실패했어요.');
     } finally {
