@@ -88,13 +88,14 @@ export const evaluateReference = (
   apiFetch('/reference/evaluate', { method: 'POST', body: JSON.stringify({ sex, items }) });
 
 // ── renal (1) ───────────────────────────────────────────────────────────
+// ⚠️ 백엔드 Sex enum(app/renal/gfr.py)은 'M'/'F'만 받는다 — 'male'/'female'을 보내면 422.
 export const calcEgfr = (
   serumCr: number, age: number, sex: 1 | 2, weightKg?: number | null,
 ): Promise<RealEgfr> =>
   apiFetch('/renal/egfr', {
     method: 'POST',
     body: JSON.stringify({
-      serum_cr: serumCr, age, sex: sex === 2 ? 'female' : 'male',
+      serum_cr: serumCr, age, sex: sex === 2 ? 'F' : 'M',
       ...(typeof weightKg === 'number' && weightKg > 0 ? { weight_kg: weightKg } : {}),
     }),
   });
