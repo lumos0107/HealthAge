@@ -126,13 +126,7 @@ async def analyze_and_save(
     # 단일그룹 판정(13개)·ASCVD 참고 시뮬도 combo_analysis(jsonb)에 함께 담아
     # 저장·조회 API로 내려준다. 구버전 저장 행에는 이 필드가 없다 → 프론트 null 처리.
     if combo_analysis and group_analysis:
-        combo_analysis["single_groups"] = _single_groups_for_display(
-            group_analysis.get("user_groups") or {}
-        )
-        combo_analysis["ascvd_simulation"] = group_analysis.get("ascvd_simulation")
-        combo_analysis["calculators"] = group_analysis.get("calculators")
-        # LDL 위험도별 개인 목표치(초고위험<55 … 저위험<160)도 함께 내려 화면에 표시한다.
-        combo_analysis["ldl_target"] = group_analysis.get("ldl_target")
+        _inject_group_extras(combo_analysis, group_analysis)
     if "warnings" in result:
         warnings.extend(result.get("warnings", []))
 
@@ -268,6 +262,33 @@ def _fetch_medications_from_hira(
 
 def _empty_medications() -> dict[str, bool]:
     return {"hypertension": False, "diabetes": False, "dyslipidemia": False}
+
+
+# ──────────────────────────────────────────────────────────────────
+# 보조 함수: combo_analysis 주입
+# ──────────────────────────────────────────────────────────────────
+
+def _inject_group_extras(
+    combo_analysis: dict[str, Any],
+    group_analysis: dict[str, Any],
+) -> None:
+    """group_analysis에서만 계산되는 부가 결과를 combo_analysis(jsonb)에 담는다.
+
+    combo_analysis만 DB에 저장되므로, 여기 넣지 않으면 GET /reports로 내려가지 않는다.
+    ⚠️ 여기서 추가한 키는 '이후 새로 저장되는 분석'에만 들어간다 — 기존 행에는 없다.
+    """
+    combo_analysis["single_groups"] = _single_groups_for_display(
+        group_analysis.get("user_groups") or {}
+    )
+    combo_analysis["ascvd_simulation"] = group_analysis.get("ascvd_simulation")
+    combo_analysis["calculators"] = group_analysis.get("calculators")
+    # LDL 위험도별 개인 목표치(초고위험<55 … 저위험<160)도 함께 내려 화면에 표시한다.
+    combo_analysis["ldl_target"] = group_analysis.get("ldl_target")
+    # 희귀도·대사증후군 세부 — 계산은 되고 있었으나 저장되지 않아 화면에 못 띄우던 값.
+    combo_analysis["rarity"] = group_analysis.get("rarity")
+    combo_analysis["metabolic_syndrome_detail"] = group_analysis.get(
+        "metabolic_syndrome_detail"
+    )
 
 
 # ──────────────────────────────────────────────────────────────────
