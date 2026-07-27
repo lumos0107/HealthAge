@@ -1,11 +1,320 @@
+import { useState } from 'react';
+import type { ChangeEvent } from 'react';
 import type { AppData } from '../App';
-import { SectionTitle } from '../components/UI';
+import { analyzeCheckup, patchUser, uploadCheckupImage } from '../api/endpoints';
+import type { Profile, RealOcrResult } from '../api/types';
+import { Card, ErrorBox, Loading, SectionTitle } from '../components/UI';
+import { alcoholWeeklyGrams, DRINK_TYPES, OCR_LOW_CONFIDENCE, ocrFlagText } from '../lib/format';
+
+// 검수 폼 항목 틀 — 모바일 data.ts의 ocrTemplate(300-319행)과 같은 id·라벨·단위·구분.
+// 예시값은 넣지 않는다(전부 빈 문자열로 시작).
+type FieldDef = { id: string; label: string; unit?: string; required?: boolean; section: '기본 정보' | '검사 수치' };
+
+const FIELDS: FieldDef[] = [
+  { id: 'exam_date', label: '검진일', required: true, section: '기본 정보' },
+  { id: 'hospital', label: '검진기관', required: true, section: '기본 정보' },
+  { id: 'height', label: '키', unit: 'cm', section: '검사 수치' },
+  { id: 'weight', label: '몸무게', unit: 'kg', section: '검사 수치' },
+  { id: 'waist', label: '허리둘레', unit: 'cm', section: '검사 수치' },
+  { id: 'sbp', label: '수축기 혈압', unit: 'mmHg', required: true, section: '검사 수치' },
+  { id: 'dbp', label: '이완기 혈압', unit: 'mmHg', required: true, section: '검사 수치' },
+  { id: 'hb', label: '혈색소', unit: 'g/dL', section: '검사 수치' },
+  { id: 'fbs', label: '공복혈당', unit: 'mg/dL', required: true, section: '검사 수치' },
+  { id: 'total_cholesterol', label: '총콜레스테롤', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'hdl', label: 'HDL 콜레스테롤', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'tg', label: '중성지방', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'ldl', label: 'LDL 콜레스테롤', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'creatinine', label: '혈청 크레아티닌', unit: 'mg/dL', section: '검사 수치' },
+  { id: 'urine_protein', label: '요단백', section: '검사 수치' },
+  { id: 'ast', label: 'AST(SGOT)', unit: 'IU/L', section: '검사 수치' },
+  { id: 'alt', label: 'ALT(SGPT)', unit: 'IU/L', section: '검사 수치' },
+  { id: 'ggt', label: '감마-GTP', unit: 'IU/L', section: '검사 수치' },
+];
+const TEXT_IDS = new Set(['exam_date', 'hospital', 'urine_protein']);
+
+type Confidence = Record<string, { confidence?: number; flags?: string[] }>;
+
+const FATTY_LIVER_BASELINE = { male: 210, female: 140 };
+
+function emptyFields(): Record<string, string> {
+  return Object.fromEntries(FIELDS.map((f) => [f.id, '']));
+}
+
+/** 폼 값 → 백엔드 ocr 골격. 숫자 항목은 실제 숫자로 보낸다(저장 경로는 문자열을 강제 변환하지 않는다). */
+function buildOcr(fields: Record<string, string>): RealOcrResult['ocr'] {
+  const measurements: Record<string, { value: unknown; unit?: string }> = {};
+  for (const f of FIELDS) {
+    if (f.id === 'exam_date' || f.id === 'hospital') continue;
+    const raw = fields[f.id]?.trim();
+    if (!raw) continue;
+    if (f.id === 'urine_protein') {
+      measurements[f.id] = { value: raw };
+    } else {
+      const num = Number(raw);
+      if (Number.isNaN(num)) continue;
+      measurements[f.id] = { value: num, unit: f.unit };
+    }
+  }
+  return { meta: { exam_date: fields.exam_date.trim(), hospital: fields.hospital.trim() }, measurements };
+}
+
+function validate(fields: Record<string, string>): string | null {
+  const missing = FIELDS.filter((f) => f.required && !fields[f.id]?.trim());
+  if (missing.length) return `필수 항목을 입력해주세요: ${missing.map((f) => f.label).join(', ')}`;
+  const invalidNumeric = FIELDS.filter(
+    (f) => f.required && !TEXT_IDS.has(f.id) && Number.isNaN(Number(fields[f.id])),
+  );
+  if (invalidNumeric.length) return `숫자로 입력해주세요: ${invalidNumeric.map((f) => f.label).join(', ')}`;
+  return null;
+}
 
 export function UploadSection({ data }: { data: AppData }) {
+  const [tab, setTab] = useState<'upload' | 'manual'>('upload');
+  const [fields, setFields] = useState<Record<string, string>>(emptyFields);
+  const [confidence, setConfidence] = useState<Confidence>({});
+  const [ocrWarnings, setOcrWarnings] = useState<string[]>([]);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  const [smoking, setSmoking] = useState<Profile['smoking'] | ''>(data.profile?.smoking ?? '');
+  const [drinking, setDrinking] = useState<Profile['drinking'] | ''>(data.profile?.drinking ?? '');
+  const [drinkFreq, setDrinkFreq] = useState('');
+  const [drinkGlasses, setDrinkGlasses] = useState('');
+  const [drinkType, setDrinkType] = useState<string>(DRINK_TYPES[0]);
+
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveWarnings, setSaveWarnings] = useState<string[]>([]);
+  const [saved, setSaved] = useState(false);
+
+  const updateField = (id: string, value: string) => {
+    setFields((prev) => ({ ...prev, [id]: value }));
+    // 사용자가 편집한 칸은 OCR 확신도라는 개념이 없으므로 즉시 해제한다.
+    setConfidence((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadBusy(true);
+    setUploadError('');
+    try {
+      const res = await uploadCheckupImage(file);
+      const meta = res.ocr.meta ?? {};
+      const measurements = res.ocr.measurements ?? {};
+      setFields((prev) => {
+        const next = { ...prev };
+        if (meta.exam_date != null) next.exam_date = String(meta.exam_date);
+        if (meta.hospital != null) next.hospital = String(meta.hospital);
+        for (const f of FIELDS) {
+          if (f.id === 'exam_date' || f.id === 'hospital') continue;
+          const m = measurements[f.id];
+          if (m && m.value != null) next[f.id] = String(m.value);
+        }
+        return next;
+      });
+      setConfidence(res.ocr.measurements_confidence ?? {});
+      setOcrWarnings(res.warnings ?? []);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : '업로드에 실패했어요.');
+    } finally {
+      setUploadBusy(false);
+    }
+  };
+
+  const alcoholG = drinking === 'yes' ? alcoholWeeklyGrams(Number(drinkFreq) || 0, Number(drinkGlasses) || 0, drinkType) : 0;
+  const baseline = data.profile?.gender === 2 ? FATTY_LIVER_BASELINE.female : FATTY_LIVER_BASELINE.male;
+  const overBaseline = drinking === 'yes' && alcoholG > baseline;
+
+  const handleSave = async () => {
+    setSaveError('');
+    setSaved(false);
+    const err = validate(fields);
+    if (err) {
+      setSaveError(err);
+      return;
+    }
+    setSaveBusy(true);
+    try {
+      const lifestyleBody: Partial<Profile> = {};
+      if (smoking) lifestyleBody.smoking = smoking;
+      if (drinking) {
+        lifestyleBody.drinking = drinking;
+        lifestyleBody.alcohol_weekly_g = drinking === 'yes' ? alcoholG : 0;
+      }
+      if (Object.keys(lifestyleBody).length) await patchUser(data.userId, lifestyleBody);
+
+      const result = await analyzeCheckup(buildOcr(fields), true);
+      setSaveWarnings(result.warnings ?? []);
+      setSaved(true);
+      await data.reload();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : '저장에 실패했어요.');
+    } finally {
+      setSaveBusy(false);
+    }
+  };
+
   return (
     <>
       <SectionTitle sub="검진지 사진을 올리거나 값을 직접 입력합니다.">업로드·입력</SectionTitle>
-      <p className="text-sm text-slate-400">준비 중</p>
+
+      <div className="mb-6 flex gap-2">
+        <button
+          onClick={() => setTab('upload')}
+          className={`rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${
+            tab === 'upload' ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          검진지 사진 업로드
+        </button>
+        <button
+          onClick={() => setTab('manual')}
+          className={`rounded-full px-4 py-1.5 text-sm font-semibold ring-1 transition ${
+            tab === 'manual' ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          직접 입력
+        </button>
+      </div>
+
+      {tab === 'upload' && (
+        <Card className="mb-6">
+          <input type="file" accept="image/*" onChange={(e) => void handleFile(e)} disabled={uploadBusy}
+            className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-800" />
+          {uploadBusy && <div className="mt-3"><Loading label="검진지를 읽는 중…" /></div>}
+          {uploadError && <div className="mt-3"><ErrorBox message={uploadError} /></div>}
+          {ocrWarnings.length > 0 && (
+            <div className="mt-3 rounded-xl bg-amber-50 px-4 py-3 ring-1 ring-amber-200">
+              {ocrWarnings.map((w, i) => (
+                <p key={i} className="text-sm text-amber-800 leading-relaxed">{w}</p>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {(['기본 정보', '검사 수치'] as const).map((section) => (
+        <Card key={section} title={section} className="mb-6">
+          <div className="grid grid-cols-3 gap-x-6 gap-y-5">
+            {FIELDS.filter((f) => f.section === section).map((f) => {
+              const conf = confidence[f.id];
+              const lowConf = conf?.confidence != null && conf.confidence < OCR_LOW_CONFIDENCE;
+              const flagText = lowConf ? ocrFlagText(conf?.flags) : null;
+              return (
+                <label key={f.id} className="block">
+                  <span className="text-sm font-medium text-slate-600">
+                    {f.label}
+                    {f.required && <span className="ml-0.5 text-rose-500">*</span>}
+                    {f.unit && <span className="ml-1.5 text-xs text-slate-400">{f.unit}</span>}
+                  </span>
+                  <input
+                    type="text"
+                    value={fields[f.id]}
+                    onChange={(e) => updateField(f.id, e.target.value)}
+                    placeholder={f.id === 'exam_date' ? 'YYYY-MM-DD' : undefined}
+                    className={`mt-1.5 w-full rounded-lg px-3 py-2 text-sm outline-none ring-1 focus:ring-2 focus:ring-slate-900 ${
+                      lowConf ? 'bg-amber-50 ring-amber-400' : 'ring-slate-300'
+                    }`}
+                  />
+                  {lowConf && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                        확신 {Math.round((conf?.confidence ?? 0) * 100)}%
+                      </span>
+                      {flagText && <span className="text-xs text-amber-700">{flagText}</span>}
+                    </div>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+        </Card>
+      ))}
+
+      <Card title="생활습관" sub="분석은 백엔드가 프로필에 저장된 값을 읽어서 사용해요." className="mb-6">
+        <div>
+          <p className="text-sm font-medium text-slate-600">흡연</p>
+          <div className="mt-2 flex gap-2">
+            {([['never', '비흡연'], ['former', '과거'], ['current', '현재']] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setSmoking(v)}
+                className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold ring-1 transition ${
+                  smoking === v ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50'
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <p className="text-sm font-medium text-slate-600">음주</p>
+          <div className="mt-2 flex gap-2">
+            {([['no', '안 마심'], ['yes', '마심']] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setDrinking(v)}
+                className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold ring-1 transition ${
+                  drinking === v ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50'
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {drinking === 'yes' && (
+          <div className="mt-5">
+            <div className="grid grid-cols-3 gap-4">
+              <label className="block">
+                <span className="text-sm font-medium text-slate-600">주당 횟수</span>
+                <input type="text" value={drinkFreq} onChange={(e) => setDrinkFreq(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-slate-900" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-slate-600">1회 잔수</span>
+                <input type="text" value={drinkGlasses} onChange={(e) => setDrinkGlasses(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-slate-900" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-slate-600">술 종류</span>
+                <select value={drinkType} onChange={(e) => setDrinkType(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-slate-900">
+                  {DRINK_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </label>
+            </div>
+            <p className={`mt-3 text-sm ${overBaseline ? 'font-bold text-rose-600' : 'text-slate-600'}`}>
+              주당 순알코올 약 {alcoholG}g
+              {overBaseline && ' — 지방간 기준선을 넘었어요'}
+            </p>
+            <p className="mt-1 text-xs text-slate-400">지방간 위험 기준선: 남 210g / 여 140g (주당 순알코올)</p>
+          </div>
+        )}
+      </Card>
+
+      {saveError && <div className="mb-4"><ErrorBox message={saveError} /></div>}
+
+      {saved && (
+        <div className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-200">
+          <p className="text-sm font-semibold text-emerald-800">저장했어요. 대시보드에서 확인하세요.</p>
+          {saveWarnings.map((w, i) => (
+            <p key={i} className="mt-1 text-xs leading-relaxed text-emerald-700">{w}</p>
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={() => void handleSave()}
+        disabled={saveBusy}
+        className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+      >
+        {saveBusy ? '저장 중…' : '저장'}
+      </button>
     </>
   );
 }
