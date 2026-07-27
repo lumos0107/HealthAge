@@ -119,6 +119,12 @@ export function WhatIfPanel({ latest }: { latest: Report }) {
   );
 }
 
+// TG≥400이면 백엔드가 achieved를 null로 준다(Friedewald LDL 신뢰도 낮음 — 판정 보류).
+function achievedLabel(achieved: boolean | null): string {
+  if (achieved === null) return '판정 보류';
+  return achieved ? '목표 달성' : '목표 초과';
+}
+
 function WhatIfResult({ result }: { result: RealSimulation }) {
   const ms = result.metabolic_syndrome;
   const beforeFactors = new Set(ms.before.met_factors);
@@ -213,15 +219,20 @@ function WhatIfResult({ result }: { result: RealSimulation }) {
         </div>
       )}
 
-      {/* 4. LDL 목표 */}
-      {target.before_achieved !== null && target.after_achieved !== null && (
+      {/* 4. LDL 목표 — achieved가 null(TG≥400 신뢰도 보류)이어도 블록 자체는 숨기지 않는다 */}
+      {target.target_ldl != null && (
         <div>
           <h4 className="text-sm font-bold text-slate-700">LDL 목표</h4>
           <p className="mt-1.5 text-sm text-slate-600">
-            {target.before_achieved ? '목표 달성' : '목표 초과'}
+            {achievedLabel(target.before_achieved)}
             {' → '}
-            {target.after_achieved ? '목표 달성' : '목표 초과'}
+            {achievedLabel(target.after_achieved)}
           </p>
+          {(target.before_achieved === null || target.after_achieved === null) && (
+            <p className="mt-1 text-xs text-slate-400">
+              중성지방이 400 이상이면 LDL 계산값의 신뢰도가 낮아 판정을 보류해요
+            </p>
+          )}
         </div>
       )}
 
