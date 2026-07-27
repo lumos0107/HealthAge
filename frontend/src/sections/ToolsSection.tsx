@@ -56,8 +56,9 @@ function MedicationCard({ userId }: { userId: string }) {
     } catch (e) {
       const msg = e instanceof Error ? e.message : '업로드에 실패했어요.';
       setError(msg);
-      // 백엔드가 생일 불일치 시 401을 준다 — 수동 생일 입력칸을 노출한다.
-      if (msg.startsWith('401')) {
+      // 백엔드가 생일 불일치 시 401을, 생일 정보 자체가 없으면 400 + manual_birthday 안내를 준다 —
+      // 두 경우 모두 수동 생일 입력칸을 노출한다.
+      if (msg.startsWith('401') || msg.includes('manual_birthday')) {
         setNeedsBirthday(true);
         setPendingFile(file);
       }

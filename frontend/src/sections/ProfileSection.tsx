@@ -57,6 +57,14 @@ export function ProfileSection({ data }: { data: AppData }) {
   const handleSave = async () => {
     setSaveError('');
     setSaved(false);
+    if (birthYear.trim()) {
+      const y = Number(birthYear);
+      const currentYear = new Date().getFullYear();
+      if (!Number.isInteger(y) || y < 1900 || y > currentYear) {
+        setSaveError(`출생연도는 1900~${currentYear} 사이 숫자로 입력해주세요.`);
+        return;
+      }
+    }
     setSaveBusy(true);
     try {
       const body: Partial<Profile> = {
@@ -67,9 +75,13 @@ export function ProfileSection({ data }: { data: AppData }) {
       if (lifestyle.smoking) body.smoking = lifestyle.smoking;
       if (lifestyle.drinking) {
         body.drinking = lifestyle.drinking;
-        body.alcohol_weekly_g = lifestyle.drinking === 'yes'
-          ? alcoholWeeklyGrams(Number(lifestyle.drinkFreq) || 0, Number(lifestyle.drinkGlasses) || 0, lifestyle.drinkType)
-          : 0;
+        if (lifestyle.drinking === 'yes') {
+          const grams = alcoholWeeklyGrams(Number(lifestyle.drinkFreq) || 0, Number(lifestyle.drinkGlasses) || 0, lifestyle.drinkType);
+          // 0이면 사용자가 음주 상세(횟수·잔수)를 입력하지 않은 것으로 보고, 기존 값을 지우지 않도록 생략한다.
+          if (grams > 0) body.alcohol_weekly_g = grams;
+        } else {
+          body.alcohol_weekly_g = 0;
+        }
       }
       await patchUser(data.userId, body);
       setSaved(true);

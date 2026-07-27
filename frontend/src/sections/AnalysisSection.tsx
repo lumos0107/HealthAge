@@ -105,6 +105,14 @@ function MetabolicSyndromeCard({ detail }: { detail: RealComboAnalysis['metaboli
 // ─── LDL 개인 목표 ────────────────────────────────────────────────────────
 function LdlTargetCard({ target }: { target: RealComboAnalysis['ldl_target'] }) {
   if (!target) return null;
+  if (target.error) {
+    return (
+      <Card title="LDL 개인 목표">
+        <p className="text-sm text-slate-500">이 항목을 계산하지 못했어요.</p>
+        <p className="mt-1 text-xs text-slate-400">{target.error}</p>
+      </Card>
+    );
+  }
   const reliable = target.ldl_reliable !== false;
   return (
     <Card title="LDL 개인 목표">
@@ -136,9 +144,9 @@ function LdlTargetCard({ target }: { target: RealComboAnalysis['ldl_target'] }) 
           {target.gap != null && <KV label="목표까지" value={fmt(target.gap, 'mg/dL')} />}
         </>
       )}
-      {target.risk_factors.length > 0 && (
+      {(target.risk_factors?.length ?? 0) > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {target.risk_factors.map((f) => (
+          {target.risk_factors!.map((f) => (
             <span key={f} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">{f}</span>
           ))}
         </div>
@@ -154,7 +162,16 @@ function LdlTargetCard({ target }: { target: RealComboAnalysis['ldl_target'] }) 
 
 // ─── 계산기 15종 ──────────────────────────────────────────────────────────
 function CalculatorsCard({ calculators }: { calculators: RealComboAnalysis['calculators'] }) {
-  if (!calculators || calculators.items.length === 0) return null;
+  if (!calculators) return null;
+  if (calculators.error) {
+    return (
+      <Card title="계산기" className="col-span-2">
+        <p className="text-sm text-slate-500">이 항목을 계산하지 못했어요.</p>
+        <p className="mt-1 text-xs text-slate-400">{calculators.error}</p>
+      </Card>
+    );
+  }
+  if (!calculators.items?.length) return null;
   const items = calculators.items;
   return (
     <Card title="계산기" sub={`${items.length}종 — 컷오프가 없는 지표는 또래 백분위를 함께 보여줘요.`} className="col-span-2">
@@ -220,7 +237,14 @@ function FattyLiverCard({ fattyLiver }: { fattyLiver: RealComboAnalysis['fatty_l
       )}
       {fattyLiver.note && <p className="mt-2 text-xs leading-relaxed text-slate-400">{fattyLiver.note}</p>}
 
-      {indices && (
+      {indices && indices.error && (
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <p className="text-sm text-slate-500">이 항목을 계산하지 못했어요.</p>
+          <p className="mt-1 text-xs text-slate-400">{indices.error}</p>
+        </div>
+      )}
+
+      {indices && !indices.error && (
         <div className="mt-4 border-t border-slate-100 pt-4">
           <div className="grid grid-cols-2 gap-3">
             {(['fli', 'hsi'] as const).map((k) => {
@@ -238,7 +262,7 @@ function FattyLiverCard({ fattyLiver }: { fattyLiver: RealComboAnalysis['fatty_l
               );
             })}
           </div>
-          {indices.unavailable.length > 0 && (
+          {(indices.unavailable?.length ?? 0) > 0 && (
             <p className="mt-2 text-xs text-slate-400">계산 불가: {indices.unavailable.join(', ')}</p>
           )}
           {indices.disclaimer && (

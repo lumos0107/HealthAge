@@ -48,6 +48,20 @@ export function statusFromBackend(status: string): Status {
   return '위험'; // extremely_low / very_low / very_high / extremely_high
 }
 
+/**
+ * comprehensive.summary.overall_status(백엔드 5단계 한글 문자열) → 3단계 표시.
+ * backend/app/analyzer/_internal/pipeline.py의 risk_score 분기가 만드는 실제 값 5종:
+ *   "건강 양호" / "관리 필요" / "주의 필요" / "위험 - 의료 상담 권장" / "고위험 - 즉시 의료 진료 권장"
+ * 그 문자열에 실제로 등장하는 단어만으로 매핑한다(새 판정 기준을 만들지 않는다).
+ * 인식하지 못하는 문자열이면 null — 호출부가 카운트 기반 폴백을 쓴다.
+ */
+export function statusFromOverallStatus(overallStatus: string): Status | null {
+  if (overallStatus.includes('위험')) return '위험';
+  if (overallStatus.includes('주의') || overallStatus.includes('관리')) return '주의';
+  if (overallStatus.includes('양호')) return '정상';
+  return null;
+}
+
 /** 백엔드 리포트 1건 → 화면용 요약 모양. 판정·점수는 백엔드 값을 그대로 쓴다. */
 export function adaptReport(payload: RealReportPayload): Report {
   const c = payload.comprehensive;
@@ -68,11 +82,16 @@ export function adaptReport(payload: RealReportPayload): Report {
   ).length;
   const bad = manageCount + trackCount;
 
+  // 백엔드 판정(overall_status)을 우선 쓴다 — 프론트 자체 컷오프는 구버전 저장 행(overall_status 없음)에만 폴백으로 쓴다.
+  const overallStatus = c?.summary?.overall_status;
+  const status = (overallStatus ? statusFromOverallStatus(overallStatus) : null)
+    ?? (bad === 0 ? '정상' : bad <= 3 ? '주의' : '위험');
+
   return {
     year: payload.year,
     date: String(payload.checkup?.exam_date ?? payload.checkup?.['검진일'] ?? `${payload.year}-01-01`),
     hospital: String(payload.checkup?.hospital ?? payload.checkup?.['검진기관'] ?? ''),
-    status: bad === 0 ? '정상' : bad <= 3 ? '주의' : '위험',
+    status,
     summary: payload.basic_report?.summary ?? c?.summary?.overall_status ?? '',
     score: Math.round(c?.summary?.risk_score ?? 0),
     manageCount,

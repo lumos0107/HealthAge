@@ -60,9 +60,13 @@ function buildOcr(fields: Record<string, string>): RealOcrResult['ocr'] {
 function validate(fields: Record<string, string>): string | null {
   const missing = FIELDS.filter((f) => f.required && !fields[f.id]?.trim());
   if (missing.length) return `필수 항목을 입력해주세요: ${missing.map((f) => f.label).join(', ')}`;
-  const invalidNumeric = FIELDS.filter(
-    (f) => f.required && !TEXT_IDS.has(f.id) && Number.isNaN(Number(fields[f.id])),
-  );
+  // 빈 값은 허용(미측정) — 값이 있는데 숫자가 아닌 경우만 막는다. 필수 여부와 무관하게 전체 수치 필드에 적용.
+  const invalidNumeric = FIELDS.filter((f) => {
+    if (TEXT_IDS.has(f.id)) return false;
+    const raw = fields[f.id]?.trim();
+    if (!raw) return false;
+    return Number.isNaN(Number(raw));
+  });
   if (invalidNumeric.length) return `숫자로 입력해주세요: ${invalidNumeric.map((f) => f.label).join(', ')}`;
   return null;
 }
@@ -152,7 +156,12 @@ export function UploadSection({ data, onSaved }: { data: AppData; onSaved?: () =
       if (lifestyle.smoking) lifestyleBody.smoking = lifestyle.smoking;
       if (lifestyle.drinking) {
         lifestyleBody.drinking = lifestyle.drinking;
-        lifestyleBody.alcohol_weekly_g = lifestyle.drinking === 'yes' ? alcoholG : 0;
+        if (lifestyle.drinking === 'yes') {
+          // 0이면 사용자가 음주 상세(횟수·잔수)를 입력하지 않은 것으로 보고, 기존 값을 지우지 않도록 생략한다.
+          if (alcoholG > 0) lifestyleBody.alcohol_weekly_g = alcoholG;
+        } else {
+          lifestyleBody.alcohol_weekly_g = 0;
+        }
       }
       if (Object.keys(lifestyleBody).length) {
         try {
