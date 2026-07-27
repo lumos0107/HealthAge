@@ -329,6 +329,42 @@ export type RealTimeseries = {
     top_concerns: { title: string; metric: string; level: string; current_value: string; details: string }[];
     next_exam_year?: number | null;
   } | null;
+  // 검진 패턴 — 홀짝년 정기검진 주기 기준 실제/예정 연도 비교. classify_exam_pattern 결과.
+  // Task 8에서 실백엔드 응답(GET /timeseries/{id})으로 확인 후 추가.
+  exam_pattern?: {
+    parity: string;
+    expected_in_range: number[];
+    actual: number[];
+    missed: number[];
+    extra: number[];
+    next_expected: number;
+  } | null;
+  // 전체 항목 방향성 분석(양방향 판단 포함, HDL 등 "높을수록 좋음" 항목도 올바른 방향으로 분류됨).
+  // analyze_full_timeseries 결과. Task 8에서 실백엔드 응답으로 확인 후 추가.
+  full_timeseries?: {
+    years: number[];
+    by_direction: Record<string, {
+      metric: string;
+      first_year: number;
+      last_year: number;
+      n_years: number;
+      first_value: number;
+      last_value: number;
+      change: number;
+      pct_change: number | null;
+      direction: string;
+      magnitude: string;
+      current_status: string;
+      current_label: string;
+      current_meaning: string;
+    }[]>;
+    summary?: {
+      total_metrics_tracked: number;
+      bad_changes: number;
+      good_changes: number;
+      neutral_or_stable: number;
+    };
+  } | null;
 };
 
 // ---- 검진지 OCR 업로드 → 분석 (POST /uploads → POST /analyze) ----------------
