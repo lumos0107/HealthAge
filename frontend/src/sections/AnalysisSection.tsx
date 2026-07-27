@@ -56,14 +56,11 @@ export function AnalysisSection({ data }: { data: AppData }) {
             <LdlTargetCard target={combo.ldl_target ?? null} />
             <CalculatorsCard calculators={combo.calculators ?? null} />
             <FattyLiverCard fattyLiver={combo.fatty_liver ?? null} />
-            <ComboGroupsCard comboGroups={combo.combo_groups ?? null} />
+            <ComboGroupsCard comboGroups={combo.combo_groups ?? null} disclaimer={combo.disclaimer} />
             <SingleGroupsCard groups={combo.single_groups ?? null} />
             <AscvdCard ascvd={combo.ascvd_simulation ?? null} />
             <RecommendationsCard recommendations={report.recommendations ?? null} />
           </div>
-          {combo.disclaimer && (
-            <p className="mt-4 text-xs text-slate-400 leading-relaxed">{combo.disclaimer}</p>
-          )}
         </>
       )}
     </>
@@ -73,6 +70,8 @@ export function AnalysisSection({ data }: { data: AppData }) {
 // ─── 대사증후군 ───────────────────────────────────────────────────────────
 function MetabolicSyndromeCard({ detail }: { detail: RealComboAnalysis['metabolic_syndrome_detail'] }) {
   if (!detail) return null;
+  // 백엔드 실응답(evaluate_metabolic_syndrome)은 types.ts가 선언한 met_factors 배열이 아니라
+  // factors: {인자명: {met, ...}} 딕셔너리로 내려온다 — 두 소스를 모두 받아 폴백한다.
   const factors = detail.factors as Record<string, { met?: boolean }> | undefined;
   const metFactors: string[] = detail.met_factors
     ?? (factors ? Object.entries(factors).filter(([, f]) => f?.met).map(([name]) => name) : []);
@@ -248,7 +247,9 @@ function FattyLiverCard({ fattyLiver }: { fattyLiver: RealComboAnalysis['fatty_l
 }
 
 // ─── 조합그룹 ─────────────────────────────────────────────────────────────
-function ComboGroupsCard({ comboGroups }: { comboGroups: RealComboAnalysis['combo_groups'] }) {
+function ComboGroupsCard({ comboGroups, disclaimer }: {
+  comboGroups: RealComboAnalysis['combo_groups']; disclaimer: RealComboAnalysis['disclaimer'];
+}) {
   if (!comboGroups) return null;
   return (
     <Card title="조합그룹" sub="내 조합이 모집단에서 얼마나 흔한지(O/E 배수)를 함께 보여줘요." className="col-span-2">
@@ -307,6 +308,7 @@ function ComboGroupsCard({ comboGroups }: { comboGroups: RealComboAnalysis['comb
         {comboGroups.caveats.map((c, i) => (
           <p key={i} className="mt-1 text-xs leading-relaxed text-slate-400">{c}</p>
         ))}
+        {disclaimer && <p className="mt-2 text-xs leading-relaxed text-slate-400">{disclaimer}</p>}
       </div>
     </Card>
   );
