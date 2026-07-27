@@ -22,7 +22,7 @@ export function DashboardSection({ data }: { data: AppData }) {
 
   const recent = reports[reports.length - 1];
   const keyMetrics = (latest?.comprehensive?.all_evaluations ?? [])
-    .filter((e) => e.status !== 'normal')
+    .filter((e) => e.status !== 'normal' && e.status !== 'normal_good' && e.status !== 'info')
     .slice(0, 6);
 
   return (
@@ -60,7 +60,7 @@ export function DashboardSection({ data }: { data: AppData }) {
       {(insight || rarity) && (
         <div className="mt-4 grid grid-cols-3 gap-4">
           {insight && (
-            <Card title="최근 인사이트" className="col-span-2">
+            <Card title="최근 인사이트" className={rarity ? 'col-span-2' : 'col-span-3'}>
               <p className="text-sm text-slate-700 leading-relaxed">{insight.summary}</p>
 
               {insight.top_concerns.length > 0 && (
@@ -87,7 +87,7 @@ export function DashboardSection({ data }: { data: AppData }) {
           )}
 
           {rarity && (
-            <Card title="이 조합의 희귀도">
+            <Card title="이 조합의 희귀도" className={insight ? undefined : 'col-span-3'}>
               <KV label="임상 조합 수" value={rarity.clinical_count} />
               <KV label="생활습관 조합 수" value={rarity.lifestyle_count} />
 
