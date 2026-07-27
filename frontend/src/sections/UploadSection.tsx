@@ -4,6 +4,7 @@ import type { AppData } from '../App';
 import { analyzeCheckup, patchUser, uploadCheckupImage } from '../api/endpoints';
 import type { Profile, RealOcrResult } from '../api/types';
 import { Card, ErrorBox, Loading, SectionTitle } from '../components/UI';
+import { LifestyleFields, type LifestyleValue } from '../components/LifestyleFields';
 import { alcoholWeeklyGrams, DRINK_TYPES, OCR_LOW_CONFIDENCE, ocrFlagText } from '../lib/format';
 
 // 검수 폼 항목 틀 — 모바일 data.ts의 ocrTemplate(300-319행)과 같은 id·라벨·단위·구분.
@@ -33,8 +34,6 @@ const FIELDS: FieldDef[] = [
 const TEXT_IDS = new Set(['exam_date', 'hospital', 'urine_protein']);
 
 type Confidence = Record<string, { confidence?: number; flags?: string[] }>;
-
-const FATTY_LIVER_BASELINE = { male: 210, female: 140 };
 
 function emptyFields(): Record<string, string> {
   return Object.fromEntries(FIELDS.map((f) => [f.id, '']));
@@ -76,11 +75,13 @@ export function UploadSection({ data, onSaved }: { data: AppData; onSaved?: () =
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
-  const [smoking, setSmoking] = useState<Profile['smoking'] | ''>(data.profile?.smoking ?? '');
-  const [drinking, setDrinking] = useState<Profile['drinking'] | ''>(data.profile?.drinking ?? '');
-  const [drinkFreq, setDrinkFreq] = useState('');
-  const [drinkGlasses, setDrinkGlasses] = useState('');
-  const [drinkType, setDrinkType] = useState<string>(DRINK_TYPES[0]);
+  const [lifestyle, setLifestyle] = useState<LifestyleValue>({
+    smoking: data.profile?.smoking ?? '',
+    drinking: data.profile?.drinking ?? '',
+    drinkFreq: '',
+    drinkGlasses: '',
+    drinkType: DRINK_TYPES[0],
+  });
 
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -128,9 +129,9 @@ export function UploadSection({ data, onSaved }: { data: AppData; onSaved?: () =
     }
   };
 
-  const alcoholG = drinking === 'yes' ? alcoholWeeklyGrams(Number(drinkFreq) || 0, Number(drinkGlasses) || 0, drinkType) : 0;
-  const baseline = data.profile?.gender === 2 ? FATTY_LIVER_BASELINE.female : FATTY_LIVER_BASELINE.male;
-  const overBaseline = drinking === 'yes' && alcoholG > baseline;
+  const alcoholG = lifestyle.drinking === 'yes'
+    ? alcoholWeeklyGrams(Number(lifestyle.drinkFreq) || 0, Number(lifestyle.drinkGlasses) || 0, lifestyle.drinkType)
+    : 0;
 
   const handleSave = async () => {
     setSaveError('');
@@ -148,10 +149,10 @@ export function UploadSection({ data, onSaved }: { data: AppData; onSaved?: () =
       const warnings = [...(result.warnings ?? [])];
 
       const lifestyleBody: Partial<Profile> = {};
-      if (smoking) lifestyleBody.smoking = smoking;
-      if (drinking) {
-        lifestyleBody.drinking = drinking;
-        lifestyleBody.alcohol_weekly_g = drinking === 'yes' ? alcoholG : 0;
+      if (lifestyle.smoking) lifestyleBody.smoking = lifestyle.smoking;
+      if (lifestyle.drinking) {
+        lifestyleBody.drinking = lifestyle.drinking;
+        lifestyleBody.alcohol_weekly_g = lifestyle.drinking === 'yes' ? alcoholG : 0;
       }
       if (Object.keys(lifestyleBody).length) {
         try {
@@ -251,62 +252,7 @@ export function UploadSection({ data, onSaved }: { data: AppData; onSaved?: () =
       ))}
 
       <Card title="생활습관" sub="분석은 백엔드가 프로필에 저장된 값을 읽어서 사용해요." className="mb-6">
-        <div>
-          <p className="text-sm font-medium text-slate-600">흡연</p>
-          <div className="mt-2 flex gap-2">
-            {([['never', '비흡연'], ['former', '과거'], ['current', '현재']] as const).map(([v, label]) => (
-              <button key={v} onClick={() => setSmoking(v)}
-                className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold ring-1 transition ${
-                  smoking === v ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50'
-                }`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <p className="text-sm font-medium text-slate-600">음주</p>
-          <div className="mt-2 flex gap-2">
-            {([['no', '안 마심'], ['yes', '마심']] as const).map(([v, label]) => (
-              <button key={v} onClick={() => setDrinking(v)}
-                className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold ring-1 transition ${
-                  drinking === v ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50'
-                }`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {drinking === 'yes' && (
-          <div className="mt-5">
-            <div className="grid grid-cols-3 gap-4">
-              <label className="block">
-                <span className="text-sm font-medium text-slate-600">주당 횟수</span>
-                <input type="text" value={drinkFreq} onChange={(e) => setDrinkFreq(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-slate-900" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-slate-600">1회 잔수</span>
-                <input type="text" value={drinkGlasses} onChange={(e) => setDrinkGlasses(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-slate-900" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-slate-600">술 종류</span>
-                <select value={drinkType} onChange={(e) => setDrinkType(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg px-3 py-2 text-sm ring-1 ring-slate-300 outline-none focus:ring-2 focus:ring-slate-900">
-                  {DRINK_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </label>
-            </div>
-            <p className={`mt-3 text-sm ${overBaseline ? 'font-bold text-rose-600' : 'text-slate-600'}`}>
-              주당 순알코올 약 {alcoholG}g
-              {overBaseline && ' — 지방간 기준선을 넘었어요'}
-            </p>
-            <p className="mt-1 text-xs text-slate-400">지방간 위험 기준선: 남 210g / 여 140g (주당 순알코올)</p>
-          </div>
-        )}
+        <LifestyleFields value={lifestyle} onChange={setLifestyle} gender={data.profile?.gender ?? null} />
       </Card>
 
       {saveError && <div className="mb-4"><ErrorBox message={saveError} /></div>}
