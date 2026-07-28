@@ -18,24 +18,23 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/api';
 import { C, Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
-import { initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions } from './src/data';
-import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem } from './src/data';
-import { dummyComboAnalysis, dummyRecommendations, dummyHighlights, dummyInsight, dummyChangePace } from './src/dummyAnalysis';
+import { initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
+import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
+import { dummyComboAnalysis, dummyRecommendations, dummyInsight } from './src/dummyAnalysis';
 import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, latestRecommendations, latestComboAnalysis, fetchEgfr, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
 import type { RealTimeseries, RealRecommendations, RealEgfr, RealComboAnalysis } from './src/health';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import HistoryScreen from './src/screens/HistoryScreen';
+import MetricDetailScreen from './src/screens/MetricDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import RecordsScreen from './src/screens/RecordsScreen';
 import UploadScreen from './src/screens/UploadScreen';
 
-type AppTab = 'dashboard' | 'records' | 'history' | 'analysis' | 'upload' | 'profile';
+type AppTab = 'dashboard' | 'records' | 'analysis' | 'upload' | 'profile';
 
 const TABS: Array<{ key: AppTab; label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }> = [
   { key: 'dashboard', label: '홈', icon: 'home-outline', activeIcon: 'home' },
-  { key: 'records', label: '기록', icon: 'document-text-outline', activeIcon: 'document-text' },
-  { key: 'history', label: '히스토리', icon: 'analytics-outline', activeIcon: 'analytics' },
+  { key: 'records', label: '검사항목', icon: 'list-outline', activeIcon: 'list' },
   { key: 'analysis', label: '분석', icon: 'pulse-outline', activeIcon: 'pulse' },
   { key: 'upload', label: '업로드', icon: 'cloud-upload-outline', activeIcon: 'cloud-upload' },
 ];
@@ -67,6 +66,8 @@ export default function App() {
   const [lsDraft, setLsDraft] = useState<Lifestyle>(EMPTY_LIFESTYLE);
   const [toast, setToast] = useState('');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [detail, setDetail] = useState<{ key: MetricKey; year: number } | null>(null);
+  const openDetail = (key: MetricKey, year: number) => setDetail({ key, year });
 
   // 실제 백엔드에서 받아온 검진 기록 — 로그인하고 데이터가 있으면 이 값을, 없으면 더미 데이터를 화면에 내려준다.
   const [realReports, setRealReports] = useState<Report[] | null>(null);
@@ -338,14 +339,11 @@ export default function App() {
       <View style={{ flex: 1, backgroundColor: T.bg }}>
         {tab === 'dashboard' && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <DashboardScreen onTab={handleTab} reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} isPreview={!loggedIn} onRequireLogin={requireLogin} />)}
+          : <DashboardScreen onTab={handleTab} reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} isPreview={!loggedIn} onRequireLogin={requireLogin} onOpenDetail={openDetail} />)}
         {tab !== 'dashboard' && !loggedIn && <LockedNotice onPress={requireLogin} />}
         {tab === 'records' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} onDeleted={() => loadHealthData(profile.id)} medications={medications} />)}
-        {tab === 'history' && loggedIn && (needEmptyState
-          ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}
+          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} onDeleted={() => loadHealthData(profile.id)} medications={medications} onOpenDetail={openDetail} />)}
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
           : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : (isDemoAccount ? dummyRecommendations : null)} egfr={usingRealData ? egfr : null} comboAnalysis={usingRealData ? comboAnalysis : (isDemoAccount ? dummyComboAnalysis : null)} />)}
@@ -378,6 +376,13 @@ export default function App() {
           );
         })}
       </View>
+
+      {/* L2 상세 오버레이 */}
+      {detail && (() => {
+        const rep = reportsForScreens.find((r) => r.year === detail.year) ?? reportsForScreens[reportsForScreens.length - 1];
+        const m = metricsForReport(rep, metricDefinitionsForScreens).find((x) => x.key === detail.key);
+        return m ? <MetricDetailScreen metric={m} report={rep} reports={reportsForScreens} onClose={() => setDetail(null)} /> : null;
+      })()}
 
       {/* 토스트 */}
       {toast ? (
@@ -573,13 +578,13 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
       <PrimaryBtn label={loading ? '처리 중...' : mode === 'login' ? '로그인' : '회원가입'} onPress={submit} loading={loading} />
 
       {!!localError && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF0F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.dangerBg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
           <Ionicons name="alert-circle" size={16} color={T.danger} />
           <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', flex: 1 }}>{localError}</Text>
         </View>
       )}
       {!!errorMessage && !localError && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF0F0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.dangerBg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
           <Ionicons name="alert-circle" size={16} color={T.danger} />
           <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', flex: 1 }}>{errorMessage}</Text>
         </View>
@@ -601,7 +606,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
     backgroundColor: T.white,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: T.border,
   },
   logoIcon: {
@@ -617,7 +622,7 @@ const s = StyleSheet.create({
   nav: {
     flexDirection: 'row',
     backgroundColor: T.white,
-    borderTopWidth: 1,
+    borderTopWidth: 0,
     borderTopColor: T.border,
     paddingBottom: Platform.OS === 'ios' ? 24 : 6,
     paddingTop: 8,
