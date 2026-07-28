@@ -70,7 +70,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
       </View>
 
       {/* 안내 — 박스 대신 구분선과 텍스트만으로 */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 20, paddingVertical: 14, marginBottom: 4, gap: 10, borderBottomWidth: 1, borderBottomColor: T.divider, marginHorizontal: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 20, paddingVertical: 14, marginBottom: 4, gap: 10, marginHorizontal: 16 }}>
         <Text style={{ fontSize: 14, color: T.primary, fontWeight: '700' }}>!</Text>
         <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
           수치 변화는 생활습관, 복용 약, 검사 당시 상태에 따라 달라질 수 있습니다. 같은 항목이 반복해서 기준을 벗어나면 의료진과 상담해 보세요.
@@ -79,7 +79,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
 
       {/* 종합 인사이트 — 여러 해 기록을 종합한 요약 + 주요 우려 Top 3 (insight_generator) */}
       {!!insight?.summary && (
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 6 }}>한눈에 요약</Text>
           <Text style={{ fontSize: 14, color: T.text2, lineHeight: 22 }}>{insight.summary}</Text>
           {!!insight.top_concerns?.length && (
@@ -112,7 +112,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
           배수는 또래 변화가 뚜렷할 때만(±0.5 이상) 나온다 — 0에 가까운 값으로 나누면 배수가 발산하므로. */}
       {!!changePace?.length && (
         <FadeInUp delay={15}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>또래 대비 변화 속도</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요. 악화 방향만 모았어요.</Text>
           <View style={{ gap: 8 }}>
@@ -120,7 +120,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
               // 2배 이상이면 빨강, 그 아래는 주황. 배수를 못 낸 항목은 중립 회색으로 둔다.
               const strong = (p.pace.ratio ?? 0) >= 2;
               const badgeColor = p.pace.ratio == null ? T.text3 : strong ? T.danger : T.warn;
-              const badgeBg = p.pace.ratio == null ? '#EFEFEF' : strong ? T.dangerBg : T.warnBg;
+              const badgeBg = p.pace.ratio == null ? T.cardAlt : strong ? T.dangerBg : T.warnBg;
               return (
                 <View key={i} style={[{ paddingVertical: 10 }, i < changePace!.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -150,7 +150,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
       {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만 보여준다(2년 미만 기록이면 비어있음) */}
       {!!highlights?.length && (
         <FadeInUp delay={20}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>주목할 만한 변화</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>여러 해의 기록을 비교해 시스템이 짚어낸 변화예요.</Text>
           <View style={{ gap: 8 }}>
@@ -182,7 +182,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
       ))}
 
       {/* 항목 설명 — 기본 접힘, 필요할 때만 펼쳐서 본다. 박스 없이 구분선으로만 영역 구분 */}
-      <View style={{ marginHorizontal: 16, paddingHorizontal: 4, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 4 }}>
+      <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, marginHorizontal: 16, marginBottom: 12 }}>
         <Collapsible title="항목별 쉬운 설명" badge={`${metricDefinitions.length}개`}>
           {metricDefinitions.map((metric, i) => (
             <View
@@ -239,7 +239,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
 
   return (
     <View style={[
-      { backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 },
+      { backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 12 },
       hasBad && { borderWidth: 1.5, borderColor: accent },
     ]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
