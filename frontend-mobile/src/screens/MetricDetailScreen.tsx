@@ -3,10 +3,10 @@ import React from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
 import { deltaText, formatMetricValue, headline, rankFromPercentile, yearDelta } from '../interpret';
-import { Collapsible, StatusBadge, T } from '../components/UI';
+import { StatusBadge, T } from '../components/UI';
 import { categoryVisual, MetricTrendChart, PeerRankSlider, RangeBar, SquircleIcon } from '../components/v2';
 
-// L2 항목 상세 — 화면 전환은 이 오버레이 한 번만. 안에서는 펼침(L3)으로만 더 들어간다.
+// L2 항목 상세 — 화면 전환은 이 오버레이 한 번만. 근거(수치 표·추이 차트·설명)까지 접지 않고 모두 보여준다.
 export default function MetricDetailScreen({ metric, report, reports, onClose }: {
   metric: MetricDefinition;
   report: Report;
@@ -69,21 +69,21 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
           </View>
           )}
 
-          {/* L3 — 자세히 보기 펼침: 원본 수치·정상범위 표, 추이 차트, 용어 설명 */}
-          <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, marginBottom: 12 }}>
-            <Collapsible title="자세히 보기">
-              <View style={{ flexDirection: 'row', gap: 24, marginBottom: 16 }}>
-                <DetailCell label="내 수치" value={`${formatMetricValue(metric, value)}${metric.unit}`} color={metric.infoOnly ? T.text1 : statusColor} />
-                <DetailCell label="정상 기준" value={metric.normalText} />
-                {metric.peerMean != null && <DetailCell label="또래 평균" value={`${metric.peerMean}${metric.unit}`} />}
-              </View>
-              <MetricTrendChart metric={metric} reports={reports} />
-              <View style={{ marginTop: 16 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 항목은요</Text>
-                <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{metric.description}</Text>
-                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>{metric.note}</Text>
-              </View>
-            </Collapsible>
+          {/* 원본 수치·정상범위 표 + 추이 차트 — 접지 않고 바로 보여준다(내용이 한 카드 분량) */}
+          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', gap: 24, marginBottom: 16 }}>
+              <DetailCell label="내 수치" value={`${formatMetricValue(metric, value)}${metric.unit}`} color={metric.infoOnly ? T.text1 : statusColor} />
+              <DetailCell label="정상 기준" value={metric.normalText} />
+              {metric.peerMean != null && <DetailCell label="또래 평균" value={`${metric.peerMean}${metric.unit}`} />}
+            </View>
+            <MetricTrendChart metric={metric} reports={reports} />
+          </View>
+
+          {/* 용어 설명 */}
+          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 항목은요</Text>
+            <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{metric.description}</Text>
+            <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>{metric.note}</Text>
           </View>
 
           <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>

@@ -57,6 +57,10 @@ export function PeerRankSlider({ rank, color }: { rank: number; color: string })
   );
 }
 
+// 정상범위 밴드 전용 색 — T.successBg(#EAF7F1)는 흰 카드 위에서 너무 연해 구분이 안 돼 한 단계 진하게 쓴다.
+// (배지·칩 배경은 기존 T.successBg 유지 — 글자가 올라가는 배경이라 연해야 한다.)
+const NORMAL_BAND = '#C9EDDC';
+
 /** percentile이 없는 항목용 — 정상범위 밴드 위에 내 수치 위치만 보여준다(추정 등수를 지어내지 않는다). */
 export function RangeBar({ metric, value }: { metric: MetricDefinition; value: number }) {
   const { low, high } = normalBounds(metric);
@@ -73,7 +77,7 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
   return (
     <View style={{ marginTop: 6 }}>
       <View style={{ height: 10, borderRadius: 5, backgroundColor: T.cardAlt, overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', left: `${bandL}%`, width: `${Math.max(2, bandR - bandL)}%`, top: 0, bottom: 0, backgroundColor: T.successBg }} />
+        <View style={{ position: 'absolute', left: `${bandL}%`, width: `${Math.max(2, bandR - bandL)}%`, top: 0, bottom: 0, backgroundColor: NORMAL_BAND }} />
         <View style={{ position: 'absolute', left: `${pct(value)}%`, transform: [{ translateX: -6 }], top: -1, width: 12, height: 12, borderRadius: 6, backgroundColor: color, borderWidth: 2, borderColor: '#fff' }} />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
@@ -151,7 +155,7 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
         <G x={PAD.left} y={PAD.top}>
           {/* 정상범위 밴드 — infoOnly는 판정 기준이 없으므로 그리지 않는다 */}
           {!metric.infoOnly && (
-            <Rect x={0} y={bandTop} width={PLOT_W} height={Math.max(0, bandBottom - bandTop)} fill={T.successBg} />
+            <Rect x={0} y={bandTop} width={PLOT_W} height={Math.max(0, bandBottom - bandTop)} fill={NORMAL_BAND} />
           )}
           {gridVals.map((v, i) => (
             <G key={i}>
@@ -170,7 +174,7 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
           <SvgText x={last.x} y={last.y - 12} fontSize={12} fill={LINE} textAnchor="middle" fontWeight="700">{last.v}</SvgText>
         </G>
       </Svg>
-      <Text style={{ fontSize: 11, color: T.text3, marginTop: 2 }}>연한 초록 밴드가 정상 범위예요. 단위: {metric.unit}</Text>
+      <Text style={{ fontSize: 11, color: T.text3, marginTop: 2 }}>초록 밴드가 정상 범위예요. 단위: {metric.unit}</Text>
     </View>
   );
 }
