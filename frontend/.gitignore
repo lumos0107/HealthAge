@@ -5,3 +5,5 @@ dist
 *.log
 vite-dev.log
 vite-dev.err.log
+.task*-verify/
+screenshots/

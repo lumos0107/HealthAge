@@ -5,6 +5,7 @@
 
 라우터:
   health      GET /, GET /health
+  auth        GET /auth/me
   users       GET /users, GET /users/{id}, POST /users, PATCH /users/{id}, DELETE /users/{id}
   analysis    POST /analyze, GET /reports/...
   uploads     POST /uploads (이미지 → OCR JSON)
@@ -13,7 +14,7 @@
   renal       신장 기능(eGFR)
   reference   기준값 조회
 
-총 20개 엔드포인트.
+총 22개 엔드포인트.
 """
 from __future__ import annotations
 
@@ -28,6 +29,7 @@ from app import __version__
 from app.config import settings
 from app.ocr.service import initialize_ocr
 from app.routers import analysis as analysis_router
+from app.routers import auth_routes as auth_router
 from app.routers import health as health_router
 from app.routers import uploads as uploads_router
 from app.routers import users as users_router
@@ -92,6 +94,7 @@ app.add_middleware(
 # 라우터 등록
 # ──────────────────────────────────────────────────────────────────
 app.include_router(health_router.router)
+app.include_router(auth_router.router)
 app.include_router(users_router.router)
 app.include_router(analysis_router.router)
 app.include_router(uploads_router.router)

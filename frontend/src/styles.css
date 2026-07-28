@@ -38,3 +38,23 @@ textarea {
   border-radius: 999px;
 }
 
+/* 검진 결과 인쇄 — 화면에 보이는 값만 옮겨 담는다. 새 의학 판단은 하지 않는다. */
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-page {
+    break-inside: avoid;
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+}
+
