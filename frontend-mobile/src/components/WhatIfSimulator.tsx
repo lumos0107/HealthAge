@@ -78,7 +78,7 @@ export function WhatIfSimulator({ latest, disabled, disabledReason }: {
 
   return (
     <>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }}>
+      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 수치가 바뀌면?</Text>
         <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
           다음 검진에서 값이 이렇게 나오면 지표가 어떻게 달라지는지 다시 계산해볼 수 있어요.

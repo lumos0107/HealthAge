@@ -20,7 +20,7 @@ function DomainHeader({ icon, title }: { icon: string; title: string }) {
 
 // 계산기 level → 상태색 (info=중립 회색, 나머지는 구간색)
 const calcLevelColor = (level: string) => level === 'info' ? T.text3 : level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
-const calcLevelBg = (level: string) => level === 'info' ? '#EFEFEF' : level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
+const calcLevelBg = (level: string) => level === 'info' ? T.cardAlt : level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
 
 /** 계산기 item 리스트를 공통 행으로 렌더 — 값·상태뱃지·공식·기준·비고. 30년 위험 함께 표기. */
 function CalcRows({ items }: { items: RealCalcItem[] }) {
@@ -39,7 +39,7 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
             {it.value}{it.unit ?? ''}{it.value_30yr != null ? `  ·  30년 ${it.value_30yr}%` : ''}
           </Text>
           {!!it.peer_label && (
-            <View style={{ alignSelf: 'flex-start', marginTop: 6, backgroundColor: '#111827', paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+            <View style={{ alignSelf: 'flex-start', marginTop: 6, backgroundColor: T.text1, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
               <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>또래비교 · {it.peer_label}</Text>
             </View>
           )}
@@ -125,7 +125,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {/* 안내 — 박스 대신 구분선과 텍스트만으로 */}
       <FadeInUp delay={50}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 20, paddingVertical: 12, marginBottom: 4 }}>
         <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
         <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>
           이 화면은 건강검진 수치를 이해하기 위한 참고 정보입니다. 질병 진단이나 치료 판단을 대체하지 않습니다.
@@ -135,7 +135,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {/* ① 참고 점수 */}
       <FadeInUp delay={100}>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
         <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500', marginBottom: 8 }}>참고 점수</Text>
         {/* 연도 선택 — 기록이 늘어나도 가로 스크롤로 자유롭게 비교 */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
@@ -180,7 +180,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           연도를 바꾸면 살짝 페이드되며 갱신되어 변화가 자연스럽게 보인다 */}
       <FadeInUp delay={150}>
       <FadeIn key={`groups-${report.year}`}>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 8 }}>
+      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>나의 관리 참고군 · {report.year}년 기준</Text>
         <Text style={{ fontSize: 13, color: T.text2, marginBottom: 16 }}>그룹을 눌러보면 관련 검사 항목을 자세히 비교할 수 있어요.</Text>
         <View style={{ gap: 8 }}>
@@ -242,7 +242,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
       {egfr && (
         <FadeInUp delay={180}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>신장 기능 (eGFR)</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>혈청 크레아티닌 수치를 바탕으로 추정한 신장 여과 기능이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
@@ -279,7 +279,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>지방간 보조지표</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표예요.</Text>
           {([
@@ -313,7 +313,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>간 계산기</Text>
           <CalcRows items={liverCalcs} />
         </View>
@@ -324,7 +324,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {metabolicCalcs.length > 0 && <DomainHeader icon="⚖️" title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>대사·지질 계산기</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
           <CalcRows items={metabolicPrimary} />
@@ -353,7 +353,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* LDL 개인 목표 — 같은 LDL이라도 위험군에 따라 목표가 다르다(초고위험<55 … 저위험<160). */}
       {ldlTarget && (
         <FadeInUp delay={205}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>LDL 콜레스테롤 개인 목표</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>같은 LDL 수치라도 위험군에 따라 목표가 달라져요. 내 위험군 기준 목표예요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -367,7 +367,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             )}
             {/* 중성지방이 높으면 LDL 계산값을 믿기 어려워 달성 여부를 단정하지 않는다. */}
             {ldlTarget.ldl_reliable === false && (
-              <View style={{ backgroundColor: '#EFEFEF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+              <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
                 <Text style={{ fontSize: 12, fontWeight: '800', color: T.text3 }}>판정 보류</Text>
               </View>
             )}
@@ -413,7 +413,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>함께 나타나는 조합 (동반 경향)</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
             여러 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
@@ -425,7 +425,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{c.combo_name}</Text>
                 {c.is_ascvd_risk && (
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.text3, backgroundColor: '#EFEFEF', paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.text3, backgroundColor: T.cardAlt, paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
                     심혈관 지표 참고
                   </Text>
                 )}
@@ -496,7 +496,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
       {!!singleGroups?.length && (
         <FadeInUp delay={218}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>집단군 판정</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
 
@@ -544,7 +544,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
       {ascvd?.available && ascvd.risk_percent != null && (
         <FadeInUp delay={221}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>심혈관 위험 참고 시뮬레이션</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
@@ -586,7 +586,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다 */}
       {recommendations && (recommendations.priority_messages?.length || recommendations.recommendations) && (
         <FadeInUp delay={220}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>맞춤 권장사항</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보예요.</Text>
 
@@ -689,8 +689,8 @@ function CompareRow({ metric, value }: { metric: MetricDefinition; value: number
             </View>
           )}
           {metric.onMedication && (
-            <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: T.primaryDark }}>약으로 관리 중인 항목</Text>
+            <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+              <Text style={{ fontSize: 11, fontWeight: '600', color: T.text2 }}>약으로 관리 중인 항목</Text>
             </View>
           )}
           {metric.isElderlyWarning && (
