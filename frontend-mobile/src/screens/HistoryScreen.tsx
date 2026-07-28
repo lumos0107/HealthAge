@@ -220,7 +220,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   // 그래프나 범례에 끼워 넣으면 사실과 다른 정보가 된다.
   const presentKeys = group.keys.filter((k) => !!metricByKeyForYear(k));
   const hasBad = presentKeys.some((k) => isBadStatus(metricByKeyForYear(k)!.status));
-  // 항상 빨간 테두리는 과하다 — 원래대로 전체 테두리를 쓰되, 색만 상태에 맞춘다(위험=빨강/주의=주황).
+  // 테두리 대신 배지 틴트로만 상태를 표시한다(위험=빨강/주의=주황) — v2는 카드에 테두리를 쓰지 않는다.
   const hasDanger = presentKeys.some((k) => metricByKeyForYear(k)!.status === '위험');
   const accent = hasDanger ? T.danger : T.warn;
   const accentBg = hasDanger ? T.dangerBg : T.warnBg;
