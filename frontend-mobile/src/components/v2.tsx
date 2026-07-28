@@ -64,12 +64,14 @@ const NORMAL_BAND = '#C9EDDC';
 /** percentile이 없는 항목용 — 정상범위 밴드 위에 내 수치 위치만 보여준다(추정 등수를 지어내지 않는다). */
 export function RangeBar({ metric, value }: { metric: MetricDefinition; value: number }) {
   const { low, high } = normalBounds(metric);
-  // 축 범위: 정상 경계와 내 값이 모두 들어가게 잡고 양쪽 15% 여유
-  const lo = Math.min(value, low ?? value, high ?? value);
-  const hi = Math.max(value, low ?? value, high ?? value);
-  const pad = (hi - lo) * 0.3 || Math.abs(hi) * 0.15 || 1;
-  const min = lo - pad;
-  const max = hi + pad;
+  // 축의 기준 폭은 값↔경계 거리가 아니라 정상범위 폭에 비례시킨다 — 살짝 벗어난 값이
+  // 축 줌인 때문에 밴드에서 멀리 떨어져 보이는 왜곡을 막는다. 한쪽 경계만 있으면 경계값의 25%를 폭으로 삼는다.
+  const bandSpan = (low != null && high != null ? high - low : Math.abs(low ?? high ?? 0) * 0.25) || 1;
+  const bandLo = low ?? high! - bandSpan;
+  const bandHi = high ?? low! + bandSpan;
+  const pad = bandSpan * 0.15;
+  const min = Math.min(value, bandLo) - pad;
+  const max = Math.max(value, bandHi) + pad;
   const pct = (v: number) => Math.min(100, Math.max(0, ((v - min) / (max - min)) * 100));
   const bandL = pct(low ?? min);
   const bandR = pct(high ?? max);
