@@ -528,13 +528,14 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
           </View>
         </View>
       </Modal>
+
+      {mode === 'checkup' && fields.length > 0 && (
+        <FixedCTA label="확인한 값 저장하기" onPress={requestSave} disabled={analyzeLoading} loading={analyzeLoading} />
+      )}
+      {mode === 'medication' && (
+        <FixedCTA label="복약자료 파일 업로드하기" onPress={pickMedicationFile} disabled={medUploading} loading={medUploading} />
+      )}
     </KeyboardAvoidingView>
-    {mode === 'checkup' && fields.length > 0 && (
-      <FixedCTA label="확인한 값 저장하기" onPress={requestSave} disabled={analyzeLoading} loading={analyzeLoading} />
-    )}
-    {mode === 'medication' && (
-      <FixedCTA label="복약자료 파일 업로드하기" onPress={pickMedicationFile} disabled={medUploading} loading={medUploading} />
-    )}
     </View>
   );
 }
