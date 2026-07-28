@@ -118,7 +118,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       <FadeInUp delay={0}>
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
         <Eyebrow>ANALYSIS</Eyebrow>
-        <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>건강분석</Text>
+        <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>건강분석</Text>
         <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>내 수치, 정상 기준, 연령대 평균을 비교합니다.</Text>
       </View>
       </FadeInUp>
@@ -126,7 +126,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 안내 — 박스 대신 구분선과 텍스트만으로 */}
       <FadeInUp delay={50}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 20, paddingVertical: 12, marginBottom: 4 }}>
-        <Text style={{ fontSize: 13, color: T.text3, fontWeight: '700' }}>!</Text>
+        <Text style={{ fontSize: 13, color: T.text2, fontWeight: '700' }}>!</Text>
         <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>
           이 화면은 건강검진 수치를 이해하기 위한 참고 정보입니다. 질병 진단이나 치료 판단을 대체하지 않습니다.
         </Text>
@@ -678,7 +678,7 @@ function CompareRow({ metric, value }: { metric: MetricDefinition; value: number
         </View>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 12 }}>
-        <Text style={{ fontSize: 11, color: T.primaryDark, fontWeight: '600' }}>{dirInfo.icon} {dirInfo.text}</Text>
+        <Text style={{ fontSize: 11, color: T.text3, fontWeight: '600' }}>{dirInfo.icon} {dirInfo.text}</Text>
       </View>
       {/* 또래 비교(백분위) · 약물 복용 중 · 고령 주의 — 실제 분석 데이터에 있을 때만 표시한다(추정해서 만들어 보여주지 않음) */}
       {(metric.percentile != null || metric.onMedication || metric.isElderlyWarning) && (

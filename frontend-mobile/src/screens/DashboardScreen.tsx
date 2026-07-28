@@ -122,7 +122,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
 
       {/* 빠른 이동 — 흰 카드 안 아이콘 행 */}
       <FadeInUp delay={90}>
-      <View style={{ backgroundColor: T.white, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: 16, borderRadius: T.radius, marginBottom: 8 }}>
+      <View style={{ backgroundColor: T.white, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: 16, borderRadius: T.radius, marginBottom: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           {QUICK_LINKS.map((link) => (
@@ -150,7 +150,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       {/* 지금 확인할 항목 — 로그인 전(프리뷰)에는 가짜 알림을 숨긴다. */}
       {!isPreview && topAlerts.length > 0 && (
         <FadeInUp delay={180}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12, marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1 }}>지금 확인할 항목</Text>
             <View style={{ backgroundColor: T.dangerBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>

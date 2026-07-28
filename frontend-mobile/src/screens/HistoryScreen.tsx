@@ -65,13 +65,13 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
       {/* 페이지 헤더 — 박스 없이 큰 제목과 설명만 배경 위에 바로 둔다 */}
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 8 }}>
         <Eyebrow>HISTORY</Eyebrow>
-        <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>히스토리</Text>
+        <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>히스토리</Text>
         <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>검진 항목별 연도 변화 추이를 확인합니다.</Text>
       </View>
 
       {/* 안내 — 박스 대신 구분선과 텍스트만으로 */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 20, paddingVertical: 14, marginBottom: 4, gap: 10, marginHorizontal: 16 }}>
-        <Text style={{ fontSize: 14, color: T.primary, fontWeight: '700' }}>!</Text>
+        <Text style={{ fontSize: 14, color: T.text2, fontWeight: '700' }}>!</Text>
         <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
           수치 변화는 생활습관, 복용 약, 검사 당시 상태에 따라 달라질 수 있습니다. 같은 항목이 반복해서 기준을 벗어나면 의료진과 상담해 보세요.
         </Text>

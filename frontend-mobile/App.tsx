@@ -415,7 +415,7 @@ export default function App() {
                 <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginBottom: 20 }}>흡연·음주는 검진 수치로 알 수 없어 한 번만 확인합니다. 나중에 내정보에서 바꿀 수 있어요.</Text>
                 <LifestyleForm value={lsDraft} onChange={setLsDraft} gender={profile.gender} />
                 <Pressable
-                  style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
+                  style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
                   onPress={() => { saveProfile({ ...profile, ...lsDraft }); setLifestylePrompt(false); }}
                 >
                   <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>저장</Text>
@@ -448,7 +448,7 @@ function LockedNotice({ onPress }: { onPress: () => void }) {
           이 화면은 로그인하면 바로 볼 수 있어요.{'\n'}지금 로그인하고 내 건강기록을 확인해보세요.
         </Text>
       </View>
-      <Pressable onPress={onPress} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
+      <Pressable onPress={onPress} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusMd, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
         <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>로그인 / 회원가입</Text>
       </Pressable>
     </View>
@@ -468,7 +468,7 @@ function EmptyDataState({ onUpload }: { onUpload: () => void }) {
           건강검진 결과지를 올리면{'\n'}분석 결과와 건강 점수를 확인할 수 있어요.
         </Text>
       </View>
-      <Pressable onPress={onUpload} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
+      <Pressable onPress={onUpload} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusMd, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
         <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>결과지 업로드하기</Text>
       </Pressable>
     </View>

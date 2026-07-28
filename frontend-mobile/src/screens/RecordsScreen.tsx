@@ -57,7 +57,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       <FadeInUp delay={0}>
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
         <Eyebrow>RECORDS</Eyebrow>
-        <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>검진·복약 기록</Text>
+        <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>검진·복약 기록</Text>
         <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>연도별 건강검진 결과와 복용 중인 약 정보를 확인합니다.</Text>
       </View>
       </FadeInUp>
@@ -65,7 +65,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       {/* 무엇을 볼지 먼저 선택 — 검사 항목(연도별) vs 복용약 정보(연도와 무관, 현재 복용 중인 약 전체).
           목록보다 위에 둬서 "복용약 정보가 연도별 자료"라는 오해가 생기지 않도록 한다. */}
       <FadeInUp delay={70}>
-      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: T.cardAlt, borderRadius: T.radiusPill, padding: 4, gap: 4 }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: T.cardAlt, borderRadius: T.radiusPill, padding: 4, gap: 4 }}>
         {([
           { key: 'metrics' as const, label: '검사 항목', icon: 'document-text-outline' as const },
           { key: 'medications' as const, label: '복용약 정보', icon: 'medkit-outline' as const },
@@ -92,7 +92,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       {view === 'metrics' && (
         /* 검사 항목을 볼 때만 연도 목록을 보여준다 — 복용약 정보는 연도 구분 없이 현재 복용 중인 약 전체이므로 목록이 필요 없다 */
         <FadeInUp delay={140}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8, marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>검진기록 목록</Text>
           <Text style={{ fontSize: 12, color: T.text3, marginBottom: 12 }}>연도를 누르면 아래에서 상세 항목을 볼 수 있어요.</Text>
           {[...reports].reverse().map((report, i, arr) => (
@@ -142,7 +142,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
         <Pressable
           onPress={exporting ? undefined : handleExport}
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                   marginHorizontal: 16, marginBottom: 8, height: 50, borderRadius: T.radiusMd,
+                   marginHorizontal: 16, marginBottom: 12, height: 50, borderRadius: T.radiusMd,
                    backgroundColor: T.primary, opacity: exporting ? 0.6 : 1 }}
         >
           <Ionicons name="share-outline" size={18} color={T.white} />
@@ -192,7 +192,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
         {usingRealData && medGroups.length === 0 ? (
           /* 실제 사용자인데 저장된 복약 정보가 없을 때 — 더미 대신 업로드를 안내한다. */
           <View style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingTop: 60 }}>
-            <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Ionicons name="medkit-outline" size={26} color={T.text3} />
             </View>
             <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>등록된 복약 정보가 없어요</Text>

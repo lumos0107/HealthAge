@@ -114,9 +114,9 @@ export default function ProfileScreen({
         </View>
         </FadeInUp>
 
-        {/* 내 정보 — 박스 없이 구분선 목록으로 */}
+        {/* 내 정보 — 흰 카드 안에 구분선 목록으로, 다른 설정 카드와 통일 */}
         <FadeInUp delay={70}>
-        <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
+        <View style={{ backgroundColor: T.white, borderRadius: T.radius, marginHorizontal: 16, marginBottom: 12, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
             <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1 }}>내 정보</Text>
             {editState === 'locked' ? (
@@ -130,10 +130,10 @@ export default function ProfileScreen({
             ) : editState === 'unlocked' ? (
               <Pressable
                 onPress={() => setEditState('locked')}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.successBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.primaryLight, paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill }}
               >
-                <Ionicons name="lock-open-outline" size={13} color={T.success} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.success }}>수정 중</Text>
+                <Ionicons name="lock-open-outline" size={13} color={T.primary} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.primary }}>수정 중</Text>
               </Pressable>
             ) : null}
           </View>
@@ -191,7 +191,7 @@ export default function ProfileScreen({
               <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginTop: 8, marginBottom: 14 }}>생활습관</Text>
               <LifestyleForm value={lifestyle} onChange={setLifestyle} gender={Number(form.gender) === 2 ? 2 : 1} />
               <Pressable
-                style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 16 }}
+                style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', marginTop: 16 }}
                 onPress={handleSave}
               >
                 <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>저장하기</Text>
@@ -331,7 +331,7 @@ export default function ProfileScreen({
             />
             {pwError ? <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', marginBottom: 16 }}>{pwError}</Text> : null}
             <Pressable
-              style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
+              style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center' }}
               onPress={verifyPassword}
             >
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>확인</Text>

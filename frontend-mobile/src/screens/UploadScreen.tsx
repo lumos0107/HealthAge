@@ -232,7 +232,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
         <FadeInUp delay={0}>
         <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
           <Eyebrow>UPLOAD</Eyebrow>
-          <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>결과지 업로드</Text>
+          <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>결과지 업로드</Text>
           <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>자료 종류를 선택한 뒤 내용을 확인하고 저장합니다.</Text>
         </View>
         </FadeInUp>
@@ -265,7 +265,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
         <FadeIn key={mode}>
         {mode === 'checkup' && (
           <>
-            <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 }}>
+            <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 12 }}>
               {/* 회원 정보 안내 — 박스 안에 박스를 두지 않고, 카드 안에서 아이콘+텍스트로 평평하게 표시 */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 16, marginBottom: 18, borderBottomWidth: 1, borderBottomColor: T.divider }}>
                 <Ionicons name="person-circle-outline" size={20} color={T.text3} />
@@ -307,7 +307,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
 
                 {/* OCR이 확신하지 못한 항목 안내 — 사진으로 읽은 경우에만 뜬다(직접 입력·예시엔 확신도가 없음). */}
                 {lowConf.length > 0 && (
-                  <View style={{ backgroundColor: T.warnBg, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 18, paddingVertical: 14, marginBottom: 8 }}>
+                  <View style={{ backgroundColor: T.warnBg, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 18, paddingVertical: 14, marginBottom: 12 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <Ionicons name="eye-outline" size={18} color={T.warn} />
                       <Text style={{ fontSize: 13, fontWeight: '800', color: T.warn }}>사진에서 흐릿하게 읽힌 항목 {lowConf.length}개</Text>
@@ -382,7 +382,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 </View>
                 <View style={{ paddingHorizontal: 16 }}>
                   <Pressable
-                    style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', opacity: analyzeLoading ? 0.6 : 1 }}
+                    style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', opacity: analyzeLoading ? 0.6 : 1 }}
                     onPress={requestSave}
                     disabled={analyzeLoading}
                   >
@@ -478,7 +478,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 고혈압약/당뇨약/이상지질혈증약처럼 효능군 단위로 묶고
                 각 약의 성분·용법·복용 기간을 함께 표시해 맥락을 이해하기 쉽게 한다. */}
             {medGroups.map(({ category, items }) => (
-              <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 8 }}>
+              <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 12 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                   <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
                     <Text style={{ fontSize: 12, fontWeight: '700', color: T.text2 }}>{category}</Text>
@@ -542,7 +542,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 <Text style={{ fontWeight: '600', color: T.text2, fontSize: 15 }}>다시 확인</Text>
               </Pressable>
               <Pressable
-                style={{ flex: 1, height: 52, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
+                style={{ flex: 1, height: 52, backgroundColor: T.primary, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center' }}
                 onPress={confirmSave}
               >
                 <Text style={{ fontWeight: '700', color: '#fff', fontSize: 15 }}>저장하기</Text>

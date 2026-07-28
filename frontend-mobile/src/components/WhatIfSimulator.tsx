@@ -86,7 +86,7 @@ export function WhatIfSimulator({ latest, disabled, disabledReason }: {
         </Text>
         <Pressable
           onPress={disabled ? undefined : openModal}
-          style={{ height: 50, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: disabled ? T.bg : T.primary }}
+          style={{ height: 50, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', backgroundColor: disabled ? T.bg : T.primary }}
         >
           <Text style={{ fontSize: 15, fontWeight: '700', color: disabled ? T.text3 : '#fff' }}>수치 바꿔보기</Text>
         </Pressable>
@@ -136,7 +136,7 @@ export function WhatIfSimulator({ latest, disabled, disabledReason }: {
             <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
               <Pressable
                 onPress={loading ? undefined : run}
-                style={{ height: 54, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary, opacity: loading ? 0.6 : 1 }}
+                style={{ height: 54, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary, opacity: loading ? 0.6 : 1 }}
               >
                 <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>{loading ? '다시 계산하는 중...' : '다시 계산'}</Text>
               </Pressable>
