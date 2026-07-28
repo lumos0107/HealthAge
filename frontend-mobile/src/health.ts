@@ -140,6 +140,21 @@ export type RealFattyLiverIndex = {
   formula?: string;
 } | null;
 
+/**
+ * 집단군 요약 — user_group_analysis.calculate_group_rarity() 결과.
+ * ⚠️ 필드명은 rarity지만 '희귀도'를 계산하지 않는다. 속한 집단군을 나열하고
+ *    개수로 해석 문구를 붙일 뿐이다(gender·age·year를 인자로 받지만 쓰지 않고,
+ *    모집단 빈도 계산도 없다). 그래서 화면에도 희귀함이 아니라 개수·해석으로 쓴다.
+ * ⚠️ 백엔드 combo_analysis 주입(2026-07-28) 이후 저장분에만 있다 → 구버전은 null.
+ */
+export type RealRarity = {
+  clinical_groups: string[];
+  lifestyle_groups: string[];
+  clinical_count: number;
+  lifestyle_count: number;
+  interpretation: string;
+} | null;
+
 // 단일 집단군 판정(13개) — user_group_analysis.GROUP_INFO 순서. applies가 null이면 판정 불가(입력값 없음).
 export type RealSingleGroup = {
   key: string;
@@ -219,6 +234,7 @@ export type RealComboAnalysis = {
     } | null;
   } | null;
   // ⚠️ 아래 필드들은 최신 분석부터 저장된다 — 구버전 분석에는 없다 → null 처리.
+  rarity?: RealRarity;
   single_groups?: RealSingleGroup[] | null;
   ascvd_simulation?: RealAscvdSimulation | null;
   calculators?: RealCalculators;
@@ -586,7 +602,10 @@ export async function fetchEgfr(serumCr: number, age: number, sex: 1 | 2, weight
     return await apiFetch('/renal/egfr', {
       method: 'POST',
       body: JSON.stringify({
-        serum_cr: serumCr, age, sex: sex === 2 ? 'female' : 'male',
+        // 백엔드 app/renal/gfr.py의 Sex enum은 'M'/'F'만 받는다.
+        // 'male'/'female'을 보내면 Pydantic 검증에서 422가 나고, 아래 catch가
+        // 그걸 삼켜서 화면에는 아무 에러 없이 신장 기능이 통째로 안 보였다.
+        serum_cr: serumCr, age, sex: sex === 2 ? 'F' : 'M',
         ...(typeof weightKg === 'number' && weightKg > 0 ? { weight_kg: weightKg } : {}),
       }),
     });

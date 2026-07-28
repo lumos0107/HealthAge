@@ -66,6 +66,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // FLI/HSI·단일그룹·ASCVD는 그 이후(08) 분석부터 담겨 온다 — 마찬가지로 없으면 그리지 않는다.
   const flIndices = fattyLiver?.indices ?? null;
   const singleGroups = comboAnalysis?.single_groups ?? null;
+  // 집단군 개수 요약 — 백엔드 주입(2026-07-28) 이후 저장분에만 있다.
+  const rarity = comboAnalysis?.rarity ?? null;
   const ascvd = comboAnalysis?.ascvd_simulation ?? null;
   const ldlTarget = comboAnalysis?.ldl_target && !comboAnalysis.ldl_target.error ? comboAnalysis.ldl_target : null;
   // 계산기 items를 도메인 카테고리로 나눠 각 섹션에 배치한다.
@@ -497,6 +499,19 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 8 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>집단군 판정</Text>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
+
+          {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
+              백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
+              구버전 저장 분석에는 이 값이 없다 → 그때는 요약 없이 상세 목록만 보인다. */}
+          {rarity && (
+            <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 14, marginTop: 8, marginBottom: 2 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
+                임상 {rarity.clinical_count}개 · 생활습관 {rarity.lifestyle_count}개에 해당
+              </Text>
+              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, marginTop: 4 }}>{rarity.interpretation}</Text>
+            </View>
+          )}
+
           {(['임상', '생활습관'] as const).map((cat) => {
             const rows = singleGroups.filter((g) => g.category === cat);
             if (!rows.length) return null;
