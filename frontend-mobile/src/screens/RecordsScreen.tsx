@@ -65,7 +65,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       {/* 무엇을 볼지 먼저 선택 — 검사 항목(연도별) vs 복용약 정보(연도와 무관, 현재 복용 중인 약 전체).
           목록보다 위에 둬서 "복용약 정보가 연도별 자료"라는 오해가 생기지 않도록 한다. */}
       <FadeInUp delay={70}>
-      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: T.white, borderRadius: T.radiusPill, padding: 4, gap: 4 }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: T.cardAlt, borderRadius: T.radiusPill, padding: 4, gap: 4 }}>
         {([
           { key: 'metrics' as const, label: '검사 항목', icon: 'document-text-outline' as const },
           { key: 'medications' as const, label: '복용약 정보', icon: 'medkit-outline' as const },
@@ -78,11 +78,11 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
               style={{
                 flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
                 paddingVertical: 11, borderRadius: T.radiusPill,
-                backgroundColor: active ? T.primary : 'transparent',
+                backgroundColor: active ? T.white : 'transparent',
               }}
             >
-              <Ionicons name={tab.icon} size={15} color={active ? '#fff' : T.text3} />
-              <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text3 }}>{tab.label}</Text>
+              <Ionicons name={tab.icon} size={15} color={active ? T.text1 : T.text3} />
+              <Text style={{ fontSize: 14, fontWeight: '700', color: active ? T.text1 : T.text3 }}>{tab.label}</Text>
             </Pressable>
           );
         })}
@@ -142,11 +142,11 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
         <Pressable
           onPress={exporting ? undefined : handleExport}
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                   marginHorizontal: 16, marginBottom: 8, height: 50, borderRadius: T.radiusPill,
-                   borderWidth: 1, borderColor: T.border, backgroundColor: T.white, opacity: exporting ? 0.6 : 1 }}
+                   marginHorizontal: 16, marginBottom: 8, height: 50, borderRadius: T.radiusMd,
+                   backgroundColor: T.primary, opacity: exporting ? 0.6 : 1 }}
         >
-          <Ionicons name="share-outline" size={18} color={T.text1} />
-          <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
+          <Ionicons name="share-outline" size={18} color={T.white} />
+          <Text style={{ fontSize: 14, fontWeight: '700', color: T.white }}>
             {exporting ? 'PDF를 만드는 중...' : `${detailReport.year}년 결과 PDF로 내보내기`}
           </Text>
         </Pressable>
@@ -211,7 +211,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
             </Text>
           </View>
           {medGroups.map(({ category, items }) => (
-            <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 8 }}>
+            <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
                   <Text style={{ fontSize: 12, fontWeight: '700', color: T.primary }}>{category}</Text>
@@ -261,7 +261,7 @@ function ReportRow({ report, last, selected, onPress, canDelete, onDelete }: {
       onPress={onPress}
       style={[
         { paddingVertical: 15, paddingHorizontal: 10, marginHorizontal: -10, borderRadius: T.radiusSm, flexDirection: 'row', alignItems: 'center', gap: 14 },
-        selected && { backgroundColor: T.primaryLight },
+        selected && { backgroundColor: T.cardAlt },
         !last && { borderBottomWidth: 1, borderBottomColor: T.divider },
       ]}
     >
