@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { FixedCTA } from '../components/v2';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, ocrTemplate } from '../data';
 import type { MedicationItem, OcrField, TabKey, UserProfile } from '../data';
@@ -225,8 +226,9 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
   };
 
   return (
+    <View style={{ flex: 1 }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
         {/* 페이지 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
         <FadeInUp delay={0}>
@@ -291,6 +293,8 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
               </Pressable>
             </View>
+
+            {ocrLoading && <View style={{ marginHorizontal: 16 }}><AnalyzingCard /></View>}
 
             {fields.length > 0 && (
               <>
@@ -377,13 +381,6 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                   <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>저장하기 전에 측정값과 검진기관, 검진일이 실제 검진표와 같은지 다시 확인해주세요.</Text>
                 </View>
                 <View style={{ paddingHorizontal: 16 }}>
-                  <Pressable
-                    style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', opacity: analyzeLoading ? 0.6 : 1 }}
-                    onPress={requestSave}
-                    disabled={analyzeLoading}
-                  >
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>{analyzeLoading ? '저장하는 중...' : '확인한 값 저장'}</Text>
-                  </Pressable>
                   {saved && (
                     <Pressable
                       style={{ height: 54, backgroundColor: T.white, borderRadius: T.radiusPill, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}
@@ -443,22 +440,6 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 </View>
               ))}
             </View>
-
-            {/* 파일 업로드 — 실제 HIRA 엑셀(xls/xlsx)을 백엔드로 보내 파싱·저장한다 */}
-            <Pressable
-              onPress={pickMedicationFile}
-              disabled={medUploading}
-              style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 16, opacity: medUploading ? 0.6 : 1 }}
-            >
-              <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="document-attach-outline" size={24} color={T.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '700', color: T.text1, fontSize: 15, marginBottom: 3 }}>{medUploading ? '분석하는 중...' : '복약자료 파일 업로드'}</Text>
-                <Text style={{ fontSize: 12, color: T.text3 }}>xls / xlsx 파일을 선택하면 자동으로 분석·저장돼요.</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={T.text3} />
-            </Pressable>
 
             {/* 예시 미리보기 — 실제 파일 없이 화면 형태만 먼저 확인할 때 */}
             <Pressable
@@ -548,6 +529,25 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
         </View>
       </Modal>
     </KeyboardAvoidingView>
+    {mode === 'checkup' && fields.length > 0 && (
+      <FixedCTA label="확인한 값 저장하기" onPress={requestSave} disabled={analyzeLoading} loading={analyzeLoading} />
+    )}
+    {mode === 'medication' && (
+      <FixedCTA label="복약자료 파일 업로드하기" onPress={pickMedicationFile} disabled={medUploading} loading={medUploading} />
+    )}
+    </View>
+  );
+}
+
+function AnalyzingCard() {
+  return (
+    <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 24, alignItems: 'center', marginBottom: 12 }}>
+      <ActivityIndicator size="large" color={T.primary} style={{ marginBottom: 16 }} />
+      <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6 }}>결과지를 읽고 있어요</Text>
+      <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21 }}>
+        사진에서 검사 수치를 찾아 정리하는 중이에요.{'\n'}보통 10~30초 정도 걸려요.
+      </Text>
+    </View>
   );
 }
 
