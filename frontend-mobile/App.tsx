@@ -342,7 +342,7 @@ export default function App() {
         {tab !== 'dashboard' && !loggedIn && <LockedNotice onPress={requireLogin} />}
         {tab === 'records' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} onDeleted={() => loadHealthData(profile.id)} medications={medications} userName={profile.name} />)}
+          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} onDeleted={() => loadHealthData(profile.id)} medications={medications} />)}
         {tab === 'history' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}

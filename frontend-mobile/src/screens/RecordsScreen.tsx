@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { Collapsible, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { categoryVisual, SquircleIcon } from '../components/v2';
+import { Eyebrow, FadeIn, FadeInUp, StatusBadge, T } from '../components/UI';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, metricsForReport } from '../data';
-import type { MedicationItem, MetricDefinition, Report } from '../data';
+import type { MedicationItem, MetricDefinition, MetricKey, Report, Status } from '../data';
 import { deleteReport } from '../health';
-import { exportReportPdf } from '../reportExport';
+import { sortByAttention, statusCounts } from '../interpret';
 
-export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, onDeleted, medications, userName }: {
+export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, onDeleted, medications, onOpenDetail }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
@@ -15,28 +16,47 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   onDeleted?: (year: number) => void;
   // 실제 저장된 복약 정보 — 있으면 이걸, 없으면(데모/프리뷰) 예시 템플릿을 보여준다.
   medications?: MedicationItem[];
-  // PDF 머리말에 넣을 이름.
-  userName?: string;
+  // 항목을 탭하면 그 항목의 상세(L2/L3)로 이동한다.
+  onOpenDetail?: (key: MetricKey, year: number) => void;
 }) {
   const [selectedYear, setSelectedYear] = useState<number>(reports[reports.length - 1].year);
   // 검사 항목 / 복용약 — 같은 연도 기록 안에서 전환해서 볼 수 있게 한다.
   const [view, setView] = useState<'metrics' | 'medications'>('metrics');
+  const [filter, setFilter] = useState<Status | null>(null);
 
   const detailReport = reports.find((r) => r.year === selectedYear) ?? reports[reports.length - 1];
   // 그 해 검진의 실제 상태(statusByKey)를 그대로 반영한 항목 목록 — 점수와 항상 일치한다.
   const yearMetrics = useMemo(() => metricsForReport(detailReport, metricDefinitions), [detailReport, metricDefinitions]);
+  const counts = statusCounts(yearMetrics);
+  const rows = sortByAttention(yearMetrics).filter((m) => (filter ? m.status === filter : true));
 
-  const [exporting, setExporting] = useState(false);
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      await exportReportPdf(detailReport, yearMetrics, userName ?? '사용자');
-    } catch (e) {
-      Alert.alert('내보내기 실패', e instanceof Error ? e.message : 'PDF를 만들지 못했습니다.');
-    } finally {
-      setExporting(false);
-    }
+  const confirmDelete = () => {
+    const year = detailReport.year;
+    Alert.alert(
+      '기록 삭제',
+      `${year}년 검진 기록을 삭제할까요?\n삭제하면 복구할 수 없습니다.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteReport(userId!, year);
+              if (year === selectedYear && reports.length > 1) {
+                const others = reports.filter((r) => r.year !== year);
+                setSelectedYear(others[0].year);
+              }
+              onDeleted?.(year);
+            } catch (e) {
+              Alert.alert('오류', '기록 삭제에 실패했습니다. 다시 시도해주세요.');
+            }
+          },
+        },
+      ],
+    );
   };
+
   // 실제 사용자면 저장된 복약 정보를, 아니면(데모/프리뷰) 예시 템플릿을 효능군별로 묶는다.
   const medSource = usingRealData ? (medications ?? []) : medicationTemplate;
   const medGroups = useMemo(() => {
@@ -56,9 +76,9 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       {/* 페이지 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
       <FadeInUp delay={0}>
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
-        <Eyebrow>RECORDS</Eyebrow>
-        <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>검진·복약 기록</Text>
-        <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>연도별 건강검진 결과와 복용 중인 약 정보를 확인합니다.</Text>
+        <Eyebrow>METRICS</Eyebrow>
+        <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>검사항목</Text>
+        <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>연도를 고르고 항목을 누르면 자세한 설명을 볼 수 있어요.</Text>
       </View>
       </FadeInUp>
 
@@ -90,99 +110,71 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       </FadeInUp>
 
       {view === 'metrics' && (
-        /* 검사 항목을 볼 때만 연도 목록을 보여준다 — 복용약 정보는 연도 구분 없이 현재 복용 중인 약 전체이므로 목록이 필요 없다 */
+        /* 검사 항목을 볼 때만 연도 선택기를 보여준다 — 복용약 정보는 연도 구분 없이 현재 복용 중인 약 전체이므로 필요 없다 */
         <FadeInUp delay={140}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>검진기록 목록</Text>
-          <Text style={{ fontSize: 12, color: T.text3, marginBottom: 12 }}>연도를 누르면 아래에서 상세 항목을 볼 수 있어요.</Text>
-          {[...reports].reverse().map((report, i, arr) => (
-            <ReportRow
-              key={report.year}
-              report={report}
-              last={i === arr.length - 1}
-              selected={report.year === selectedYear}
-              onPress={() => setSelectedYear(report.year)}
-              canDelete={usingRealData && !!userId}
-              onDelete={() => {
-                Alert.alert(
-                  '기록 삭제',
-                  `${report.year}년 검진 기록을 삭제할까요?\n삭제하면 복구할 수 없습니다.`,
-                  [
-                    { text: '취소', style: 'cancel' },
-                    {
-                      text: '삭제',
-                      style: 'destructive',
-                      onPress: async () => {
-                        try {
-                          await deleteReport(userId!, report.year);
-                          if (report.year === selectedYear && arr.length > 1) {
-                            const others = arr.filter((r) => r.year !== report.year);
-                            setSelectedYear(others[0].year);
-                          }
-                          onDeleted?.(report.year);
-                        } catch (e) {
-                          Alert.alert('오류', '기록 삭제에 실패했습니다. 다시 시도해주세요.');
-                        }
-                      },
-                    },
-                  ],
-                );
-              }}
-            />
-          ))}
+        <View style={{ marginHorizontal: 16, marginBottom: 12 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {[...reports].reverse().map((r) => {
+              const active = r.year === selectedYear;
+              return (
+                <Pressable key={r.year} onPress={() => setSelectedYear(r.year)}
+                  style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.white }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text2 }}>{r.year}년</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          {/* 선택 연도 메타 + 삭제(기능 보존) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 }}>
+            <Text style={{ flex: 1, fontSize: 13, color: T.text3 }}>{detailReport.date} · {detailReport.hospital} · {detailReport.score}점</Text>
+            {usingRealData && !!userId && (
+              <Pressable hitSlop={8} onPress={confirmDelete}>
+                <Ionicons name="trash-outline" size={17} color={T.text3} />
+              </Pressable>
+            )}
+          </View>
         </View>
         </FadeInUp>
+      )}
+
+      {view === 'metrics' && (
+        <View style={{ flexDirection: 'row', gap: 8, marginHorizontal: 16, marginBottom: 12 }}>
+          {([['전체', null], [`정상 ${counts.정상}`, '정상'], [`주의 ${counts.주의}`, '주의'], [`위험 ${counts.위험}`, '위험']] as const).map(([label, val]) => {
+            const active = filter === val;
+            return (
+              <Pressable key={label} onPress={() => setFilter(val as Status | null)}
+                style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.white }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: active ? '#fff' : T.text2 }}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
       )}
 
       {view === 'metrics' ? (
         /* 상세 항목 — 선택한 연도의 statusByKey를 그대로 반영해, 위 점수와 항상 일치한다.
            연도를 바꾸면 살짝 페이드되며 갱신되어 변화가 자연스럽게 보인다 */
         <FadeIn key={`metrics-${detailReport.year}`}>
-        {/* 병원 지참·가족 공유용 PDF 내보내기 — 화면에 보이는 값만 옮겨 담는다(새 판단 없음). */}
-        <Pressable
-          onPress={exporting ? undefined : handleExport}
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                   marginHorizontal: 16, marginBottom: 8, height: 50, borderRadius: T.radiusPill,
-                   borderWidth: 1, borderColor: T.border, backgroundColor: T.white, opacity: exporting ? 0.6 : 1 }}
-        >
-          <Ionicons name="share-outline" size={18} color={T.text1} />
-          <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
-            {exporting ? 'PDF를 만드는 중...' : `${detailReport.year}년 결과 PDF로 내보내기`}
-          </Text>
-        </Pressable>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20 }}>
-          <Collapsible
-            title={`${detailReport.year}년 상세 항목`}
-            badge={detailReport.year === reports[reports.length - 1].year ? '최근 검진' : undefined}
-            defaultOpen
-          >
-          {yearMetrics.map((metric, i) => {
-            const value = detailReport.values[metric.key];
-            const isLast = i === yearMetrics.length - 1;
-            const { color: statusColor, bg: statusBg } = getStatusStyle(metric.status);
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, marginBottom: 12 }}>
+          {rows.map((metric, i) => {
+            const visual = categoryVisual(metric.category);
+            const { color } = getStatusStyle(metric.status);
             return (
-              <View
-                key={metric.key}
-                style={[{ paddingVertical: 15 }, !isLast && { borderBottomWidth: 1, borderBottomColor: T.divider }]}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
-                    <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>{metric.category}</Text>
-                  </View>
-                  <View style={{ backgroundColor: statusBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: statusColor }}>{metric.status}</Text>
-                  </View>
+              <Pressable key={metric.key} onPress={() => onOpenDetail?.(metric.key, selectedYear)}
+                style={[{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
+                        i < rows.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
+                <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
+                  <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>{metric.category}</Text>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 20 }}>
-                  <MetaItem label="내 수치" value={`${value}${metric.unit}`} highlight color={statusColor} />
-                  <MetaItem label="정상 기준" value={metric.normalText} />
-                  <MetaItem label="연령대 평균" value={metric.peerMean != null ? `${metric.peerMean}${metric.unit}` : '—'} />
-                </View>
-              </View>
+                <Text style={{ fontSize: 16, fontWeight: '700', color }}>{detailReport.values[metric.key]}<Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text></Text>
+                <StatusBadge status={metric.status} />
+                <Ionicons name="chevron-forward" size={16} color={T.text3} />
+              </Pressable>
             );
           })}
-          </Collapsible>
+          {rows.length === 0 && <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center', paddingVertical: 24 }}>해당 상태의 항목이 없어요.</Text>}
         </View>
         </FadeIn>
       ) : (
@@ -244,60 +236,4 @@ function getStatusStyle(status: string) {
   if (status === '정상') return { color: T.success, bg: T.successBg };
   if (status === '주의') return { color: T.warn, bg: T.warnBg };
   return { color: T.danger, bg: T.dangerBg };
-}
-
-function ReportRow({ report, last, selected, onPress, canDelete, onDelete }: {
-  report: Report;
-  last: boolean;
-  selected?: boolean;
-  onPress?: () => void;
-  canDelete?: boolean;
-  onDelete?: () => void;
-}) {
-  const scoreColor = report.score >= 70 ? T.success : report.score >= 40 ? T.warn : T.danger;
-  const { color: statusColor, bg: statusBg } = getStatusStyle(report.status);
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        { paddingVertical: 15, paddingHorizontal: 10, marginHorizontal: -10, borderRadius: T.radiusSm, flexDirection: 'row', alignItems: 'center', gap: 14 },
-        selected && { backgroundColor: T.primaryLight },
-        !last && { borderBottomWidth: 1, borderBottomColor: T.divider },
-      ]}
-    >
-      <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: selected ? T.primary : T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: selected ? '#fff' : T.primary }}>{report.year}</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{report.hospital}</Text>
-        <Text style={{ fontSize: 12, color: T.text3, marginBottom: 4 }}>{report.date}</Text>
-        <View style={{ backgroundColor: statusBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill, alignSelf: 'flex-start' }}>
-          <Text style={{ fontSize: 10, fontWeight: '600', color: statusColor }}>{report.status}</Text>
-        </View>
-      </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: scoreColor }}>{report.score}</Text>
-        <Text style={{ fontSize: 10, color: T.text3 }}>/ 100점</Text>
-      </View>
-      <Ionicons name={selected ? 'chevron-up-circle' : 'chevron-down-circle-outline'} size={20} color={selected ? T.primary : T.text3} />
-      {canDelete && (
-        <Pressable
-          onPress={(e) => { e.stopPropagation?.(); onDelete?.(); }}
-          hitSlop={8}
-          style={{ padding: 4 }}
-        >
-          <Ionicons name="trash-outline" size={18} color={T.danger} />
-        </Pressable>
-      )}
-    </Pressable>
-  );
-}
-
-function MetaItem({ label, value, highlight, color }: { label: string; value: string; highlight?: boolean; color?: string }) {
-  return (
-    <View>
-      <Text style={{ fontSize: 11, color: T.text3, fontWeight: '500', marginBottom: 3 }}>{label}</Text>
-      <Text style={{ fontSize: 14, color: highlight ? (color ?? T.text1) : T.text2, fontWeight: highlight ? '700' : '500' }}>{value}</Text>
-    </View>
-  );
 }
