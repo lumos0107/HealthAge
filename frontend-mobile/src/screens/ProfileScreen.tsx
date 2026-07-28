@@ -107,7 +107,7 @@ export default function ProfileScreen({
   const [exporting, setExporting] = useState(false);
   const pdfReport = reports?.find((r) => r.year === (pdfYear ?? reports[reports.length - 1]?.year));
   const handleExport = async () => {
-    if (!pdfReport || !metricDefinitions) return;
+    if (exporting || !pdfReport || !metricDefinitions) return;
     setExporting(true);
     try {
       await exportReportPdf(pdfReport, metricsForReport(pdfReport, metricDefinitions), profile.name);
