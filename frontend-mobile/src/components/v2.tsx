@@ -142,7 +142,8 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
   }
   // infoOnly(키·체중)는 판정 대상이 아니라 정상범위 밴드가 없다 — 밴드 없이 값만 보여준다.
   const { low, high } = metric.infoOnly ? { low: undefined, high: undefined } : normalBounds(metric);
-  const vals = [...pts0.map((p) => p.v), ...(low != null ? [low] : []), ...(high != null ? [high] : [])];
+  // 하한 0(상한형의 표시용 바닥)은 축 계산에서 빼서 라인이 위쪽에 눌리지 않게 한다. 밴드는 클램프로 바닥까지 채운다.
+  const vals = [...pts0.map((p) => p.v), ...(low != null && low > 0 ? [low] : []), ...(high != null ? [high] : [])];
   const rawMin = Math.min(...vals);
   const rawMax = Math.max(...vals);
   const margin = (rawMax - rawMin) * 0.25 || 5;
@@ -151,8 +152,8 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
   const range = maxVal - minVal || 1;
   const xPos = (i: number) => (reports.length === 1 ? PLOT_W / 2 : (i / (reports.length - 1)) * PLOT_W);
   const yPos = (v: number) => PLOT_H - ((v - minVal) / range) * PLOT_H;
-  const bandTop = yPos(high ?? maxVal);
-  const bandBottom = yPos(low ?? minVal);
+  const bandTop = Math.max(0, yPos(high ?? maxVal));
+  const bandBottom = Math.min(PLOT_H, yPos(low ?? minVal));
   const pts = pts0.map((p) => ({ ...p, x: xPos(p.i), y: yPos(p.v) }));
   const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
   const last = pts[pts.length - 1];

@@ -84,8 +84,11 @@ describe('normalBounds / rankFromPercentile', () => {
   it('범위형("70-99")은 양쪽 경계', () => {
     expect(normalBounds(by('glucose'))).toEqual({ low: 70, high: 99 });
   });
-  it('상한형("<120")은 high만', () => {
-    expect(normalBounds(by('sbp'))).toEqual({ high: 120 });
+  it('상한형(허리둘레 "<90")은 결과지 관행대로 하한 0을 채운다', () => {
+    expect(normalBounds(by('waist'))).toEqual({ low: 0, high: 90 });
+  });
+  it('혈압은 저혈압 하한까지 양쪽 경계(수축기 90-119)', () => {
+    expect(normalBounds(by('sbp'))).toEqual({ low: 90, high: 119 });
   });
   it('하한형(HDL "남 ≥40 / 여 ≥50")은 normalValue를 low로', () => {
     expect(normalBounds(by('hdl'))).toEqual({ low: 40 });

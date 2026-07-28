@@ -190,8 +190,8 @@ export const reports: Report[] = [
 export const latest = reports[reports.length - 1];
 
 export const metricDefinitions: MetricDefinition[] = [
-  { key: 'sbp', category: '혈압', name: '수축기 혈압', shortName: '수축기', unit: 'mmHg', normalText: '<120', normalValue: 120, peerMean: 126, status: '주의', description: '심장이 피를 밀어낼 때 혈관에 걸리는 압력입니다.', note: '한 번 높게 나왔다고 바로 판단하지 않고 반복 측정 흐름을 함께 봅니다.' },
-  { key: 'dbp', category: '혈압', name: '이완기 혈압', shortName: '이완기', unit: 'mmHg', normalText: '<80', normalValue: 80, peerMean: 79, status: '주의', description: '심장이 쉬는 순간 혈관에 남아 있는 압력입니다.', note: '수축기 혈압과 같이 확인해야 혈압 흐름을 이해하기 쉽습니다.' },
+  { key: 'sbp', category: '혈압', name: '수축기 혈압', shortName: '수축기', unit: 'mmHg', normalText: '90-119', normalValue: 120, peerMean: 126, status: '주의', description: '심장이 피를 밀어낼 때 혈관에 걸리는 압력입니다.', note: '한 번 높게 나왔다고 바로 판단하지 않고 반복 측정 흐름을 함께 봅니다.' },
+  { key: 'dbp', category: '혈압', name: '이완기 혈압', shortName: '이완기', unit: 'mmHg', normalText: '60-79', normalValue: 80, peerMean: 79, status: '주의', description: '심장이 쉬는 순간 혈관에 남아 있는 압력입니다.', note: '수축기 혈압과 같이 확인해야 혈압 흐름을 이해하기 쉽습니다.' },
   { key: 'glucose', category: '혈당', name: '공복혈당', shortName: '혈당', unit: 'mg/dL', normalText: '70-99', normalValue: 99, peerMean: 101, status: '주의', description: '식사하지 않은 상태에서 혈액 속 포도당이 어느 정도인지 보는 항목입니다.', note: '식사, 수면, 스트레스 영향을 받을 수 있어 여러 해의 흐름이 중요합니다.' },
   { key: 'bmi', category: '체중·복부', name: '체질량지수(BMI)', shortName: 'BMI', unit: 'kg/m²', normalText: '18.5-22.9', normalValue: 22.9, peerMean: 24.2, status: '위험', description: '키와 체중으로 계산한 체중 상태 참고값입니다.', note: '근육량이 많은 사람은 실제 상태와 다를 수 있어 허리둘레와 함께 봅니다.' },
   { key: 'height', category: '체중·복부', name: '키', shortName: '키', unit: 'cm', normalText: '참고값', normalValue: 0, infoOnly: true, status: '정상', description: '체질량지수(BMI)를 계산할 때 쓰는 기준값입니다.', note: '좋고 나쁨을 판정하는 항목이 아니라 다른 수치를 계산하기 위한 참고값이에요.' },

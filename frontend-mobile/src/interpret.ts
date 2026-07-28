@@ -10,14 +10,16 @@ function subjectJosa(word: string): '이' | '가' {
   return (code - 0xac00) % 28 > 0 ? '이' : '가';
 }
 
-/** 정상범위 경계 파싱 — 범위형은 normalText의 "a-b"에서, 상한/하한형은 normalValue에서. */
+/** 정상범위 경계 파싱 — 범위형은 normalText의 "a-b"에서, 상한/하한형은 normalValue에서.
+ * 상한형(LDL·AST 등)은 검진 결과지 관행("0~40")대로 하한 0을 채워 양쪽 경계를 돌려준다.
+ * 하한형(HDL)은 높을수록 좋아 의학적 상한이 없으므로 위쪽을 열어둔다. */
 export function normalBounds(metric: MetricDefinition): { low?: number; high?: number } {
   const dir = metricDirection(metric);
-  if (dir === 'high') return { high: metric.normalValue };
+  if (dir === 'high') return { low: 0, high: metric.normalValue };
   if (dir === 'low') return { low: metric.normalValue };
   const m = /(\d+(?:\.\d+)?)\s*[-~]\s*(\d+(?:\.\d+)?)/.exec(metric.normalText);
   if (m) return { low: Number(m[1]), high: Number(m[2]) };
-  return { high: metric.normalValue };
+  return { low: 0, high: metric.normalValue };
 }
 
 /** L2 상단 헤드라인 — 상태+방향으로 쉬운 문장을 만든다. */
