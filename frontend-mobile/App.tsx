@@ -612,9 +612,8 @@ const s = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     paddingHorizontal: 20,
-    backgroundColor: T.white,
-    borderBottomWidth: 0,
-    borderBottomColor: T.border,
+    // 헤더를 흰 박스로 띄우지 않고 화면 배경과 같은 톤으로 둔다 — 카드만 흰색이라는 원칙에 맞춘다.
+    backgroundColor: T.bg,
   },
   logoIcon: {
     width: 30,
