@@ -37,14 +37,14 @@ const QUICK_LINKS: {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   svgPill?: boolean;
-  color: string; bg: string; url: string | null;
+  color: string; url: string | null;
 }[] = [
-  // 유틸리티 이동 링크는 '상태'가 아니므로 상태색(빨강/초록/주황)을 쓰지 않고
-  // 앱의 무채색 원칙대로 아이콘을 검정 톤으로 통일한다. (근처 병원은 병원 느낌의 medkit 아이콘)
-  { label: '검진기관\n찾기', icon: 'search-outline', color: T.primary, bg: T.primaryLight, url: 'https://www.nhis.or.kr/nhis/healthin/retrieveMdcAdminSknsClinic.do' },
-  { label: '근처\n병원', icon: 'medkit-outline', color: T.primary, bg: T.primaryLight, url: 'https://www.e-gen.or.kr/egen/search_hospital.do' },
-  { label: '약국\n찾기', icon: 'bandage-outline', svgPill: true, color: T.primary, bg: T.primaryLight, url: 'https://www.hira.or.kr/ra/hosp/getHealthMap.do?pgmid=HIRAA030002010000' },
-  { label: '결과지\n업로드', icon: 'cloud-upload-outline', color: T.primary, bg: T.primaryLight, url: null },
+  // 유틸리티 이동 링크는 '상태'가 아니므로 상태색(빨강/초록/주황)을 쓰지 않는다.
+  // 빠른 접근 아이콘은 앱 브랜드 색상(초록)을 사용한다. (근처 병원은 병원 느낌의 medkit 아이콘)
+  { label: '검진기관\n찾기', icon: 'search-outline', color: T.primary, url: 'https://www.nhis.or.kr/nhis/healthin/retrieveMdcAdminSknsClinic.do' },
+  { label: '근처\n병원', icon: 'medkit-outline', color: T.primary, url: 'https://www.e-gen.or.kr/egen/search_hospital.do' },
+  { label: '약국\n찾기', icon: 'bandage-outline', svgPill: true, color: T.primary, url: 'https://www.hira.or.kr/ra/hosp/getHealthMap.do?pgmid=HIRAA030002010000' },
+  { label: '결과지\n업로드', icon: 'cloud-upload-outline', color: T.primary, url: null },
 ];
 
 export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin, onOpenDetail }: {

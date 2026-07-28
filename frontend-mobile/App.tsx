@@ -16,7 +16,7 @@ import {
 // RN 내장 SafeAreaView는 iOS 전용(안드로이드에선 no-op) — 상태바/제스처바 겹침 방지를 위해 safe-area-context 사용
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/api';
-import { C, Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
+import { Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';

@@ -436,25 +436,6 @@ function AnimatedBarRow({ row, pct, delay }: {
   );
 }
 
-// ─── C alias for backward compat ────────────────────────
-export const C = {
-  blue: T.primary,
-  blueBg: T.primaryLight,
-  dark: T.text1,
-  mid: T.text2,
-  light: T.text3,
-  border: T.border,
-  bg: T.bg,
-  white: T.white,
-  warnText: T.warn,
-  warnBg: T.warnBg,
-  dangerText: T.danger,
-  dangerBg: T.dangerBg,
-  dangerBorder: T.danger,
-  goodText: T.success,
-  goodBg: T.successBg,
-} as const;
-
 const ui = StyleSheet.create({
   card: {
     backgroundColor: T.white,
