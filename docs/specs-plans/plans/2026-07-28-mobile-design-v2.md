@@ -720,7 +720,9 @@ git add frontend-mobile/src/screens/DashboardScreen.tsx
 git commit -m "feat(mobile): 홈 L0 재구성 — TOP3 카드(수치 없음)·전체 보기"
 ```
 
----### Task 6: 검사항목(L1) 재구성 — RecordsScreen
+---
+
+### Task 6: 검사항목(L1) 재구성 — RecordsScreen
 
 **Files:**
 - Modify: `frontend-mobile/src/screens/RecordsScreen.tsx`
