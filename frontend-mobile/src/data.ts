@@ -1,4 +1,4 @@
-export type TabKey = 'dashboard' | 'records' | 'analysis' | 'upload';
+export type TabKey = 'dashboard' | 'records' | 'history' | 'analysis' | 'upload';
 export type Status = '정상' | '주의' | '위험';
 export type MetricKey =
   | 'sbp' | 'dbp' | 'glucose' | 'bmi' | 'waist'
