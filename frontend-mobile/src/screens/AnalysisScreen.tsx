@@ -5,7 +5,32 @@ import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../
 import { WhatIfSimulator } from '../components/WhatIfSimulator';
 import { computeGroupsForReport, directionLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem } from '../health';
+import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealTimeseries } from '../health';
+
+type Highlight = NonNullable<RealTimeseries['highlights']>[number];
+type Insight = NonNullable<RealTimeseries['insight']>;
+type ChangePace = NonNullable<RealTimeseries['change_pace']>[number];
+
+// 백엔드 시계열은 내부 검진항목 키를 그대로 쓴다(non_HDL, 식전혈당(공복혈당) 등).
+// 화면에는 사용자가 읽는 이름으로 바꿔 보여준다. 맵에 없으면 원래 키를 그대로 쓴다.
+const METRIC_LABEL: Record<string, string> = {
+  '수축기혈압': '수축기 혈압',
+  '이완기혈압': '이완기 혈압',
+  '식전혈당(공복혈당)': '공복혈당',
+  '트리글리세라이드': '중성지방',
+  'non_HDL': 'Non-HDL 콜레스테롤',
+  '총콜레스테롤': '총콜레스테롤',
+  'LDL콜레스테롤': 'LDL 콜레스테롤',
+  'HDL콜레스테롤': 'HDL 콜레스테롤',
+  '혈청지오티(AST)': 'AST',
+  '혈청지피티(ALT)': 'ALT',
+  '감마지티피': '감마-GTP',
+  '혈청크레아티닌': '크레아티닌',
+  'AST_ALT비': 'AST/ALT 비',
+  'BMI': '체질량지수(BMI)',
+  '맥압': '맥압',
+};
+const metricLabel = (m: string) => METRIC_LABEL[m] ?? m;
 
 /** 도메인 섹션 헤더 — 분석 카드를 신장/간/대사·지질/심혈관/통계참고로 묶어 읽히게 한다.
  *  카드를 부수지 않고 헤더만 얹는 가벼운 그룹핑. 해당 카드가 없으면 헤더도 그리지 않는다. */
@@ -20,7 +45,7 @@ function DomainHeader({ icon, title }: { icon: string; title: string }) {
 
 // 계산기 level → 상태색 (info=중립 회색, 나머지는 구간색)
 const calcLevelColor = (level: string) => level === 'info' ? T.text3 : level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
-const calcLevelBg = (level: string) => level === 'info' ? '#EFEFEF' : level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
+const calcLevelBg = (level: string) => level === 'info' ? T.cardAlt : level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
 
 /** 계산기 item 리스트를 공통 행으로 렌더 — 값·상태뱃지·공식·기준·비고. 30년 위험 함께 표기. */
 function CalcRows({ items }: { items: RealCalcItem[] }) {
@@ -39,7 +64,7 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
             {it.value}{it.unit ?? ''}{it.value_30yr != null ? `  ·  30년 ${it.value_30yr}%` : ''}
           </Text>
           {!!it.peer_label && (
-            <View style={{ alignSelf: 'flex-start', marginTop: 6, backgroundColor: '#111827', paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+            <View style={{ alignSelf: 'flex-start', marginTop: 6, backgroundColor: T.text1, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
               <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>또래비교 · {it.peer_label}</Text>
             </View>
           )}
@@ -52,13 +77,16 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
   );
 }
 
-export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendations, egfr, comboAnalysis }: {
+export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendations, egfr, comboAnalysis, highlights, insight, changePace }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
   recommendations?: RealRecommendations | null;
   egfr?: RealEgfr | null;
   comboAnalysis?: RealComboAnalysis | null;
+  highlights?: Highlight[] | null;
+  insight?: Insight | null;
+  changePace?: ChangePace[] | null;
 }) {
   // 조합 그룹은 07 마이그레이션 이후 분석에만 있다 — 없으면 카드 자체를 그리지 않는다.
   const comboGroups = comboAnalysis?.combo_groups ?? null;
@@ -132,6 +160,103 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </Text>
       </View>
       </FadeInUp>
+
+      {/* 종합 인사이트 — 여러 해 기록을 종합한 요약 + 주요 우려 Top 3 (insight_generator) */}
+      {!!insight?.summary && (
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 6 }}>한눈에 요약</Text>
+          <Text style={{ fontSize: 14, color: T.text2, lineHeight: 22 }}>{insight.summary}</Text>
+          {!!insight.top_concerns?.length && (
+            <View style={{ marginTop: 12 }}>
+              {insight.top_concerns.map((c, i) => {
+                const col = c.level === 'high' ? T.danger : T.warn;
+                const bg = c.level === 'high' ? T.dangerBg : T.warnBg;
+                return (
+                  <View key={i} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                      <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: col }}>주의 {i + 1}</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, flex: 1 }}>{c.title}</Text>
+                      {!!c.current_value && <Text style={{ fontSize: 12, color: T.text3 }}>{c.current_value}</Text>}
+                    </View>
+                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{c.details}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+          {insight.next_exam_year != null && (
+            <Text style={{ fontSize: 12, color: T.text3, marginTop: 10 }}>다음 검진 권장: {insight.next_exam_year}년</Text>
+          )}
+        </View>
+      )}
+
+      {/* 또래 대비 변화 '속도' — 공단 표본의 같은 성별·연령대 평균 변화량과 내 변화 폭을 배수로 비교.
+          배수는 또래 변화가 뚜렷할 때만(±0.5 이상) 나온다 — 0에 가까운 값으로 나누면 배수가 발산하므로. */}
+      {!!changePace?.length && (
+        <FadeInUp delay={15}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>또래 대비 변화 속도</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요. 악화 방향만 모았어요.</Text>
+          <View style={{ gap: 8 }}>
+            {changePace!.map((p, i) => {
+              // 2배 이상이면 빨강, 그 아래는 주황. 배수를 못 낸 항목은 중립 회색으로 둔다.
+              const strong = (p.pace.ratio ?? 0) >= 2;
+              const badgeColor = p.pace.ratio == null ? T.text3 : strong ? T.danger : T.warn;
+              const badgeBg = p.pace.ratio == null ? T.cardAlt : strong ? T.dangerBg : T.warnBg;
+              return (
+                <View key={i} style={[{ paddingVertical: 10 }, i < changePace!.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: badgeColor }}>
+                        {p.pace.ratio != null ? `또래의 ${p.pace.ratio}배` : '또래와 다른 방향'}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>{metricLabel(p.metric)}</Text>
+                    {p.span_years != null && (
+                      <Text style={{ fontSize: 11, color: T.text3 }}>{p.span_years}년간</Text>
+                    )}
+                  </View>
+                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{p.pace.text}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
+            기준: 건강보험공단 검진 표본의 성별·연령대별 평균 변화량. 위험도 예측이 아니라 변화 폭 비교예요.
+            배수는 <Text style={{ fontWeight: '700' }}>평균과의 비교</Text>라서 또래 안에서도 개인차가 큰 점은 담기지 않아요.
+          </Text>
+        </View>
+        </FadeInUp>
+      )}
+
+      {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만 보여준다(2년 미만 기록이면 비어있음) */}
+      {!!highlights?.length && (
+        <FadeInUp delay={20}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>주목할 만한 변화</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>여러 해의 기록을 비교해 시스템이 짚어낸 변화예요.</Text>
+          <View style={{ gap: 8 }}>
+            {highlights!.map((h, i) => {
+              const sevColor = h.severity === 'high' ? T.danger : T.warn;
+              const sevBg = h.severity === 'high' ? T.dangerBg : T.warnBg;
+              return (
+                <View key={i} style={[{ paddingVertical: 10 }, i < highlights!.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <View style={{ backgroundColor: sevBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: sevColor }}>{h.type}</Text>
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>{metricLabel(h.metric)}</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{h.message}</Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+        </FadeInUp>
+      )}
 
       {/* ① 참고 점수 */}
       <FadeInUp delay={100}>
@@ -367,7 +492,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             )}
             {/* 중성지방이 높으면 LDL 계산값을 믿기 어려워 달성 여부를 단정하지 않는다. */}
             {ldlTarget.ldl_reliable === false && (
-              <View style={{ backgroundColor: '#EFEFEF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+              <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
                 <Text style={{ fontSize: 12, fontWeight: '800', color: T.text3 }}>판정 보류</Text>
               </View>
             )}
@@ -425,7 +550,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{c.combo_name}</Text>
                 {c.is_ascvd_risk && (
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.text3, backgroundColor: '#EFEFEF', paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.text3, backgroundColor: T.cardAlt, paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
                     심혈관 지표 참고
                   </Text>
                 )}
