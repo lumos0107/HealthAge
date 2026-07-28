@@ -10,6 +10,7 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import type { MetricDefinition, Report, Status } from './data';
+import { T } from './components/UI';
 
 const STATUS_COLOR: Record<Status, string> = {
   정상: '#0F7B4F',
@@ -36,7 +37,7 @@ function buildHtml(report: Report, metrics: MetricDefinition[], userName: string
   return `<!doctype html><html><head><meta charset="utf-8" />
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Noto Sans KR", sans-serif; color: #1A1A1A; padding: 36px 32px; }
+  body { font-family: -apple-system, "Noto Sans KR", sans-serif; color: ${T.text1}; padding: 36px 32px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
   .sub { color: #6B7280; font-size: 12px; margin-bottom: 22px; }
   .score { font-size: 40px; font-weight: 800; letter-spacing: -1px; }

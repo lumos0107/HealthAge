@@ -380,7 +380,7 @@ export function DirectionalBar({
   const rows: { label: string; value: number; barColor: string; borderColor?: string; textColor: string; bold?: boolean }[] = [
     { label: '내 수치', value: myValue, barColor: color, textColor: color, bold: true },
     { label: '정상 기준', value: normalValue, barColor: T.success, textColor: T.success },
-    ...(peerMean != null ? [{ label: '또래 평균', value: peerMean, barColor: '#9A9A9A', textColor: T.text2 }] : []),
+    ...(peerMean != null ? [{ label: '또래 평균', value: peerMean, barColor: T.text3, textColor: T.text2 }] : []),
   ];
 
   return (
