@@ -56,7 +56,7 @@ export function DashboardSection({ data }: { data: AppData }) {
         </Card>
       </div>
 
-      {/* 2·3. 인사이트 + 다음 검진 (2칸) / 4. 희귀도 (1칸) */}
+      {/* 2·3. 인사이트 + 다음 검진 (2칸) / 4. 해당 위험군 (1칸) */}
       {(insight || rarity) && (
         <div className="mt-4 grid grid-cols-3 gap-4">
           {insight && (
@@ -86,10 +86,14 @@ export function DashboardSection({ data }: { data: AppData }) {
             </Card>
           )}
 
+          {/* 백엔드 필드명은 rarity지만 실제로 계산하는 건 희귀도가 아니라
+              '내가 속한 집단군의 개수'다(user_group_analysis.calculate_group_rarity —
+              gender·age·year를 인자로 받지만 쓰지 않고, 모집단 빈도 계산도 없다).
+              그래서 화면에는 개수와 해당 집단군만 그대로 보여준다. */}
           {rarity && (
-            <Card title="이 조합의 희귀도" className={insight ? undefined : 'col-span-3'}>
-              <KV label="임상 조합 수" value={rarity.clinical_count} />
-              <KV label="생활습관 조합 수" value={rarity.lifestyle_count} />
+            <Card title="해당하는 위험군" className={insight ? undefined : 'col-span-3'}>
+              <KV label="임상 집단군 수" value={rarity.clinical_count} />
+              <KV label="생활습관 집단군 수" value={rarity.lifestyle_count} />
 
               {rarity.clinical_groups.length > 0 && (
                 <div className="mt-3">
@@ -116,7 +120,7 @@ export function DashboardSection({ data }: { data: AppData }) {
               <p className="mt-3 text-sm text-slate-700 leading-relaxed">{rarity.interpretation}</p>
 
               <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400 leading-relaxed">
-                해당 조합이 드물다는 것은 통계적으로 흔치 않다는 뜻이며, 그 자체로 더 위험하다는 뜻이 아닙니다.
+                검진 수치로 판정한 집단군의 개수를 센 참고 정보이며, 진단이 아닙니다.
               </p>
             </Card>
           )}

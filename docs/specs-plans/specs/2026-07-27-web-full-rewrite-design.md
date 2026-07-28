@@ -46,7 +46,14 @@ frontend/src/
 
 | 섹션 | 기능 | 엔드포인트 |
 |---|---|---|
-| ① 대시보드 | 최근 검진 요약, 관리점수, 관리 필요 항목, insight(다음 검진 연도), **rarity 희귀도**("희귀≠위험" 프레이밍 동반) | `GET /reports/{id}/comprehensive/latest` |
+| ① 대시보드 | 최근 검진 요약, 관리점수, 관리 필요 항목, insight(다음 검진 연도), **`rarity` — 해당하는 위험군** | `GET /reports/{id}/comprehensive/latest` |
+
+> ⚠️ **`rarity` 필드명 주의 (2026-07-28 정정)**: 이름은 희귀도지만 `calculate_group_rarity()`는
+> 희귀도를 계산하지 않는다 — 사용자가 속한 집단군을 나열·집계하고 개수로 해석 문구를 붙일 뿐이다
+> (`gender`·`age`·`year`를 인자로 받지만 본문에서 쓰지 않고, 모집단 빈도 계산도 없다).
+> 따라서 화면 제목은 **"해당하는 위험군"**이며 "희귀≠위험" 프레이밍은 쓰지 않는다
+> (내용이 "고위험 패턴" 같은 위험도 서술이라 정면으로 모순된다).
+> 실제 희귀함에 가까운 지표는 조합그룹 카드의 **O/E 배수 + 모집단 표본 수**다.
 | ② 종합 분석 (핵심) | 계산기 **15종 전체 표**(대사·지질·간·신장 그룹), 대사증후군 5요소+`metabolic_syndrome_detail`, **LDL 개인 목표**(TG≥400 판정보류 배지·`ldl_reliable`·`reliability_note`), 조합그룹 **단일13+조합12**(의학 출처 상시 노출), **What-if 시뮬레이터**(모달 아닌 넓은 패널: 좌 스테퍼 7종 / 우 결과 비교) | `GET /reports/{id}/{year}`, `POST /analyze/simulate` |
 | ③ 히스토리 | 연도별 그래프(Recharts), 시계열 insight·highlights, **또래 대비 변화속도(change_pace)**, `exam_pattern`·`full_timeseries` 표 노출(앱 미사용분) | `GET /timeseries/{id}`, `POST /timeseries/refresh` |
 | ④ 검진 기록 | 목록·상세·JSON 다운로드·삭제, **리포트 인쇄/PDF**(print CSS + `window.print()` — 앱 ⑨의 웹 구현. 화면에 보이는 값만, 새 의학 판단 없음, 면책 문구 포함) | `GET /reports/{id}`, `GET /reports/{id}/{year}`, `DELETE /reports/{id}/{year}` |
