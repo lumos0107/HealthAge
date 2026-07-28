@@ -22,70 +22,57 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ─── 무신사(Musinsa) 디자인 그대로 ─────────────────────────
-// 박스를 걷어내고 구분선 중심으로 정리한 지난 틀은 그대로 두되,
-// "배치의 리듬"은 무신사 앱에서 실제로 쓰는 방식으로 다시 짠다.
-// - 무신사는 색을 거의 쓰지 않는다. 포인트는 옅은 회색이 아니라 강한 무채색(블랙)이고,
-//   화면에서 유일하게 살아있는 색은 세일/배지 등 "꼭 필요한 곳"의 빨강 정도다.
-//   → 이 앱에서는 그 자리를 정상/주의/위험(초록/주황/빨강) 색이 대신하게 되므로,
-//     포인트 컬러를 무채색 블랙으로 두면 "상태색 외엔 색이 거의 없는" 가장 깔끔한 조합이 된다.
-// - 무신사 특유의 리듬: 작은 대문자/자간 넓은 라벨("eyebrow")을 큰 타이틀 위에 얹어
-//   위계를 분명히 하고, 굵기·크기 대비를 크게 줘서(아주 큰 숫자 vs 아주 작은 캡션)
-//   "다 비슷비슷해 보이는" 평면적 레이아웃을 피한다. 정렬은 항상 왼쪽 기준.
-// - 구분선은 카드 안에 갇히지 않고 화면 가장자리까지 꽉 채워(full-bleed) 그어
-//   리스트가 한 덩어리의 표처럼 보이게 한다.
+// ─── 디자인 시스템 v2: 토스 구조 × 뱅샐 그린 ─────────────────
+// - 연회색 배경(#F3F5F7) 위 흰 카드(radius 20, 무테두리·무그림자)로 영역 구분
+// - 브랜드 그린(#00C073)은 "누를 수 있는 것" 전용. '정상' 상태는 #1F8A5D로 분리
+// - 상태 배지는 틴트 배경 + 상태색 텍스트 병기 (색만으로 구분 금지)
 export const T = {
-  // Primary — 무신사처럼 색이 아닌 무채색(블랙)을 포인트로 사용
-  primary: '#1A1A1A',
-  primaryPressed: '#000000',
-  // 옅은 색조 배경 대신 무채색 그레이만 사용
-  primaryLight: '#EFEFEF',
-  primaryDark: '#000000',
+  // Primary = 브랜드 그린. 버튼·링크·활성 탭 등 인터랙션 전용.
+  primary: '#00C073',
+  primaryPressed: '#00A862',
+  primaryLight: '#E6F9F1',
+  primaryDark: '#00A862',
 
-  // Backgrounds — 흰 배경 기본, 구분에는 옅은 그레이만
-  bg: '#FFFFFF',
+  // Backgrounds — 연회색 화면 배경, 카드만 흰색
+  bg: '#F3F5F7',
   white: '#FFFFFF',
-  cardAlt: '#F5F5F5',
+  cardAlt: '#F2F4F6',
 
-  // Text hierarchy — 진한 잉크 그레이 위계 (연한 회색 글씨로 가독성을 해치지 않는다)
-  text1: '#191919',
-  text2: '#5C5C5C',
-  text3: '#9A9A9A',
+  // Text hierarchy
+  text1: '#191F28',
+  text2: '#4E5968',
+  text3: '#8B95A1',
 
-  // Borders & dividers — 박스 대신 구분선으로만 영역을 나눈다 (무신사 리스트의 핵심)
-  border: '#E5E5E5',
-  divider: '#E5E5E5',
+  // 테두리는 원칙적으로 안 쓴다 — 남은 사용처를 위해 구분선과 같은 색으로.
+  border: '#F2F4F6',
+  divider: '#F2F4F6',
 
-  // Semantic colors — 정상/주의/위험을 초록/주황/빨강으로 고정.
-  // 주황(#FF8A3D)은 빨강(#F44336)과 톤이 또렷이 갈려 헷갈리지 않는다.
-  // 배경은 옅은 색칠 칩이 아니라 무채색 그레이만 쓰고, 색은 글자·아이콘에만 입힌다.
-  success: '#3CB371',
-  successBg: '#EFEFEF',
-  warn: '#FF8A3D',
-  warnBg: '#EFEFEF',
-  danger: '#F44336',
-  dangerBg: '#EFEFEF',
+  // Semantic colors — 상태 전용(인터랙션 그린과 분리)
+  success: '#1F8A5D',
+  successBg: '#EAF7F1',
+  warn: '#D97706',
+  warnBg: '#FFF3E7',
+  danger: '#F04452',
+  dangerBg: '#FEE9EB',
 
-  // Radius — 무신사는 둥근 모서리를 거의 쓰지 않는다. 버튼 정도에만 살짝.
-  radius: 4,
-  radiusMd: 8,
-  radiusSm: 4,
+  // Radius — 카드 20 · 버튼 14 · 입력 12 · 칩 999
+  radius: 20,
+  radiusMd: 14,
+  radiusSm: 12,
   radiusPill: 999,
 
-  // Shadow — 그림자 없이 구분선 위주로 구성한다
+  // 그림자 없음 — 배경 대비로만 구분
   shadow: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
 
-  // Display font — 큰 제목·브랜드 영역에만 사용해 본문 가독성은 시스템 글꼴로 지킨다.
   fontDisplay: 'Pretendard',
 
-  // Eyebrow label — 무신사 특유의 "자간 넓은 작은 대문자 라벨"을 큰 제목 위에 얹는 리듬
-  eyebrow: { fontSize: 11, fontWeight: '700' as const, color: '#9A9A9A', letterSpacing: 1.6, textTransform: 'uppercase' as const },
+  eyebrow: { fontSize: 11, fontWeight: '700' as const, color: '#8B95A1', letterSpacing: 1.6, textTransform: 'uppercase' as const },
 } as const;
 
 export const W = Dimensions.get('window').width;
@@ -188,7 +175,7 @@ export function Board({ title, children, attention, style }: { title: string; ch
 export function Notice({ children }: { children: React.ReactNode }) {
   return (
     <View style={ui.notice}>
-      <Ionicons name="information-circle" size={18} color={T.primary} style={{ marginRight: 8, marginTop: 1 }} />
+      <Ionicons name="information-circle" size={18} color={T.text2} style={{ marginRight: 8, marginTop: 1 }} />
       <Text style={ui.noticeText}>{typeof children === 'string' ? children : ''}</Text>
       {typeof children !== 'string' ? children : null}
     </View>
@@ -207,7 +194,7 @@ export function PageTitle2({ title, subtitle }: { title: string; subtitle?: stri
 export function PrimaryBtn({ label, onPress, disabled, loading }: { label: string; onPress: () => void; disabled?: boolean; loading?: boolean }) {
   return (
     <Pressable
-      style={[ui.primaryBtn, (disabled || loading) && { backgroundColor: '#BDBDBD' }]}
+      style={[ui.primaryBtn, (disabled || loading) && { backgroundColor: T.text3 }]}
       onPress={onPress}
       disabled={disabled || loading}
     >
@@ -392,7 +379,7 @@ export function DirectionalBar({
   // 정상 기준·또래 평균은 흐릿한 톤 대신 분명히 구분되는 색을 써서, 한눈에 봐도 세 막대가 또렷이 비교되도록 한다.
   const rows: { label: string; value: number; barColor: string; borderColor?: string; textColor: string; bold?: boolean }[] = [
     { label: '내 수치', value: myValue, barColor: color, textColor: color, bold: true },
-    { label: '정상 기준', value: normalValue, barColor: '#1F6B4A', textColor: '#1F6B4A' },
+    { label: '정상 기준', value: normalValue, barColor: T.success, textColor: T.success },
     ...(peerMean != null ? [{ label: '또래 평균', value: peerMean, barColor: '#9A9A9A', textColor: T.text2 }] : []),
   ];
 
@@ -473,37 +460,35 @@ const ui = StyleSheet.create({
     backgroundColor: T.white,
     borderRadius: T.radius,
     padding: 20,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: T.border,
+    marginBottom: 12,
   },
   pageTitle: { fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 },
   pageSubtitle: { fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 },
   notice: {
     flexDirection: 'row', alignItems: 'flex-start',
-    backgroundColor: T.primaryLight, borderRadius: T.radiusSm,
+    backgroundColor: T.cardAlt, borderRadius: T.radiusSm,
     padding: 14, marginBottom: 14,
   },
-  noticeText: { flex: 1, fontSize: 13, lineHeight: 20, color: T.primaryDark, fontWeight: '500' },
+  noticeText: { flex: 1, fontSize: 13, lineHeight: 20, color: T.text2, fontWeight: '500' },
   primaryBtn: {
     backgroundColor: T.primary,
-    height: 54,
-    borderRadius: T.radiusPill,
+    height: 52,
+    borderRadius: T.radiusMd,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
   },
   primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   secondaryBtn: {
-    backgroundColor: T.primaryLight,
+    backgroundColor: T.cardAlt,
     height: 54,
-    borderRadius: T.radiusPill,
+    borderRadius: T.radiusMd,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
   },
   secondaryBtnText: { color: T.primary, fontWeight: '700', fontSize: 15 },
-  ghostBtn: { height: 48, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  ghostBtn: { height: 48, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   ghostBtnText: { color: T.text3, fontWeight: '600', fontSize: 15 },
   chip: {
     paddingHorizontal: 16,
@@ -517,12 +502,11 @@ const ui = StyleSheet.create({
   fieldLabel: { fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 8 },
   fieldInput: {
     height: 52,
-    borderWidth: 1,
-    borderColor: T.border,
+    borderWidth: 0,
     borderRadius: T.radiusSm,
     paddingHorizontal: 16,
     fontSize: 15,
     color: T.text1,
-    backgroundColor: T.white,
+    backgroundColor: T.cardAlt,
   },
 });
