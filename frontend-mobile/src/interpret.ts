@@ -23,6 +23,7 @@ export function normalBounds(metric: MetricDefinition): { low?: number; high?: n
 /** L2 상단 헤드라인 — 상태+방향으로 쉬운 문장을 만든다. */
 export function headline(metric: MetricDefinition, value: number): string {
   const subject = `${metric.name}${subjectJosa(metric.name)}`;
+  if (metric.infoOnly) return `${subject} 참고용 수치예요`;
   if (metric.status === '정상') return `${subject} 정상 범위예요`;
   const { low, high } = normalBounds(metric);
   const isLow = low != null && value < low;
@@ -57,15 +58,24 @@ export function sortByAttention(defs: MetricDefinition[]): MetricDefinition[] {
   return [...defs].sort((a, b) => ATTENTION_ORDER[a.status] - ATTENTION_ORDER[b.status]);
 }
 
-/** 홈 TOP3 — 이상 항목만, 위험 우선 최대 3개. */
+/** 홈 TOP3 — 이상 항목만, 위험 우선 최대 3개. infoOnly(키·체중)는 판정 대상이 아니므로 제외한다. */
 export function top3Alerts(defs: MetricDefinition[]): MetricDefinition[] {
-  return sortByAttention(defs.filter((m) => m.status !== '정상')).slice(0, 3);
+  return sortByAttention(defs.filter((m) => !m.infoOnly && m.status !== '정상')).slice(0, 3);
 }
 
+/** infoOnly(키·체중) 항목은 판정 대상이 아니므로 상태 카운트에서 제외한다. */
 export function statusCounts(defs: MetricDefinition[]): { 정상: number; 주의: number; 위험: number } {
   const counts = { 정상: 0, 주의: 0, 위험: 0 };
-  for (const m of defs) counts[m.status]++;
+  for (const m of defs) {
+    if (m.infoOnly) continue;
+    counts[m.status]++;
+  }
   return counts;
+}
+
+/** 값 표시용 문자열 — valueLabels가 있으면 등급 라벨(요단백 등)을, 없으면 숫자 그대로 반환한다. 단위는 호출부가 따로 붙인다. */
+export function formatMetricValue(metric: MetricDefinition, value: number): string {
+  return metric.valueLabels?.[value] ?? String(value);
 }
 
 /** "같은 나이대 100명이라면 그중 N등" — 상위 percentile% ≈ N등. 1~100으로 clamp. */

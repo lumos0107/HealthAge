@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { metricDefinitions, reports } from './data';
 import type { MetricDefinition } from './data';
-import { deltaText, headline, normalBounds, rankFromPercentile, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
+import { deltaText, formatMetricValue, headline, normalBounds, rankFromPercentile, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
 
 const by = (key: string) => metricDefinitions.find((m) => m.key === key)!;
 const withStatus = (m: MetricDefinition, status: MetricDefinition['status']): MetricDefinition => ({ ...m, status });
@@ -55,8 +55,28 @@ describe('top3Alerts / sortByAttention / statusCounts', () => {
   });
   it('statusCounts', () => {
     const c = statusCounts(metricDefinitions);
-    expect(c.정상 + c.주의 + c.위험).toBe(metricDefinitions.length);
+    // infoOnly(키·체중)는 카운트에서 빠지므로 전체 개수가 아니라 판정 대상 개수와 맞아야 한다.
+    expect(c.정상 + c.주의 + c.위험).toBe(metricDefinitions.filter((m) => !m.infoOnly).length);
     expect(c.위험).toBe(2);
+  });
+});
+
+describe('infoOnly / 등급 표시', () => {
+  it('키·체중은 상태 카운트에서 빠진다', () => {
+    const c = statusCounts(metricDefinitions);
+    expect(c.정상 + c.주의 + c.위험).toBe(metricDefinitions.filter((m) => !m.infoOnly).length);
+  });
+  it('infoOnly 항목은 TOP3에 오르지 않는다', () => {
+    expect(top3Alerts(metricDefinitions).some((m) => m.infoOnly)).toBe(false);
+  });
+  it('요단백 값은 등급 라벨로 바뀐다', () => {
+    const up = metricDefinitions.find((m) => m.key === 'urineProtein')!;
+    expect(formatMetricValue(up, 1)).toBe('음성');
+    expect(formatMetricValue(up, 3)).toBe('1+');
+  });
+  it('라벨이 없는 항목은 숫자 그대로', () => {
+    const g = metricDefinitions.find((m) => m.key === 'glucose')!;
+    expect(formatMetricValue(g, 112)).toBe('112');
   });
 });
 

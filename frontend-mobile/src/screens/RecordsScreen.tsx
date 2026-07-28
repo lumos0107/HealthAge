@@ -6,7 +6,7 @@ import { Eyebrow, FadeIn, FadeInUp, StatusBadge, T } from '../components/UI';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, metricsForReport } from '../data';
 import type { MedicationItem, MetricDefinition, MetricKey, Report, Status } from '../data';
 import { deleteReport } from '../health';
-import { sortByAttention, statusCounts } from '../interpret';
+import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
 
 export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, onDeleted, medications, onOpenDetail }: {
   reports: Report[];
@@ -168,8 +168,14 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                   <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
                   <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>{metric.category}</Text>
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: '700', color }}>{detailReport.values[metric.key]}<Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text></Text>
-                <StatusBadge status={metric.status} />
+                <Text style={{ fontSize: 16, fontWeight: '700', color: metric.infoOnly ? T.text1 : color }}>{formatMetricValue(metric, detailReport.values[metric.key])}{metric.unit ? <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text> : null}</Text>
+                {metric.infoOnly ? (
+                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: T.text3 }}>참고</Text>
+                  </View>
+                ) : (
+                  <StatusBadge status={metric.status} />
+                )}
                 <Ionicons name="chevron-forward" size={16} color={T.text3} />
               </Pressable>
             );

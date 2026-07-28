@@ -44,6 +44,10 @@ const METRIC_NAME_TO_KEY: Record<string, MetricKey> = {
   '감마지티피': 'ggt', '감마-GTP': 'ggt',
   '혈색소': 'hemoglobin',
   '혈청크레아티닌': 'creatinine', '혈청 크레아티닌': 'creatinine',
+  '총콜레스테롤': 'totalCholesterol',
+  '요단백': 'urineProtein',
+  '신장': 'height', '키': 'height',
+  '체중': 'weight', '몸무게': 'weight',
 };
 
 // ---- 백엔드 status/direction → 프론트 표시값 매핑 ---------------------------

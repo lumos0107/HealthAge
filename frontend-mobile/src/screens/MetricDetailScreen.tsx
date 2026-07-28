@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
-import { deltaText, headline, rankFromPercentile, yearDelta } from '../interpret';
+import { deltaText, formatMetricValue, headline, rankFromPercentile, yearDelta } from '../interpret';
 import { Collapsible, StatusBadge, T } from '../components/UI';
 import { categoryVisual, MetricTrendChart, PeerRankSlider, RangeBar, SquircleIcon } from '../components/v2';
 
@@ -34,17 +34,24 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
-              <StatusBadge status={metric.status} />
+              {metric.infoOnly ? (
+                <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: T.text3 }}>참고</Text>
+                </View>
+              ) : (
+                <StatusBadge status={metric.status} />
+              )}
             </View>
             <Text style={{ fontSize: 24, fontWeight: '800', color: T.text1, lineHeight: 33 }}>{headline(metric, value)}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 12 }}>
-              <Text style={{ fontSize: 40, fontWeight: '800', color: statusColor, lineHeight: 44 }}>{value}</Text>
-              <Text style={{ fontSize: 14, color: T.text3, marginLeft: 4, marginBottom: 5 }}>{metric.unit}</Text>
+              <Text style={{ fontSize: 40, fontWeight: '800', color: metric.infoOnly ? T.text1 : statusColor, lineHeight: 44 }}>{formatMetricValue(metric, value)}</Text>
+              {metric.unit ? <Text style={{ fontSize: 14, color: T.text3, marginLeft: 4, marginBottom: 5 }}>{metric.unit}</Text> : null}
             </View>
             {delta && <Text style={{ fontSize: 15, color: T.text2, marginTop: 6 }}>{deltaText(delta, metric.unit)}</Text>}
           </View>
 
-          {/* 또래 비교 — percentile 있을 때만 등수, 없으면 정상범위 위치 바 */}
+          {/* 또래 비교 — percentile 있을 때만 등수, 없으면 정상범위 위치 바. infoOnly는 판정 대상이 아니라 등수·정상범위 비교가 의미 없어 카드 자체를 렌더하지 않는다. */}
+          {!metric.infoOnly && (
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
             {metric.percentile != null ? (
               <>
@@ -60,12 +67,13 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
               </>
             )}
           </View>
+          )}
 
           {/* L3 — 자세히 보기 펼침: 원본 수치·정상범위 표, 추이 차트, 용어 설명 */}
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, marginBottom: 12 }}>
             <Collapsible title="자세히 보기">
               <View style={{ flexDirection: 'row', gap: 24, marginBottom: 16 }}>
-                <DetailCell label="내 수치" value={`${value}${metric.unit}`} color={statusColor} />
+                <DetailCell label="내 수치" value={`${formatMetricValue(metric, value)}${metric.unit}`} color={metric.infoOnly ? T.text1 : statusColor} />
                 <DetailCell label="정상 기준" value={metric.normalText} />
                 {metric.peerMean != null && <DetailCell label="또래 평균" value={`${metric.peerMean}${metric.unit}`} />}
               </View>

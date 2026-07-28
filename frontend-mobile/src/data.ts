@@ -4,7 +4,8 @@ export type MetricKey =
   | 'sbp' | 'dbp' | 'glucose' | 'bmi' | 'waist'
   | 'ldl' | 'hdl' | 'triglyceride'
   | 'ast' | 'alt' | 'ggt'
-  | 'hemoglobin' | 'creatinine';
+  | 'hemoglobin' | 'creatinine'
+  | 'totalCholesterol' | 'urineProtein' | 'height' | 'weight';
 
 export type Report = {
   year: number;
@@ -38,6 +39,10 @@ export type MetricDefinition = {
   percentile?: number | null;
   onMedication?: boolean;
   isElderlyWarning?: boolean;
+  /** 백엔드 thresholds의 direction:"info_only" — 판정 대상이 아닌 참고값(키·체중). 점수·카운트에서 제외한다. */
+  infoOnly?: boolean;
+  /** 값이 숫자가 아니라 등급인 항목(요단백)의 표시 라벨. 예: {1:'음성', 3:'1+'} */
+  valueLabels?: Record<number, string>;
 };
 
 export type OcrField = {
@@ -131,54 +136,54 @@ export const reports: Report[] = [
     date: '2014-05-20',
     hospital: '한국건강관리협회 서울강남지부',
     summary: '전 항목이 정상 범위로, 현재의 생활습관을 유지하면 좋습니다.',
-    values: { sbp: 116, dbp: 74, glucose: 86, bmi: 22.5, waist: 80, ldl: 112, hdl: 54, triglyceride: 104, ast: 23, alt: 25, ggt: 28, hemoglobin: 14.9, creatinine: 0.84 },
+    values: { sbp: 116, dbp: 74, glucose: 86, bmi: 22.5, waist: 80, ldl: 112, hdl: 54, triglyceride: 104, ast: 23, alt: 25, ggt: 28, hemoglobin: 14.9, creatinine: 0.84, height: 165.9, weight: 61.9, totalCholesterol: 187, urineProtein: 1 },
     // 감점 없음 → 100
-    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
   }),
   makeReport({
     year: 2016,
     date: '2016-06-11',
     hospital: '한국건강관리협회 서울강남지부',
     summary: '혈압과 체중이 정상 상단에 걸치기 시작해 흐름을 지켜봅니다.',
-    values: { sbp: 121, dbp: 77, glucose: 91, bmi: 23.3, waist: 82, ldl: 120, hdl: 51, triglyceride: 122, ast: 24, alt: 27, ggt: 33, hemoglobin: 15.0, creatinine: 0.85 },
+    values: { sbp: 121, dbp: 77, glucose: 91, bmi: 23.3, waist: 82, ldl: 120, hdl: 51, triglyceride: 122, ast: 24, alt: 27, ggt: 33, hemoglobin: 15.0, creatinine: 0.85, height: 165.9, weight: 64.1, totalCholesterol: 195, urineProtein: 1 },
     // 100 - 6×2 = 88
-    statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+    statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
   }),
   makeReport({
     year: 2018,
     date: '2018-05-30',
     hospital: '한국건강관리협회 서울강남지부',
     summary: '혈압이 이완기까지 올라오고 체중 관리가 필요한 시점입니다.',
-    values: { sbp: 125, dbp: 80, glucose: 96, bmi: 23.9, waist: 85, ldl: 129, hdl: 48, triglyceride: 140, ast: 26, alt: 30, ggt: 41, hemoglobin: 15.1, creatinine: 0.87 },
-    // 100 - 6×3 = 82
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+    values: { sbp: 125, dbp: 80, glucose: 96, bmi: 23.9, waist: 85, ldl: 129, hdl: 48, triglyceride: 140, ast: 26, alt: 30, ggt: 41, hemoglobin: 15.1, creatinine: 0.87, height: 165.9, weight: 65.8, totalCholesterol: 205, urineProtein: 1 },
+    // 100 - 6×4 = 76 (총콜레스테롤 주의 추가)
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2020,
     date: '2020-07-08',
     hospital: '서울대병원 강남센터',
     summary: '혈당·지질까지 함께 올라 대사 지표를 묶어서 확인합니다.',
-    values: { sbp: 129, dbp: 82, glucose: 102, bmi: 24.4, waist: 87, ldl: 134, hdl: 45, triglyceride: 152, ast: 29, alt: 35, ggt: 50, hemoglobin: 15.2, creatinine: 0.89 },
-    // 100 - 6×6 = 64
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+    values: { sbp: 129, dbp: 82, glucose: 102, bmi: 24.4, waist: 87, ldl: 134, hdl: 45, triglyceride: 152, ast: 29, alt: 35, ggt: 50, hemoglobin: 15.2, creatinine: 0.89, height: 165.9, weight: 67.2, totalCholesterol: 209, urineProtein: 1 },
+    // 100 - 6×7 = 58 (총콜레스테롤 주의 추가)
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2022,
     date: '2022-06-15',
     hospital: '서울대병원 강남센터',
     summary: '비만·복부비만이 위험 수준에 들어 대사증후군 위험이 커집니다.',
-    values: { sbp: 133, dbp: 85, glucose: 107, bmi: 25.2, waist: 90, ldl: 140, hdl: 42, triglyceride: 166, ast: 31, alt: 41, ggt: 59, hemoglobin: 15.3, creatinine: 0.95 },
-    // 100 - 6×6 - 12×2 = 40
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '정상', hemoglobin: '정상', creatinine: '정상' },
+    values: { sbp: 133, dbp: 85, glucose: 107, bmi: 25.2, waist: 90, ldl: 140, hdl: 42, triglyceride: 166, ast: 31, alt: 41, ggt: 59, hemoglobin: 15.3, creatinine: 0.95, height: 165.9, weight: 69.4, totalCholesterol: 215, urineProtein: 1 },
+    // 100 - 6×7 - 12×2 = 34 (총콜레스테롤 주의 추가)
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2024,
     date: '2024-03-15',
     hospital: '서울대병원 강남센터',
     summary: '대사증후군 관련 항목이 여러 개 겹쳐 위험 수준의 확인이 필요합니다.',
-    values: { sbp: 138, dbp: 88, glucose: 112, bmi: 26.3, waist: 93, ldl: 145, hdl: 39, triglyceride: 178, ast: 34, alt: 45, ggt: 68, hemoglobin: 15.4, creatinine: 1.01 },
-    // 100 - 6×8 - 12×2 = 28
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '주의', hemoglobin: '정상', creatinine: '정상' },
+    values: { sbp: 138, dbp: 88, glucose: 112, bmi: 26.3, waist: 93, ldl: 145, hdl: 39, triglyceride: 178, ast: 34, alt: 45, ggt: 68, hemoglobin: 15.4, creatinine: 1.01, height: 165.9, weight: 72.4, totalCholesterol: 220, urineProtein: 1 },
+    // 100 - 6×9 - 12×2 = 22 (총콜레스테롤 주의 추가)
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
 ];
 
@@ -189,7 +194,10 @@ export const metricDefinitions: MetricDefinition[] = [
   { key: 'dbp', category: '혈압', name: '이완기 혈압', shortName: '이완기', unit: 'mmHg', normalText: '<80', normalValue: 80, peerMean: 79, status: '주의', description: '심장이 쉬는 순간 혈관에 남아 있는 압력입니다.', note: '수축기 혈압과 같이 확인해야 혈압 흐름을 이해하기 쉽습니다.' },
   { key: 'glucose', category: '혈당', name: '공복혈당', shortName: '혈당', unit: 'mg/dL', normalText: '70-99', normalValue: 99, peerMean: 101, status: '주의', description: '식사하지 않은 상태에서 혈액 속 포도당이 어느 정도인지 보는 항목입니다.', note: '식사, 수면, 스트레스 영향을 받을 수 있어 여러 해의 흐름이 중요합니다.' },
   { key: 'bmi', category: '체중·복부', name: '체질량지수(BMI)', shortName: 'BMI', unit: 'kg/m²', normalText: '18.5-22.9', normalValue: 22.9, peerMean: 24.2, status: '위험', description: '키와 체중으로 계산한 체중 상태 참고값입니다.', note: '근육량이 많은 사람은 실제 상태와 다를 수 있어 허리둘레와 함께 봅니다.' },
+  { key: 'height', category: '체중·복부', name: '키', shortName: '키', unit: 'cm', normalText: '참고값', normalValue: 0, infoOnly: true, status: '정상', description: '체질량지수(BMI)를 계산할 때 쓰는 기준값입니다.', note: '좋고 나쁨을 판정하는 항목이 아니라 다른 수치를 계산하기 위한 참고값이에요.' },
+  { key: 'weight', category: '체중·복부', name: '몸무게', shortName: '몸무게', unit: 'kg', normalText: '참고값', normalValue: 0, infoOnly: true, status: '정상', description: '키와 함께 체질량지수(BMI)를 계산하는 데 쓰입니다.', note: '몸무게 자체보다 BMI와 허리둘레를 함께 보는 것이 도움이 됩니다.' },
   { key: 'waist', category: '체중·복부', name: '허리둘레', shortName: '허리', unit: 'cm', normalText: '남 <90 / 여 <85', normalValue: 90, peerMean: 86, status: '위험', description: '복부 비만 여부를 볼 때 참고하는 둘레 수치입니다.', note: '대사증후군 기준과 연결되므로 BMI와 함께 확인합니다.' },
+  { key: 'totalCholesterol', category: '지질', name: '총콜레스테롤', shortName: '총콜레스테롤', unit: 'mg/dL', normalText: '150-199', normalValue: 199, peerMean: 193, status: '주의', description: '혈액 속 콜레스테롤을 모두 합친 값입니다.', note: 'LDL·HDL·중성지방을 함께 봐야 전체 지질 상태를 이해할 수 있습니다.' },
   { key: 'ldl', category: '지질', name: 'LDL-C', shortName: 'LDL', unit: 'mg/dL', normalText: '<130', normalValue: 130, peerMean: 128, status: '주의', description: '혈관 건강 관리에서 자주 확인하는 콜레스테롤 항목입니다.', note: '기저질환이나 복용 약에 따라 목표 기준이 달라질 수 있습니다.' },
   { key: 'hdl', category: '지질', name: 'HDL-C', shortName: 'HDL', unit: 'mg/dL', normalText: '남 ≥40 / 여 ≥50', normalValue: 40, peerMean: 47, status: '주의', description: '흔히 좋은 콜레스테롤이라고 부르며 낮을 때 참고가 필요합니다.', note: '다른 지질 수치와 함께 봐야 전체 흐름을 이해하기 쉽습니다.' },
   { key: 'triglyceride', category: '지질', name: '중성지방', shortName: '중성지방', unit: 'mg/dL', normalText: '<150', normalValue: 150, peerMean: 152, status: '주의', description: '혈액 속 지방 성분 중 하나로 식사와 음주의 영향을 많이 받습니다.', note: '공복 여부와 최근 식습관에 따라 달라질 수 있어 위험이 좋습니다.' },
@@ -198,6 +206,7 @@ export const metricDefinitions: MetricDefinition[] = [
   { key: 'ggt', category: '간 기능', name: '감마-GTP', shortName: '감마-GTP', unit: 'IU/L', normalText: '남 11-63 / 여 8-35', normalValue: 63, peerMean: 41, status: '주의', description: '간담도계 상태와 음주 영향을 참고할 때 보는 수치입니다.', note: '음주, 약물, 지방간 등과 함께 해석해야 합니다.' },
   { key: 'hemoglobin', category: '혈액', name: '혈색소', shortName: '혈색소', unit: 'g/dL', normalText: '남 13-17 / 여 12-16', normalValue: 17, peerMean: 14.8, status: '정상', description: '혈액이 산소를 운반하는 능력을 참고하는 항목입니다.', note: '낮거나 높을 때는 다른 혈액검사 결과와 함께 확인합니다.' },
   { key: 'creatinine', category: '신장 기능', name: '혈청 크레아티닌', shortName: '크레아티닌', unit: 'mg/dL', normalText: '기관 기준 확인', normalValue: 1.2, status: '정상', description: '신장 기능을 추정할 때 참고하는 혈액검사 수치입니다.', note: '요청사항에 따라 시계열에는 표시하고 연령대 평균 비교에서는 제외합니다.' },
+  { key: 'urineProtein', category: '신장 기능', name: '요단백', shortName: '요단백', unit: '', normalText: '음성', normalValue: 1, status: '정상', valueLabels: { 1: '음성', 2: '약양성(±)', 3: '1+', 4: '2+', 5: '3+', 6: '4+' }, description: '소변에 단백질이 섞여 나오는지 보는 검사입니다.', note: '일시적으로 나타날 수 있어 반복해서 나오면 신장 기능과 함께 확인합니다.' },
 ];
 
 export function metricByKey(key: MetricKey, defs: MetricDefinition[] = metricDefinitions): MetricDefinition {
@@ -227,8 +236,9 @@ export function isBadStatus(status: Status) {
  * 화면에 보여주는 감점 기준과 항상 일치하도록 단일 함수로 관리한다.
  */
 export function computeScore(defs: MetricDefinition[] = metricDefinitions) {
-  const manageCount = defs.filter((m) => m.status === '주의').length;
-  const trackCount = defs.filter((m) => m.status === '위험').length;
+  const scoringDefs = defs.filter((m) => !m.infoOnly);
+  const manageCount = scoringDefs.filter((m) => m.status === '주의').length;
+  const trackCount = scoringDefs.filter((m) => m.status === '위험').length;
   const score = Math.max(0, 100 - SCORE_PENALTY.manage * manageCount - SCORE_PENALTY.track * trackCount);
   return { score, manageCount, trackCount };
 }
@@ -265,9 +275,9 @@ export function historyRows(keys: MetricKey[], reportList: Report[] = reports) {
 const groupDefs = [
   { name: '대사 관리 참고군', keys: ['waist', 'glucose', 'triglyceride', 'hdl', 'sbp'] as MetricKey[], description: '허리둘레, 혈당, 지질, 혈압 항목이 함께 겹칠 때 먼저 확인하는 그룹입니다.', meaning: '대사증후군 기준과 가까운 항목을 묶어 보는 참고군입니다.', related: '복부비만, 혈당 상승, 혈압 상승, 중성지방 상승, HDL 저하와 관련해 볼 수 있습니다.' },
   { name: '혈압 관리 참고군', keys: ['sbp', 'dbp'] as MetricKey[], description: '수축기와 이완기 혈압 흐름을 우선 살펴보는 그룹입니다.', meaning: '혈압 수치가 반복해서 기준을 벗어나는지 확인하는 참고군입니다.', related: '두통, 어지럼, 혈관 부담과 관련해 상담이 필요할 수 있지만 증상 없이 나타나기도 합니다.' },
-  { name: '지질 관리 참고군', keys: ['ldl', 'hdl', 'triglyceride'] as MetricKey[], description: '콜레스테롤과 중성지방 항목을 묶어서 보는 그룹입니다.', meaning: '혈관 건강과 관련된 지질 수치를 함께 보는 참고군입니다.', related: 'LDL 상승, HDL 저하, 중성지방 상승은 심혈관 위험 요인과 함께 확인합니다.' },
+  { name: '지질 관리 참고군', keys: ['ldl', 'hdl', 'triglyceride', 'totalCholesterol'] as MetricKey[], description: '콜레스테롤과 중성지방 항목을 묶어서 보는 그룹입니다.', meaning: '혈관 건강과 관련된 지질 수치를 함께 보는 참고군입니다.', related: 'LDL 상승, HDL 저하, 중성지방 상승은 심혈관 위험 요인과 함께 확인합니다.' },
   { name: '간 기능 관찰군', keys: ['ast', 'alt', 'ggt'] as MetricKey[], description: '간 효소 수치가 생활습관, 약물, 음주와 함께 영향을 받을 수 있는 그룹입니다.', meaning: '간세포나 간담도계 상태를 참고하는 효소 수치를 묶은 그룹입니다.', related: '음주, 약물, 피로, 지방간 가능성 등 여러 요인과 함께 확인합니다.' },
-  { name: '신장 기능 관찰군', keys: ['creatinine'] as MetricKey[], description: '혈청 크레아티닌 흐름을 따로 추적하는 그룹입니다.', meaning: '신장 기능 추정에 쓰이는 혈청 크레아티닌을 관찰하는 참고군입니다.', related: '신장 기능 변화는 eGFR 계산과 함께 확인하며 평균 비교에는 사용하지 않습니다.' },
+  { name: '신장 기능 관찰군', keys: ['creatinine', 'urineProtein'] as MetricKey[], description: '혈청 크레아티닌 흐름을 따로 추적하는 그룹입니다.', meaning: '신장 기능 추정에 쓰이는 혈청 크레아티닌을 관찰하는 참고군입니다.', related: '신장 기능 변화는 eGFR 계산과 함께 확인하며 평균 비교에는 사용하지 않습니다.' },
 ];
 
 /**

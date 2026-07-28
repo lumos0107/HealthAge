@@ -127,7 +127,8 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
   if (pts0.length === 0) {
     return <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center', paddingVertical: 24 }}>이 항목의 기록이 없어요.</Text>;
   }
-  const { low, high } = normalBounds(metric);
+  // infoOnly(키·체중)는 판정 대상이 아니라 정상범위 밴드가 없다 — 밴드 없이 값만 보여준다.
+  const { low, high } = metric.infoOnly ? { low: undefined, high: undefined } : normalBounds(metric);
   const vals = [...pts0.map((p) => p.v), ...(low != null ? [low] : []), ...(high != null ? [high] : [])];
   const rawMin = Math.min(...vals);
   const rawMax = Math.max(...vals);
@@ -148,8 +149,10 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
     <View>
       <Svg width={CHART_W} height={CHART_H}>
         <G x={PAD.left} y={PAD.top}>
-          {/* 정상범위 밴드 */}
-          <Rect x={0} y={bandTop} width={PLOT_W} height={Math.max(0, bandBottom - bandTop)} fill={T.successBg} />
+          {/* 정상범위 밴드 — infoOnly는 판정 기준이 없으므로 그리지 않는다 */}
+          {!metric.infoOnly && (
+            <Rect x={0} y={bandTop} width={PLOT_W} height={Math.max(0, bandBottom - bandTop)} fill={T.successBg} />
+          )}
           {gridVals.map((v, i) => (
             <G key={i}>
               <Line x1={0} y1={yPos(v)} x2={PLOT_W} y2={yPos(v)} stroke={T.divider} strokeWidth={1} />
