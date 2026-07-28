@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
-import { Eyebrow, FadeInUp, T } from '../components/UI';
+import { Eyebrow, FadeInUp, StatusBadge, T } from '../components/UI';
+import { categoryVisual, SquircleIcon } from '../components/v2';
 import { computeScore } from '../data';
-import type { MetricDefinition, Report, TabKey } from '../data';
+import type { MetricDefinition, MetricKey, Report, TabKey } from '../data';
+import { headline, top3Alerts } from '../interpret';
 
 // 외부 링크를 안전하게 연다 — 실패해도 조용히 죽지 않고 안내를 띄운다.
 async function openExternalUrl(url: string) {
@@ -45,7 +47,7 @@ const QUICK_LINKS: {
   { label: '결과지\n업로드', icon: 'cloud-upload-outline', color: T.primary, bg: T.primaryLight, url: null },
 ];
 
-export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin }: {
+export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin, onOpenDetail }: {
   onTab: (tab: TabKey) => void;
   reports: Report[];
   metricDefinitions: MetricDefinition[];
@@ -53,10 +55,10 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   // 로그인 전 프리뷰 — 가짜 점수 대신 로그인 유도 카드를 보여주고, 빠른 이동만 사용 가능하게 한다.
   isPreview?: boolean;
   onRequireLogin?: () => void;
+  onOpenDetail?: (key: MetricKey, year: number) => void;
 }) {
   const latest = reports[reports.length - 1];
-  const abnormal = metricDefinitions.filter((m) => m.status !== '정상');
-  const topAlerts = abnormal.slice(0, 4);
+  const top3 = top3Alerts(metricDefinitions);
   const normalCount = metricDefinitions.filter((m) => m.status === '정상').length;
   const warnCount = metricDefinitions.filter((m) => m.status === '주의').length;
   const dangerCount = metricDefinitions.filter((m) => m.status === '위험').length;
@@ -69,7 +71,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       {/* 히어로 섹션 — 로그인 전에는 가짜 점수 대신 로그인 유도 카드를 보여준다. */}
       {isPreview ? (
         <FadeInUp delay={0}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 32, paddingBottom: 20 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 16 }}>
           <Eyebrow>헬스에이지</Eyebrow>
           <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 8, lineHeight: 34 }}>
             내 건강검진 결과를{'\n'}한눈에 관리해요
@@ -88,7 +90,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         </FadeInUp>
       ) : (
       <FadeInUp delay={0}>
-      <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 16 }}>
+      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 16 }}>
         <Eyebrow>최근 건강검진 · {latest.hospital}</Eyebrow>
         <Text style={{ fontSize: 12, color: T.text3, marginTop: 6, marginBottom: 22 }}>{latest.date}</Text>
 
@@ -147,53 +149,42 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       </View>
       </FadeInUp>
 
-      {/* 지금 확인할 항목 — 로그인 전(프리뷰)에는 가짜 알림을 숨긴다. */}
-      {!isPreview && topAlerts.length > 0 && (
+      {/* 지금 주의할 항목 TOP 3 — L0에는 수치를 두지 않는다. 탭하면 바로 항목 상세(L2). */}
+      {!isPreview && (
         <FadeInUp delay={180}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8, marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1 }}>지금 확인할 항목</Text>
-            <View style={{ backgroundColor: T.dangerBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: T.danger }}>{abnormal.length}개 항목</Text>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8, marginBottom: 12 }}>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 4 }}>지금 주의할 항목 TOP 3</Text>
+          <Text style={{ fontSize: 13, color: T.text3, marginBottom: 8 }}>가장 먼저 확인하면 좋은 항목이에요.</Text>
+          {top3.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+              <Ionicons name="checkmark-circle" size={36} color={T.success} />
+              <Text style={{ fontSize: 15, fontWeight: '700', color: T.success, marginTop: 8 }}>모두 정상이에요</Text>
+              <Text style={{ fontSize: 13, color: T.text3, marginTop: 3 }}>지금의 생활습관을 유지해보세요.</Text>
             </View>
-          </View>
-          <Text style={{ fontSize: 12, color: T.text3, marginBottom: 12 }}>
-            정상 기준을 벗어난 항목이에요. 자세한 비교는 분석 탭에서 확인할 수 있어요.
-          </Text>
-          {topAlerts.map((m, i) => {
-            const isWarn = m.status === '주의';
-            const c = isWarn ? T.warn : T.danger;
-            const bg = isWarn ? T.warnBg : T.dangerBg;
-            const val = latest.values[m.key];
+          ) : top3.map((m, i) => {
+            const visual = categoryVisual(m.category);
             return (
-              <View
+              <Pressable
                 key={m.key}
-                style={[
-                  { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14 },
-                  i < topAlerts.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider },
-                ]}
+                onPress={() => onOpenDetail?.(m.key, latest.year)}
+                style={[{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
+                        i < top3.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}
               >
-                <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name={isWarn ? 'warning-outline' : 'alert-circle-outline'} size={20} color={c} />
-                </View>
+                <Text style={{ width: 16, fontSize: 15, fontWeight: '700', color: T.text3 }}>{i + 1}</Text>
+                <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{m.name}</Text>
-                  <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>{m.normalText}</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{m.name}</Text>
+                  <Text style={{ fontSize: 13, color: T.text2, marginTop: 2 }}>{headline(m, latest.values[m.key])}</Text>
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 17, fontWeight: '700', color: c }}>{val}<Text style={{ fontSize: 12, fontWeight: '500' }}>{m.unit}</Text></Text>
-                  <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill, marginTop: 4 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: c }}>{m.status}</Text>
-                  </View>
-                </View>
-              </View>
+                <StatusBadge status={m.status} />
+                <Ionicons name="chevron-forward" size={18} color={T.text3} />
+              </Pressable>
             );
           })}
-          {abnormal.length > topAlerts.length && (
-            <Pressable onPress={() => onTab('analysis')} style={{ paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: T.divider }}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: T.primary }}>나머지 {abnormal.length - topAlerts.length}개 항목 분석에서 보기 →</Text>
-            </Pressable>
-          )}
+          {/* 전체 보기 — 하단 탭 '검사항목'으로 이동 */}
+          <Pressable onPress={() => onTab('records')} style={{ paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: T.primary }}>전체 항목 보기</Text>
+          </Pressable>
         </View>
         </FadeInUp>
       )}
