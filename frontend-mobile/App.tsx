@@ -439,14 +439,16 @@ export default function App() {
 function LockedNotice({ onPress }: { onPress: () => void }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-      <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-        <Ionicons name="lock-closed" size={28} color={T.primary} />
+      <View style={{ width: '100%', backgroundColor: T.white, borderRadius: T.radius, padding: 28, alignItems: 'center' }}>
+        <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+          <Ionicons name="lock-closed" size={28} color={T.primary} />
+        </View>
+        <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>로그인 후 확인 가능해요</Text>
+        <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21 }}>
+          이 화면은 로그인하면 바로 볼 수 있어요.{'\n'}지금 로그인하고 내 건강기록을 확인해보세요.
+        </Text>
       </View>
-      <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>로그인 후 확인 가능해요</Text>
-      <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21, marginBottom: 24 }}>
-        이 화면은 로그인하면 바로 볼 수 있어요.{'\n'}지금 로그인하고 내 건강기록을 확인해보세요.
-      </Text>
-      <Pressable onPress={onPress} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
+      <Pressable onPress={onPress} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
         <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>로그인 / 회원가입</Text>
       </Pressable>
     </View>
@@ -457,14 +459,16 @@ function LockedNotice({ onPress }: { onPress: () => void }) {
 function EmptyDataState({ onUpload }: { onUpload: () => void }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-      <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-        <Ionicons name="document-text-outline" size={28} color={T.primary} />
+      <View style={{ width: '100%', backgroundColor: T.white, borderRadius: T.radius, padding: 28, alignItems: 'center' }}>
+        <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+          <Ionicons name="document-text-outline" size={28} color={T.primary} />
+        </View>
+        <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>아직 검진 기록이 없어요</Text>
+        <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21 }}>
+          건강검진 결과지를 올리면{'\n'}분석 결과와 건강 점수를 확인할 수 있어요.
+        </Text>
       </View>
-      <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>아직 검진 기록이 없어요</Text>
-      <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21, marginBottom: 24 }}>
-        건강검진 결과지를 올리면{'\n'}분석 결과와 건강 점수를 확인할 수 있어요.
-      </Text>
-      <Pressable onPress={onUpload} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
+      <Pressable onPress={onUpload} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 24 }}>
         <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>결과지 업로드하기</Text>
       </Pressable>
     </View>
@@ -600,9 +604,7 @@ const s = StyleSheet.create({
     height: 60,
     justifyContent: 'center',
     paddingHorizontal: 20,
-    backgroundColor: T.white,
-    borderBottomWidth: 1,
-    borderBottomColor: T.border,
+    backgroundColor: T.bg,
   },
   logoIcon: {
     width: 30,
@@ -617,22 +619,22 @@ const s = StyleSheet.create({
   nav: {
     flexDirection: 'row',
     backgroundColor: T.white,
-    borderTopWidth: 1,
+    borderTopWidth: 0.5,
     borderTopColor: T.border,
     paddingBottom: Platform.OS === 'ios' ? 24 : 6,
     paddingTop: 8,
   },
   navItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
   navIconWrap: { width: 44, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
-  navIconWrapActive: { backgroundColor: T.primaryLight },
+  navIconWrapActive: {},
   navLabel: { fontSize: 10, fontWeight: '500', color: T.text3 },
   toast: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 100 : 84,
     left: 24,
     right: 24,
-    backgroundColor: T.white,
-    borderRadius: T.radiusSm,
+    backgroundColor: T.text1,
+    borderRadius: T.radiusMd,
     paddingHorizontal: 16,
     paddingVertical: 13,
     flexDirection: 'row',
@@ -640,12 +642,12 @@ const s = StyleSheet.create({
     gap: 8,
     ...T.shadow,
   },
-  toastText: { fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 },
+  toastText: { fontSize: 14, fontWeight: '600', color: '#fff', flex: 1 },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
   modalSheet: {
     backgroundColor: T.white,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 24,
     paddingBottom: Platform.OS === 'ios' ? 44 : 28,
     paddingTop: 16,
