@@ -358,6 +358,8 @@ export default function App() {
             onLogout={logout}
             onDeleteAccount={handleDeleteAccount}
             onOpenAuth={() => setAuthOpen(true)}
+            reports={loggedIn && !needEmptyState ? reportsForScreens : null}
+            metricDefinitions={loggedIn && !needEmptyState ? metricDefinitionsForScreens : null}
           />
         )}
       </View>

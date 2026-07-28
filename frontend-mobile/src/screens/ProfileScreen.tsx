@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { Eyebrow, FadeInUp, FieldInput, T } from '../components/UI';
+import { Eyebrow, FadeInUp, FieldInput, SecondaryBtn, T } from '../components/UI';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
-import { birthDateFromProfile, profileBirthFromDate } from '../data';
-import type { UserProfile, UserSettings } from '../data';
+import { birthDateFromProfile, metricsForReport, profileBirthFromDate } from '../data';
+import type { MetricDefinition, Report, UserProfile, UserSettings } from '../data';
 import { cancelCheckupReminder, getScheduledCheckupReminder, scheduleCheckupReminder } from '../notifications';
+import { exportReportPdf } from '../reportExport';
 
 type EditState = 'locked' | 'verifying' | 'unlocked';
 
@@ -17,6 +18,8 @@ export default function ProfileScreen({
   nextExamYear,
   onLogout,
   onDeleteAccount,
+  reports,
+  metricDefinitions,
 }: {
   profile: UserProfile;
   settings: UserSettings;
@@ -27,6 +30,9 @@ export default function ProfileScreen({
   onLogout: () => void;
   onDeleteAccount?: () => void;
   onOpenAuth?: () => void;
+  // 검진 결과 PDF 내보내기용 — 없으면(비로그인/기록 없음) 카드 자체를 숨긴다.
+  reports?: Report[] | null;
+  metricDefinitions?: MetricDefinition[] | null;
 }) {
   const [editState, setEditState] = useState<EditState>('locked');
   const [pwInput, setPwInput] = useState('');
@@ -94,6 +100,20 @@ export default function ProfileScreen({
     const next = { ...localSettings, [key]: value };
     setLocalSettings(next);
     onSaveSettings(next);
+  };
+
+  // 검진 결과 PDF 내보내기 — RecordsScreen에서 옮겨온 로직 그대로(새 판단 로직 추가 없음).
+  const [pdfYear, setPdfYear] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const pdfReport = reports?.find((r) => r.year === (pdfYear ?? reports[reports.length - 1]?.year));
+  const handleExport = async () => {
+    if (!pdfReport || !metricDefinitions) return;
+    setExporting(true);
+    try {
+      await exportReportPdf(pdfReport, metricsForReport(pdfReport, metricDefinitions), profile.name);
+    } catch (e) {
+      Alert.alert('내보내기 실패', e instanceof Error ? e.message : 'PDF를 만들지 못했습니다.');
+    } finally { setExporting(false); }
   };
 
   return (
@@ -251,6 +271,28 @@ export default function ProfileScreen({
           ))}
         </View>
         </FadeInUp>
+
+        {/* 검진 결과 내보내기 — reports가 없거나 비어 있으면(비로그인/기록 없음) 카드 전체를 숨긴다 */}
+        {reports && reports.length > 0 && (
+        <FadeInUp delay={245}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>검진 결과 내보내기</Text>
+          <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginBottom: 14 }}>병원 지참·가족 공유용 PDF로 저장해요.</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {[...reports].reverse().map((r) => {
+              const active = (pdfYear ?? reports[reports.length - 1]?.year) === r.year;
+              return (
+                <Pressable key={r.year} onPress={() => setPdfYear(r.year)}
+                  style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.cardAlt }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text2 }}>{r.year}년</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <SecondaryBtn label={exporting ? 'PDF를 만드는 중...' : 'PDF로 내보내기'} onPress={handleExport} />
+        </View>
+        </FadeInUp>
+        )}
 
         {/* 로그아웃 */}
         <FadeInUp delay={280}>
