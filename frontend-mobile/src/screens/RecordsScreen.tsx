@@ -44,7 +44,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
             try {
               await deleteReport(userId!, year);
               if (year === selectedYear && reports.length > 1) {
-                const others = reports.filter((r) => r.year !== year);
+                const others = [...reports].reverse().filter((r) => r.year !== year);
                 setSelectedYear(others[0].year);
               }
               onDeleted?.(year);
