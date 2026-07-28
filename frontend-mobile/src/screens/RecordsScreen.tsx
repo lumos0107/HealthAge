@@ -193,7 +193,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
           /* 실제 사용자인데 저장된 복약 정보가 없을 때 — 더미 대신 업로드를 안내한다. */
           <View style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingTop: 60 }}>
             <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <Ionicons name="medkit-outline" size={26} color={T.primary} />
+              <Ionicons name="medkit-outline" size={26} color={T.text3} />
             </View>
             <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>등록된 복약 정보가 없어요</Text>
             <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center', lineHeight: 20 }}>
@@ -203,7 +203,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
         ) : (
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-            <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
+            <Text style={{ fontSize: 13, color: T.text2, fontWeight: '700' }}>!</Text>
             <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
               {usingRealData
                 ? '"내가 먹는 약! 한눈에" 자료를 효능군별로 정리했어요. 검사 수치가 약 복용의 영향을 받을 수 있으니 함께 확인해보세요.'
@@ -213,8 +213,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
           {medGroups.map(({ category, items }) => (
             <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: T.primary }}>{category}</Text>
+                <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: T.text2 }}>{category}</Text>
                 </View>
                 <Text style={{ fontSize: 12, color: T.text3 }}>{items.length}개</Text>
               </View>

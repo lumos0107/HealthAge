@@ -251,7 +251,7 @@ export default function ProfileScreen({
           ].map((item, i, arr) => (
             <View key={item.label} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
                   <Ionicons name={item.icon} size={17} color={T.text2} />
                 </View>
                 <Text style={{ fontSize: 15, color: T.text2 }}>{item.label}</Text>
@@ -279,7 +279,7 @@ export default function ProfileScreen({
           <FadeInUp delay={340}>
           <View style={{ alignItems: 'center', marginTop: 4, marginBottom: 12 }}>
             <Pressable onPress={onDeleteAccount} hitSlop={8} style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
-              <Text style={{ fontSize: 13, color: T.text3, fontWeight: '600', textDecorationLine: 'underline' }}>회원탈퇴</Text>
+              <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', textDecorationLine: 'underline' }}>회원탈퇴</Text>
             </Pressable>
           </View>
           </FadeInUp>

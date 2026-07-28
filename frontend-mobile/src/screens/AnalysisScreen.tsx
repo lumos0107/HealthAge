@@ -126,7 +126,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 안내 — 박스 대신 구분선과 텍스트만으로 */}
       <FadeInUp delay={50}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 20, paddingVertical: 12, marginBottom: 4 }}>
-        <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
+        <Text style={{ fontSize: 13, color: T.text3, fontWeight: '700' }}>!</Text>
         <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>
           이 화면은 건강검진 수치를 이해하기 위한 참고 정보입니다. 질병 진단이나 치료 판단을 대체하지 않습니다.
         </Text>

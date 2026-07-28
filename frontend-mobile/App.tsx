@@ -642,7 +642,7 @@ const s = StyleSheet.create({
     gap: 8,
     ...T.shadow,
   },
-  toastText: { fontSize: 14, fontWeight: '600', color: '#fff', flex: 1 },
+  toastText: { fontSize: 14, fontWeight: '600', color: T.white, flex: 1 },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
   modalSheet: {
     backgroundColor: T.white,
