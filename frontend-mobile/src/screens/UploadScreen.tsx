@@ -239,21 +239,25 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
 
         {/* 모드 탭 — 카드로 감싸지 않고 구분선 위에 탭만 둔다 */}
         <FadeInUp delay={70}>
-        <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-          {(['checkup', 'medication'] as const).map((m) => (
-            <Pressable
-              key={m}
-              onPress={() => changeMode(m)}
-              style={[
-                { flex: 1, paddingVertical: 13, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
-                mode === m && { borderBottomColor: T.primary },
-              ]}
-            >
-              <Text style={{ fontSize: 14, fontWeight: mode === m ? '700' : '500', color: mode === m ? T.text1 : T.text3 }}>
-                {m === 'checkup' ? '건강검진 결과지' : '처방전·복약자료'}
-              </Text>
-            </Pressable>
-          ))}
+        <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: T.cardAlt, borderRadius: T.radiusPill, padding: 4, gap: 4 }}>
+          {(['checkup', 'medication'] as const).map((m) => {
+            const active = mode === m;
+            return (
+              <Pressable
+                key={m}
+                onPress={() => changeMode(m)}
+                style={{
+                  flex: 1, alignItems: 'center', justifyContent: 'center',
+                  paddingVertical: 11, borderRadius: T.radiusPill,
+                  backgroundColor: active ? T.white : 'transparent',
+                }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '700', color: active ? T.text1 : T.text3 }}>
+                  {m === 'checkup' ? '건강검진 결과지' : '처방전·복약자료'}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
         </FadeInUp>
 
@@ -315,7 +319,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 )}
 
                 {(['기본 정보', '검사 수치'] as OcrField['section'][]).map((section) => (
-                  <View key={section} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8, marginBottom: 8 }}>
+                  <View key={section} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8, marginBottom: 12 }}>
                     <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>{section}</Text>
                     {fields.filter((f) => f.section === section).map((field, fi, arr) => {
                       const bad = touched && !!field.required && !field.value.trim();
@@ -415,7 +419,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
             {/* HIRA 링크 카드 */}
             <Pressable
               onPress={() => openExternalUrl(HIRA_URL)}
-              style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 16 }}
+              style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 16 }}
             >
               <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name="open-outline" size={24} color={T.primary} />
@@ -448,7 +452,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
             <Pressable
               onPress={pickMedicationFile}
               disabled={medUploading}
-              style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 16, opacity: medUploading ? 0.6 : 1 }}
+              style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 16, opacity: medUploading ? 0.6 : 1 }}
             >
               <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name="document-attach-outline" size={24} color={T.primary} />
