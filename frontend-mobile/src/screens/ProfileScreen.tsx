@@ -102,8 +102,8 @@ export default function ProfileScreen({
 
         {/* 프로필 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
         <FadeInUp delay={0}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 20, marginHorizontal: 16, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: T.divider, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 24, marginHorizontal: 16, marginBottom: 12, backgroundColor: T.white, borderRadius: T.radius, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name="person" size={30} color={T.primary} />
           </View>
           <View style={{ flex: 1 }}>
@@ -201,20 +201,25 @@ export default function ProfileScreen({
         </View>
         </FadeInUp>
 
-        {/* 알림·표시 설정 — 박스 없이 구분선 목록으로 */}
+        {/* 알림·표시 설정 — 토스 설정 카드 문법: 흰 카드 + 아이콘 스쿼클 행 */}
         <FadeInUp delay={140}>
-        <View style={{ paddingHorizontal: 20, marginBottom: 8, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 18 }}>
+        <View style={{ backgroundColor: T.white, borderRadius: T.radius, marginHorizontal: 16, marginBottom: 12, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>알림 및 표시 설정</Text>
           {([
-            { key: 'checkupReminder' as const, title: '검진 일정 알림', desc: '다음 검진 시기를 놓치지 않도록 알려줍니다.' },
-            { key: 'medicationReminder' as const, title: '복약 자료 알림', desc: '내가 먹는 약 자료를 정기적으로 확인하도록 안내합니다.' },
-            { key: 'simpleWords' as const, title: '쉬운 설명 우선 표시', desc: '검사항목 설명을 어려운 의학 용어보다 쉽게 보여줍니다.' },
+            { key: 'checkupReminder' as const, title: '검진 일정 알림', desc: '다음 검진 시기를 놓치지 않도록 알려줍니다.', icon: 'calendar-outline' as const },
+            { key: 'medicationReminder' as const, title: '복약 자료 알림', desc: '내가 먹는 약 자료를 정기적으로 확인하도록 안내합니다.', icon: 'medkit-outline' as const },
+            { key: 'simpleWords' as const, title: '쉬운 설명 우선 표시', desc: '검사항목 설명을 어려운 의학 용어보다 쉽게 보여줍니다.', icon: 'chatbubble-ellipses-outline' as const },
           ]).map((item, i, arr) => (
             <View key={item.key} style={[{ paddingVertical: 14 }, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flex: 1, marginRight: 14 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: T.text1, marginBottom: 3 }}>{item.title}</Text>
-                  <Text style={{ fontSize: 13, color: T.text3, lineHeight: 18 }}>{item.desc}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 14 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                    <Ionicons name={item.icon} size={19} color={T.text2} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '600', color: T.text1, marginBottom: 3 }}>{item.title}</Text>
+                    <Text style={{ fontSize: 13, color: T.text3, lineHeight: 18 }}>{item.desc}</Text>
+                  </View>
                 </View>
                 <Switch
                   value={localSettings[item.key]}
@@ -224,7 +229,7 @@ export default function ProfileScreen({
                 />
               </View>
               {item.key === 'checkupReminder' && localSettings.checkupReminder && (
-                <Text style={{ fontSize: 12, color: reminderAt ? T.success : T.text3, marginTop: 8, lineHeight: 18 }}>
+                <Text style={{ fontSize: 12, color: reminderAt ? T.success : T.text3, marginTop: 8, lineHeight: 18, marginLeft: 52 }}>
                   {reminderAt
                     ? `예약됨 · ${reminderAt.getFullYear()}년 ${reminderAt.getMonth() + 1}월 ${reminderAt.getDate()}일 ${String(reminderAt.getHours()).padStart(2, '0')}:${String(reminderAt.getMinutes()).padStart(2, '0')}`
                     : '아직 예약된 알림이 없어요. 검진 기록을 등록하면 다음 검진 시기에 맞춰 알려드려요.'}
@@ -235,17 +240,22 @@ export default function ProfileScreen({
         </View>
         </FadeInUp>
 
-        {/* 앱 정보 — 박스 없이 구분선 목록으로 */}
+        {/* 앱 정보 — 토스 설정 카드 문법: 흰 카드 + 아이콘 스쿼클 행 */}
         <FadeInUp delay={210}>
-        <View style={{ paddingHorizontal: 20, marginBottom: 8, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 18 }}>
+        <View style={{ backgroundColor: T.white, borderRadius: T.radius, marginHorizontal: 16, marginBottom: 12, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>앱 정보</Text>
           {[
-            { label: '앱 이름', value: '헬스에이지' },
-            { label: '버전', value: '1.0.0' },
-            { label: '문의', value: 'support@healthage.kr' },
+            { label: '앱 이름', value: '헬스에이지', icon: 'information-circle-outline' as const },
+            { label: '버전', value: '1.0.0', icon: 'code-slash-outline' as const },
+            { label: '문의', value: 'support@healthage.kr', icon: 'mail-outline' as const },
           ].map((item, i, arr) => (
             <View key={item.label} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
-              <Text style={{ fontSize: 15, color: T.text2 }}>{item.label}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name={item.icon} size={17} color={T.text2} />
+                </View>
+                <Text style={{ fontSize: 15, color: T.text2 }}>{item.label}</Text>
+              </View>
               <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500' }}>{item.value}</Text>
             </View>
           ))}
