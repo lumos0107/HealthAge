@@ -22,70 +22,60 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// ─── 무신사(Musinsa) 디자인 그대로 ─────────────────────────
-// 박스를 걷어내고 구분선 중심으로 정리한 지난 틀은 그대로 두되,
-// "배치의 리듬"은 무신사 앱에서 실제로 쓰는 방식으로 다시 짠다.
-// - 무신사는 색을 거의 쓰지 않는다. 포인트는 옅은 회색이 아니라 강한 무채색(블랙)이고,
-//   화면에서 유일하게 살아있는 색은 세일/배지 등 "꼭 필요한 곳"의 빨강 정도다.
-//   → 이 앱에서는 그 자리를 정상/주의/위험(초록/주황/빨강) 색이 대신하게 되므로,
-//     포인트 컬러를 무채색 블랙으로 두면 "상태색 외엔 색이 거의 없는" 가장 깔끔한 조합이 된다.
-// - 무신사 특유의 리듬: 작은 대문자/자간 넓은 라벨("eyebrow")을 큰 타이틀 위에 얹어
-//   위계를 분명히 하고, 굵기·크기 대비를 크게 줘서(아주 큰 숫자 vs 아주 작은 캡션)
-//   "다 비슷비슷해 보이는" 평면적 레이아웃을 피한다. 정렬은 항상 왼쪽 기준.
-// - 구분선은 카드 안에 갇히지 않고 화면 가장자리까지 꽉 채워(full-bleed) 그어
-//   리스트가 한 덩어리의 표처럼 보이게 한다.
+// ─── 토스(Toss) 구조 × 뱅크샐러드(Bank Salad) 그린 ─────────────
+// 구조와 컴포넌트 문법은 토스를 따르고, 브랜드 컬러만 뱅크샐러드의 그린을 쓴다.
+// - 화면 배경은 연회색, 그 위에 테두리 없는 흰 카드를 얹어 배경 대비만으로 카드를 구분한다.
+// - 그림자·테두리 박스 대신 배경 대비와 넉넉한 라운드로 위계를 준다.
+// - 브랜드 그린(#00C073)은 "누를 수 있는 것"에만 쓴다 — 버튼·링크·활성탭·인터랙션 아이콘.
+//   '정상' 상태는 별도의 딥그린(#1F8A5D)을 써서 배지·수치 전용 색과 역할을 분리한다.
 export const T = {
-  // Primary — 무신사처럼 색이 아닌 무채색(블랙)을 포인트로 사용
-  primary: '#1A1A1A',
-  primaryPressed: '#000000',
-  // 옅은 색조 배경 대신 무채색 그레이만 사용
-  primaryLight: '#EFEFEF',
-  primaryDark: '#000000',
+  // Primary — 뱅크샐러드 그린. "누를 수 있는 것만 브랜드 그린" (버튼·링크·활성탭·인터랙션 아이콘 전용)
+  primary: '#00C073',
+  primaryPressed: '#00A862',
+  primaryLight: '#E6F9F1',
+  primaryDark: '#00834F',
 
-  // Backgrounds — 흰 배경 기본, 구분에는 옅은 그레이만
-  bg: '#FFFFFF',
+  // Backgrounds — 토스 문법: 연회색 화면 배경 위 테두리 없는 흰 카드
+  bg: '#F3F5F7',
   white: '#FFFFFF',
-  cardAlt: '#F5F5F5',
+  cardAlt: '#F2F4F6',        // 입력 채움·스쿼클 배경
 
-  // Text hierarchy — 진한 잉크 그레이 위계 (연한 회색 글씨로 가독성을 해치지 않는다)
-  text1: '#191919',
-  text2: '#5C5C5C',
-  text3: '#9A9A9A',
+  // Text — 토스 잉크(블루-그레이) 위계
+  text1: '#191F28',
+  text2: '#4E5968',
+  text3: '#8B95A1',
 
-  // Borders & dividers — 박스 대신 구분선으로만 영역을 나눈다 (무신사 리스트의 핵심)
-  border: '#E5E5E5',
-  divider: '#E5E5E5',
+  // Borders & dividers — 카드 테두리는 없다. 구분선은 카드 내부 행 전용
+  border: '#E5E8EB',          // 입력 포커스·예외적 경계 전용
+  divider: '#F2F4F6',
 
-  // Semantic colors — 정상/주의/위험을 초록/주황/빨강으로 고정.
-  // 주황(#FF8A3D)은 빨강(#F44336)과 톤이 또렷이 갈려 헷갈리지 않는다.
-  // 배경은 옅은 색칠 칩이 아니라 무채색 그레이만 쓰고, 색은 글자·아이콘에만 입힌다.
-  success: '#3CB371',
-  successBg: '#EFEFEF',
-  warn: '#FF8A3D',
-  warnBg: '#EFEFEF',
-  danger: '#F44336',
-  dangerBg: '#EFEFEF',
+  // Semantic — 상태색은 배지·수치 전용. 배경은 옅은 색 틴트 칩
+  success: '#1F8A5D',         // 딥그린 (브랜드 그린과 톤·역할 분리)
+  successBg: '#EAF7F1',
+  warn: '#D97706',            // 딥 앰버 (#FF8A3D는 틴트 위 대비 부족으로 어둡게 조정)
+  warnBg: '#FFF3E7',
+  danger: '#F04452',
+  dangerBg: '#FEE9EB',
 
-  // Radius — 무신사는 둥근 모서리를 거의 쓰지 않는다. 버튼 정도에만 살짝.
-  radius: 4,
-  radiusMd: 8,
-  radiusSm: 4,
+  // Radius — 카드 20 · 버튼 14 · 입력 12 · 칩 999
+  radius: 20,
+  radiusMd: 14,
+  radiusSm: 12,
   radiusPill: 999,
 
-  // Shadow — 그림자 없이 구분선 위주로 구성한다
+  // Shadow — 없음. 배경 대비로만 카드 구분 (토스 방식)
   shadow: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
 
-  // Display font — 큰 제목·브랜드 영역에만 사용해 본문 가독성은 시스템 글꼴로 지킨다.
   fontDisplay: 'Pretendard',
 
-  // Eyebrow label — 무신사 특유의 "자간 넓은 작은 대문자 라벨"을 큰 제목 위에 얹는 리듬
-  eyebrow: { fontSize: 11, fontWeight: '700' as const, color: '#9A9A9A', letterSpacing: 1.6, textTransform: 'uppercase' as const },
+  // eyebrow — 대문자·자간 폐기. 일반 회색 캡션으로 (컴포넌트 호환 유지)
+  eyebrow: { fontSize: 13, fontWeight: '600' as const, color: '#8B95A1', letterSpacing: 0, textTransform: 'none' as const },
 } as const;
 
 export const W = Dimensions.get('window').width;
@@ -159,7 +149,7 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
 export function SectionTitle({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-      <Text style={{ fontSize: 18, fontWeight: '700', color: T.text1 }}>{title}</Text>
+      <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>{title}</Text>
       {action ? (
         <Pressable onPress={onAction}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: T.primary }}>{action}</Text>
@@ -258,7 +248,7 @@ export function FieldInput({ label, required, error, hint, ...props }: TextInput
         {...props}
       />
       {hint ? <Text style={{ fontSize: 12, color: T.text3, marginTop: 5 }}>{hint}</Text> : null}
-      {error ? <Text style={{ fontSize: 12, color: T.danger, marginTop: 4, fontWeight: '600' }}>확인 필요</Text> : null}
+      {error ? <Text style={{ fontSize: 12, color: T.danger, marginTop: 4, fontWeight: '600' }}>다시 확인해 주세요</Text> : null}
     </View>
   );
 }
@@ -363,7 +353,7 @@ export function AnimatedScore({ score, color, max = 100 }: { score: number; colo
         <Text style={{ fontSize: 64, fontWeight: '700', color, lineHeight: 68 }}>{display}</Text>
         <Text style={{ fontSize: 18, color: T.text3, marginBottom: 10, marginLeft: 4 }}>/ {max}</Text>
       </View>
-      <View style={{ height: 8, backgroundColor: T.bg, borderRadius: 4, overflow: 'hidden' }}>
+      <View style={{ height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
         <Animated.View
           style={{
             width: anim.interpolate({ inputRange: [0, max], outputRange: ['0%', '100%'], extrapolate: 'clamp' }),
@@ -392,8 +382,8 @@ export function DirectionalBar({
   // 정상 기준·또래 평균은 흐릿한 톤 대신 분명히 구분되는 색을 써서, 한눈에 봐도 세 막대가 또렷이 비교되도록 한다.
   const rows: { label: string; value: number; barColor: string; borderColor?: string; textColor: string; bold?: boolean }[] = [
     { label: '내 수치', value: myValue, barColor: color, textColor: color, bold: true },
-    { label: '정상 기준', value: normalValue, barColor: '#1F6B4A', textColor: '#1F6B4A' },
-    ...(peerMean != null ? [{ label: '또래 평균', value: peerMean, barColor: '#9A9A9A', textColor: T.text2 }] : []),
+    { label: '정상 기준', value: normalValue, barColor: T.success, textColor: T.success },
+    ...(peerMean != null ? [{ label: '또래 평균', value: peerMean, barColor: T.text3, textColor: T.text2 }] : []),
   ];
 
   return (
@@ -433,7 +423,7 @@ function AnimatedBarRow({ row, pct, delay }: {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <Text style={{ width: 56, fontSize: 11, color: T.text3, fontWeight: '600' }}>{row.label}</Text>
-      <View style={{ flex: 1, height: 10, backgroundColor: T.bg, borderRadius: 5, overflow: 'hidden' }}>
+      <View style={{ flex: 1, height: 10, backgroundColor: T.cardAlt, borderRadius: 5, overflow: 'hidden' }}>
         <Animated.View
           style={{
             width: widthAnim.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }),
@@ -473,37 +463,36 @@ const ui = StyleSheet.create({
     backgroundColor: T.white,
     borderRadius: T.radius,
     padding: 20,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: T.border,
+    marginBottom: 12,
+    // 테두리 제거 — 배경 대비로 구분
   },
-  pageTitle: { fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 },
-  pageSubtitle: { fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 },
+  pageTitle: { fontSize: 24, fontWeight: '700', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.3, marginTop: 6 },
+  pageSubtitle: { fontSize: 14, color: T.text3, lineHeight: 20, marginTop: 6 },
   notice: {
     flexDirection: 'row', alignItems: 'flex-start',
-    backgroundColor: T.primaryLight, borderRadius: T.radiusSm,
-    padding: 14, marginBottom: 14,
+    backgroundColor: T.white, borderRadius: T.radiusMd,
+    padding: 16, marginBottom: 12,
   },
-  noticeText: { flex: 1, fontSize: 13, lineHeight: 20, color: T.primaryDark, fontWeight: '500' },
+  noticeText: { flex: 1, fontSize: 13, lineHeight: 20, color: T.text2, fontWeight: '500' },
   primaryBtn: {
     backgroundColor: T.primary,
     height: 54,
-    borderRadius: T.radiusPill,
+    borderRadius: T.radiusMd,   // 필 → 토스식 사각라운드 14
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
   },
   primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   secondaryBtn: {
-    backgroundColor: T.primaryLight,
+    backgroundColor: T.cardAlt,
     height: 54,
-    borderRadius: T.radiusPill,
+    borderRadius: T.radiusMd,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
   },
-  secondaryBtnText: { color: T.primary, fontWeight: '700', fontSize: 15 },
-  ghostBtn: { height: 48, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  secondaryBtnText: { color: T.text2, fontWeight: '700', fontSize: 15 },
+  ghostBtn: { height: 48, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   ghostBtnText: { color: T.text3, fontWeight: '600', fontSize: 15 },
   chip: {
     paddingHorizontal: 16,
@@ -517,12 +506,11 @@ const ui = StyleSheet.create({
   fieldLabel: { fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 8 },
   fieldInput: {
     height: 52,
-    borderWidth: 1,
-    borderColor: T.border,
+    borderWidth: 0,             // 테두리 박스 → 회색 채움 (토스 입력 문법)
     borderRadius: T.radiusSm,
     paddingHorizontal: 16,
     fontSize: 15,
     color: T.text1,
-    backgroundColor: T.white,
+    backgroundColor: T.cardAlt,
   },
 });
