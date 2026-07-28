@@ -74,16 +74,23 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
   const bandL = pct(low ?? min);
   const bandR = pct(high ?? max);
   const { color } = statusTone(metric);
+  // 라벨을 바 전체가 아니라 밴드 위치에 붙인다 — 밴드가 한쪽으로 쏠려도 글자가 초록 영역을 정확히 가리키게.
+  // width:0 컨테이너 + alignItems:center = 해당 % 지점을 중심으로 글자를 앉히는 RN 트릭.
+  const anchor = (leftPct: number, children: React.ReactNode) => (
+    <View style={{ position: 'absolute', left: `${leftPct}%`, width: 0, alignItems: 'center' }}>{children}</View>
+  );
   return (
     <View style={{ marginTop: 6 }}>
+      <View style={{ height: 20 }}>
+        {anchor((bandL + bandR) / 2, <Text style={{ fontSize: 12, color: T.success, fontWeight: '600', width: 80, textAlign: 'center' }}>정상 범위</Text>)}
+      </View>
       <View style={{ height: 10, borderRadius: 5, backgroundColor: T.cardAlt, overflow: 'hidden' }}>
         <View style={{ position: 'absolute', left: `${bandL}%`, width: `${Math.max(2, bandR - bandL)}%`, top: 0, bottom: 0, backgroundColor: NORMAL_BAND }} />
         <View style={{ position: 'absolute', left: `${pct(value)}%`, transform: [{ translateX: -6 }], top: -1, width: 12, height: 12, borderRadius: 6, backgroundColor: color, borderWidth: 2, borderColor: '#fff' }} />
       </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-        <Text style={{ fontSize: 12, color: T.text3 }}>{low != null ? low : ''}</Text>
-        <Text style={{ fontSize: 12, color: T.success, fontWeight: '600' }}>정상 범위</Text>
-        <Text style={{ fontSize: 12, color: T.text3 }}>{high != null ? high : ''}</Text>
+      <View style={{ height: 20, marginTop: 4 }}>
+        {low != null && anchor(bandL, <Text style={{ fontSize: 12, color: T.text3, width: 60, textAlign: 'center' }}>{low}</Text>)}
+        {high != null && anchor(bandR, <Text style={{ fontSize: 12, color: T.text3, width: 60, textAlign: 'center' }}>{high}</Text>)}
       </View>
     </View>
   );
