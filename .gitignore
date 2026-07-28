@@ -72,3 +72,6 @@ frontend-reference-preview/
 
 # 개인정보 원칙상 테스트 검진지 이미지는 커밋하지 않음
 **/테스트검진지_마스킹/
+
+# git worktrees
+worktrees/
