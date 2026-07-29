@@ -318,7 +318,8 @@ export default function App() {
       <StatusBar style="dark" />
 
       {/* 헤더 */}
-      <View style={[s.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+      {/* 홈은 히어로 카드가 바로 이어져 구분선 없이, 나머지 탭은 실선으로 콘텐츠와 구분 */}
+      <View style={[s.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, tab === 'dashboard' && { borderBottomWidth: 0 }]}>
         <Pressable onPress={() => handleTab('dashboard')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={s.logoIcon}>
             <Ionicons name="pulse" size={14} color="#fff" />
