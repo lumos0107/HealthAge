@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { categoryVisual, SquircleIcon } from '../components/v2';
 import { Eyebrow, FadeIn, FadeInUp, StatusBadge, T } from '../components/UI';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, metricsForReport } from '../data';
-import type { MedicationItem, MetricDefinition, MetricKey, Report, Status } from '../data';
+import type { MedicationItem, MetricDefinition, MetricKey, Report } from '../data';
 import { deleteReport } from '../health';
 import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
 
@@ -22,13 +22,13 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   const [selectedYear, setSelectedYear] = useState<number>(reports[reports.length - 1].year);
   // 검사 항목 / 복용약 — 같은 연도 기록 안에서 전환해서 볼 수 있게 한다.
   const [view, setView] = useState<'metrics' | 'medications'>('metrics');
-  const [filter, setFilter] = useState<Status | null>(null);
 
   const detailReport = reports.find((r) => r.year === selectedYear) ?? reports[reports.length - 1];
   // 그 해 검진의 실제 상태(statusByKey)를 그대로 반영한 항목 목록 — 점수와 항상 일치한다.
   const yearMetrics = useMemo(() => metricsForReport(detailReport, metricDefinitions), [detailReport, metricDefinitions]);
   const counts = statusCounts(yearMetrics);
-  const rows = sortByAttention(yearMetrics).filter((m) => (filter ? m.status === filter : true));
+  // 필터 없이 주의 순 정렬만 — 목록이 짧고 이미 심각한 것부터 정렬돼 있어 필터는 과한 도구다.
+  const rows = sortByAttention(yearMetrics);
 
   const confirmDelete = () => {
     const year = detailReport.year;
@@ -124,9 +124,12 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
               );
             })}
           </ScrollView>
-          {/* 선택 연도 메타 + 삭제(기능 보존) */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 }}>
-            <Text style={{ flex: 1, fontSize: 13, color: T.text3 }}>{detailReport.date} · {detailReport.hospital} · {detailReport.score}점</Text>
+          {/* 선택한 검진의 제목 줄 — 연도·병원을 각주가 아니라 큰 글씨로. 검사일은 연도만(월일 생략). */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 8 }}>
+            <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: T.text1 }}>
+              {detailReport.year}년 · {detailReport.hospital}
+            </Text>
+            <Text style={{ fontSize: 13, color: T.text3 }}>{detailReport.score}점</Text>
             {usingRealData && !!userId && (
               <Pressable hitSlop={8} onPress={confirmDelete}>
                 <Ionicons name="trash-outline" size={17} color={T.text3} />
@@ -138,16 +141,14 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       )}
 
       {view === 'metrics' && (
-        <View style={{ flexDirection: 'row', gap: 8, marginHorizontal: 16, marginBottom: 12 }}>
-          {([['전체', null], [`정상 ${counts.정상}`, '정상'], [`주의 ${counts.주의}`, '주의'], [`위험 ${counts.위험}`, '위험']] as const).map(([label, val]) => {
-            const active = filter === val;
-            return (
-              <Pressable key={label} onPress={() => setFilter(val as Status | null)}
-                style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.white }}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: active ? '#fff' : T.text2 }}>{label}</Text>
-              </Pressable>
-            );
-          })}
+        /* 상태 요약 — 필터가 아니라 읽기 전용 한 줄. 목록은 이미 주의 순이라 걸러볼 필요가 없다. */
+        <View style={{ flexDirection: 'row', gap: 14, marginHorizontal: 20, marginBottom: 12 }}>
+          {([['정상', counts.정상, T.success], ['주의', counts.주의, T.warn], ['위험', counts.위험, T.danger]] as const).map(([label, n, color]) => (
+            <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }} />
+              <Text style={{ fontSize: 13, color: T.text2 }}>{label} <Text style={{ fontWeight: '700', color: T.text1 }}>{n}</Text></Text>
+            </View>
+          ))}
         </View>
       )}
 
@@ -180,7 +181,6 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
               </Pressable>
             );
           })}
-          {rows.length === 0 && <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center', paddingVertical: 24 }}>해당 상태의 항목이 없어요.</Text>}
         </View>
         </FadeIn>
       ) : (
