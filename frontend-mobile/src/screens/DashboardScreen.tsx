@@ -91,15 +91,14 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         </FadeInUp>
       ) : (
       <FadeInUp delay={0}>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 10 }}>
-        {/* 히어로 다이어트 — 판단 1번(배지)·정량 1번(점수)·구성 1번(문장+바)만.
-            눈썹·범례는 뺐다: 정확한 개수는 검사항목 탭 몫, 홈은 요약만. */}
+      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 24, marginBottom: 12, marginTop: 10 }}>
+        {/* 히어로 다이어트 — 판단 1번(배지)·정량 1번(점수)·구성 1번(범례)만. */}
         <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1 }}>
           {latest.year}년 · {latest.hospital}
         </Text>
 
         {/* 점수 + 판단 배지 한 행 */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 8, marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 18, marginBottom: 18 }}>
           <Text style={{ fontSize: 72, fontWeight: '800', fontFamily: T.fontDisplay, color: scoreColor, lineHeight: 76, letterSpacing: -1 }}>{score}</Text>
           <Text style={{ fontSize: 15, color: T.text3, marginBottom: 12, marginLeft: 6 }}>/ 100점</Text>
           <View style={{ backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginLeft: 12, marginBottom: 12 }}>
@@ -108,7 +107,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         </View>
 
         {/* 점수 바 — 22/100의 위치감. 그래프는 이거 하나만, 분포는 문장으로만 말한다. */}
-        <View style={{ height: 6, backgroundColor: T.cardAlt, borderRadius: 3, overflow: 'hidden', marginBottom: 14 }}>
+        <View style={{ height: 6, backgroundColor: T.cardAlt, borderRadius: 3, overflow: 'hidden', marginBottom: 18 }}>
           <View style={{ width: `${score}%`, height: 6, borderRadius: 3, backgroundColor: scoreColor }} />
         </View>
 
