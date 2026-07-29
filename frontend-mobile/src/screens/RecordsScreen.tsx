@@ -124,31 +124,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
               );
             })}
           </ScrollView>
-          {/* 선택한 검진의 제목 줄 — 연도·병원을 각주가 아니라 큰 글씨로. 검사일은 연도만(월일 생략). */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 8 }}>
-            <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: T.text1 }}>
-              {detailReport.year}년 · {detailReport.hospital}
-            </Text>
-            {usingRealData && !!userId && (
-              <Pressable hitSlop={8} onPress={confirmDelete}>
-                <Ionicons name="trash-outline" size={17} color={T.text3} />
-              </Pressable>
-            )}
-          </View>
         </View>
         </FadeInUp>
-      )}
-
-      {view === 'metrics' && (
-        /* 상태 요약 — 필터가 아니라 읽기 전용 한 줄. 목록은 이미 주의 순이라 걸러볼 필요가 없다. */
-        <View style={{ flexDirection: 'row', gap: 14, marginHorizontal: 20, marginBottom: 12 }}>
-          {([['정상', counts.정상, T.success], ['주의', counts.주의, T.warn], ['위험', counts.위험, T.danger]] as const).map(([label, n, color]) => (
-            <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }} />
-              <Text style={{ fontSize: 13, color: T.text2 }}>{label} <Text style={{ fontWeight: '700', color: T.text1 }}>{n}</Text></Text>
-            </View>
-          ))}
-        </View>
       )}
 
       {view === 'metrics' ? (
@@ -156,6 +133,27 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
            연도를 바꾸면 살짝 페이드되며 갱신되어 변화가 자연스럽게 보인다 */
         <FadeIn key={`metrics-${detailReport.year}`}>
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, marginBottom: 12 }}>
+          {/* 카드 헤더 — 이 카드가 어느 검진인지(연도·병원, 월일 생략)와 상태 요약. 배경 위에 띄우지 않고 결과 카드에 소속시킨다. */}
+          <View style={{ paddingTop: 18, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: T.divider }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: T.text1 }}>
+                {detailReport.year}년 · {detailReport.hospital}
+              </Text>
+              {usingRealData && !!userId && (
+                <Pressable hitSlop={8} onPress={confirmDelete}>
+                  <Ionicons name="trash-outline" size={17} color={T.text3} />
+                </Pressable>
+              )}
+            </View>
+            <View style={{ flexDirection: 'row', gap: 14, marginTop: 10 }}>
+              {([['정상', counts.정상, T.success], ['주의', counts.주의, T.warn], ['위험', counts.위험, T.danger]] as const).map(([label, n, color]) => (
+                <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }} />
+                  <Text style={{ fontSize: 13, color: T.text2 }}>{label} <Text style={{ fontWeight: '700', color: T.text1 }}>{n}</Text></Text>
+                </View>
+              ))}
+            </View>
+          </View>
           {rows.map((metric, i) => {
             const visual = categoryVisual(metric.category);
             const { color } = getStatusStyle(metric.status);
