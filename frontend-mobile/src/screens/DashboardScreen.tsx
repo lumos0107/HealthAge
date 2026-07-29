@@ -94,25 +94,22 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       ) : (
       <FadeInUp delay={0}>
       <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 10 }}>
-        {/* 검진 정보 — 검사항목 탭 카드 헤더와 같은 문법: 작은 눈썹 + 연도·병원 볼드 제목 */}
-        <Eyebrow>최근 건강검진</Eyebrow>
-        <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1, marginTop: 6 }}>
+        {/* 히어로 다이어트 — 판단 1번(배지)·정량 1번(점수)·구성 1번(문장+바)만.
+            눈썹·범례는 뺐다: 정확한 개수는 검사항목 탭 몫, 홈은 요약만. */}
+        <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1 }}>
           {latest.year}년 · {latest.hospital}
         </Text>
 
-        {/* 판단 배지 — 숫자보다 판단이 먼저 읽히게 */}
-        <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 14, marginBottom: 6 }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+        {/* 점수 + 판단 배지 한 행 */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 8, marginBottom: 12 }}>
+          <Text style={{ fontSize: 72, fontWeight: '800', fontFamily: T.fontDisplay, color: scoreColor, lineHeight: 76, letterSpacing: -1 }}>{score}</Text>
+          <Text style={{ fontSize: 15, color: T.text3, marginBottom: 12, marginLeft: 6 }}>/ 100점</Text>
+          <View style={{ backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginLeft: 12, marginBottom: 12 }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+          </View>
         </View>
 
-        {/* 점수 대형 표시 — 숫자는 아주 크게, 캡션은 아주 작게 둬서 대비를 강하게 준다 */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 }}>
-          <Text style={{ fontSize: 80, fontWeight: '800', fontFamily: T.fontDisplay, color: scoreColor, lineHeight: 82, letterSpacing: -1 }}>{score}</Text>
-          <Text style={{ fontSize: 15, color: T.text3, marginBottom: 14, marginLeft: 6 }}>/ 100점</Text>
-        </View>
-
-        {/* 상태 분포 — 판단 문장 먼저, 근거는 3색 비율 바 + 점 범례로 (박스 나열보다 함축적).
-            점수 바는 뺐다 — 큰 숫자가 이미 같은 정보라 바 두 개가 중복돼 보인다. */}
+        {/* 구성 — 판단 문장 + 3색 비율 바 */}
         <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 22 }}>
           {outCount === 0
             ? '모든 항목이 정상 범위예요'
@@ -122,18 +119,6 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           {counts.정상 > 0 && <View style={{ flex: counts.정상, backgroundColor: T.success, borderRadius: 2 }} />}
           {counts.주의 > 0 && <View style={{ flex: counts.주의, backgroundColor: T.warn, borderRadius: 2 }} />}
           {counts.위험 > 0 && <View style={{ flex: counts.위험, backgroundColor: T.danger, borderRadius: 2 }} />}
-        </View>
-        <View style={{ flexDirection: 'row', gap: 14, marginTop: 8 }}>
-          {[
-            { label: '정상', count: counts.정상, color: T.success },
-            { label: '주의', count: counts.주의, color: T.warn },
-            { label: '위험', count: counts.위험, color: T.danger },
-          ].map((c) => (
-            <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: c.color }} />
-              <Text style={{ fontSize: 13, color: T.text2 }}>{c.label} <Text style={{ fontWeight: '700', color: T.text1 }}>{c.count}</Text></Text>
-            </View>
-          ))}
         </View>
       </View>
       </FadeInUp>
