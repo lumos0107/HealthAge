@@ -94,8 +94,11 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       ) : (
       <FadeInUp delay={0}>
       <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 10 }}>
-        {/* 검사일은 연도만 — 월일까지 있는 날짜 줄은 노이즈라 상단 문구에 합친다 */}
-        <Eyebrow>최근 건강검진({latest.year}) · {latest.hospital}</Eyebrow>
+        {/* 검진 정보 — 검사항목 탭 카드 헤더와 같은 문법: 작은 눈썹 + 연도·병원 볼드 제목 */}
+        <Eyebrow>최근 건강검진</Eyebrow>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1, marginTop: 6 }}>
+          {latest.year}년 · {latest.hospital}
+        </Text>
 
         {/* 판단 배지 — 숫자보다 판단이 먼저 읽히게 */}
         <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 14, marginBottom: 6 }}>
