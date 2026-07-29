@@ -112,7 +112,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
             <View style={{ width: `${score}%`, height: 10, borderRadius: 5, backgroundColor: scoreColor }} />
             {/* 구간 눈금 — 배지 기준(40 미만 관리 필요 · 70 이상 양호)의 경계 */}
             {[40, 70].map((t) => (
-              <View key={t} style={{ position: 'absolute', left: `${t}%`, top: 0, bottom: 0, width: 2, backgroundColor: T.text3 }} />
+              <View key={t} style={{ position: 'absolute', left: `${t}%`, top: 0, bottom: 0, width: 3, backgroundColor: T.white }} />
             ))}
           </View>
           {/* 눈금 값 라벨 — 경계 지점 아래에 붙인다(width:0 + alignItems로 그 %를 중심에) */}
