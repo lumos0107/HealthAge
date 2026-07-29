@@ -614,6 +614,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     // 헤더를 흰 박스로 띄우지 않고 화면 배경과 같은 톤으로 둔다 — 카드만 흰색이라는 원칙에 맞춘다.
     backgroundColor: T.bg,
+    // 콘텐츠와의 구분은 가는 실선 하나로. T.divider는 배경과 색이 같아 안 보여서 한 톤 어두운 색을 쓴다.
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E8EB',
   },
   logoIcon: {
     width: 30,
