@@ -61,6 +61,8 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   const top3 = top3Alerts(metricDefinitions);
   // 검사항목 탭과 같은 기준(statusCounts) — 판정 대상이 아닌 참고 항목(키·몸무게)은 세지 않는다.
   const counts = statusCounts(metricDefinitions);
+  const totalCount = counts.정상 + counts.주의 + counts.위험;
+  const outCount = counts.주의 + counts.위험;
   const { score } = computeScore(metricDefinitions);
   const scoreColor = score >= 70 ? T.success : score >= 40 ? T.warn : T.danger;
   const scoreBg = score >= 70 ? T.successBg : score >= 40 ? T.warnBg : T.dangerBg;
@@ -111,16 +113,26 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           <View style={{ width: `${score}%`, height: 6, borderRadius: 3, backgroundColor: scoreColor }} />
         </View>
 
-        {/* 현황 3개 — 상태색 틴트 박스로 분포가 한눈에 들어오게 (뱅샐 방식) */}
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+        {/* 상태 분포 — 판단 문장 먼저, 근거는 3색 비율 바 + 점 범례로 (박스 나열보다 함축적) */}
+        <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 22 }}>
+          {outCount === 0
+            ? '모든 항목이 정상 범위예요'
+            : <>{totalCount}개 항목 중 <Text style={{ color: counts.위험 > 0 ? T.danger : T.warn }}>{outCount}개</Text>가 정상 범위를 벗어났어요</>}
+        </Text>
+        <View style={{ flexDirection: 'row', height: 8, gap: 2, marginTop: 10 }}>
+          {counts.정상 > 0 && <View style={{ flex: counts.정상, backgroundColor: T.success, borderRadius: 2 }} />}
+          {counts.주의 > 0 && <View style={{ flex: counts.주의, backgroundColor: T.warn, borderRadius: 2 }} />}
+          {counts.위험 > 0 && <View style={{ flex: counts.위험, backgroundColor: T.danger, borderRadius: 2 }} />}
+        </View>
+        <View style={{ flexDirection: 'row', gap: 14, marginTop: 8 }}>
           {[
-            { label: '정상', count: counts.정상, color: T.success, bg: T.successBg },
-            { label: '주의', count: counts.주의, color: T.warn, bg: T.warnBg },
-            { label: '위험', count: counts.위험, color: T.danger, bg: T.dangerBg },
+            { label: '정상', count: counts.정상, color: T.success },
+            { label: '주의', count: counts.주의, color: T.warn },
+            { label: '위험', count: counts.위험, color: T.danger },
           ].map((c) => (
-            <View key={c.label} style={{ flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: T.radiusSm, backgroundColor: c.bg }}>
-              <Text style={{ fontSize: 20, fontWeight: '800', color: c.color }}>{c.count}</Text>
-              <Text style={{ fontSize: 11, color: c.color, fontWeight: '600', marginTop: 2 }}>{c.label}</Text>
+            <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: c.color }} />
+              <Text style={{ fontSize: 13, color: T.text2 }}>{c.label} <Text style={{ fontWeight: '700', color: T.text1 }}>{c.count}</Text></Text>
             </View>
           ))}
         </View>
