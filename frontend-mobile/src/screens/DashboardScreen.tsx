@@ -109,17 +109,17 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           </View>
         </View>
 
-        {/* 구성 — 판단 문장 + 3색 비율 바 */}
+        {/* 점수 바 — 22/100의 위치감. 그래프는 이거 하나만, 분포는 문장으로만 말한다. */}
+        <View style={{ height: 6, backgroundColor: T.cardAlt, borderRadius: 3, overflow: 'hidden', marginBottom: 14 }}>
+          <View style={{ width: `${score}%`, height: 6, borderRadius: 3, backgroundColor: scoreColor }} />
+        </View>
+
+        {/* 구성 — 판단 문장 한 줄 */}
         <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 22 }}>
           {outCount === 0
             ? '모든 항목이 정상 범위예요'
             : <>{totalCount}개 항목 중 <Text style={{ color: counts.위험 > 0 ? T.danger : T.warn }}>{outCount}개</Text>가 정상 범위를 벗어났어요</>}
         </Text>
-        <View style={{ flexDirection: 'row', height: 8, gap: 2, marginTop: 10 }}>
-          {counts.정상 > 0 && <View style={{ flex: counts.정상, backgroundColor: T.success, borderRadius: 2 }} />}
-          {counts.주의 > 0 && <View style={{ flex: counts.주의, backgroundColor: T.warn, borderRadius: 2 }} />}
-          {counts.위험 > 0 && <View style={{ flex: counts.위험, backgroundColor: T.danger, borderRadius: 2 }} />}
-        </View>
       </View>
       </FadeInUp>
       )}
