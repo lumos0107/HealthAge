@@ -24,7 +24,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 // ─── 디자인 시스템 v2: 토스 구조 × 뱅샐 그린 ─────────────────
 // - 연회색 배경(#F3F5F7) 위 흰 카드(radius 20, 무테두리·무그림자)로 영역 구분
-// - 브랜드 그린(#00C073)은 "누를 수 있는 것" 전용. '정상' 상태는 #1F8A5D로 분리
+// - 브랜드 그린(#00C073)은 "누를 수 있는 것" 전용. '정상' 상태는 #3CB371로 분리
 // - 상태 배지는 틴트 배경 + 상태색 텍스트 병기 (색만으로 구분 금지)
 export const T = {
   // Primary = 브랜드 그린. 버튼·링크·활성 탭 등 인터랙션 전용.
@@ -47,12 +47,13 @@ export const T = {
   border: '#F2F4F6',
   divider: '#F2F4F6',
 
-  // Semantic colors — 상태 전용(인터랙션 그린과 분리)
-  success: '#1F8A5D',
+  // Semantic colors — 상태 전용(인터랙션 그린과 분리).
+  // 채도는 백업본 톤(#3CB371/#FF8A3D/#F44336)을 따른다 — 낮춘 버전(#1F8A5D/#D97706/#F04452)은 흐릿하다는 피드백.
+  success: '#3CB371',
   successBg: '#EAF7F1',
-  warn: '#D97706',
+  warn: '#FF8A3D',
   warnBg: '#FFF3E7',
-  danger: '#F04452',
+  danger: '#F44336',
   dangerBg: '#FEE9EB',
 
   // Radius — 카드 20 · 버튼 14 · 입력 12 · 칩 999
