@@ -71,7 +71,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       {/* 히어로 섹션 — 로그인 전에는 가짜 점수 대신 로그인 유도 카드를 보여준다. */}
       {isPreview ? (
         <FadeInUp delay={0}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 6 }}>
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 10 }}>
           <Eyebrow>헬스에이지</Eyebrow>
           <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 8, lineHeight: 34 }}>
             내 건강검진 결과를{'\n'}한눈에 관리해요
@@ -90,7 +90,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         </FadeInUp>
       ) : (
       <FadeInUp delay={0}>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 6 }}>
+      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 10 }}>
         <Eyebrow>최근 건강검진 · {latest.hospital}</Eyebrow>
         <Text style={{ fontSize: 12, color: T.text3, marginTop: 6, marginBottom: 22 }}>{latest.date}</Text>
 
