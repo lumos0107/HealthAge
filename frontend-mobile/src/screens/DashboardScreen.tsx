@@ -109,6 +109,10 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         {/* 점수 바 — 22/100의 위치감. 그래프는 이거 하나만, 분포는 문장으로만 말한다. */}
         <View style={{ height: 6, backgroundColor: T.cardAlt, borderRadius: 3, overflow: 'hidden', marginBottom: 18 }}>
           <View style={{ width: `${score}%`, height: 6, borderRadius: 3, backgroundColor: scoreColor }} />
+          {/* 구간 눈금 — 배지 기준(40 미만 관리 필요 · 70 이상 양호)의 경계를 바에 표시 */}
+          {[40, 70].map((t) => (
+            <View key={t} style={{ position: 'absolute', left: `${t}%`, top: 0, bottom: 0, width: 2, backgroundColor: T.white }} />
+          ))}
         </View>
 
         {/* 구성 — 검사항목 카드 헤더와 같은 점 범례 한 줄 */}
