@@ -61,8 +61,6 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   const top3 = top3Alerts(metricDefinitions);
   // 검사항목 탭과 같은 기준(statusCounts) — 판정 대상이 아닌 참고 항목(키·몸무게)은 세지 않는다.
   const counts = statusCounts(metricDefinitions);
-  const totalCount = counts.정상 + counts.주의 + counts.위험;
-  const outCount = counts.주의 + counts.위험;
   const { score } = computeScore(metricDefinitions);
   const scoreColor = score >= 70 ? T.success : score >= 40 ? T.warn : T.danger;
   const scoreBg = score >= 70 ? T.successBg : score >= 40 ? T.warnBg : T.dangerBg;
@@ -114,12 +112,19 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           <View style={{ width: `${score}%`, height: 6, borderRadius: 3, backgroundColor: scoreColor }} />
         </View>
 
-        {/* 구성 — 판단 문장 한 줄 */}
-        <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 22 }}>
-          {outCount === 0
-            ? '모든 항목이 정상 범위예요'
-            : <>{totalCount}개 항목 중 <Text style={{ color: counts.위험 > 0 ? T.danger : T.warn }}>{outCount}개</Text>가 정상 범위를 벗어났어요</>}
-        </Text>
+        {/* 구성 — 검사항목 카드 헤더와 같은 점 범례 한 줄 */}
+        <View style={{ flexDirection: 'row', gap: 14 }}>
+          {[
+            { label: '정상', count: counts.정상, color: T.success },
+            { label: '주의', count: counts.주의, color: T.warn },
+            { label: '위험', count: counts.위험, color: T.danger },
+          ].map((c) => (
+            <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: c.color }} />
+              <Text style={{ fontSize: 13, color: T.text2 }}>{c.label} <Text style={{ fontWeight: '700', color: T.text1 }}>{c.count}</Text></Text>
+            </View>
+          ))}
+        </View>
       </View>
       </FadeInUp>
       )}
