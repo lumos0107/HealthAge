@@ -108,12 +108,8 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           <Text style={{ fontSize: 15, color: T.text3, marginBottom: 14, marginLeft: 6 }}>/ 100점</Text>
         </View>
 
-        {/* 점수 바 */}
-        <View style={{ height: 6, backgroundColor: T.cardAlt, borderRadius: 3, overflow: 'hidden', marginBottom: 16 }}>
-          <View style={{ width: `${score}%`, height: 6, borderRadius: 3, backgroundColor: scoreColor }} />
-        </View>
-
-        {/* 상태 분포 — 판단 문장 먼저, 근거는 3색 비율 바 + 점 범례로 (박스 나열보다 함축적) */}
+        {/* 상태 분포 — 판단 문장 먼저, 근거는 3색 비율 바 + 점 범례로 (박스 나열보다 함축적).
+            점수 바는 뺐다 — 큰 숫자가 이미 같은 정보라 바 두 개가 중복돼 보인다. */}
         <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 22 }}>
           {outCount === 0
             ? '모든 항목이 정상 범위예요'
