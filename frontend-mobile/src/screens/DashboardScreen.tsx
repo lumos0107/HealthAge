@@ -107,22 +107,12 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         </View>
 
         {/* 점수 바 — 22/100의 위치감. 그래프는 이거 하나만, 분포는 문장으로만 말한다. */}
-        <View style={{ marginBottom: 18 }}>
-          <View style={{ height: 10, backgroundColor: T.cardAlt, borderRadius: 5, overflow: 'hidden' }}>
-            <View style={{ width: `${score}%`, height: 10, borderRadius: 5, backgroundColor: scoreColor }} />
-            {/* 구간 눈금 — 배지 기준(40 미만 관리 필요 · 70 이상 양호)의 경계 */}
-            {[40, 70].map((t) => (
-              <View key={t} style={{ position: 'absolute', left: `${t}%`, top: 0, bottom: 0, width: 3, backgroundColor: T.white }} />
-            ))}
-          </View>
-          {/* 눈금 값 라벨 — 경계 지점 아래에 붙인다(width:0 + alignItems로 그 %를 중심에) */}
-          <View style={{ height: 16, marginTop: 3 }}>
-            {[40, 70].map((t) => (
-              <View key={t} style={{ position: 'absolute', left: `${t}%`, width: 0, alignItems: 'center' }}>
-                <Text style={{ fontSize: 11, color: T.text3, width: 40, textAlign: 'center' }}>{t}</Text>
-              </View>
-            ))}
-          </View>
+        <View style={{ height: 10, backgroundColor: T.cardAlt, borderRadius: 5, overflow: 'hidden', marginBottom: 18 }}>
+          <View style={{ width: `${score}%`, height: 10, borderRadius: 5, backgroundColor: scoreColor }} />
+          {/* 구간 눈금 — 배지 기준(40 미만 관리 필요 · 70 이상 양호)의 경계 */}
+          {[40, 70].map((t) => (
+            <View key={t} style={{ position: 'absolute', left: `${t}%`, top: 0, bottom: 0, width: 3, backgroundColor: T.white }} />
+          ))}
         </View>
 
         {/* 구성 — 검사항목 카드 헤더와 같은 점 범례 한 줄 */}
