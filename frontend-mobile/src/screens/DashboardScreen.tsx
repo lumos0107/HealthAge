@@ -6,7 +6,7 @@ import { Eyebrow, FadeInUp, StatusBadge, T } from '../components/UI';
 import { categoryVisual, SquircleIcon } from '../components/v2';
 import { computeScore } from '../data';
 import type { MetricDefinition, MetricKey, Report, TabKey } from '../data';
-import { headline, top3Alerts } from '../interpret';
+import { headline, statusCounts, top3Alerts } from '../interpret';
 
 // 외부 링크를 안전하게 연다 — 실패해도 조용히 죽지 않고 안내를 띄운다.
 async function openExternalUrl(url: string) {
@@ -59,11 +59,12 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
 }) {
   const latest = reports[reports.length - 1];
   const top3 = top3Alerts(metricDefinitions);
-  const normalCount = metricDefinitions.filter((m) => m.status === '정상').length;
-  const warnCount = metricDefinitions.filter((m) => m.status === '주의').length;
-  const dangerCount = metricDefinitions.filter((m) => m.status === '위험').length;
+  // 검사항목 탭과 같은 기준(statusCounts) — 판정 대상이 아닌 참고 항목(키·몸무게)은 세지 않는다.
+  const counts = statusCounts(metricDefinitions);
   const { score } = computeScore(metricDefinitions);
   const scoreColor = score >= 70 ? T.success : score >= 40 ? T.warn : T.danger;
+  const scoreBg = score >= 70 ? T.successBg : score >= 40 ? T.warnBg : T.dangerBg;
+  const scoreLabel = score >= 70 ? '양호해요' : score >= 40 ? '주의가 필요해요' : '관리가 필요해요';
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
@@ -91,8 +92,13 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       ) : (
       <FadeInUp delay={0}>
       <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 10 }}>
-        <Eyebrow>최근 건강검진 · {latest.hospital}</Eyebrow>
-        <Text style={{ fontSize: 12, color: T.text3, marginTop: 6, marginBottom: 22 }}>{latest.date}</Text>
+        {/* 검사일은 연도만 — 월일까지 있는 날짜 줄은 노이즈라 상단 문구에 합친다 */}
+        <Eyebrow>최근 건강검진({latest.year}) · {latest.hospital}</Eyebrow>
+
+        {/* 판단 배지 — 숫자보다 판단이 먼저 읽히게 */}
+        <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 14, marginBottom: 6 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+        </View>
 
         {/* 점수 대형 표시 — 숫자는 아주 크게, 캡션은 아주 작게 둬서 대비를 강하게 준다 */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 }}>
@@ -105,16 +111,16 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           <View style={{ width: `${score}%`, height: 6, borderRadius: 3, backgroundColor: scoreColor }} />
         </View>
 
-        {/* 현황 3개 — 옅은 색칠 박스 없이, 색은 글자에만 사용해 구분선으로 나열 */}
-        <View style={{ flexDirection: 'row' }}>
+        {/* 현황 3개 — 상태색 틴트 박스로 분포가 한눈에 들어오게 (뱅샐 방식) */}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
           {[
-            { label: '정상', count: normalCount, color: T.success },
-            { label: '주의', count: warnCount, color: T.warn },
-            { label: '위험', count: dangerCount, color: T.danger },
-          ].map((c, i) => (
-            <View key={c.label} style={[{ flex: 1, alignItems: 'center', paddingVertical: 10 }, i > 0 && { borderLeftWidth: 1, borderLeftColor: T.divider }]}>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: c.color }}>{c.count}</Text>
-              <Text style={{ fontSize: 11, color: c.color, fontWeight: '500', marginTop: 2 }}>{c.label}</Text>
+            { label: '정상', count: counts.정상, color: T.success, bg: T.successBg },
+            { label: '주의', count: counts.주의, color: T.warn, bg: T.warnBg },
+            { label: '위험', count: counts.위험, color: T.danger, bg: T.dangerBg },
+          ].map((c) => (
+            <View key={c.label} style={{ flex: 1, alignItems: 'center', paddingVertical: 12, borderRadius: T.radiusSm, backgroundColor: c.bg }}>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: c.color }}>{c.count}</Text>
+              <Text style={{ fontSize: 11, color: c.color, fontWeight: '600', marginTop: 2 }}>{c.label}</Text>
             </View>
           ))}
         </View>
