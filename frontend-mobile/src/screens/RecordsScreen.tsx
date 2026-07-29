@@ -129,7 +129,6 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
             <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: T.text1 }}>
               {detailReport.year}년 · {detailReport.hospital}
             </Text>
-            <Text style={{ fontSize: 13, color: T.text3 }}>{detailReport.score}점</Text>
             {usingRealData && !!userId && (
               <Pressable hitSlop={8} onPress={confirmDelete}>
                 <Ionicons name="trash-outline" size={17} color={T.text3} />
