@@ -122,9 +122,9 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       </FadeInUp>
       )}
 
-      {/* 빠른 이동 — 카드로 감싸지 않고 구분선 위에 아이콘 행만 둔다 */}
+      {/* 빠른 이동 — 다른 섹션과 같은 흰 카드로 */}
       <FadeInUp delay={90}>
-      <View style={{ paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: 16, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.divider, marginBottom: 8 }}>
+      <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: 16, marginBottom: 12 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           {QUICK_LINKS.map((link) => (
