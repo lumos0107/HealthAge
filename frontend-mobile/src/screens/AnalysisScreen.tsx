@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
-import { PeerRankSlider, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
-import { estimateRank, rankFromPercentile } from '../interpret';
+import { PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
+import { metricPeerRank, rankFromPercentile } from '../interpret';
 import { WhatIfSimulator } from '../components/WhatIfSimulator';
 import { cardContent, computeGroupsForReport, directionLabel, metricLabel, metricsForReport, metricDirection } from '../data';
 import type { MetricDefinition, Report } from '../data';
@@ -58,25 +58,24 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
 
 /** 2-2 나의 위치 — "같은 나이대 100명 중 N등". 백엔드 percentile은 누적분포(내 아래 몇 %)라
  *  값이 클수록 나쁜 계산기 지표에서는 그대로 등수가 된다(1등 = 가장 좋음).
- *  percentile이 있는 항목이 하나도 없으면 아무것도 그리지 않는다 — 등수를 지어내지 않는다. */
+ *  percentile이 있는 항목이 하나도 없으면 아무것도 그리지 않는다 — 등수를 지어내지 않는다.
+ *  문장·근거 배지는 PeerRankBlock에 모아 두어 네 화면이 같은 모양으로 말한다. */
 function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
   const it = items.find((x) => x.percentile != null);
   if (!it) return null;
-  const rank = rankFromPercentile(it.percentile!);
-  const color = calcLevelColor(it.level);
   return (
     <View style={{ marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-      <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 23 }}>
-        {it.title} 기준, 같은 나이대 100명 중 <Text style={{ color }}>{rank}등</Text>이에요
-      </Text>
-      <PeerRankSlider rank={rank} color={color} />
-      {!!it.peer_label && (
-        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, marginTop: 8 }}>
-          {it.peer_label}
-          {it.peer_n ? ` · 표본 ${it.peer_n.toLocaleString()}명` : ''}
-          {it.peer_year ? ` (${it.peer_year}년 국가검진)` : ''}
-        </Text>
-      )}
+      <PeerRankBlock
+        subject={it.title}
+        rank={rankFromPercentile(it.percentile!)}
+        color={calcLevelColor(it.level)}
+        measured
+        basis={[
+          it.peer_label,
+          it.peer_n ? `표본 ${it.peer_n.toLocaleString()}명` : null,
+          it.peer_year ? `${it.peer_year}년 국가검진` : null,
+        ].filter(Boolean).join(' · ')}
+      />
     </View>
   );
 }
@@ -323,7 +322,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         const groupMetrics = metricsByKeys(group.keys);
         // 그룹의 대표 항목 = 가장 주의가 필요한 항목. 그 항목으로 "100명 중 몇 등"을 보여준다.
         const lead = [...groupMetrics].sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0];
-        const leadRank = lead ? (lead.percentile != null ? rankFromPercentile(lead.percentile) : estimateRank(lead, report.values[lead.key])) : null;
+        const leadRank = lead ? metricPeerRank(lead, report.values[lead.key]) : null;
         const leadColor = lead ? (lead.status === '정상' ? T.success : lead.status === '주의' ? T.warn : T.danger) : T.text3;
         return (
           <SummaryCard
@@ -386,18 +385,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 </View>
               );
             })()}
-            positionExtra={lead && leadRank != null ? (
+            positionExtra={lead && leadRank ? (
               <View style={{ marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 23 }}>
-                  {lead.name} 기준, 같은 나이대 100명 중 <Text style={{ color: leadColor }}>{leadRank}등</Text>
-                  {lead.percentile != null ? '이에요' : '쯤이에요'}
-                </Text>
-                <PeerRankSlider rank={leadRank} color={leadColor} />
-                {lead.percentile == null && lead.peerMean != null && (
-                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, marginTop: 8 }}>
-                    또래 평균({lead.peerMean}{lead.unit})과 정상범위 폭으로 어림한 추정 등수예요.
-                  </Text>
-                )}
+                <PeerRankBlock subject={lead.name} color={leadColor} {...leadRank} />
               </View>
             ) : undefined}
           >

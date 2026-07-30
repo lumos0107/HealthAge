@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T } from '../components/UI';
-import { NORMAL_BAND, PeerRankSlider, Sparkline, scoreTone, SummaryCard } from '../components/v2';
+import { NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard } from '../components/v2';
 import { cardContent, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
-import { estimateRank, normalBounds, rankFromPercentile, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa } from '../interpret';
+import { metricPeerRank, normalBounds, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
 import type { RealTimeseries } from '../health';
 
@@ -420,9 +420,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
     // 최신 대표 항목을 그 해에 측정하지 않았을 때만 그 해에 있는 항목으로 대신한다.
     : pickLead(presentKeys.map((k) => metricByKeyForYear(k)!), reports) ?? undefined;
   const focusMetric = pickedMetric ?? leadMetric;
-  const focusRank = focusMetric
-    ? (focusMetric.percentile != null ? rankFromPercentile(focusMetric.percentile) : estimateRank(focusMetric, r.values[focusMetric.key]))
-    : null;
+  const focusRank = focusMetric ? metricPeerRank(focusMetric, r.values[focusMetric.key]) : null;
 
   // 2뎁스 헤드라인은 '기준 항목' 칩을 따라간다 — 칩을 바꾸면 아래 차트·밴드·등수가 전부 그
   // 항목으로 바뀌는데 맨 위 문장만 그대로면 한 화면이 서로 다른 항목을 말한다.
@@ -454,21 +452,13 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
           <Text style={{ fontSize: 11, fontWeight: '700', color: latestLead.badge.color }}>{latestLead.badge.text}</Text>
         </View>
       ) : undefined}
-      positionExtra={focusMetric && focusRank != null ? (
+      positionExtra={focusMetric && focusRank ? (
         <View style={{ marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 23 }}>
-            {focusMetric.name} 기준, 같은 나이대 100명 중{' '}
-            <Text style={{ color: focusMetric.status === '정상' ? T.success : focusMetric.status === '주의' ? T.warn : T.danger }}>
-              {focusRank}등
-            </Text>
-            {focusMetric.percentile != null ? '이에요' : '쯤이에요'}
-          </Text>
-          <PeerRankSlider rank={focusRank} color={focusMetric.status === '정상' ? T.success : focusMetric.status === '주의' ? T.warn : T.danger} />
-          {focusMetric.percentile == null && focusMetric.peerMean != null && (
-            <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, marginTop: 8 }}>
-              또래 평균({focusMetric.peerMean}{focusMetric.unit})과 정상범위 폭으로 어림한 추정 등수예요.
-            </Text>
-          )}
+          <PeerRankBlock
+            subject={focusMetric.name}
+            color={focusMetric.status === '정상' ? T.success : focusMetric.status === '주의' ? T.warn : T.danger}
+            {...focusRank}
+          />
         </View>
       ) : undefined}
     >

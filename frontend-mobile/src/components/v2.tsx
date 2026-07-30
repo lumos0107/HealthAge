@@ -70,6 +70,46 @@ export function PeerRankSlider({ rank, color }: { rank: number; color: string })
   );
 }
 
+/**
+ * "같은 나이대 100명 중 N등" 한 덩어리 — 앱에서 등수를 말하는 곳은 전부 이걸 쓴다.
+ * (분석 계산기 · 분석 관리참고군 · 히스토리 · 검사항목 상세 — 네 군데)
+ *
+ * ⚠️ 등수의 출처가 세 가지인데 문장도 근거 표기도 화면마다 달랐다:
+ *   ① 계산기 백분위 — calculator_percentiles_2017.parquet. 표본 수·연도까지 밝히고 있었다.
+ *   ② 검사항목 백분위 — peer_stats.parquet(성별·5세 연령대별 분포 선형보간). 근거를 안 밝혔다.
+ *   ③ 추정 등수 — 또래 평균 ± 정상범위 폭으로 정규분포를 가정한 계산(estimateRank).
+ *      실제 분포 데이터가 아니다.
+ * 셋 다 "100명 중 N등"이라는 같은 문장으로 나왔고, 실측인지 추정인지는 '이에요/쯤이에요'
+ * 한 글자 차이에만 실려 있었다. 여기서 문장 모양과 근거 배지를 한곳에 고정한다.
+ */
+export function PeerRankBlock({ subject, rank, color, measured, basis }: {
+  /** "{subject} 기준, …" — 어느 항목의 등수인지. */
+  subject: string;
+  rank: number;
+  color: string;
+  /** 모집단 분포에서 나온 값이면 true, 정규분포 가정으로 어림한 값이면 false. */
+  measured: boolean;
+  /** 근거 한 줄 — 어느 표본인지 / 무엇으로 어림했는지. */
+  basis?: string;
+}) {
+  return (
+    <>
+      <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 23 }}>
+        {subject} 기준, 같은 나이대 100명 중 <Text style={{ color }}>{rank}등</Text>{measured ? '이에요' : '쯤이에요'}
+      </Text>
+      <PeerRankSlider rank={rank} color={color} />
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8 }}>
+        <View style={{ backgroundColor: measured ? T.cardAlt : T.warnBg, paddingHorizontal: 7, paddingVertical: 2, borderRadius: T.radiusPill }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: measured ? T.text2 : T.warn }}>
+            {measured ? '모집단 분포' : '추정'}
+          </Text>
+        </View>
+        {!!basis && <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, flex: 1 }}>{basis}</Text>}
+      </View>
+    </>
+  );
+}
+
 /** 1뎁스 요약 카드 + 2뎁스 상세 오버레이 — 탭에는 제목·결론 한 줄만 두고,
  *  누르면 검사항목 상세(MetricDetailScreen)와 같은 전체 화면 오버레이가 열린다.
  *  오버레이 안은 항상 같은 순서로 읽힌다:

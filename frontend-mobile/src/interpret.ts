@@ -156,3 +156,27 @@ export function estimateRank(metric: MetricDefinition, value: number): number | 
   const betterFrac = metricDirection(metric) === 'low' ? 1 - phi : phi;
   return Math.min(100, Math.max(1, Math.round(betterFrac * 100)));
 }
+
+/** 검사 항목의 또래 등수 한 벌 — 등수·실측 여부·근거 문구를 함께 만든다.
+ *  등수를 말하는 세 화면(분석 관리참고군 · 히스토리 · 검사항목 상세)이 각자 같은 분기를
+ *  되풀이하면서 근거 문구만 조금씩 달랐다. 판단을 한 곳으로 모아 PeerRankBlock에 그대로 넘긴다.
+ *  percentile(모집단 분포)이 있으면 그걸 쓰고, 없을 때만 정규분포 가정으로 어림한다. */
+export function metricPeerRank(
+  metric: MetricDefinition,
+  value: number,
+): { rank: number; measured: boolean; basis: string } | null {
+  if (metric.percentile != null) {
+    return {
+      rank: rankFromPercentile(metric.percentile),
+      measured: true,
+      basis: '공단 표본에서 같은 성별·연령대의 분포와 비교한 값이에요.',
+    };
+  }
+  const rank = estimateRank(metric, value);
+  if (rank == null) return null;
+  return {
+    rank,
+    measured: false,
+    basis: `또래 평균(${metric.peerMean}${metric.unit})과 정상범위 폭으로 어림한 값이라 실제 등수와는 다를 수 있어요.`,
+  };
+}

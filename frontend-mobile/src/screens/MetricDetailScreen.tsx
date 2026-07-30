@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
 import { metricContent } from '../data';
-import { deltaText, estimateRank, formatMetricValue, headline, rankFromPercentile, yearDelta } from '../interpret';
+import { deltaText, formatMetricValue, headline, metricPeerRank, yearDelta } from '../interpret';
 import { StatusBadge, T } from '../components/UI';
-import { categoryVisual, MetricTrendChart, PeerRankSlider, RangeBar, SquircleIcon } from '../components/v2';
+import { categoryVisual, MetricTrendChart, PeerRankBlock, RangeBar, SquircleIcon } from '../components/v2';
 
 // L2 항목 상세 — 이야기 순서로 읽힌다: 판단 → 이 항목이 뭔지(정의, 펼치면 심화) → 내 위치 → 근거 → 그래서 뭘 하면 되는지.
 // 화면 전환은 이 오버레이 한 번만. 심화 설명만 2.5뎁스(펼치기)로 접어둔다 — 기본 설명으로 충분한 사람에게는 안 보여도 되는 층.
@@ -80,26 +80,17 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
           </View>
 
           {/* 나의 위치 — 위: 정상범위 바, 아래: "100명 중 N등" 또래 그래프(별도). infoOnly는 판정 대상이 아니라 카드 자체를 렌더하지 않는다.
-              등수는 percentile(실데이터)이 있으면 실측, 없으면 또래 평균+정상범위 폭으로 어림한 추정치 — 추정임을 문구로 밝힌다. */}
+              등수 문장·근거 배지는 PeerRankBlock 한 곳에 모아 두어 분석·히스토리와 같은 모양으로 말한다. */}
           {!metric.infoOnly && (
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
             <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>정상 범위와 비교하면 여기예요</Text>
             <RangeBar metric={metric} value={value} />
             {(() => {
-              const measured = metric.percentile != null;
-              const rank = measured ? rankFromPercentile(metric.percentile!) : estimateRank(metric, value);
-              if (rank == null) return null;
+              const peer = metricPeerRank(metric, value);
+              if (!peer) return null;
               return (
                 <View style={{ marginTop: 16, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
-                  <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, lineHeight: 25 }}>
-                    같은 나이대 100명이라면,{'\n'}그중 <Text style={{ color: statusColor }}>{rank}등</Text>{measured ? '이에요' : '쯤이에요'}
-                  </Text>
-                  <PeerRankSlider rank={rank} color={statusColor} />
-                  {!measured && (
-                    <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, marginTop: 8 }}>
-                      또래 평균({metric.peerMean}{metric.unit})과 정상범위 폭으로 어림한 추정 등수예요.
-                    </Text>
-                  )}
+                  <PeerRankBlock subject={metric.name} color={statusColor} {...peer} />
                 </View>
               );
             })()}

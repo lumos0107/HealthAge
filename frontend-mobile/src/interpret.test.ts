@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyGender, metricDefinitions, reports } from './data';
 import type { MetricDefinition } from './data';
-import { deltaText, estimateRank, formatMetricValue, headline, normalBounds, rankFromPercentile, scoreGapNote, scoreGrade, scoreSeries, scoreTrendText, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
+import { deltaText, estimateRank, formatMetricValue, headline, metricPeerRank, normalBounds, rankFromPercentile, scoreGapNote, scoreGrade, scoreSeries, scoreTrendText, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
 
 const by = (key: string) => metricDefinitions.find((m) => m.key === key)!;
 const withStatus = (m: MetricDefinition, status: MetricDefinition['status']): MetricDefinition => ({ ...m, status });
@@ -186,5 +186,26 @@ describe('estimateRank — percentile 없을 때의 추정 등수', () => {
   });
   it('peerMean 없는 항목(크레아티닌)은 추정하지 않는다', () => {
     expect(estimateRank(by('creatinine'), 1.0)).toBeNull();
+  });
+});
+
+describe('metricPeerRank — 등수를 말하는 네 화면이 같은 판단을 쓰게 하는 단일 지점', () => {
+  it('percentile이 있으면 그걸 쓰고 모집단 분포임을 밝힌다', () => {
+    const m = { ...by('bmi'), percentile: 72.4 };
+    expect(metricPeerRank(m, 26.3)).toEqual({
+      rank: 72,
+      measured: true,
+      basis: '공단 표본에서 같은 성별·연령대의 분포와 비교한 값이에요.',
+    });
+  });
+  it('percentile이 없으면 추정으로 떨어지고 measured가 false가 된다', () => {
+    const r = metricPeerRank(by('bmi'), 24.2);
+    expect(r?.rank).toBe(50);
+    expect(r?.measured).toBe(false);
+    // 근거 문구에 '어림'이 들어가야 추정임이 배지 밖에서도 읽힌다.
+    expect(r?.basis).toContain('어림');
+  });
+  it('추정도 못 하는 항목(peerMean 없음)은 등수를 지어내지 않는다', () => {
+    expect(metricPeerRank(by('creatinine'), 1.0)).toBeNull();
   });
 });
