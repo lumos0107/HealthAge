@@ -275,7 +275,8 @@ export default function ProfileScreen({
         {/* 검진 결과 내보내기 — reports가 없거나 비어 있으면(비로그인/기록 없음) 카드 전체를 숨긴다 */}
         {reports && reports.length > 0 && (
         <FadeInUp delay={245}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
+        {/* 위 세 섹션과 같은 '박스 없이 구분선' 문법 — 이 카드만 흰 박스라 한 화면에 두 문법이 섞여 있었다. */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 8, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 18 }}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>검진 결과 내보내기</Text>
           <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginBottom: 14 }}>병원 지참·가족 공유용 PDF로 저장해요.</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>

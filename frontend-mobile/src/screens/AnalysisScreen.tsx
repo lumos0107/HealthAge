@@ -2,19 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
-import { PeerRankSlider, scoreTone, SummaryCard } from '../components/v2';
+import { PeerRankSlider, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
 import { estimateRank, rankFromPercentile } from '../interpret';
 import { WhatIfSimulator } from '../components/WhatIfSimulator';
-import { cardContent, computeGroupsForReport, directionLabel, metricLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
+import { cardContent, computeGroupsForReport, directionLabel, metricLabel, metricsForReport, metricDirection } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
 /** 도메인 섹션 헤더 — 분석 카드를 신장/간/대사·지질/심혈관/통계참고로 묶어 읽히게 한다.
  *  카드를 부수지 않고 헤더만 얹는 가벼운 그룹핑. 해당 카드가 없으면 헤더도 그리지 않는다. */
-function DomainHeader({ icon, title }: { icon: string; title: string }) {
+function DomainHeader({ title }: { title: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginTop: 16, marginBottom: 6 }}>
-      <Text style={{ fontSize: 15 }}>{icon}</Text>
       <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>{title}</Text>
     </View>
   );
@@ -184,7 +183,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
   const [showRedundant, setShowRedundant] = useState(false);
   // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
-  const [showScoreCalc, setShowScoreCalc] = useState(false);
   // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
   const [showEngines, setShowEngines] = useState(false);
   const report = reports[yearIdx];
@@ -192,7 +190,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 참고 점수: 그 해 검진 결과에 기록된 값을 그대로 보여준다(대시보드·기록 화면과 항상 일치).
   // 감점 근거(주의/위험 개수)도 그 해 기록과 함께 저장해 둔 값을 그대로 쓴다 — 연도가 바뀌어도 항상 점수와 일치한다.
   const scorePct = report.score;
-  const scoreColor = scoreTone(scorePct).color;
+  const { color: scoreColor, bg: scoreBg, label: scoreLabel } = scoreTone(scorePct);
 
   // 관리 참고군: 선택한 연도의 실제 측정값을 기준으로 매번 다시 계산한다 — 연도를 바꾸면 그 해 기준으로 갱신된다.
   // (단, 정렬은 매칭 개수 기준이라 1순위 그룹이 자연히 상단에 오게 되고, 보통 연도가 바뀌어도 같은 그룹이 1순위를 유지한다)
@@ -219,7 +217,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 안내 — 박스 대신 구분선과 텍스트만으로 */}
       <FadeInUp delay={50}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-        <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
+        {/* 경고 성격의 기호에 브랜드 그린(=누를 수 있는 것)을 쓰면 안 된다 — 히스토리에서 같은 이유로 고쳤다. */}
+        <Text style={{ fontSize: 13, color: T.warn, fontWeight: '700' }}>!</Text>
         <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>
           이 화면은 건강검진 수치를 이해하기 위한 참고 정보입니다. 질병 진단이나 치료 판단을 대체하지 않습니다.
         </Text>
@@ -248,37 +247,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         {/* 연도를 바꿀 때마다 점수가 0에서부터 채워지며 그려져, 변화가 자연스럽게 느껴진다 */}
         <View style={{ marginBottom: 16 }}>
           <AnimatedScore score={scorePct} color={scoreColor} />
+          {/* 판단 배지 — 홈과 같은 숫자에 홈에만 판단이 붙어 있었다. scoreTone 한 곳에서 색·라벨을 받는다. */}
+          <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 10 }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+          </View>
         </View>
         {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
-        {showScoreCalc && (
-          <>
-            <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 16 }}>
-              100점에서 시작해 주의 항목은 {SCORE_PENALTY.manage}점, 위험 항목은 {SCORE_PENALTY.track}점씩 빼서 계산해요.{'\n'}
-              100 − ({SCORE_PENALTY.manage}×주의 {report.manageCount}개) − ({SCORE_PENALTY.track}×위험 {report.trackCount}개) = {scorePct}점
-            </Text>
-            {/* 감점 기준 — 옅은 색칠 박스 없이, 색은 글자에만 사용해 구분선으로 나열 */}
-            <View style={{ flexDirection: 'row' }}>
-              {[
-                { label: '정상', note: '감점 없음', color: T.success },
-                { label: '주의', note: '-6점', color: T.warn },
-                { label: '위험', note: '-12점', color: T.danger },
-              ].map((item, i) => (
-                <View key={item.label} style={[{ flex: 1, alignItems: 'center', paddingVertical: 10 }, i > 0 && { borderLeftWidth: 1, borderLeftColor: T.divider }]}>
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: item.color, textAlign: 'center', marginBottom: 4 }}>{item.label}</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{item.note}</Text>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-        <Pressable
-          onPress={() => setShowScoreCalc((v) => !v)}
-          hitSlop={8}
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
-        >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{showScoreCalc ? '접기' : '어떻게 계산했나요?'}</Text>
-          <Ionicons name={showScoreCalc ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
-        </Pressable>
+        <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
       </View>
       </FadeInUp>
 
@@ -389,8 +364,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       </FadeIn>
       </FadeInUp>
 
-      {/* 🩺 신장 — eGFR·CrCl */}
-      {egfr && <DomainHeader icon="🩺" title="신장 기능" />}
+      {/* 신장 — eGFR·CrCl */}
+      {egfr && <DomainHeader title="신장 기능" />}
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
       {egfr && (
         <FadeInUp delay={180}>
@@ -424,8 +399,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* 🫁 간 — FLI/HSI 보조지표 + 지방간 유형 + 간 계산기(BARD·De Ritis) */}
-      {((flIndices && (flIndices.fli || flIndices.hsi)) || fattyLiverType || liverCalcs.length > 0) && <DomainHeader icon="🫁" title="간" />}
+      {/* 간 — FLI/HSI 보조지표 + 지방간 유형 + 간 계산기(BARD·De Ritis) */}
+      {((flIndices && (flIndices.fli || flIndices.hsi)) || fattyLiverType || liverCalcs.length > 0) && <DomainHeader title="간" />}
       {/* ③-3 지방간 보조지표(FLI·HSI) — 검진 수치로 계산되는 선별용 지표.
           값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
@@ -508,8 +483,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* ⚖️ 대사·지질 — 검증된 수치 계산기(지질비·인슐린저항성·내장지방·혈압) */}
-      {metabolicCalcs.length > 0 && <DomainHeader icon="⚖️" title="대사·지질" />}
+      {/* 대사·지질 — 검증된 수치 계산기(지질비·인슐린저항성·내장지방·혈압) */}
+      {metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
         <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} summary={levelSummary(metabolicCalcs.map((it) => it.level))}>
@@ -613,9 +588,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* 📊 함께 나타나는 패턴 · 집단군 (통계 참고) — 위험 정량이 아닌 동반·판정 통계 묶음 */}
+      {/* 함께 나타나는 패턴 · 집단군 (통계 참고) — 위험 정량이 아닌 동반·판정 통계 묶음 */}
       {((comboGroups && comboGroups.matched_count > 0) || !!singleGroups?.length) && (
-        <DomainHeader icon="📊" title="함께 나타나는 패턴 · 집단군 (통계 참고)" />
+        <DomainHeader title="함께 나타나는 패턴 · 집단군 (통계 참고)" />
       )}
       {/* ③-2 함께 나타나는 조합(조합 그룹) — 공단 표본 기준 '동반 경향(기술통계)'이며 위험도가 아니다.
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
@@ -828,8 +803,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* 🫀 심혈관 — ASCVD 위험 계산기 */}
-      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader icon="🫀" title="심혈관" />}
+      {/* 심혈관 — ASCVD 위험 계산기 */}
+      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
       {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
       {ascvd?.available && ascvd.risk_percent != null && (

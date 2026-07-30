@@ -3,7 +3,7 @@ import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { Eyebrow, FadeInUp, StatusBadge, T } from '../components/UI';
-import { categoryVisual, scoreTone, SquircleIcon } from '../components/v2';
+import { categoryVisual, ScoreCalcNote, scoreTone, SquircleIcon } from '../components/v2';
 import { computeScore } from '../data';
 import type { MetricDefinition, MetricKey, Report, TabKey } from '../data';
 import { headline, statusCounts, top3Alerts } from '../interpret';
@@ -61,7 +61,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   const top3 = top3Alerts(metricDefinitions);
   // 검사항목 탭과 같은 기준(statusCounts) — 판정 대상이 아닌 참고 항목(키·몸무게)은 세지 않는다.
   const counts = statusCounts(metricDefinitions);
-  const { score } = computeScore(metricDefinitions);
+  const { score, manageCount, trackCount } = computeScore(metricDefinitions);
   const { color: scoreColor, bg: scoreBg, label: scoreLabel } = scoreTone(score);
 
   return (
@@ -95,8 +95,11 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           {latest.year}년 · {latest.hospital}
         </Text>
 
+        {/* 무슨 점수인지부터 — 점수를 처음 만나는 화면인데 라벨 없이 큰 숫자만 있었다(분석 탭에는 있었다). */}
+        <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500', marginTop: 14 }}>참고 점수</Text>
+
         {/* 점수 + 판단 배지 한 행 */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 18, marginBottom: 18 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 4, marginBottom: 18 }}>
           <Text style={{ fontSize: 72, fontWeight: '800', fontFamily: T.fontDisplay, color: scoreColor, lineHeight: 76, letterSpacing: -1 }}>{score}</Text>
           <Text style={{ fontSize: 15, color: T.text3, marginBottom: 12, marginLeft: 6 }}>/ 100점</Text>
           <View style={{ backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginLeft: 12, marginBottom: 12 }}>
@@ -125,6 +128,11 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
               <Text style={{ fontSize: 13, color: T.text2 }}>{c.label} <Text style={{ fontWeight: '700', color: T.text1 }}>{c.count}</Text></Text>
             </View>
           ))}
+        </View>
+
+        {/* 계산 방법 — 분석 탭과 같은 블록. 점수를 보여주는 화면은 모두 설명을 단다. */}
+        <View style={{ marginTop: 18 }}>
+          <ScoreCalcNote score={score} manageCount={manageCount} trackCount={trackCount} />
         </View>
       </View>
       </FadeInUp>

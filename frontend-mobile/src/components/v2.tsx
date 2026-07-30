@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
+import { SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import { normalBounds, scoreGrade } from '../interpret';
 import { T, W } from './UI';
@@ -61,7 +62,7 @@ export function PeerRankSlider({ rank, color }: { rank: number; color: string })
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
         <Text style={{ fontSize: 12, color: T.text3 }}>1등</Text>
         <Text style={{ fontSize: 12, fontWeight: '600', color: T.text2 }}>
-          상위 {myBin * 10 + 1}~{myBin * 10 + 10}등 구간
+          {myBin * 10 + 1}~{myBin * 10 + 10}등 구간
         </Text>
         <Text style={{ fontSize: 12, color: T.text3 }}>100등</Text>
       </View>
@@ -291,6 +292,47 @@ export function scoreTone(score: number) {
   if (grade === '정상') return { color: T.success, bg: T.successBg, label: '양호해요' };
   if (grade === '주의') return { color: T.warn, bg: T.warnBg, label: '주의가 필요해요' };
   return { color: T.danger, bg: T.dangerBg, label: '관리가 필요해요' };
+}
+
+/** "어떻게 계산했나요?" 접이식 설명 — 점수를 보여주는 화면은 모두 이걸 단다.
+ *  분석 탭에만 있어서, 점수를 처음 만나는 홈에는 정작 무슨 점수인지 설명이 없었다. */
+export function ScoreCalcNote({ score, manageCount, trackCount }: {
+  score: number; manageCount: number; trackCount: number;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      {open && (
+        <>
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 16 }}>
+            100점에서 시작해 주의 항목은 {SCORE_PENALTY.manage}점, 위험 항목은 {SCORE_PENALTY.track}점씩 빼서 계산해요.{'\n'}
+            100 − ({SCORE_PENALTY.manage}×주의 {manageCount}개) − ({SCORE_PENALTY.track}×위험 {trackCount}개) = {score}점
+          </Text>
+          {/* 감점 기준 — 옅은 색칠 박스 없이, 색은 글자에만 사용해 구분선으로 나열 */}
+          <View style={{ flexDirection: 'row' }}>
+            {[
+              { label: '정상', note: '감점 없음', color: T.success },
+              { label: '주의', note: `-${SCORE_PENALTY.manage}점`, color: T.warn },
+              { label: '위험', note: `-${SCORE_PENALTY.track}점`, color: T.danger },
+            ].map((item, i) => (
+              <View key={item.label} style={[{ flex: 1, alignItems: 'center', paddingVertical: 10 }, i > 0 && { borderLeftWidth: 1, borderLeftColor: T.divider }]}>
+                <Text style={{ fontSize: 11, fontWeight: '600', color: item.color, textAlign: 'center', marginBottom: 4 }}>{item.label}</Text>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{item.note}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        hitSlop={8}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+      >
+        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : '어떻게 계산했나요?'}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+      </Pressable>
+    </>
+  );
 }
 
 /** 하단 고정 CTA — 다음 행동 버튼을 항상 같은 위치에. 스크롤 콘텐츠에는 paddingBottom 100 이상을 줄 것. */

@@ -574,23 +574,23 @@ def run_recommendations(
 
     if ms_detail.get("is_metabolic_syndrome"):
         priority_messages.append(
-            f"🚨 대사증후군에 해당합니다 ({ms_detail['count']}/{ms_detail['evaluable']}개 충족). "
+            f"대사증후군에 해당합니다 ({ms_detail['count']}/{ms_detail['evaluable']}개 충족). "
             "심혈관 질환 위험이 매우 높으니 의료진 상담을 권장합니다."
         )
 
     if user_groups.get("g_diabetes"):
         priority_messages.append(
-            "💊 당뇨 관리 - HbA1c 검사로 3개월 평균 혈당을 확인하고 합병증 예방에 신경 쓰세요."
+            "당뇨 관리 - HbA1c 검사로 3개월 평균 혈당을 확인하고 합병증 예방에 신경 쓰세요."
         )
 
     if user_groups.get("g_fatty_liver_suspect"):
         priority_messages.append(
-            "🩺 지방간 의심 - 간 초음파 검사 및 절주 권장."
+            "지방간 의심 - 간 초음파 검사 및 절주 권장."
         )
 
     if age and age >= 65:
         priority_messages.append(
-            "👴 65세 이상 - 낙상 예방을 위해 저혈압/저혈당 증상에 특히 주의하세요."
+            "65세 이상 - 낙상 예방을 위해 저혈압/저혈당 증상에 특히 주의하세요."
         )
 
     return {

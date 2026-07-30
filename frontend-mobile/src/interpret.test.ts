@@ -7,18 +7,25 @@ const by = (key: string) => metricDefinitions.find((m) => m.key === key)!;
 const withStatus = (m: MetricDefinition, status: MetricDefinition['status']): MetricDefinition => ({ ...m, status });
 
 describe('headline', () => {
+  // 호출처(홈 TOP3·검사항목 상세)가 바로 위에 항목명을 띄우므로 문장에 주어를 넣지 않는다.
+  it('항목명을 넣지 않는다 — 제목과 두 줄 연속으로 겹치기 때문', () => {
+    expect(headline(withStatus(by('bmi'), '위험'), 26.3)).not.toContain('체질량지수');
+  });
   it('주의 + 높은 방향이면 "살짝 높아요"', () => {
     // glucose: normalText '70-99', 2024년 값 112 → 살짝 높아요
-    expect(headline(withStatus(by('glucose'), '주의'), 112)).toBe('공복혈당이 살짝 높아요');
+    expect(headline(withStatus(by('glucose'), '주의'), 112)).toBe('살짝 높아요');
   });
   it('위험이면 "많이 높아요"', () => {
-    expect(headline(withStatus(by('waist'), '위험'), 93)).toBe('허리둘레가 많이 높아요');
+    expect(headline(withStatus(by('waist'), '위험'), 93)).toBe('많이 높아요');
   });
   it('정상이면 "정상 범위예요"', () => {
-    expect(headline(withStatus(by('ast'), '정상'), 34)).toBe('AST가 정상 범위예요');
+    expect(headline(withStatus(by('ast'), '정상'), 34)).toBe('정상 범위예요');
   });
   it('낮은 방향(HDL)이 주의면 "살짝 낮아요"', () => {
-    expect(headline(withStatus(by('hdl'), '주의'), 39)).toBe('HDL-C가 살짝 낮아요');
+    expect(headline(withStatus(by('hdl'), '주의'), 39)).toBe('살짝 낮아요');
+  });
+  it('참고 항목(infoOnly)은 참고용 문구', () => {
+    expect(headline(by('height'), 172)).toBe('참고용 수치예요');
   });
 });
 

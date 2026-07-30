@@ -31,16 +31,17 @@ export function normalBounds(metric: MetricDefinition): { low?: number; high?: n
   return { low: 0, high: metric.normalValue };
 }
 
-/** L2 상단 헤드라인 — 상태+방향으로 쉬운 문장을 만든다. */
+/** L2 상단 헤드라인 — 상태+방향으로 쉬운 문장을 만든다.
+ *  ⚠️ 주어(항목명)를 넣지 않는다. 호출처 두 곳(홈 TOP3·검사항목 상세)이 모두 바로 위에
+ *  항목명을 제목으로 띄우고 있어서, 주어를 넣으면 같은 이름이 두 줄 연속으로 나온다. */
 export function headline(metric: MetricDefinition, value: number): string {
-  const subject = `${metric.name}${subjectJosa(metric.name)}`;
-  if (metric.infoOnly) return `${subject} 참고용 수치예요`;
-  if (metric.status === '정상') return `${subject} 정상 범위예요`;
-  const { low, high } = normalBounds(metric);
+  if (metric.infoOnly) return '참고용 수치예요';
+  if (metric.status === '정상') return '정상 범위예요';
+  const { low } = normalBounds(metric);
   const isLow = low != null && value < low;
   const dirWord = isLow ? '낮아요' : '높아요';
   const degree = metric.status === '위험' ? '많이' : '살짝';
-  return `${subject} ${degree} ${dirWord}`;
+  return `${degree} ${dirWord}`;
 }
 
 /** 해당 연도 직전 검진(그 항목이 실제 측정된 해)과의 차이. 이전 기록이 없으면 null. */

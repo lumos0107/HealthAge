@@ -349,7 +349,8 @@ export function AnimatedScore({ score, color, max = 100 }: { score: number; colo
     <View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 }}>
         <Text style={{ fontSize: 64, fontWeight: '700', color, lineHeight: 68 }}>{display}</Text>
-        <Text style={{ fontSize: 18, color: T.text3, marginBottom: 10, marginLeft: 4 }}>/ {max}</Text>
+        {/* 홈 히어로와 같은 표기("/ 100점") — 같은 점수인데 화면마다 단위가 달랐다. */}
+        <Text style={{ fontSize: 18, color: T.text3, marginBottom: 10, marginLeft: 4 }}>/ {max}점</Text>
       </View>
       <View style={{ height: 8, backgroundColor: T.bg, borderRadius: 4, overflow: 'hidden' }}>
         <Animated.View
