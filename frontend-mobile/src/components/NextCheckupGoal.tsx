@@ -506,6 +506,18 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                   );
                 })()}
 
+                {/* 그대로인 지표 — 위 ③의 "이건 안 움직여요"와 다른 층이다. 저건 문헌 근거상
+                    효과가 없다는 뜻이고, 이건 바꾼 값이 그 지표의 계산식에 아예 안 들어간다는 뜻이다.
+                    조용히 빼면 "안 보이니 상관없나 보다"가 된다. */}
+                {!!result.unchanged.length && (
+                  <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 6 }}>그대로인 지표 {result.unchanged.length}종</Text>
+                    <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+                      {result.unchanged.join(' · ')} — 이 행동으로 달라지는 값이 이 지표의 계산식에 들어가지 않아서예요.
+                    </Text>
+                  </View>
+                )}
+
                 <View style={{ marginHorizontal: 16, marginTop: 12, paddingHorizontal: 4 }}>
                   {/* 유지 확률 — 계산으로는 옳지만 2년 뒤에도 남아 있을 확률은 절반 이하다.
                       "다음 검진 목표"라는 틀 자체가 이 한계에 맞춰 고른 것이므로 문구로도 밝힌다. */}
