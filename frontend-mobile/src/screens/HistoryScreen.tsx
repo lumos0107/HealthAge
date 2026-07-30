@@ -360,8 +360,6 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   // 선 색은 '그리는 순서'가 아니라 '항목'에 고정한다 — 그래프는 한 번에 한 항목만 그리므로
   // 순서로 색을 뽑으면 어떤 항목을 골라도 늘 첫 번째 색이 되어 아래 범례의 색 표식과 어긋난다.
   const colorOf = (k: MetricKey) => LINE_COLORS[Math.max(0, presentKeys.indexOf(k)) % LINE_COLORS.length];
-  // 이 묶음의 대표 항목 = 가장 주의가 필요한 항목. 2뎁스의 밴드·등수 기본값이 된다(선택 연도 기준).
-  const leadMetric = pickLead(presentKeys.map((k) => metricByKeyForYear(k)!), reports) ?? undefined;
 
   // 1뎁스(요약 문장 + 스파크라인)는 **항상 최신 연도** 기준으로 고른다.
   // 2뎁스에서 연도 칩을 바꾸면 selIdx가 남아 있어, 그걸 쓰면 모달을 닫은 뒤 1뎁스 문장의
@@ -409,7 +407,17 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   // 그 해에 측정되지 않은 항목이 골라져 있으면 전체보기로 돌아간다 — 없는 값을 단독으로 그릴 수는 없다.
   const pickedMetric = pick && presentKeys.includes(pick) ? metricByKeyForYear(pick) : null;
   // 전체보기에서도 밴드·등수는 하나를 골라야 한다(항목마다 정상범위가 달라 전부 깔면 못 읽는다).
-  // 그때의 기준은 대표 항목 — 대개 그게 보고 싶은 항목이다.
+  // 그때의 기준은 대표 항목인데, **최신 연도로 고정한 대표**(latestLead)를 쓴다.
+  // ⚠️ 선택 연도로 대표를 다시 뽑으면 연도를 누를 때마다 기준이 갈아탄다 — 혈당·체중은
+  // 2014년엔 허리가 주의라 허리가, 2024년엔 BMI가 위험이라 BMI가 대표가 되어서
+  // 초록 띠·값 라벨·등수·헤드라인이 통째로 다른 항목으로 바뀌었다. 연도만 눌렀을 뿐인
+  // 사용자에게는 이유 없는 변화이고, 연도끼리 수치를 비교할 수도 없다.
+  // 1뎁스에서 latestLead로 막아 둔 것과 같은 결함이다(위 주석 참고).
+  const leadKey = latestLead.lead?.key;
+  const leadMetric = leadKey && presentKeys.includes(leadKey)
+    ? metricByKeyForYear(leadKey)
+    // 최신 대표 항목을 그 해에 측정하지 않았을 때만 그 해에 있는 항목으로 대신한다.
+    : pickLead(presentKeys.map((k) => metricByKeyForYear(k)!), reports) ?? undefined;
   const focusMetric = pickedMetric ?? leadMetric;
   const focusRank = focusMetric
     ? (focusMetric.percentile != null ? rankFromPercentile(focusMetric.percentile) : estimateRank(focusMetric, r.values[focusMetric.key]))
