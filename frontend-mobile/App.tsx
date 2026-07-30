@@ -18,9 +18,9 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/api';
 import { Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
-import { initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
+import { applyGender, initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
-import { dummyComboAnalysis, dummyRecommendations, dummyInsight, dummyHighlights, dummyChangePace } from './src/dummyAnalysis';
+import { dummyComboAnalysis, dummyEgfr, dummyRecommendations, dummyInsight, dummyHighlights, dummyChangePace } from './src/dummyAnalysis';
 import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, latestRecommendations, latestComboAnalysis, fetchEgfr, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
 import type { RealTimeseries, RealRecommendations, RealEgfr, RealComboAnalysis } from './src/health';
 import AnalysisScreen from './src/screens/AnalysisScreen';
@@ -155,7 +155,8 @@ export default function App() {
   // 실제 사용자로 로그인했는데 검진 기록이 아직 없는 경우 — 더미 대신 "빈 상태"를 보여준다.
   const needEmptyState = loggedIn && !usingRealData && !isDemoAccount;
   const reportsForScreens = usingRealData ? realReports! : dummyReports;
-  const metricDefinitionsForScreens = usingRealData ? realMetricDefinitions! : dummyMetricDefinitions;
+  // 허리둘레·HDL·감마-GTP·혈색소는 성별로 정상범위가 달라, 화면에 넘기기 전 이 사람 기준으로 치환한다.
+  const metricDefinitionsForScreens = applyGender(usingRealData ? realMetricDefinitions! : dummyMetricDefinitions, profile.gender);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -352,7 +353,7 @@ export default function App() {
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : (isDemoAccount ? dummyRecommendations : null)} egfr={usingRealData ? egfr : null} comboAnalysis={usingRealData ? comboAnalysis : (isDemoAccount ? dummyComboAnalysis : null)} />)}
+          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : (isDemoAccount ? dummyRecommendations : null)} egfr={usingRealData ? egfr : (isDemoAccount ? dummyEgfr : null)} comboAnalysis={usingRealData ? comboAnalysis : (isDemoAccount ? dummyComboAnalysis : null)} />)}
         {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} />}
         {tab === 'profile' && loggedIn && (
           <ProfileScreen

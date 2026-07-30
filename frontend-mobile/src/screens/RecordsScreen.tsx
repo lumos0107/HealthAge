@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { categoryVisual, SquircleIcon } from '../components/v2';
 import { Eyebrow, FadeIn, FadeInUp, StatusBadge, T } from '../components/UI';
-import { medicationDosageText, medicationPeriodText, medicationTemplate, metricsForReport } from '../data';
+import { medicationDosageText, medicationPeriodText, medicationTemplate, metricGloss, metricsForReport } from '../data';
 import type { MedicationItem, MetricDefinition, MetricKey, Report } from '../data';
 import { deleteReport } from '../health';
 import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
@@ -164,7 +164,13 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                 <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
-                  <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>{metric.category}</Text>
+                  {/* 이름만으로 모를 항목에만 짧은 뜻풀이. 카테고리는 왼쪽 아이콘 색이 이미 말해주고,
+                      상태는 오른쪽 값·배지가 말해주므로 여기서 반복하지 않는다. 자세한 정의는 2뎁스. */}
+                  {!!metricGloss[metric.key] && (
+                    <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }} numberOfLines={1}>
+                      {metricGloss[metric.key]}
+                    </Text>
+                  )}
                 </View>
                 <Text style={{ fontSize: 16, fontWeight: '700', color: metric.infoOnly ? T.text1 : color }}>{formatMetricValue(metric, detailReport.values[metric.key])}{metric.unit ? <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text> : null}</Text>
                 {metric.infoOnly ? (

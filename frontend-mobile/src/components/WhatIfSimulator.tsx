@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { T } from './UI';
 import { Stepper } from './LifestyleForm';
 import { simulateCheckup } from '../health';
+import { simulateDemo } from '../dummyAnalysis';
 import type { RealSimulation, SimulateChanges } from '../health';
 import type { Report } from '../data';
 
@@ -35,10 +36,12 @@ function MsDiff({ before, after }: { before: number | null; after: number | null
   );
 }
 
-export function WhatIfSimulator({ latest, disabled, disabledReason }: {
+export function WhatIfSimulator({ latest, disabled, disabledReason, demoMode }: {
   latest: Report;
   disabled?: boolean;
   disabledReason?: string;
+  /** 데모 계정 — 서버 재계산을 쓸 수 없어 앱 안에서 다시 센다(simulateDemo 주석 참고). */
+  demoMode?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Record<string, number>>({});
@@ -66,7 +69,7 @@ export function WhatIfSimulator({ latest, disabled, disabledReason }: {
         if (values[c.key] != null && values[c.key] !== base) (changes as any)[c.key] = values[c.key];
       }
       if (!Object.keys(changes).length) { setError('바꾼 값이 없어요. 위 항목을 조정한 뒤 다시 계산해주세요.'); return; }
-      setResult(await simulateCheckup(changes));
+      setResult(demoMode ? simulateDemo(latest, changes) : await simulateCheckup(changes));
     } catch (e) {
       setError(e instanceof Error ? `재계산에 실패했어요: ${e.message}` : '재계산에 실패했어요.');
     } finally {
@@ -90,7 +93,7 @@ export function WhatIfSimulator({ latest, disabled, disabledReason }: {
         >
           <Text style={{ fontSize: 15, fontWeight: '700', color: disabled ? T.text3 : '#fff' }}>수치 바꿔보기</Text>
         </Pressable>
-        {disabled && !!disabledReason && (
+        {(disabled || demoMode) && !!disabledReason && (
           <Text style={{ fontSize: 11, color: T.text3, marginTop: 8, lineHeight: 16 }}>{disabledReason}</Text>
         )}
       </View>

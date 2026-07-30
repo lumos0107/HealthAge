@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { PeerRankSlider, SummaryCard } from '../components/v2';
+import { estimateRank, rankFromPercentile } from '../interpret';
 import { WhatIfSimulator } from '../components/WhatIfSimulator';
-import { computeGroupsForReport, directionLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
+import { cardContent, computeGroupsForReport, directionLabel, metricLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem } from '../health';
+import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
 /** 도메인 섹션 헤더 — 분석 카드를 신장/간/대사·지질/심혈관/통계참고로 묶어 읽히게 한다.
  *  카드를 부수지 않고 헤더만 얹는 가벼운 그룹핑. 해당 카드가 없으면 헤더도 그리지 않는다. */
@@ -17,6 +19,9 @@ function DomainHeader({ icon, title }: { icon: string; title: string }) {
     </View>
   );
 }
+
+// 그룹의 '대표 항목'을 고르는 순서 — 가장 나쁜 상태를 대표로 삼는다.
+const ATTENTION: Record<string, number> = { 위험: 0, 주의: 1, 정상: 2 };
 
 // 계산기 level → 상태색 (info=중립 회색, 나머지는 구간색)
 const calcLevelColor = (level: string) => level === 'info' ? T.text3 : level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
@@ -52,6 +57,79 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
   );
 }
 
+/** 2-2 나의 위치 — "같은 나이대 100명 중 N등". 백엔드 percentile은 누적분포(내 아래 몇 %)라
+ *  값이 클수록 나쁜 계산기 지표에서는 그대로 등수가 된다(1등 = 가장 좋음).
+ *  percentile이 있는 항목이 하나도 없으면 아무것도 그리지 않는다 — 등수를 지어내지 않는다. */
+function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
+  const it = items.find((x) => x.percentile != null);
+  if (!it) return null;
+  const rank = rankFromPercentile(it.percentile!);
+  const color = calcLevelColor(it.level);
+  return (
+    <View style={{ marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: T.divider }}>
+      <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 23 }}>
+        {it.title} 기준, 같은 나이대 100명 중 <Text style={{ color }}>{rank}등</Text>이에요
+      </Text>
+      <PeerRankSlider rank={rank} color={color} />
+      {!!it.peer_label && (
+        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, marginTop: 8 }}>
+          {it.peer_label}
+          {it.peer_n ? ` · 표본 ${it.peer_n.toLocaleString()}명` : ''}
+          {it.peer_year ? ` (${it.peer_year}년 국가검진)` : ''}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+/** 조합의 '그래서 뭐가 다른가' — 같은 조합인 사람들과 아닌 사람들의 검진 수치 평균 비교.
+ *  O/E비(얼마나 자주 같이 나타나는지)만으로는 조합이 무슨 의미인지 와닿지 않는다.
+ *  차이가 가장 큰 항목을 백엔드가 골라 보내주므로(top_metrics) 그대로 나란히 놓는다.
+ *  ⚠️ 공단 표본의 집단 평균이며 내 수치가 아니다 — 문구에서 반드시 구분한다. */
+function ComboMeanCompare({ combo }: { combo: RealComboGroup }) {
+  const rows = combo.population?.top_metrics ?? [];
+  if (!rows.length) return null;
+  return (
+    <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
+      <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>같은 조합인 분들은 뭐가 다를까요</Text>
+      <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+        '{combo.combo_name}'에 해당하는 분들과 그렇지 않은 분들의 평균 차이가 가장 큰 항목이에요. 공단 표본의 집단 평균이라 내 수치와는 다릅니다.
+      </Text>
+      {rows.slice(0, 3).map((m) => {
+        const max = Math.max(m.combo_mean, m.non_combo_mean) || 1;
+        return (
+          <View key={m.metric} style={{ marginTop: 14 }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 6 }}>{metricLabel(m.metric)}</Text>
+            {([
+              { label: '같은 조합', value: m.combo_mean, color: T.warn },
+              { label: '아닌 분들', value: m.non_combo_mean, color: T.text3 },
+            ] as const).map((r) => (
+              <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                <Text style={{ fontSize: 11, color: T.text3, width: 52 }}>{r.label}</Text>
+                <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
+                  <View style={{ width: `${(r.value / max) * 100}%`, height: '100%', backgroundColor: r.color, borderRadius: 4 }} />
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 52, textAlign: 'right' }}>{r.value}</Text>
+              </View>
+            ))}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+/** 지표 카드의 결론 한 줄 — 행(근거)을 읽기 전에 요약부터 보여준다.
+ *  level: info=판정 없음(제외), low=양호, 그 외(moderate/high/very_high)=주의 이상. */
+function levelSummary(levels: string[]): string | null {
+  const judged = levels.filter((l) => l !== 'info');
+  if (!judged.length) return null;
+  const bad = judged.filter((l) => l !== 'low').length;
+  return bad === 0
+    ? `지표 ${judged.length}개 모두 양호 구간이에요.`
+    : `지표 ${judged.length}개 중 ${bad}개가 주의 이상 구간이에요.`;
+}
+
 export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendations, egfr, comboAnalysis }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
@@ -62,12 +140,25 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 }) {
   // 조합 그룹은 07 마이그레이션 이후 분석에만 있다 — 없으면 카드 자체를 그리지 않는다.
   const comboGroups = comboAnalysis?.combo_groups ?? null;
+  // 16년(1,596만 건) 모집단 통계 — 최신 분석부터 담겨 온다. 구버전 저장분에는 없다.
+  const pop16 = comboAnalysis?.population_16yr ?? null;
+  // 수치 비교를 보여줄 대표 조합 — 우연 대비 가장 강하게 뭉쳐 나타난 것(O/E 최대)을 고른다.
+  const leadCombo = useMemo(() => {
+    const withPop = (comboGroups?.matched ?? []).filter((c) => c.population?.top_metrics?.length);
+    if (!withPop.length) return null;
+    return withPop.reduce((a, b) => (b.population!.observed_to_expected > a.population!.observed_to_expected ? b : a));
+  }, [comboGroups]);
   const fattyLiver = comboAnalysis?.fatty_liver ?? null;
+  // 지방간 유형(MASLD/MetALD/ALD)은 조합 그룹 매칭과 무관한 독립 판정이다.
+  // 예전엔 조합 카드 안에 있어서, 해당 조합이 0개인 사람에게는 유형·근거가 통째로 사라졌다.
+  const fattyLiverType = fattyLiver?.applicable && fattyLiver.type ? fattyLiver : null;
   // FLI/HSI·단일그룹·ASCVD는 그 이후(08) 분석부터 담겨 온다 — 마찬가지로 없으면 그리지 않는다.
   const flIndices = fattyLiver?.indices ?? null;
   const singleGroups = comboAnalysis?.single_groups ?? null;
   // 집단군 개수 요약 — 백엔드 주입(2026-07-28) 이후 저장분에만 있다.
   const rarity = comboAnalysis?.rarity ?? null;
+  // 대사증후군 5인자 세부 — 판정 근거. 계산·전송은 되고 있었으나 화면에 그리지 않던 값.
+  const msDetail = comboAnalysis?.metabolic_syndrome_detail ?? null;
   const ascvd = comboAnalysis?.ascvd_simulation ?? null;
   const ldlTarget = comboAnalysis?.ldl_target && !comboAnalysis.ldl_target.error ? comboAnalysis.ldl_target : null;
   // 계산기 items를 도메인 카테고리로 나눠 각 섹션에 배치한다.
@@ -84,11 +175,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const liverCalcs = calcOf(['liver']);
   const cvCalcs = calcOf(['cardiovascular']);
   const calcDisclaimer = comboAnalysis?.calculators?.disclaimer;
+  // 입력값이 없어 만들지 못한 계산기 — FLI/HSI가 '계산 불가'를 밝히듯 계산기도 침묵하지 않는다.
+  // 백엔드가 카테고리 없이 한 목록으로 주므로(지표명 + 필요 항목 문구) 계산기 대표 카드에 한 번만 싣는다.
+  const calcUnavailable = comboAnalysis?.calculators?.unavailable ?? [];
   // FLI/HSI level → 상태색 (백엔드 interpretation 문구를 그대로 쓰고, 색만 구간에 맞춘다)
   const levelColor = (level: string) => level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
   const levelBg = (level: string) => level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
   const [showRedundant, setShowRedundant] = useState(false);
+  // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
+  const [showScoreCalc, setShowScoreCalc] = useState(false);
+  // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
+  const [showEngines, setShowEngines] = useState(false);
   const report = reports[yearIdx];
 
   // 참고 점수: 그 해 검진 결과에 기록된 값을 그대로 보여준다(대시보드·기록 화면과 항상 일치).
@@ -106,11 +204,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 사용자에게 사실과 다른 정보를 전달하게 되므로, yearMetrics(그 해 측정 항목)에 없는 키는 제외한다.
   const metricsByKeys = (keys: typeof topGroup.keys) =>
     keys.map((k) => yearMetrics.find((m) => m.key === k)).filter((m): m is MetricDefinition => !!m);
-  // 펼쳐진 참고군 이름 — 카드를 누르면 그 그룹의 관련 항목들이 카드 바로 아래에 펼쳐진다.
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(topGroup.name);
-  // 연도를 바꾸면 그 해의 1순위 그룹을 기본으로 펼쳐서 보여준다.
-  useEffect(() => { setExpandedGroup(topGroup.name); }, [report.year]);
-
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
@@ -156,23 +249,36 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <View style={{ marginBottom: 16 }}>
           <AnimatedScore score={scorePct} color={scoreColor} />
         </View>
-        <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 16 }}>
-          100점에서 시작해 주의 항목은 {SCORE_PENALTY.manage}점, 위험 항목은 {SCORE_PENALTY.track}점씩 빼서 계산해요.{'\n'}
-          100 − ({SCORE_PENALTY.manage}×주의 {report.manageCount}개) − ({SCORE_PENALTY.track}×위험 {report.trackCount}개) = {scorePct}점
-        </Text>
-        {/* 감점 기준 — 옅은 색칠 박스 없이, 색은 글자에만 사용해 구분선으로 나열 */}
-        <View style={{ flexDirection: 'row' }}>
-          {[
-            { label: '정상', note: '감점 없음', color: T.success },
-            { label: '주의', note: '-6점', color: T.warn },
-            { label: '위험', note: '-12점', color: T.danger },
-          ].map((item, i) => (
-            <View key={item.label} style={[{ flex: 1, alignItems: 'center', paddingVertical: 10 }, i > 0 && { borderLeftWidth: 1, borderLeftColor: T.divider }]}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: item.color, textAlign: 'center', marginBottom: 4 }}>{item.label}</Text>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{item.note}</Text>
+        {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
+        {showScoreCalc && (
+          <>
+            <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 16 }}>
+              100점에서 시작해 주의 항목은 {SCORE_PENALTY.manage}점, 위험 항목은 {SCORE_PENALTY.track}점씩 빼서 계산해요.{'\n'}
+              100 − ({SCORE_PENALTY.manage}×주의 {report.manageCount}개) − ({SCORE_PENALTY.track}×위험 {report.trackCount}개) = {scorePct}점
+            </Text>
+            {/* 감점 기준 — 옅은 색칠 박스 없이, 색은 글자에만 사용해 구분선으로 나열 */}
+            <View style={{ flexDirection: 'row' }}>
+              {[
+                { label: '정상', note: '감점 없음', color: T.success },
+                { label: '주의', note: '-6점', color: T.warn },
+                { label: '위험', note: '-12점', color: T.danger },
+              ].map((item, i) => (
+                <View key={item.label} style={[{ flex: 1, alignItems: 'center', paddingVertical: 10 }, i > 0 && { borderLeftWidth: 1, borderLeftColor: T.divider }]}>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: item.color, textAlign: 'center', marginBottom: 4 }}>{item.label}</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{item.note}</Text>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </>
+        )}
+        <Pressable
+          onPress={() => setShowScoreCalc((v) => !v)}
+          hitSlop={8}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{showScoreCalc ? '접기' : '어떻게 계산했나요?'}</Text>
+          <Ionicons name={showScoreCalc ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+        </Pressable>
       </View>
       </FadeInUp>
 
@@ -180,60 +286,106 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           연도를 바꾸면 살짝 페이드되며 갱신되어 변화가 자연스럽게 보인다 */}
       <FadeInUp delay={150}>
       <FadeIn key={`groups-${report.year}`}>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 8 }}>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>나의 관리 참고군 · {report.year}년 기준</Text>
-        <Text style={{ fontSize: 13, color: T.text2, marginBottom: 16 }}>그룹을 눌러보면 관련 검사 항목을 자세히 비교할 수 있어요.</Text>
-        <View style={{ gap: 8 }}>
-          {groups.map((group) => {
-            const isOpen = expandedGroup === group.name;
-            const groupMetrics = metricsByKeys(group.keys);
-            return (
-              <View
-                key={group.name}
-                style={{
-                  borderWidth: 1,
-                  borderColor: isOpen ? T.primary : T.border,
-                  backgroundColor: T.white,
-                  borderRadius: T.radiusMd,
-                  overflow: 'hidden',
-                }}
-              >
-                <Pressable onPress={() => setExpandedGroup(isOpen ? null : group.name)} style={{ padding: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ fontWeight: '700', color: T.text1, fontSize: 14, flex: 1 }}>{group.name}</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <View style={{ backgroundColor: group.matches > 0 ? T.dangerBg : T.cardAlt, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: group.matches > 0 ? T.danger : T.text3 }}>{group.matches}개 해당</Text>
-                      </View>
-                      <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={16} color={T.text3} />
-                    </View>
+      <View style={{ paddingHorizontal: 20, marginTop: 8, marginBottom: 6 }}>
+        <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>나의 관리 참고군 · {report.year}년 기준</Text>
+      </View>
+      {groups.map((group) => {
+        const groupMetrics = metricsByKeys(group.keys);
+        // 그룹의 대표 항목 = 가장 주의가 필요한 항목. 그 항목으로 "100명 중 몇 등"을 보여준다.
+        const lead = [...groupMetrics].sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0];
+        const leadRank = lead ? (lead.percentile != null ? rankFromPercentile(lead.percentile) : estimateRank(lead, report.values[lead.key])) : null;
+        const leadColor = lead ? (lead.status === '정상' ? T.success : lead.status === '주의' ? T.warn : T.danger) : T.text3;
+        return (
+          <SummaryCard
+            key={group.name}
+            title={group.name}
+            summary={group.matches > 0 ? `${group.keys.length}개 항목 중 ${group.matches}개가 이 그룹 기준에 해당해요.` : '해당하는 항목이 없어요.'}
+            definition={group.description}
+            detail={group.related}
+            meaning={group.meaning}
+            positionTitle={`나의 위치 — ${report.year}년 항목별 비교`}
+            badge={
+              <View style={{ backgroundColor: group.matches > 0 ? T.dangerBg : T.cardAlt, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: group.matches > 0 ? T.danger : T.text3 }}>{group.matches}개 해당</Text>
+              </View>
+            }
+            meaningExtra={(() => {
+              // 관리 참고군은 그동안 "5개 중 5개 해당"이라고만 말할 뿐 모집단 근거가 없었다.
+              // 같은 성별·연령대에서 나처럼 걸린 사람이 몇 %인지 붙여 처음으로 위치를 준다.
+              const d = pop16?.care_distribution?.[group.name];
+              if (!d) return undefined;
+              const same = d.dist.find((x) => x.hits === group.matches);
+              const worse = d.dist.filter((x) => x.hits > group.matches).reduce((s, x) => s + x.pct, 0);
+              return (
+                <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
+                    같은 또래에서 나 같은 사람은
+                  </Text>
+                  <Text style={{ fontSize: 15, color: T.text2, lineHeight: 23 }}>
+                    {group.matches}개가 걸린 사람은 100명 중{' '}
+                    <Text style={{ fontWeight: '800', color: T.text1 }}>{Math.max(1, Math.round(same?.pct ?? 0))}명</Text>
+                    이에요.
+                    {worse > 0.05 && ` 나보다 많이 걸린 사람은 ${worse.toFixed(1)}%예요.`}
+                  </Text>
+                  {/* 막대는 공통 바닥선에서 자라야 한다 — 높이만큼 위로 밀리면 아래 라벨이 들쭉날쭉해진다. */}
+                  <View style={{ flexDirection: 'row', gap: 4, marginTop: 12, alignItems: 'flex-end' }}>
+                    {(() => {
+                      const peak = Math.max(...d.dist.map((x) => x.pct), 1);
+                      return d.dist.map((x) => {
+                        const mine = x.hits === group.matches;
+                        return (
+                          <View key={x.hits} style={{ flex: 1, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 10, fontWeight: mine ? '800' : '500', color: mine ? T.danger : T.text3, marginBottom: 3 }}>{x.pct}%</Text>
+                            <View style={{ height: 46, width: '100%', justifyContent: 'flex-end' }}>
+                              <View style={{
+                                width: '100%', height: Math.max(3, (x.pct / peak) * 46), borderRadius: 3,
+                                backgroundColor: mine ? T.danger : T.cardAlt,
+                              }} />
+                            </View>
+                            <Text style={{ fontSize: 10, fontWeight: mine ? '800' : '500', color: mine ? T.danger : T.text3, marginTop: 4 }}>
+                              {x.hits}개
+                            </Text>
+                          </View>
+                        );
+                      });
+                    })()}
                   </View>
-                  <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>{group.meaning}</Text>
-                  {group.metrics.length > 0 && (
-                    <Text style={{ fontSize: 12, color: T.text3, marginTop: 3 }}>해당: {group.metrics.join(', ')}</Text>
-                  )}
-                </Pressable>
-                {isOpen && (
-                  <View style={{ paddingHorizontal: 14, paddingBottom: 6, backgroundColor: T.white, borderTopWidth: 1, borderTopColor: T.divider }}>
-                    {groupMetrics.length === 0 ? (
-                      <Text style={{ fontSize: 12, color: T.text3, paddingVertical: 14 }}>이 그룹에 해당하는 검사 항목이 없습니다.</Text>
-                    ) : (
-                      groupMetrics.map((metric, i) => (
-                        <View
-                          key={metric.key}
-                          style={[{ paddingVertical: 14 }, i < groupMetrics.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}
-                        >
-                          <CompareRow metric={metric} value={report.values[metric.key]} />
-                        </View>
-                      ))
-                    )}
-                  </View>
+                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
+                    공단 표본 1,596만 건 중 같은 성별·연령대 {d.total.toLocaleString()}명 기준이에요. 모집단은 학회 기준 수치로만 세어 앱 판정과 조금 다를 수 있어요.
+                  </Text>
+                </View>
+              );
+            })()}
+            positionExtra={lead && leadRank != null ? (
+              <View style={{ marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: T.divider }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 23 }}>
+                  {lead.name} 기준, 같은 나이대 100명 중 <Text style={{ color: leadColor }}>{leadRank}등</Text>
+                  {lead.percentile != null ? '이에요' : '쯤이에요'}
+                </Text>
+                <PeerRankSlider rank={leadRank} color={leadColor} />
+                {lead.percentile == null && lead.peerMean != null && (
+                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, marginTop: 8 }}>
+                    또래 평균({lead.peerMean}{lead.unit})과 정상범위 폭으로 어림한 추정 등수예요.
+                  </Text>
                 )}
               </View>
-            );
-          })}
-        </View>
-      </View>
+            ) : undefined}
+          >
+            {groupMetrics.length === 0 ? (
+              <Text style={{ fontSize: 13, color: T.text3, paddingVertical: 14 }}>이 그룹에 해당하는 검사 항목이 없습니다.</Text>
+            ) : (
+              groupMetrics.map((metric, i) => (
+                <View
+                  key={metric.key}
+                  style={[{ paddingVertical: 14 }, i < groupMetrics.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}
+                >
+                  <CompareRow metric={metric} value={report.values[metric.key]} />
+                </View>
+              ))
+            )}
+          </SummaryCard>
+        );
+      })}
       </FadeIn>
       </FadeInUp>
 
@@ -242,8 +394,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
       {egfr && (
         <FadeInUp delay={180}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>신장 기능 (eGFR)</Text>
+        <SummaryCard title="신장 기능 (eGFR)" definition={cardContent['신장 기능 (eGFR)']?.definition} detail={cardContent['신장 기능 (eGFR)']?.detail} meaning={cardContent['신장 기능 (eGFR)']?.meaning} tips={cardContent['신장 기능 (eGFR)']?.tips} summary={`${egfr.egfr} ${egfr.unit} · ${egfr.label}`}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>혈청 크레아티닌 수치를 바탕으로 추정한 신장 여과 기능이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{egfr.egfr}</Text>
@@ -269,18 +420,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               )}
             </View>
           )}
-        </View>
+        </SummaryCard>
         </FadeInUp>
       )}
 
-      {/* 🫁 간 — FLI/HSI 보조지표 + 간 계산기(BARD·De Ritis) */}
-      {((flIndices && (flIndices.fli || flIndices.hsi)) || liverCalcs.length > 0) && <DomainHeader icon="🫁" title="간" />}
+      {/* 🫁 간 — FLI/HSI 보조지표 + 지방간 유형 + 간 계산기(BARD·De Ritis) */}
+      {((flIndices && (flIndices.fli || flIndices.hsi)) || fattyLiverType || liverCalcs.length > 0) && <DomainHeader icon="🫁" title="간" />}
       {/* ③-3 지방간 보조지표(FLI·HSI) — 검진 수치로 계산되는 선별용 지표.
           값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>지방간 보조지표</Text>
+        <SummaryCard title="지방간 보조지표" definition={cardContent['지방간 보조지표']?.definition} detail={cardContent['지방간 보조지표']?.detail} meaning={cardContent['지방간 보조지표']?.meaning} tips={cardContent['지방간 보조지표']?.tips} summary={levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표예요.</Text>
           {([
             { title: 'FLI', idx: flIndices.fli },
@@ -306,17 +456,55 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {!!flIndices.disclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{flIndices.disclaimer}</Text>
           )}
-        </View>
+        </SummaryCard>
+        </FadeInUp>
+      )}
+
+      {/* 지방간 유형 (MASLD/MetALD/ALD) — 지방간이 의심될 때 원인이 대사인지 음주인지 가른다.
+          조합 그룹 매칭 여부와 무관한 독립 판정이라 별도 카드로 둔다.
+          음주량 문진이 없으면 잠정 분류임을 제목과 근거 양쪽에서 밝힌다. */}
+      {fattyLiverType && (
+        <FadeInUp delay={216}>
+        <SummaryCard
+          title="지방간 유형"
+          definition={cardContent['지방간 유형']?.definition}
+          detail={cardContent['지방간 유형']?.detail}
+          meaning={cardContent['지방간 유형']?.meaning}
+          tips={cardContent['지방간 유형']?.tips}
+          summary={`${fattyLiverType.type}${fattyLiverType.provisional ? ' (잠정)' : ''}`}
+          positionTitle="이렇게 판정했어요"
+        >
+          <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 6 }}>
+            {fattyLiverType.type}{fattyLiverType.provisional ? ' (잠정)' : ''}
+          </Text>
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{fattyLiverType.basis}</Text>
+          {/* 판정 근거인 심장대사 위험인자 — 결론(유형)만 있고 근거가 없으면 왜 그렇게 나뉘었는지 알 수 없다.
+              2025 MASLD 지침의 5종 중 실제로 해당한 것만 백엔드가 담아 보낸다. */}
+          {!!fattyLiverType.cardiometabolic_factors?.length && (
+            <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+              <Text style={{ fontSize: 12, color: T.text3, marginBottom: 6 }}>해당하는 심장대사 위험인자</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {fattyLiverType.cardiometabolic_factors.map((f) => (
+                  <View key={f} style={{ backgroundColor: T.warnBg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: T.radiusPill }}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: T.warn }}>{f}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+          {!!fattyLiverType.note && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{fattyLiverType.note}</Text>
+          )}
+        </SummaryCard>
         </FadeInUp>
       )}
 
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>간 계산기</Text>
+        <SummaryCard title="간 계산기" definition={cardContent['간 계산기']?.definition} detail={cardContent['간 계산기']?.detail} meaning={cardContent['간 계산기']?.meaning} tips={cardContent['간 계산기']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} summary={levelSummary(liverCalcs.map((it) => it.level))}>
           <CalcRows items={liverCalcs} />
-        </View>
+        </SummaryCard>
         </FadeInUp>
       )}
 
@@ -324,8 +512,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {metabolicCalcs.length > 0 && <DomainHeader icon="⚖️" title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>대사·지질 계산기</Text>
+        <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} summary={levelSummary(metabolicCalcs.map((it) => it.level))}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
           <CalcRows items={metabolicPrimary} />
           {metabolicRedundant.length > 0 && (
@@ -343,18 +530,39 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               {showRedundant && <CalcRows items={metabolicRedundant} />}
             </>
           )}
+          {/* 계산하지 못한 지표 — 값이 없는 걸 조용히 빼면 '원래 그런 개수'로 읽힌다.
+              무엇이 왜 빠졌는지(어떤 검사가 필요한지) 백엔드 문구를 그대로 밝힌다. */}
+          {calcUnavailable.length > 0 && (
+            <View style={{ marginTop: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 2 }}>
+                계산하지 못한 지표 {calcUnavailable.length}종
+              </Text>
+              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 6 }}>
+                이번 검진에 필요한 값이 없어 만들지 못했어요(간·심혈관 지표 포함).
+              </Text>
+              {calcUnavailable.map((u) => (
+                <Text key={u} style={{ fontSize: 12, color: T.text3, lineHeight: 19 }}>· {u}</Text>
+              ))}
+            </View>
+          )}
           {!!calcDisclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{calcDisclaimer}</Text>
           )}
-        </View>
+        </SummaryCard>
         </FadeInUp>
       )}
 
       {/* LDL 개인 목표 — 같은 LDL이라도 위험군에 따라 목표가 다르다(초고위험<55 … 저위험<160). */}
       {ldlTarget && (
         <FadeInUp delay={205}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>LDL 콜레스테롤 개인 목표</Text>
+        <SummaryCard
+          title="LDL 콜레스테롤 개인 목표"
+          definition={cardContent['LDL 콜레스테롤 개인 목표']?.definition}
+          detail={cardContent['LDL 콜레스테롤 개인 목표']?.detail}
+          meaning={cardContent['LDL 콜레스테롤 개인 목표']?.meaning}
+          tips={cardContent['LDL 콜레스테롤 개인 목표']?.tips}
+          summary={`목표 ${ldlTarget.target_text}${ldlTarget.achieved == null ? '' : ldlTarget.achieved ? ' · 달성했어요' : ` · 초과했어요${ldlTarget.gap != null ? ` (+${ldlTarget.gap})` : ''}`}`}
+        >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>같은 LDL 수치라도 위험군에 따라 목표가 달라져요. 내 위험군 기준 목표예요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{ldlTarget.target_text}</Text>
@@ -388,7 +596,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· {ldlTarget.limitations[0]}</Text>
           )}
           <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>기준: {ldlTarget.reference}</Text>
-        </View>
+        </SummaryCard>
         </FadeInUp>
       )}
 
@@ -399,8 +607,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <FadeInUp delay={215}>
           <WhatIfSimulator
             latest={reports[reports.length - 1]}
-            disabled={!usingRealData}
-            disabledReason="데모 계정은 저장된 검진값이 없어 재계산을 할 수 없어요. 실제 결과지를 업로드하면 사용할 수 있어요."
+            demoMode={!usingRealData}
+            disabledReason="데모 계정은 앱 안에서 대사증후군 기준·LDL 목표만 다시 셉니다. 실제 결과지를 올리면 계산기 22종까지 함께 갱신돼요."
           />
         </FadeInUp>
       )}
@@ -413,8 +621,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>함께 나타나는 조합 (동반 경향)</Text>
+        <SummaryCard title="함께 나타나는 조합 (동반 경향)" definition={cardContent['함께 나타나는 조합 (동반 경향)']?.definition} detail={cardContent['함께 나타나는 조합 (동반 경향)']?.detail} meaning={cardContent['함께 나타나는 조합 (동반 경향)']?.meaning} tips={cardContent['함께 나타나는 조합 (동반 경향)']?.tips} summary={`${comboGroups.matched_count}개 조합에 해당해요.`} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
             여러 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
             {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 동반 경향(통계)이며, 위험도 자체는 아니에요. 위험 정량은 위 계산기(ASCVD 등)를 참고하세요.
@@ -441,6 +648,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                   )}
                 </Text>
               )}
+              {/* 16년 재현성 — 한 해 값 하나는 "그 해만 그랬나?"라는 반문을 받는다.
+                  16년 중앙값과 범위를 함께 보여 우연이 아님을 밝힌다(28번 문서 §3-B). */}
+              {(() => {
+                const o = pop16?.combo_oe?.[c.combo_name];
+                if (!o) return null;
+                return (
+                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>
+                    {o.year_from}~{o.year_to}년 {o.n_years}개 연도에서도 {o.min}~{o.max}배로 꾸준했어요 (중앙값 {o.median}배).
+                    {o.lipid_era_only ? ' 지질검사를 전원 받던 시기만 세어 기준을 맞췄습니다.' : ''}
+                  </Text>
+                );
+              })()}
             </View>
           ))}
 
@@ -466,20 +685,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           )}
 
-          {/* 지방간 유형 — 음주량이 없으면 잠정 분류임을 반드시 밝힌다 */}
-          {fattyLiver?.applicable && fattyLiver.type && (
-            <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>
-                지방간 유형 {fattyLiver.provisional ? '(잠정)' : ''}
-              </Text>
-              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{fattyLiver.type}</Text>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 4 }}>{fattyLiver.basis}</Text>
-              {!!fattyLiver.note && (
-                <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>{fattyLiver.note}</Text>
-              )}
-            </View>
-          )}
-
           {/* 해석의 한계 — 숨기지 않고 그대로 노출한다 */}
           {!!comboGroups.caveats?.length && (
             <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
@@ -488,7 +693,55 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               ))}
             </View>
           )}
-        </View>
+        </SummaryCard>
+        </FadeInUp>
+      )}
+
+      {/* 같은 나이대의 16년 변화 — 유병률 상승이 고령화 때문인지 아닌지를 가르는 분석.
+          나이를 고정했으므로 "또래 집단 자체가 나빠졌다"는 뜻이고, 그래서 위쪽 '100명 중 N등'이
+          기준선이 내려앉은 집단 안에서의 순위임을 알려준다. 근거: 28번 문서 §4. */}
+      {!!pop16?.age_fixed_trend?.items?.length && (
+        <FadeInUp delay={219}>
+        <SummaryCard
+          title="같은 나이대의 16년 변화"
+          definition={cardContent['같은 나이대의 16년 변화']?.definition}
+          detail={cardContent['같은 나이대의 16년 변화']?.detail}
+          meaning={cardContent['같은 나이대의 16년 변화']?.meaning}
+          tips={cardContent['같은 나이대의 16년 변화']?.tips}
+          positionTitle={`${pop16.age_fixed_trend.sex} ${pop16.age_fixed_trend.age_band} · 2009년 vs 2024년`}
+          summary={(() => {
+            const top = pop16.age_fixed_trend!.items[0];
+            return top ? `${pop16.age_fixed_trend!.age_band} ${top.name}이 16년 만에 ${top.y2009}% → ${top.y2024}%로 늘었어요.` : null;
+          })()}
+        >
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
+            나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
+          </Text>
+          {pop16.age_fixed_trend.items.map((it, i) => {
+            const worse = it.diff > 0;
+            const max = Math.max(it.y2009, it.y2024, 1);
+            return (
+              <View key={it.group} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{it.name}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: worse ? T.danger : T.success }}>
+                    {worse ? '+' : ''}{it.diff}%p{it.ratio >= 1.5 ? ` · ${it.ratio}배` : ''}
+                  </Text>
+                </View>
+                {([{ y: '2009년', v: it.y2009, c: T.text3 }, { y: '2024년', v: it.y2024, c: worse ? T.danger : T.success }] as const).map((r) => (
+                  <View key={r.y} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                    <Text style={{ fontSize: 11, color: T.text3, width: 44 }}>{r.y}</Text>
+                    <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
+                      <View style={{ width: `${(r.v / max) * 100}%`, height: '100%', backgroundColor: r.c, borderRadius: 4 }} />
+                    </View>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 46, textAlign: 'right' }}>{r.v}%</Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
+        </SummaryCard>
         </FadeInUp>
       )}
 
@@ -496,9 +749,46 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
       {!!singleGroups?.length && (
         <FadeInUp delay={218}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>집단군 판정</Text>
+        <SummaryCard
+          title="집단군 판정"
+          definition={cardContent['집단군 판정']?.definition}
+          detail={cardContent['집단군 판정']?.detail}
+          meaning={cardContent['집단군 판정']?.meaning}
+          tips={cardContent['집단군 판정']?.tips}
+          summary={rarity ? `임상 ${rarity.clinical_count}개 · 생활습관 ${rarity.lifestyle_count}개에 해당해요.` : null}
+        >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
+
+          {/* 대사증후군 5인자 세부 — "해당/비해당"만으로는 왜 그렇게 판정됐는지 알 수 없다.
+              각 인자가 수치 때문인지 약 복용 때문인지까지 백엔드가 이미 보내주므로 그대로 보여준다. */}
+          {msDetail && (
+            <View style={{ marginTop: 12, marginBottom: 6, backgroundColor: T.bg, borderRadius: T.radiusSm, padding: 14 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
+                대사증후군 5개 기준 중 {msDetail.count}개 충족
+                {msDetail.evaluable < 5 ? ` (판정 가능 ${msDetail.evaluable}개)` : ''}
+              </Text>
+              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 8 }}>
+                3개 이상이면 대사증후군으로 봐요. {msDetail.is_metabolic_syndrome ? '지금은 해당해요.' : '지금은 해당하지 않아요.'}
+              </Text>
+              {Object.entries(msDetail.factors).map(([name, f], i) => (
+                <View key={name} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                  <Ionicons
+                    name={f.met ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={16}
+                    color={f.met ? T.danger : T.text3}
+                  />
+                  <Text style={{ fontSize: 13, fontWeight: f.met ? '700' : '500', color: f.met ? T.text1 : T.text3, width: 76 }}>{name}</Text>
+                  <Text style={{ flex: 1, fontSize: 12, color: T.text2, lineHeight: 17 }}>{f.reason}</Text>
+                  {/* 약으로 충족된 인자는 따로 표시 — 수치가 정상이어도 관리 중이라 충족된 것이다 */}
+                  {f.by_medication && (
+                    <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 7, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: T.primaryDark }}>약</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
               백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
@@ -534,7 +824,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               </View>
             );
           })}
-        </View>
+        </SummaryCard>
         </FadeInUp>
       )}
 
@@ -544,8 +834,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
       {ascvd?.available && ascvd.risk_percent != null && (
         <FadeInUp delay={221}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>심혈관 위험 참고 시뮬레이션</Text>
+        <SummaryCard
+          title="심혈관 위험 참고 시뮬레이션"
+          definition={cardContent['심혈관 위험 참고 시뮬레이션']?.definition}
+          detail={cardContent['심혈관 위험 참고 시뮬레이션']?.detail}
+          meaning={cardContent['심혈관 위험 참고 시뮬레이션']?.meaning}
+          tips={cardContent['심혈관 위험 참고 시뮬레이션']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />}
+          summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
+        >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{ascvd.risk_percent}%</Text>
@@ -572,6 +868,31 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               ))}
             </View>
           )}
+          {/* 다른 위험엔진 3종(PREVENT·Framingham·SCORE2) — 계산은 되고 있었으나 그리지 않던 값.
+              엔진마다 코호트·공식이 달라 값이 조금씩 다르다. 그 차이를 보여주는 것 자체가
+              "절대값을 그대로 믿지 말라"는 메시지라, 숨기지 않고 2.5뎁스로 펼쳐 볼 수 있게 둔다. */}
+          {cvCalcs.length > 0 && (
+            <>
+              <Pressable
+                onPress={() => setShowEngines((v) => !v)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 11, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 10 }}
+              >
+                <Ionicons name={showEngines ? 'chevron-up' : 'chevron-down'} size={16} color={T.text2} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>
+                  {showEngines ? '다른 계산법 접기' : `다른 계산법 ${cvCalcs.length}종으로도 계산해보기`}
+                </Text>
+              </Pressable>
+              {showEngines && (
+                <>
+                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 4 }}>
+                    같은 위험을 다른 공식으로 계산한 값이에요. 서로 비슷하면 그만큼 믿을 만하고,
+                    많이 다르면 절대값보다 구간으로 이해하는 게 맞아요.
+                  </Text>
+                  <CalcRows items={cvCalcs} />
+                </>
+              )}
+            </>
+          )}
           {!!ascvd.limitations?.length && (
             <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
               {ascvd.limitations.map((l, i) => (
@@ -579,15 +900,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               ))}
             </View>
           )}
-        </View>
+        </SummaryCard>
         </FadeInUp>
       )}
 
       {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다 */}
       {recommendations && (recommendations.priority_messages?.length || recommendations.recommendations) && (
         <FadeInUp delay={220}>
-        <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>맞춤 권장사항</Text>
+        <SummaryCard
+          title="맞춤 권장사항"
+          definition={cardContent['맞춤 권장사항']?.definition}
+          detail={cardContent['맞춤 권장사항']?.detail}
+          meaning={cardContent['맞춤 권장사항']?.meaning}
+          tips={cardContent['맞춤 권장사항']?.tips}
+          summary={recommendations.priority_messages?.[0] ?? '내 검진 결과 기반 생활습관·검진 참고 안내예요.'}
+        >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보예요.</Text>
 
           {!!recommendations.priority_messages?.length && (
@@ -649,7 +976,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {recommendations._meta?.disclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, marginTop: 14, lineHeight: 17 }}>{recommendations._meta.disclaimer}</Text>
           )}
-        </View>
+        </SummaryCard>
         </FadeInUp>
       )}
     </ScrollView>

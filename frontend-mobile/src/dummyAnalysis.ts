@@ -2,7 +2,26 @@
 // 홍길동 2024년 검진값(sbp138·bmi26.3·waist93·glucose112·ldl145·hdl39·tg178 등, 50세 남)을
 // 백엔드에 넣어 나온 실제 combo_analysis·recommendations를 그대로 임베드했다(수치·정합성 실제와 동일).
 // highlights·insight(시계열)만 6개년 악화 스토리에 맞춰 수작업.
-import type { RealComboAnalysis, RealRecommendations, RealTimeseries } from './health';
+import type { RealComboAnalysis, RealEgfr, RealRecommendations, RealSimulation, RealTimeseries, SimulateChanges } from './health';
+import type { Report } from './data';
+
+/** 신장 기능 — 데모 계정용. 다른 값과 달리 서버 계산이라 더미가 없었고,
+ *  그 결과 root 계정에서는 🩺 신장 섹션이 통째로 안 보였다.
+ *  홍길동 2024년 값(크레아티닌 1.01 · 체중 72.4kg · 50세 남)을 백엔드
+ *  app/renal/gfr.analyze_renal()에 그대로 넣어 나온 실제 산출값이다. */
+export const dummyEgfr: RealEgfr = {
+  egfr: 90.6,
+  unit: 'mL/min/1.73㎡',
+  stage: 'G1',
+  label: '정상 또는 높음',
+  description: '사구체여과율 정상 범위',
+  severity: 'normal',
+  method: 'CKD-EPI 2021 (크레아티닌, 인종 항 제거)',
+  crcl: 89.6,
+  crcl_label: '정상 범위',
+  crcl_note: '일반적으로 용량 조절이 필요하지 않은 범위입니다.',
+  crcl_method: 'Cockcroft-Gault',
+};
 
 
 export const dummyComboAnalysis = ({
@@ -394,6 +413,315 @@ export const dummyComboAnalysis = ({
     }
   },
   "disclaimer": "조합 그룹 결과는 국민건강보험공단 표본과의 통계 비교이며, 진단이 아닙니다. 판단은 의료진과 상담하세요.",
+  "metabolic_syndrome_detail": {
+    "factors": {
+      "복부비만": { "met": true, "value": 93, "threshold": 90, "reason": "허리둘레 93cm (기준 ≥90)", "by_medication": false },
+      "고혈압": { "met": true, "value": 138, "threshold": 130, "reason": "혈압 138/88 (기준 ≥130/85)", "by_medication": false },
+      "고혈당": { "met": true, "value": 112, "threshold": 100, "reason": "공복혈당 112mg/dL (기준 ≥100)", "by_medication": false },
+      "낮은 HDL": { "met": true, "value": 39, "threshold": 40, "reason": "HDL 39mg/dL (기준 <40)", "by_medication": false },
+      "고중성지방": { "met": true, "value": 178, "threshold": 150, "reason": "중성지방 178mg/dL (기준 ≥150)", "by_medication": false }
+    },
+    "count": 5,
+    "evaluable": 5,
+    "is_metabolic_syndrome": true
+  },
+  // 집단군 개수 요약 — 아래 single_groups의 applies:true를 그대로 센 값이다(임상 6 · 생활습관 1).
+  // 이 값이 없으면 '집단군 판정' 카드의 1뎁스 결론이 빈칸이 되므로 더미에도 반드시 둔다.
+  "rarity": {
+    "clinical_groups": ["고혈압 전단계", "당뇨 전단계", "대사증후군", "비만", "이상지질혈증", "지방간 의심"],
+    "lifestyle_groups": ["음주자"],
+    "clinical_count": 6,
+    "lifestyle_count": 1,
+    "interpretation": "임상 집단군 6개에 해당합니다. 여러 기준에 동시에 걸쳐 있어 관리 우선순위를 정할 필요가 있습니다."
+  },
+  // 16년(1,596만 건) 모집단 통계 — 백엔드 population16.build_population16(1, 50, 매칭조합)
+  // 을 데모 페르소나(50세 남)로 실제 실행해 나온 산출값 그대로. 지어낸 값이 아니다.
+  "population_16yr": {
+    "source": {
+      "years": "2009~2024",
+      "total_rows": 15957665,
+      "label": "국민건강보험공단 표본 1,596만 건"
+    },
+    "combo_oe": {
+      "비만+이상지질혈증+지방간의심": {
+        "median": 2.9,
+        "min": 2.77,
+        "max": 2.98,
+        "n_years": 9,
+        "year_from": 2009,
+        "year_to": 2017,
+        "lipid_era_only": true
+      },
+      "대사증후군+비만": {
+        "median": 2.08,
+        "min": 1.97,
+        "max": 2.1,
+        "n_years": 9,
+        "year_from": 2009,
+        "year_to": 2017,
+        "lipid_era_only": true
+      },
+      "비만+지방간의심": {
+        "median": 1.71,
+        "min": 1.68,
+        "max": 1.8,
+        "n_years": 16,
+        "year_from": 2009,
+        "year_to": 2024,
+        "lipid_era_only": false
+      },
+      "비만+당뇨전단계": {
+        "median": 1.25,
+        "min": 1.22,
+        "max": 1.29,
+        "n_years": 16,
+        "year_from": 2009,
+        "year_to": 2024,
+        "lipid_era_only": false
+      },
+      "음주+지방간의심": {
+        "median": 1.14,
+        "min": 1.14,
+        "max": 1.16,
+        "n_years": 5,
+        "year_from": 2020,
+        "year_to": 2024,
+        "lipid_era_only": false
+      }
+    },
+    "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
+    "peer_prevalence": {
+      "g_hypertension": {
+        "name": "고혈압",
+        "pct": 17.0,
+        "n_eval": 63913
+      },
+      "g_diabetes": {
+        "name": "당뇨",
+        "pct": 12.2,
+        "n_eval": 63913
+      },
+      "g_pre_diabetes": {
+        "name": "당뇨 전단계",
+        "pct": 41.6,
+        "n_eval": 63913
+      },
+      "g_metabolic_syndrome": {
+        "name": "대사증후군",
+        "pct": 30.0,
+        "n_eval": 16863
+      },
+      "g_obesity": {
+        "name": "비만",
+        "pct": 49.1,
+        "n_eval": 63913
+      },
+      "g_dyslipidemia": {
+        "name": "이상지질혈증",
+        "pct": 40.9,
+        "n_eval": 16856
+      },
+      "g_fatty_liver_suspect": {
+        "name": "지방간 의심",
+        "pct": 29.1,
+        "n_eval": 63913
+      }
+    },
+    "age_fixed_trend": {
+      "age_band": "50~54세",
+      "sex": "남성",
+      "items": [
+        {
+          "group": "g_obesity",
+          "name": "비만",
+          "y2009": 27.5,
+          "y2024": 49.1,
+          "diff": 21.6,
+          "ratio": 1.78
+        },
+        {
+          "group": "g_fatty_liver_suspect",
+          "name": "지방간 의심",
+          "y2009": 15.9,
+          "y2024": 29.1,
+          "diff": 13.2,
+          "ratio": 1.83
+        },
+        {
+          "group": "g_pre_diabetes",
+          "name": "당뇨 전단계",
+          "y2009": 32.9,
+          "y2024": 41.6,
+          "diff": 8.7,
+          "ratio": 1.26
+        },
+        {
+          "group": "g_dyslipidemia",
+          "name": "이상지질혈증",
+          "y2009": 32.8,
+          "y2024": 40.9,
+          "diff": 8.1,
+          "ratio": 1.25
+        },
+        {
+          "group": "g_metabolic_syndrome",
+          "name": "대사증후군",
+          "y2009": 26.4,
+          "y2024": 30.0,
+          "diff": 3.6,
+          "ratio": 1.13
+        },
+        {
+          "group": "g_diabetes",
+          "name": "당뇨",
+          "y2009": 12.3,
+          "y2024": 12.2,
+          "diff": -0.1,
+          "ratio": 0.99
+        },
+        {
+          "group": "g_hypertension",
+          "name": "고혈압",
+          "y2009": 28.0,
+          "y2024": 17.0,
+          "diff": -11.0,
+          "ratio": 0.61
+        }
+      ]
+    },
+    "care_distribution": {
+      "지질 관리 참고군": {
+        "total": 16217,
+        "dist": [
+          {
+            "hits": 0,
+            "n": 4794,
+            "pct": 29.6
+          },
+          {
+            "hits": 1,
+            "n": 3296,
+            "pct": 20.3
+          },
+          {
+            "hits": 2,
+            "n": 5253,
+            "pct": 32.4
+          },
+          {
+            "hits": 3,
+            "n": 2476,
+            "pct": 15.3
+          },
+          {
+            "hits": 4,
+            "n": 398,
+            "pct": 2.5
+          }
+        ]
+      },
+      "간 기능 관찰군": {
+        "total": 63909,
+        "dist": [
+          {
+            "hits": 0,
+            "n": 44304,
+            "pct": 69.3
+          },
+          {
+            "hits": 1,
+            "n": 11142,
+            "pct": 17.4
+          },
+          {
+            "hits": 2,
+            "n": 5669,
+            "pct": 8.9
+          },
+          {
+            "hits": 3,
+            "n": 2794,
+            "pct": 4.4
+          }
+        ]
+      },
+      "혈압 관리 참고군": {
+        "total": 63913,
+        "dist": [
+          {
+            "hits": 0,
+            "n": 36738,
+            "pct": 57.5
+          },
+          {
+            "hits": 1,
+            "n": 13058,
+            "pct": 20.4
+          },
+          {
+            "hits": 2,
+            "n": 14117,
+            "pct": 22.1
+          }
+        ]
+      },
+      "신장 기능 관찰군": {
+        "total": 63727,
+        "dist": [
+          {
+            "hits": 0,
+            "n": 61003,
+            "pct": 95.7
+          },
+          {
+            "hits": 1,
+            "n": 2573,
+            "pct": 4.0
+          },
+          {
+            "hits": 2,
+            "n": 151,
+            "pct": 0.2
+          }
+        ]
+      },
+      "대사 관리 참고군": {
+        "total": 16844,
+        "dist": [
+          {
+            "hits": 0,
+            "n": 2919,
+            "pct": 17.3
+          },
+          {
+            "hits": 1,
+            "n": 4606,
+            "pct": 27.3
+          },
+          {
+            "hits": 2,
+            "n": 4547,
+            "pct": 27.0
+          },
+          {
+            "hits": 3,
+            "n": 3199,
+            "pct": 19.0
+          },
+          {
+            "hits": 4,
+            "n": 1321,
+            "pct": 7.8
+          },
+          {
+            "hits": 5,
+            "n": 252,
+            "pct": 1.5
+          }
+        ]
+      }
+    }
+  },
   "single_groups": [
     {
       "key": "g_hypertension",
@@ -935,3 +1263,80 @@ export const dummyInsight: NonNullable<RealTimeseries['insight']> = {
   ],
   next_exam_year: 2026,
 };
+
+/** 데모 계정용 What-if 재계산 — 서버(`POST /analyze/simulate`)는 로그인 토큰과
+ *  저장된 검진 회차를 읽어야 해서 데모 계정에서는 호출 자체가 불가능하다.
+ *  그래서 화면에서 버튼이 아예 잠겨 있었다.
+ *
+ *  대신 여기서는 **클라이언트에서 정직하게 계산할 수 있는 것만** 다시 센다:
+ *  대사증후군 5개 기준은 고정된 컷오프 비교라 백엔드 공식을 옮겨 적을 필요가 없다
+ *  (같은 컷오프가 이미 metabolic_syndrome_detail의 reason 문구에 그대로 적혀 있다).
+ *  ⚠️ 계산기 22종은 백엔드 공식이라 여기서 다시 만들지 않는다 — 지어낸 값을 보여주느니
+ *     limitations에 "데모라서 못 한다"고 밝히고 비워 둔다.
+ *  ⚠️ 컷오프는 데모 페르소나(50세 남)의 남성 기준이다. 데모 전용이라 성별 분기를 두지 않는다. */
+export function simulateDemo(latest: Report, changes: SimulateChanges): RealSimulation {
+  const v = latest.values;
+  const pick = (k: keyof SimulateChanges, base: number | undefined) =>
+    changes[k] != null ? changes[k]! : base;
+
+  // (라벨, 적용 전 값, 적용 후 값, 충족 판정)
+  const factors = (waist?: number, sbp?: number, dbp?: number, fbs?: number, tg?: number, hdl?: number) => {
+    const met: string[] = [];
+    if (waist != null && waist >= 90) met.push('복부비만');
+    if ((sbp != null && sbp >= 130) || (dbp != null && dbp >= 85)) met.push('고혈압');
+    if (fbs != null && fbs >= 100) met.push('고혈당');
+    if (tg != null && tg >= 150) met.push('고중성지방');
+    if (hdl != null && hdl < 40) met.push('낮은 HDL');
+    return met;
+  };
+
+  const beforeMet = factors(v.waist, v.sbp, v.dbp, v.glucose, v.triglyceride, v.hdl);
+  const afterMet = factors(
+    pick('waist', v.waist), pick('sbp', v.sbp), pick('dbp', v.dbp),
+    pick('fbs', v.glucose), pick('tg', v.triglyceride), pick('hdl', v.hdl),
+  );
+  const beforeMs = beforeMet.length >= 3;
+  const afterMs = afterMet.length >= 3;
+
+  const CONTROL_LABEL: Record<string, [string, keyof Report['values']]> = {
+    waist: ['허리둘레', 'waist'], sbp: ['수축기 혈압', 'sbp'], dbp: ['이완기 혈압', 'dbp'],
+    fbs: ['공복혈당', 'glucose'], tg: ['중성지방', 'triglyceride'],
+    hdl: ['HDL 콜레스테롤', 'hdl'], ldl: ['LDL 콜레스테롤', 'ldl'],
+  };
+
+  const targetLdl = 130;   // dummyComboAnalysis.ldl_target 기준(중등도위험군)과 같은 값
+  const afterLdl = pick('ldl', v.ldl);
+
+  return {
+    changes_applied: Object.entries(changes).map(([k, after]) => ({
+      key: k,
+      label: CONTROL_LABEL[k]?.[0] ?? k,
+      before: CONTROL_LABEL[k] ? v[CONTROL_LABEL[k][1]] ?? null : null,
+      after: after as number,
+    })),
+    metabolic_syndrome: {
+      before: { count: beforeMet.length, evaluable: 5, is_metabolic_syndrome: beforeMs, met_factors: beforeMet },
+      after: { count: afterMet.length, evaluable: 5, is_metabolic_syndrome: afterMs, met_factors: afterMet },
+    },
+    calculators: [],
+    groups: {
+      resolved: beforeMs && !afterMs ? ['대사증후군'] : [],
+      added: !beforeMs && afterMs ? ['대사증후군'] : [],
+    },
+    ldl_target: {
+      target_ldl: targetLdl,
+      label: '중등도위험군',
+      before_ldl: v.ldl ?? null,
+      after_ldl: afterLdl ?? null,
+      before_achieved: v.ldl != null ? v.ldl < targetLdl : null,
+      after_achieved: afterLdl != null ? afterLdl < targetLdl : null,
+    },
+    unchanged: [],
+    limitations: [
+      '데모 계정이라 앱 안에서 다시 계산합니다. 대사증후군 5개 기준과 LDL 목표 달성 여부만 다시 셉니다.',
+      '계산기 22종(TyG·AIP·PREVENT 등)은 서버 공식이라 데모에서는 다시 계산하지 않습니다. 실제 결과지를 올리면 함께 갱신돼요.',
+      '생활습관 변화의 효과를 예측하는 것이 아니라, 검진값을 바꿔 넣었을 때의 판정을 다시 볼 뿐입니다.',
+    ],
+    baseline_year: latest.year,
+  };
+}

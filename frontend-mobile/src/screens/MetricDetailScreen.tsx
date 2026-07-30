@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
-import { deltaText, formatMetricValue, headline, rankFromPercentile, yearDelta } from '../interpret';
+import { metricContent } from '../data';
+import { deltaText, estimateRank, formatMetricValue, headline, rankFromPercentile, yearDelta } from '../interpret';
 import { StatusBadge, T } from '../components/UI';
 import { categoryVisual, MetricTrendChart, PeerRankSlider, RangeBar, SquircleIcon } from '../components/v2';
 
-// L2 항목 상세 — 화면 전환은 이 오버레이 한 번만. 근거(수치 표·추이 차트·설명)까지 접지 않고 모두 보여준다.
+// L2 항목 상세 — 이야기 순서로 읽힌다: 판단 → 이 항목이 뭔지(정의, 펼치면 심화) → 내 위치 → 근거 → 그래서 뭘 하면 되는지.
+// 화면 전환은 이 오버레이 한 번만. 심화 설명만 2.5뎁스(펼치기)로 접어둔다 — 기본 설명으로 충분한 사람에게는 안 보여도 되는 층.
 export default function MetricDetailScreen({ metric, report, reports, onClose }: {
   metric: MetricDefinition;
   report: Report;
@@ -17,6 +19,13 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
   const statusColor = metric.status === '정상' ? T.success : metric.status === '주의' ? T.warn : T.danger;
   const delta = yearDelta(reports, metric.key, report.year);
   const visual = categoryVisual(metric.category);
+  // 실데이터 경로에서 키가 어긋나도 화면이 깨지지 않게 폴백을 둔다(심화=note, 팁 없음).
+  const content = metricContent[metric.key] ?? { detail: '', tips: [] };
+  // 2.5뎁스 — 심화 설명은 접어두고, 원하는 사람만 화살표로 연다.
+  const [showDetail, setShowDetail] = useState(false);
+  // 행동 카드 프레임 — 같은 습관 팁이라도 상태에 따라 읽히는 맥락이 다르다:
+  // 정상은 유지, 주의는 개선 제안, 위험은 우선순위로 프레이밍한다.
+  const tipsTitle = metric.status === '정상' ? '지금처럼 유지하려면' : metric.status === '주의' ? '이렇게 하면 좋아요' : '먼저 이것부터';
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
@@ -50,22 +59,50 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
             {delta && <Text style={{ fontSize: 15, color: T.text2, marginTop: 6 }}>{deltaText(delta, metric.unit)}</Text>}
           </View>
 
-          {/* 또래 비교 — percentile 있을 때만 등수, 없으면 정상범위 위치 바. infoOnly는 판정 대상이 아니라 등수·정상범위 비교가 의미 없어 카드 자체를 렌더하지 않는다. */}
-          {!metric.infoOnly && (
+          {/* 정의 — 이 항목이 뭔지부터. 기본 설명 한 문장, 심화(기준 구간·용어)는 펼치기 뒤에 둔다. */}
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            {metric.percentile != null ? (
+            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 항목은요</Text>
+            <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{metric.description}</Text>
+            {showDetail && (
               <>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, lineHeight: 25 }}>
-                  같은 나이대 100명이라면,{'\n'}그중 <Text style={{ color: statusColor }}>{rankFromPercentile(metric.percentile)}등</Text>이에요
-                </Text>
-                <PeerRankSlider rank={rankFromPercentile(metric.percentile)} color={statusColor} />
-              </>
-            ) : (
-              <>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>정상 범위와 비교하면 여기예요</Text>
-                <RangeBar metric={metric} value={value} />
+                {!!content.detail && <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21, marginTop: 10 }}>{content.detail}</Text>}
+                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 8 }}>{metric.note}</Text>
               </>
             )}
+            <Pressable
+              onPress={() => setShowDetail((v) => !v)}
+              hitSlop={8}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+            >
+              <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{showDetail ? '접기' : '자세히 알아보기'}</Text>
+              <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+            </Pressable>
+          </View>
+
+          {/* 나의 위치 — 위: 정상범위 바, 아래: "100명 중 N등" 또래 그래프(별도). infoOnly는 판정 대상이 아니라 카드 자체를 렌더하지 않는다.
+              등수는 percentile(실데이터)이 있으면 실측, 없으면 또래 평균+정상범위 폭으로 어림한 추정치 — 추정임을 문구로 밝힌다. */}
+          {!metric.infoOnly && (
+          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>정상 범위와 비교하면 여기예요</Text>
+            <RangeBar metric={metric} value={value} />
+            {(() => {
+              const measured = metric.percentile != null;
+              const rank = measured ? rankFromPercentile(metric.percentile!) : estimateRank(metric, value);
+              if (rank == null) return null;
+              return (
+                <View style={{ marginTop: 16, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
+                  <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, lineHeight: 25 }}>
+                    같은 나이대 100명이라면,{'\n'}그중 <Text style={{ color: statusColor }}>{rank}등</Text>{measured ? '이에요' : '쯤이에요'}
+                  </Text>
+                  <PeerRankSlider rank={rank} color={statusColor} />
+                  {!measured && (
+                    <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, marginTop: 8 }}>
+                      또래 평균({metric.peerMean}{metric.unit})과 정상범위 폭으로 어림한 추정 등수예요.
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
           </View>
           )}
 
@@ -79,12 +116,23 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
             <MetricTrendChart metric={metric} reports={reports} />
           </View>
 
-          {/* 용어 설명 */}
-          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 항목은요</Text>
-            <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{metric.description}</Text>
-            <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>{metric.note}</Text>
-          </View>
+          {/* 행동 — 그래서 뭘 하면 되는지. 참고값(infoOnly)이나 팁이 없는 항목은 카드를 그리지 않는다. */}
+          {content.tips.length > 0 && (
+            <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 10 }}>{tipsTitle}</Text>
+              {content.tips.map((tip, i) => (
+                <View key={i} style={{ flexDirection: 'row', gap: 8, marginTop: i === 0 ? 0 : 8 }}>
+                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: T.text3, marginTop: 8 }} />
+                  <Text style={{ flex: 1, fontSize: 14, color: T.text2, lineHeight: 21 }}>{tip}</Text>
+                </View>
+              ))}
+              {metric.status === '위험' && (
+                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 10 }}>
+                  수치가 반복해서 범위를 벗어난다면 의료기관 상담을 참고하세요.
+                </Text>
+              )}
+            </View>
+          )}
 
           <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
         </ScrollView>

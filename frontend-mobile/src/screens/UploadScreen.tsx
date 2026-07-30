@@ -35,6 +35,9 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
   const [medUsingExample, setMedUsingExample] = useState(false);
   const [medUploading, setMedUploading] = useState(false);
   const [medResult, setMedResult] = useState<{ inserted: number; persisted: boolean } | null>(null);
+  // 생일 재입력이 필요할 때 방금 고른 파일을 붙잡아 둔다 — 다시 고르게 하지 않고 그대로 재시도한다.
+  const [medBirthdayAsk, setMedBirthdayAsk] = useState<{ uri: string; name: string } | null>(null);
+  const [medBirthdayInput, setMedBirthdayInput] = useState('');
   // 실제 OCR 응답 원본 — 사용자가 검수한 값을 다시 같은 모양으로 합쳐서 /analyze로 보낼 때 필요하다.
   const [ocrRaw, setOcrRaw] = useState<RealOcrResult['ocr'] | null>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
@@ -57,6 +60,50 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
   };
 
   // 실제 HIRA 복약이력 엑셀(xls/xlsx) 업로드 → 백엔드 파싱 + 저장(POST /medication/upload)
+  //
+  // HIRA 파일은 생년월일이 열기 비밀번호다. 백엔드는 프로필에 저장된 생일로 먼저 열어보고,
+  // 없으면 400, 안 맞으면 401을 준다. 두 경우 모두 사용자가 생일을 직접 넣으면 풀리므로
+  // (백엔드가 manual_birthday를 받도록 이미 열어 뒀다) 에러로 끝내지 않고 다시 물어본다.
+  const runMedUpload = async (uri: string, name: string, birthday?: string) => {
+    setMedUploading(true);
+    setMedUsingExample(false);
+    setIsError(false);
+    setMedResult(null);
+    setStatusMsg('복약자료 파일을 분석하는 중이에요...');
+    try {
+      const res = await uploadMedicationFile(uri, name, birthday);
+      setMedItems(res.items as unknown as MedicationItem[]);
+      setMedResult({ inserted: res.inserted, persisted: res.persisted });
+      setIsError(false);
+      setMedBirthdayAsk(null);
+      setStatusMsg(
+        res.persisted
+          ? `복약 정보 ${res.count}건을 확인했고, ${res.inserted}건을 저장했습니다. 이후 검진 결과 분석에 "복용 중인 약" 정보로 활용됩니다.`
+          : `복약 정보 ${res.count}건을 확인했습니다. (이미 저장되어 있어 추가로 저장된 건수는 없어요)`
+      );
+      // 저장이 되었으면 상위(App)에서 복약 목록을 다시 불러오게 해 기록화면에 바로 반영한다.
+      if (res.persisted) onSaved?.();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      // 400 = 생일 정보 자체가 없음 / 401 = 생일이 파일과 안 맞음. 둘 다 재입력으로 풀 수 있다.
+      if (/^(400|401)\b/.test(msg)) {
+        setMedBirthdayAsk({ uri, name });
+        setMedBirthdayInput('');
+        setIsError(true);
+        setStatusMsg(
+          birthday
+            ? '입력하신 생년월일로도 파일이 열리지 않았어요. 숫자 8자리를 다시 확인해주세요.'
+            : 'HIRA 파일은 생년월일이 비밀번호예요. 파일 주인의 생년월일을 입력해주세요.'
+        );
+        return;
+      }
+      setIsError(true);
+      setStatusMsg(msg ? `복약자료 업로드에 실패했습니다: ${msg}` : '복약자료 업로드에 실패했습니다.');
+    } finally {
+      setMedUploading(false);
+    }
+  };
+
   const pickMedicationFile = async () => {
     let result: DocumentPicker.DocumentPickerResult;
     try {
@@ -70,30 +117,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
     }
     if (result.canceled || !result.assets?.length) return;
     const asset = result.assets[0];
-
-    setMedUploading(true);
-    setMedUsingExample(false);
-    setIsError(false);
-    setMedResult(null);
-    setStatusMsg('복약자료 파일을 분석하는 중이에요...');
-    try {
-      const res = await uploadMedicationFile(asset.uri, asset.name ?? 'medication.xlsx');
-      setMedItems(res.items as unknown as MedicationItem[]);
-      setMedResult({ inserted: res.inserted, persisted: res.persisted });
-      setIsError(false);
-      setStatusMsg(
-        res.persisted
-          ? `복약 정보 ${res.count}건을 확인했고, ${res.inserted}건을 저장했습니다. 이후 검진 결과 분석에 "복용 중인 약" 정보로 활용됩니다.`
-          : `복약 정보 ${res.count}건을 확인했습니다. (이미 저장되어 있어 추가로 저장된 건수는 없어요)`
-      );
-      // 저장이 되었으면 상위(App)에서 복약 목록을 다시 불러오게 해 기록화면에 바로 반영한다.
-      if (res.persisted) onSaved?.();
-    } catch (e) {
-      setIsError(true);
-      setStatusMsg(e instanceof Error ? `복약자료 업로드에 실패했습니다: ${e.message}` : '복약자료 업로드에 실패했습니다.');
-    } finally {
-      setMedUploading(false);
-    }
+    await runMedUpload(asset.uri, asset.name ?? 'medication.xlsx');
   };
 
   // 효능군(category)별로 묶어서 보여준다 — 어떤 약을 왜 먹는지 한눈에 파악하기 쉽도록.
@@ -523,6 +547,45 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 onPress={confirmSave}
               >
                 <Text style={{ fontWeight: '700', color: '#fff', fontSize: 15 }}>저장하기</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 생년월일 재입력 — HIRA 파일이 프로필 생일로 안 열릴 때. 파일을 다시 고르지 않고 그대로 재시도한다. */}
+      <Modal transparent visible={!!medBirthdayAsk} animationType="fade" onRequestClose={() => setMedBirthdayAsk(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: T.white, borderRadius: T.radiusMd, padding: 24 }}>
+            <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <Ionicons name="lock-closed-outline" size={24} color={T.primary} />
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: T.text1, marginBottom: 8 }}>생년월일을 입력해주세요</Text>
+            <Text style={{ fontSize: 14, lineHeight: 22, color: T.text2, marginBottom: 16 }}>
+              HIRA 복약이력 파일은 생년월일이 열기 비밀번호예요. 파일 주인의 생년월일 8자리를 넣어주세요.
+            </Text>
+            <TextInput
+              value={medBirthdayInput}
+              onChangeText={(t) => setMedBirthdayInput(t.replace(/[^0-9]/g, '').slice(0, 8))}
+              placeholder="19740101"
+              placeholderTextColor={T.text3}
+              keyboardType="number-pad"
+              maxLength={8}
+              style={{ backgroundColor: T.bg, borderRadius: T.radiusSm, paddingHorizontal: 16, height: 52, fontSize: 17, color: T.text1, letterSpacing: 2, marginBottom: 20 }}
+            />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Pressable
+                style={{ flex: 1, height: 52, backgroundColor: T.bg, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
+                onPress={() => { setMedBirthdayAsk(null); setStatusMsg(''); setIsError(false); }}
+              >
+                <Text style={{ fontWeight: '600', color: T.text2, fontSize: 15 }}>취소</Text>
+              </Pressable>
+              <Pressable
+                disabled={medBirthdayInput.length !== 8 || medUploading}
+                style={{ flex: 1, height: 52, backgroundColor: medBirthdayInput.length === 8 ? T.primary : T.cardAlt, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
+                onPress={() => { const a = medBirthdayAsk!; setMedBirthdayAsk(null); runMedUpload(a.uri, a.name, medBirthdayInput); }}
+              >
+                <Text style={{ fontWeight: '700', color: medBirthdayInput.length === 8 ? '#fff' : T.text3, fontSize: 15 }}>다시 시도</Text>
               </Pressable>
             </View>
           </View>
