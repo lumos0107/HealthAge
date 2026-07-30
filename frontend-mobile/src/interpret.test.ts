@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { metricDefinitions, reports } from './data';
+import { applyGender, metricDefinitions, reports } from './data';
 import type { MetricDefinition } from './data';
-import { deltaText, formatMetricValue, headline, normalBounds, rankFromPercentile, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
+import { deltaText, estimateRank, formatMetricValue, headline, normalBounds, rankFromPercentile, scoreGapNote, scoreSeries, scoreTrendText, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
 
 const by = (key: string) => metricDefinitions.find((m) => m.key === key)!;
 const withStatus = (m: MetricDefinition, status: MetricDefinition['status']): MetricDefinition => ({ ...m, status });
@@ -80,6 +80,50 @@ describe('infoOnly / 등급 표시', () => {
   });
 });
 
+describe('scoreSeries / scoreTrendText / scoreGapNote', () => {
+  // 점수 추이 히어로용. 검사 항목이 빠진 해를 구분하지 못하면 "검사를 안 받아서
+  // 좋아진 것처럼" 보이는 위쪽 꺾임이 생긴다(참고 점수는 판정된 항목만 감점하므로).
+  const rep = (year: number, score: number, keys: string[]) => ({
+    year, score, date: '', hospital: '', status: '주의' as const, summary: '',
+    manageCount: 0, trackCount: 0, values: {} as any,
+    statusByKey: Object.fromEntries(keys.map((k) => [k, '정상'])) as any,
+  });
+  const full = ['sbp', 'dbp', 'ldl', 'hdl'];
+
+  it('연도순으로 정렬하고 항목 수가 최대인 해만 complete', () => {
+    const s = scoreSeries([rep(2024, 22, ['sbp', 'dbp']), rep(2020, 70, full), rep(2022, 60, full)]);
+    expect(s.map((p) => p.year)).toEqual([2020, 2022, 2024]);
+    expect(s.map((p) => p.complete)).toEqual([true, true, false]);
+    expect(s[2].judged).toBe(2);
+  });
+
+  it('기간은 회차 수가 아니라 첫 해~마지막 해로 센다', () => {
+    // 6회차지만 2014~2024 = 10년이다.
+    const years = [2014, 2016, 2018, 2020, 2022, 2024];
+    const s = scoreSeries(years.map((y, i) => rep(y, 100 - i * 15.6, full)));
+    expect(scoreTrendText(s)).toBe('10년간 78점 내려갔어요.');
+  });
+
+  it('점수가 올랐으면 올라갔다고 말한다', () => {
+    const s = scoreSeries([rep(2022, 40, full), rep(2024, 64, full)]);
+    expect(scoreTrendText(s)).toBe('2년간 24점 올라갔어요.');
+  });
+
+  it('한 해뿐이면 추이 문장이 없다', () => {
+    expect(scoreTrendText(scoreSeries([rep(2024, 22, full)]))).toBeNull();
+  });
+
+  it('항목이 빠진 해가 있으면 그 사실을 문구로 알린다', () => {
+    const s = scoreSeries([rep(2020, 70, full), rep(2022, 82, ['sbp', 'dbp']), rep(2024, 58, full)]);
+    expect(scoreGapNote(s)).toContain('2022년은 검사한 항목이 적어');
+  });
+
+  it('모든 해가 온전하면 문구가 없다', () => {
+    const s = scoreSeries([rep(2022, 70, full), rep(2024, 58, full)]);
+    expect(scoreGapNote(s)).toBeNull();
+  });
+});
+
 describe('normalBounds / rankFromPercentile', () => {
   it('범위형("70-99")은 양쪽 경계', () => {
     expect(normalBounds(by('glucose'))).toEqual({ low: 70, high: 99 });
@@ -90,12 +134,41 @@ describe('normalBounds / rankFromPercentile', () => {
   it('혈압은 저혈압 하한까지 양쪽 경계(수축기 90-119)', () => {
     expect(normalBounds(by('sbp'))).toEqual({ low: 90, high: 119 });
   });
-  it('하한형(HDL "남 ≥40 / 여 ≥50")은 normalValue를 low로', () => {
+  it('하한형(HDL "남 ≥40")은 normalValue를 low로', () => {
     expect(normalBounds(by('hdl'))).toEqual({ low: 40 });
+  });
+  it('여성은 applyGender로 치환한 정의를 써야 정상범위가 맞는다', () => {
+    const f = (key: string) => applyGender(metricDefinitions, 2).find((m) => m.key === key)!;
+    expect(normalBounds(f('waist'))).toEqual({ low: 0, high: 85 });   // 남 90 → 여 85
+    expect(normalBounds(f('hdl'))).toEqual({ low: 50 });              // 남 40 → 여 50
+    expect(normalBounds(f('ggt'))).toEqual({ low: 8, high: 35 });     // 남 11-63 → 여 8-35
+    expect(normalBounds(f('hemoglobin'))).toEqual({ low: 12, high: 16 });
+  });
+  it('applyGender(남)은 정의를 그대로 둔다', () => {
+    expect(applyGender(metricDefinitions, 1)).toBe(metricDefinitions);
+  });
+  it('성별 기준이 없는 항목은 여성도 그대로', () => {
+    const f = applyGender(metricDefinitions, 2).find((m) => m.key === 'glucose')!;
+    expect(normalBounds(f)).toEqual({ low: 70, high: 99 });
   });
   it('rank는 1~100으로 clamp', () => {
     expect(rankFromPercentile(0)).toBe(1);
     expect(rankFromPercentile(30.4)).toBe(30);
     expect(rankFromPercentile(150)).toBe(100);
+  });
+});
+
+describe('estimateRank — percentile 없을 때의 추정 등수', () => {
+  it('또래 평균과 같으면 딱 중간(50등)', () => {
+    expect(estimateRank(by('bmi'), 24.2)).toBe(50);
+  });
+  it('높을수록 나쁜 항목은 평균보다 높으면 등수가 뒤로 간다', () => {
+    expect(estimateRank(by('bmi'), 26.3)!).toBeGreaterThan(50);
+  });
+  it('HDL(높을수록 좋음)은 값이 낮을수록 등수가 뒤로 간다', () => {
+    expect(estimateRank(by('hdl'), 39)!).toBeGreaterThan(estimateRank(by('hdl'), 60)!);
+  });
+  it('peerMean 없는 항목(크레아티닌)은 추정하지 않는다', () => {
+    expect(estimateRank(by('creatinine'), 1.0)).toBeNull();
   });
 });
