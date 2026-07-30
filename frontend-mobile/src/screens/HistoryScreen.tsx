@@ -399,12 +399,13 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   }, [latestLead, reports]);
   const c = cardContent[group.title];
 
-  // 지금 보고 있는 항목 — null이면 '전체보기'(묶음 전체를 한 축에 겹쳐 그린다).
-  // 기본값이 전체보기인 이유: 이 카드는 '묶음'이 단위라, 먼저 네 항목이 같이 어떻게 움직였는지
-  // 보고 나서 궁금한 하나를 파고드는 순서가 자연스럽다. 항목을 고르면 그 항목만 단독으로 그려
-  // 축이 그 항목 전용이 되고(겹쳐 그릴 때 눌리던 변화 폭이 살아난다) 밴드·등수도 함께 따라간다.
+  // 보기 상태 두 가지. 서로 독립이다.
+  //   pick    = 기준 항목(초록 띠·등수·헤드라인·값 라벨의 주인). null이면 대표 항목을 따른다.
+  //   showAll = 나머지 항목 선을 배경에 같이 깔지. 기본은 켬 — 이 카드는 '묶음'이 단위라
+  //             먼저 항목들이 같이 어떻게 움직였는지 보고 궁금한 하나를 파고드는 순서가 자연스럽다.
   const [pick, setPick] = useState<MetricKey | null>(null);
-  // 그 해에 측정되지 않은 항목이 골라져 있으면 전체보기로 돌아간다 — 없는 값을 단독으로 그릴 수는 없다.
+  const [showAll, setShowAll] = useState(true);
+  // 그 해에 측정되지 않은 항목이 골라져 있으면 대표 항목으로 돌아간다 — 없는 값을 기준 삼을 수는 없다.
   const pickedMetric = pick && presentKeys.includes(pick) ? metricByKeyForYear(pick) : null;
   // 전체보기에서도 밴드·등수는 하나를 골라야 한다(항목마다 정상범위가 달라 전부 깔면 못 읽는다).
   // 그때의 기준은 대표 항목인데, **최신 연도로 고정한 대표**(latestLead)를 쓴다.
@@ -479,50 +480,63 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
         </Text>
       ) : (
         <View>
-          {/* 그래프에 그릴 항목을 고르는 줄. 전체보기(기본)는 묶음이 같이 어떻게 움직였는지 보여주고,
-              항목을 고르면 그 항목만 단독으로 그린다 — 항목마다 단위가 달라(LDL mg/dL vs BMI kg/m²)
-              겹쳐 그리면 폭이 좁은 항목의 변화가 눌리는데, 단독이면 축이 그 항목 전용이라 그대로 보인다. */}
+          {/* 컨트롤 두 줄. 한 칩이 '기준 바꾸기'와 '단독으로 보기'를 겸하면 전체보기를 유지한 채
+              기준만 옮길 방법이 없어서 둘을 갈라 놓았다.
+                칩   = 기준 항목 — 초록 띠·등수·헤드라인·값 라벨의 주인
+                체크 = 나머지 항목 선을 배경에 같이 깔지 */}
           {presentKeys.length > 1 && (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-              <Text style={{ fontSize: 11, color: T.text3, alignSelf: 'center', marginRight: 2 }}>기준 항목</Text>
+            <>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                <Text style={{ fontSize: 11, color: T.text3, alignSelf: 'center', marginRight: 2 }}>기준 항목</Text>
+                {presentKeys.map((k) => {
+                  const m = metricByKeyForYear(k)!;
+                  // 아무것도 안 고른 기본 상태에서도 대표 항목 칩이 켜져 있어야 한다 —
+                  // 지금 무엇을 기준으로 보고 있는지가 화면에 늘 드러나야 하기 때문이다.
+                  const on = k === focusMetric?.key;
+                  return (
+                    <Pressable
+                      key={k}
+                      onPress={() => setPick(k)}
+                      style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: on ? T.text1 : T.cardAlt }}
+                    >
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: on ? '#fff' : T.text3 }}>{m.shortName}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
               <Pressable
-                onPress={() => setPick(null)}
-                style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: pickedMetric ? T.cardAlt : T.text1 }}
+                onPress={() => setShowAll((v) => !v)}
+                hitSlop={6}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}
               >
-                <Text style={{ fontSize: 11, fontWeight: '700', color: pickedMetric ? T.text3 : '#fff' }}>전체보기</Text>
+                <View style={{
+                  width: 15, height: 15, borderRadius: 4, borderWidth: 1.5,
+                  borderColor: showAll ? T.text1 : T.text3, backgroundColor: showAll ? T.text1 : 'transparent',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {showAll && <Text style={{ fontSize: 10, lineHeight: 12, color: '#fff', fontWeight: '700' }}>✓</Text>}
+                </View>
+                <Text style={{ fontSize: 11, color: T.text3 }}>다른 항목도 함께 보기</Text>
               </Pressable>
-              {presentKeys.map((k) => {
-                const m = metricByKeyForYear(k)!;
-                const on = k === pickedMetric?.key;
-                return (
-                  <Pressable
-                    key={k}
-                    onPress={() => setPick(k)}
-                    style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: on ? T.text1 : T.cardAlt }}
-                  >
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: on ? '#fff' : T.text3 }}>{m.shortName}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            </>
           )}
-          {/* 전체보기면 묶음 전체를, 항목을 골랐으면 그 하나만. 초록 띠는 어느 쪽이든 하나뿐이라
-              전체보기에서는 밴드 주인(대표 항목)만 진하게 두고 나머지는 흐리게 깐다. */}
+          {/* 함께 보기를 끄면 기준 항목 하나만 남는다 — 축이 그 항목 전용이 되어, 겹쳐 그릴 때
+              눌리던 변화 폭이 그대로 보인다(항목마다 단위가 달라 한 축에 겹치면 폭이 좁은 쪽이 눌린다). */}
           <LineChart
-            keys={pickedMetric ? [pickedMetric.key] : presentKeys}
-            color={pickedMetric ? colorOf(pickedMetric.key) : undefined}
+            keys={showAll ? presentKeys : focusMetric ? [focusMetric.key] : []}
+            color={showAll || !focusMetric ? undefined : colorOf(focusMetric.key)}
             selIdx={selIdx}
             onSelect={setSelIdx}
             reports={reports}
             band={focusMetric ? normalBounds(focusMetric) : null}
-            focusKey={!pickedMetric && presentKeys.length > 1 ? focusMetric?.key ?? null : null}
+            focusKey={showAll && presentKeys.length > 1 ? focusMetric?.key ?? null : null}
           />
           <Text style={{ fontSize: 11, color: T.text3, marginTop: 6, marginBottom: 4, lineHeight: 16 }}>
             {!focusMetric
               ? '그래프를 눌러 해당 연도의 수치를 확인하세요.'
-              : pickedMetric
-                ? `${pickedMetric.name} 하나만 그린 그래프예요. 초록 띠 = 정상 ${pickedMetric.normalText}${pickedMetric.unit}.`
-                : `초록 띠 = ${focusMetric.shortName} 정상 ${focusMetric.normalText}${focusMetric.unit}. 진한 선만 이 띠로 판단하세요. 항목을 누르면 그것만 크게 봐요.`}
+              : showAll && presentKeys.length > 1
+                ? `초록 띠 = ${focusMetric.shortName} 정상 ${focusMetric.normalText}${focusMetric.unit}. 진한 선만 이 띠로 판단하세요.`
+                : `${focusMetric.name} 하나만 그린 그래프예요. 초록 띠 = 정상 ${focusMetric.normalText}${focusMetric.unit}.`}
           </Text>
 
           {/* 선택한 연도의 수치 = 그래프 범례. 예전에는 "검진 수치" 줄과 "범례" 줄이
@@ -535,10 +549,10 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
                 const metric = metricByKeyForYear(k)!;
                 const color = colorOf(k);
                 const bad = isBadStatus(metric.status);
-                // 단독 보기에서는 그려지지 않은 항목의 선 표식을 흐리게 둔다 — 진하게 두면
-                // 화면에 없는 선이 있는 것처럼 읽힌다. 전체보기에서는 전부 그려지므로 전부 진하게.
-                // 줄을 눌러도 그 항목 단독 보기로 넘어간다(칩과 같은 동작).
-                const on = !pickedMetric || k === pickedMetric.key;
+                // 함께 보기를 끈 상태에서는 그려지지 않은 항목의 선 표식을 흐리게 둔다 —
+                // 진하게 두면 화면에 없는 선이 있는 것처럼 읽힌다. 켜져 있으면 전부 그려지므로 전부 진하게.
+                // 줄을 눌러도 그 항목이 기준이 된다(칩과 같은 동작).
+                const on = showAll || k === focusMetric?.key;
                 return (
                   <Pressable
                     key={k}
@@ -546,7 +560,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 }}
                   >
                     <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: color, opacity: on ? 1 : 0.3 }} />
-                    <Text style={{ flex: 1, fontSize: 13, color: on ? T.text2 : T.text3, fontWeight: pickedMetric && on ? '700' : '400' }}>
+                    <Text style={{ flex: 1, fontSize: 13, color: on ? T.text2 : T.text3, fontWeight: !showAll && on ? '700' : '400' }}>
                       {metric.shortName}
                       {/* 방향 표시 — HDL처럼 '높을수록 좋음'인 항목은 선이 내려가는 게 나빠지는 것이다.
                           표시가 없으면 같은 목록에서 위로 갈수록 나빠지는 LDL과 나란히 놓여 거꾸로
