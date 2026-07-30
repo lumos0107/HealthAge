@@ -649,11 +649,13 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
         {layout.slice(0, -1).map((s, i) => {
           const y = s.yTop - BREAK_PX / 2;
           // 한 마디씩 위아래로 번갈아 휜다. t(반사) 대신 마디마다 q를 써서 끝이 잘려도 모양이 유지된다.
+          // x는 그래프 영역(0~PLOT_W) 안에서만 — 축 라벨 칸까지 나가면 눈금 숫자 왼쪽으로
+          // 삐져나와 차트 밖에 걸친 선처럼 보인다.
           const wave = (dy: number) => {
             const seg = 18;
-            let d = `M${-PAD.left + 6},${y + dy}`;
+            let d = `M0,${y + dy}`;
             let up = true;
-            for (let x = -PAD.left + 6; x < PLOT_W; x += seg) {
+            for (let x = 0; x < PLOT_W; x += seg) {
               const w = Math.min(seg, PLOT_W - x);
               d += ` q${w / 2},${up ? -3.5 : 3.5} ${w},0`;
               up = !up;
@@ -662,8 +664,9 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
           };
           return (
             <G key={`brk${i}`}>
-              {/* 끊긴 자리를 카드 배경색으로 덮어 격자선·연도 기준선이 지나가지 않게 한다 */}
-              <Rect x={-PAD.left + 4} y={y - BREAK_PX / 2} width={PLOT_W + PAD.left} height={BREAK_PX} fill={T.white} />
+              {/* 끊긴 자리를 카드 배경색으로 덮어 격자선·연도 기준선이 지나가지 않게 한다.
+                  눈금선과 같은 폭만 덮는다 — 라벨 칸까지 덮을 이유가 없다(그 자리에 눈금이 놓이지도 않는다). */}
+              <Rect x={0} y={y - BREAK_PX / 2} width={PLOT_W} height={BREAK_PX} fill={T.white} />
               {/* 두 줄 — 한 줄이면 초록 밴드 경계선 같은 '기준선'으로 오인된다 */}
               <Path d={wave(-2)} stroke={T.text3} strokeWidth={1} fill="none" opacity={0.45} />
               <Path d={wave(2)} stroke={T.text3} strokeWidth={1} fill="none" opacity={0.45} />
