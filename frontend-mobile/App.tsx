@@ -21,7 +21,7 @@ import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components
 import { applyGender, initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
 import { dummyComboAnalysis, dummyEgfr, dummyRecommendations, dummyInsight, dummyHighlights, dummyChangePace } from './src/dummyAnalysis';
-import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, latestRecommendations, latestComboAnalysis, fetchEgfr, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
+import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, recommendationsByYear, comboAnalysisByYear, egfrByYear, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
 import type { RealTimeseries, RealRecommendations, RealEgfr, RealComboAnalysis } from './src/health';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
@@ -77,19 +77,21 @@ export default function App() {
   const [healthDataLoading, setHealthDataLoading] = useState(false);
   // 시계열 분석(연도별 추세 하이라이트) — 2년 이상 기록이 있을 때만 백엔드가 내려준다.
   const [timeseries, setTimeseries] = useState<RealTimeseries | null>(null);
-  // 개인화 권장사항 — 최신 연도 분석 결과에 백엔드가 실제로 생성해 보내준 내용 그대로.
-  const [recommendations, setRecommendations] = useState<RealRecommendations | null>(null);
-  // 조합 그룹(복합 위험 패턴) — 구버전 분석에는 없어 null이 정상이다.
-  const [comboAnalysis, setComboAnalysis] = useState<RealComboAnalysis | null>(null);
-  // 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 받아온다.
-  const [egfr, setEgfr] = useState<RealEgfr | null>(null);
+  // 아래 셋은 모두 **연도별**이다 — 분석은 해마다 그 해 수치로 따로 계산·저장된다.
+  // 최신 연도 것 하나만 들고 있으면 분석 화면에서 연도를 바꿔도 아래 카드가 안 따라간다.
+  // 개인화 권장사항 — 백엔드가 그 해 분석에 실제로 생성해 보내준 내용 그대로.
+  const [recommendations, setRecommendations] = useState<Record<number, RealRecommendations>>({});
+  // 조합 그룹(복합 위험 패턴) — 구버전 분석에는 없어 그 연도가 비어 있는 게 정상이다.
+  const [comboAnalysis, setComboAnalysis] = useState<Record<number, RealComboAnalysis>>({});
+  // 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 연도만 백엔드 계산 결과를 받아온다.
+  const [egfr, setEgfr] = useState<Record<number, RealEgfr>>({});
   // 저장된 복약 정보 — 업로드한 HIRA 복약이력을 조회해 기록화면 복약탭에 실제로 표시한다.
   const [medications, setMedications] = useState<MedicationItem[]>([]);
 
   const loadHealthData = async (userId?: string) => {
     if (!userId) {
       setRealReports(null); setRealMetricDefinitions(null);
-      setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
+      setTimeseries(null); setRecommendations({}); setEgfr({}); setComboAnalysis({});
       setMedications([]);
       return;
     }
@@ -101,8 +103,8 @@ export default function App() {
       if (fetchedReports.length > 0) {
         setRealReports(fetchedReports);
         setRealMetricDefinitions(latestEvaluationsAsMetricDefinitions(raw));
-        setRecommendations(latestRecommendations(raw));
-        setComboAnalysis(latestComboAnalysis(raw));
+        setRecommendations(recommendationsByYear(raw));
+        setComboAnalysis(comboAnalysisByYear(raw));
 
         // 시계열 하이라이트 — 기록이 2년 이상일 때만 의미가 있다(백엔드도 그 미만이면 비워서 내려줌).
         let ts = await fetchTimeseries(userId);
@@ -114,29 +116,19 @@ export default function App() {
         }
         setTimeseries(ts);
 
-        // eGFR — 최신 연도에 혈청 크레아티닌이 "실제로" 측정된 경우에만 계산을 요청한다.
+        // eGFR — 혈청 크레아티닌이 "실제로" 측정된 연도만 계산을 요청한다.
         // (측정되지 않은 값으로 추정해서 보여주면 사실과 다른 정보를 전달하게 되므로 호출 자체를 하지 않는다)
-        const latestRaw = raw[raw.length - 1];
-        const cr = latestRaw?.comprehensive?.all_evaluations?.find((e) => e.metric === '혈청크레아티닌' || e.metric === '혈청 크레아티닌')?.value;
-        if (typeof cr === 'number' && profile.birth_year) {
-          const age = latestRaw.year - profile.birth_year;
-          const sex: 1 | 2 = profile.gender === 2 ? 2 : 1;
-          // 체중이 그 해 검진에 기록돼 있으면 함께 보내 약물 용량 참고용 CrCl도 받아온다.
-          const weight = latestRaw?.checkup?.weight_kg;
-          setEgfr(await fetchEgfr(cr, age, sex, typeof weight === 'number' ? weight : null));
-        } else {
-          setEgfr(null);
-        }
+        setEgfr(profile.birth_year ? await egfrByYear(raw, profile.birth_year, profile.gender) : {});
       } else {
         setRealReports(null);
         setRealMetricDefinitions(null);
-        setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
+        setTimeseries(null); setRecommendations({}); setEgfr({}); setComboAnalysis({});
       }
     } catch {
       // 검진 기록이 아직 없거나 서버 호출에 실패하면 더미 데이터로 화면을 보여준다.
       setRealReports(null);
       setRealMetricDefinitions(null);
-      setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
+      setTimeseries(null); setRecommendations({}); setEgfr({}); setComboAnalysis({});
     } finally {
       setHealthDataLoading(false);
     }
@@ -157,6 +149,16 @@ export default function App() {
   const reportsForScreens = usingRealData ? realReports! : dummyReports;
   // 허리둘레·HDL·감마-GTP·혈색소는 성별로 정상범위가 달라, 화면에 넘기기 전 이 사람 기준으로 치환한다.
   const metricDefinitionsForScreens = applyGender(usingRealData ? realMetricDefinitions! : dummyMetricDefinitions, profile.gender);
+
+  // 분석 탭에 내려줄 연도별 상세 분석.
+  // 데모는 더미 분석이 한 벌뿐이라 **최신 연도에만** 붙인다 — 전 연도에 같은 걸 복사해 두면
+  // 연도를 바꿔도 아래가 안 바뀌는(=고치려는 바로 그) 상태를 데모에서 그대로 재현하게 된다.
+  const demoYear = dummyReports[dummyReports.length - 1].year;
+  const analysisByYear = usingRealData
+    ? { rec: recommendations, egfr, combo: comboAnalysis }
+    : isDemoAccount
+      ? { rec: { [demoYear]: dummyRecommendations }, egfr: { [demoYear]: dummyEgfr }, combo: { [demoYear]: dummyComboAnalysis } }
+      : { rec: {}, egfr: {}, combo: {} };
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -293,7 +295,7 @@ export default function App() {
               if (supabaseConfigured) await supabase.auth.signOut().catch(() => undefined);
               setLoggedIn(false); setDemoMode(false); setProfile(initialProfile); setTab('dashboard');
               setRealReports(null); setRealMetricDefinitions(null);
-              setTimeseries(null); setRecommendations(null); setEgfr(null); setComboAnalysis(null);
+              setTimeseries(null); setRecommendations({}); setEgfr({}); setComboAnalysis({});
               showToast('회원탈퇴가 완료되었습니다.');
             } catch (e) {
               showToast(e instanceof Error ? `회원탈퇴에 실패했습니다: ${e.message}` : '회원탈퇴에 실패했습니다.');
@@ -353,7 +355,7 @@ export default function App() {
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendations={usingRealData ? recommendations : (isDemoAccount ? dummyRecommendations : null)} egfr={usingRealData ? egfr : (isDemoAccount ? dummyEgfr : null)} comboAnalysis={usingRealData ? comboAnalysis : (isDemoAccount ? dummyComboAnalysis : null)} />)}
+          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendationsByYear={analysisByYear.rec} egfrByYear={analysisByYear.egfr} comboAnalysisByYear={analysisByYear.combo} />)}
         {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} />}
         {tab === 'profile' && loggedIn && (
           <ProfileScreen

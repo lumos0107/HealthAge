@@ -674,17 +674,42 @@ export async function fetchEgfr(serumCr: number, age: number, sex: 1 | 2, weight
   }
 }
 
-/** 최신 연도 보고서의 개인화 권장사항 — 백엔드가 실제로 생성해 보내준 내용만 그대로 보여준다. */
-export function latestRecommendations(raw: RealReportPayload[]): RealRecommendations | null {
-  if (raw.length === 0) return null;
-  const latest = raw[raw.length - 1];
-  return latest.recommendations ?? null;
+/** 연도별 개인화 권장사항 — 백엔드가 실제로 생성해 보내준 내용만 그대로 보여준다.
+ *  분석은 연도마다 그 해 수치로 따로 계산돼 그 해 record에 저장된다(analysis_results ⟷ checkup_records).
+ *  ⚠️ 예전엔 최신 연도 것 하나만 뽑아 썼다 — 분석 화면 위쪽 연도 칩을 눌러도 아래 카드는
+ *  그대로여서, 2018년 점수 옆에 2024년 권장사항이 아무 표시 없이 나란히 놓였다. */
+export function recommendationsByYear(raw: RealReportPayload[]): Record<number, RealRecommendations> {
+  const out: Record<number, RealRecommendations> = {};
+  for (const p of raw) if (p.recommendations) out[p.year] = p.recommendations;
+  return out;
 }
 
-/** 최신 연도 보고서의 조합 그룹 분석 — 구버전 분석에는 없으므로 null이 정상이다. */
-export function latestComboAnalysis(raw: RealReportPayload[]): RealComboAnalysis | null {
-  if (raw.length === 0) return null;
-  return raw[raw.length - 1].combo_analysis ?? null;
+/** 연도별 조합 그룹 분석 — 07 마이그레이션 이전에 저장된 연도에는 없으므로 비어 있는 게 정상이다. */
+export function comboAnalysisByYear(raw: RealReportPayload[]): Record<number, RealComboAnalysis> {
+  const out: Record<number, RealComboAnalysis> = {};
+  for (const p of raw) if (p.combo_analysis) out[p.year] = p.combo_analysis;
+  return out;
+}
+
+/** 연도별 eGFR — /renal/egfr은 저장 없는 순수 계산기라 각 해 크레아티닌·그 해 나이로 그냥 다시 부르면 된다.
+ *  "그 해에 실제로 측정된 경우에만 계산한다"는 원칙은 그대로 두고, 대상만 최신 연도에서 전 연도로 넓힌다. */
+export async function egfrByYear(
+  raw: RealReportPayload[],
+  birthYear: number,
+  gender: number,
+): Promise<Record<number, RealEgfr>> {
+  const sex: 1 | 2 = gender === 2 ? 2 : 1;
+  const targets = raw.flatMap((p) => {
+    const cr = p.comprehensive?.all_evaluations?.find((e) => e.metric === '혈청크레아티닌' || e.metric === '혈청 크레아티닌')?.value;
+    if (typeof cr !== 'number') return [];
+    // 체중이 그 해 검진에 기록돼 있으면 함께 보내 약물 용량 참고용 CrCl도 받아온다.
+    const weight = p.checkup?.weight_kg;
+    return [{ year: p.year, cr, weight: typeof weight === 'number' ? weight : null }];
+  });
+  const results = await Promise.all(targets.map((t) => fetchEgfr(t.cr, t.year - birthYear, sex, t.weight)));
+  const out: Record<number, RealEgfr> = {};
+  targets.forEach((t, i) => { const r = results[i]; if (r) out[t.year] = r; });
+  return out;
 }
 
 /**

@@ -129,14 +129,29 @@ function levelSummary(levels: string[]): string | null {
     : `지표 ${judged.length}개 중 ${bad}개가 주의 이상 구간이에요.`;
 }
 
-export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendations, egfr, comboAnalysis }: {
+export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendationsByYear, egfrByYear, comboAnalysisByYear }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
-  recommendations?: RealRecommendations | null;
-  egfr?: RealEgfr | null;
-  comboAnalysis?: RealComboAnalysis | null;
+  // 상세 분석은 **연도별**로 받는다. 예전엔 최신 연도 것 하나만 받아, 위쪽 연도 칩을 눌러도
+  // 아래 카드(신장·간·대사·심혈관·권장사항)는 그대로여서 2018년 점수 옆에 2024년 분석이 놓였다.
+  recommendationsByYear?: Record<number, RealRecommendations>;
+  egfrByYear?: Record<number, RealEgfr>;
+  comboAnalysisByYear?: Record<number, RealComboAnalysis>;
 }) {
+  const [yearIdx, setYearIdx] = useState(reports.length - 1);
+  const [showRedundant, setShowRedundant] = useState(false);
+  // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
+  // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
+  const [showEngines, setShowEngines] = useState(false);
+  const report = reports[yearIdx];
+
+  // 아래 모든 상세 분석은 **선택한 연도의 것**이다. 그 해에 저장된 분석이 없으면 null이고,
+  // 그때는 카드를 조용히 지우는 대신 "이 연도엔 상세 분석이 없다"고 밝힌다(아래 noDetail 안내).
+  const recommendations = recommendationsByYear?.[report.year] ?? null;
+  const egfr = egfrByYear?.[report.year] ?? null;
+  const comboAnalysis = comboAnalysisByYear?.[report.year] ?? null;
+
   // 조합 그룹은 07 마이그레이션 이후 분석에만 있다 — 없으면 카드 자체를 그리지 않는다.
   const comboGroups = comboAnalysis?.combo_groups ?? null;
   // 16년(1,596만 건) 모집단 통계 — 최신 분석부터 담겨 온다. 구버전 저장분에는 없다.
@@ -180,12 +195,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // FLI/HSI level → 상태색 (백엔드 interpretation 문구를 그대로 쓰고, 색만 구간에 맞춘다)
   const levelColor = (level: string) => level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
   const levelBg = (level: string) => level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
-  const [yearIdx, setYearIdx] = useState(reports.length - 1);
-  const [showRedundant, setShowRedundant] = useState(false);
-  // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
-  // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
-  const [showEngines, setShowEngines] = useState(false);
-  const report = reports[yearIdx];
 
   // 참고 점수: 그 해 검진 결과에 기록된 값을 그대로 보여준다(대시보드·기록 화면과 항상 일치).
   // 감점 근거(주의/위험 개수)도 그 해 기록과 함께 저장해 둔 값을 그대로 쓴다 — 연도가 바뀌어도 항상 점수와 일치한다.
@@ -363,6 +372,33 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       })}
       </FadeIn>
       </FadeInUp>
+
+      {/* 여기부터는 그 해 검진 수치로 따로 계산해 저장해 둔 상세 분석이다.
+          예전엔 최신 연도 것만 내려받아, 위에서 연도를 바꿔도 아래는 그대로였다.
+          이제 연도를 따라가므로 어느 해 기준인지 한 줄로 못 박아 둔다. */}
+      <FadeIn key={`detail-${report.year}`}>
+      <View style={{ paddingHorizontal: 20, marginTop: 18, marginBottom: 2 }}>
+        <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>상세 분석 · {report.year}년 검진 기준</Text>
+        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 3 }}>
+          아래 카드는 모두 {report.year}년 수치로 계산한 결과예요. 위에서 연도를 바꾸면 함께 바뀝니다.
+        </Text>
+      </View>
+
+      {/* 그 해 분석이 통째로 없는 경우 — 카드를 조용히 지우면 "원래 그런 해"로 읽힌다.
+          왜 없는지(예전 방식으로 저장된 회차) 밝히고, 최신 회차를 보라고 안내한다. */}
+      {!comboAnalysis && !egfr && !recommendations && (
+        <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>
+            {report.year}년은 상세 분석이 저장돼 있지 않아요
+          </Text>
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+            상세 분석(신장·간·대사·심혈관·권장사항)은 검진 회차마다 따로 계산해 저장돼요.
+            이 회차는 예전 방식으로 저장돼 있어 보여드릴 내용이 없습니다.
+            {reports.length > 1 && ' 위에서 최근 연도를 선택해 주세요.'}
+          </Text>
+        </View>
+      )}
+      </FadeIn>
 
       {/* 신장 — eGFR·CrCl */}
       {egfr && <DomainHeader title="신장 기능" />}

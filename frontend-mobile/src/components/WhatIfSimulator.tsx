@@ -86,6 +86,10 @@ export function WhatIfSimulator({ latest, disabled, disabledReason, demoMode }: 
         <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
           다음 검진에서 값이 이렇게 나오면 지표가 어떻게 달라지는지 다시 계산해볼 수 있어요.
           공식으로 계산하는 것이라 예측이 아니에요.
+          {'\n'}
+          {/* 서버는 '가장 최근' 저장 검진값을 기준선으로 쓴다 — 위에서 다른 연도를 골라도 여기만 최신이라
+              밖에서는 알 길이 없었다. 카드 겉면에 기준 연도를 못 박는다. */}
+          <Text style={{ color: T.text3 }}>기준은 가장 최근 검진인 {latest.year}년 값이에요.</Text>
         </Text>
         <Pressable
           onPress={disabled ? undefined : openModal}
@@ -165,6 +169,36 @@ export function WhatIfSimulator({ latest, disabled, disabledReason, demoMode }: 
                     </Text>
                   )}
                 </View>
+
+                {/* LDL 개인 목표 — 백엔드도 데모(simulateDemo)도 계속 보내주고 타입에도 있었는데
+                    그리는 코드가 없어 화면에 한 번도 나온 적이 없다. 결과가 '대사증후군만' 보이던
+                    이유 중 하나다. 목표선을 넘었는지/넘겼는지가 LDL을 조정하는 유일한 이유이므로
+                    대사증후군 바로 다음에 놓는다. */}
+                {result.ldl_target?.target_ldl != null && result.ldl_target.after_ldl != null && (
+                  <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>LDL 개인 목표</Text>
+                    <Text style={{ fontSize: 12, color: T.text3, marginBottom: 12 }}>
+                      {result.ldl_target.label ? `${result.ldl_target.label} 기준 ` : ''}목표 {result.ldl_target.target_ldl}mg/dL 미만이에요.
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <Text style={{ fontSize: 26, fontWeight: '800', color: T.text3 }}>{result.ldl_target.before_ldl ?? '—'}</Text>
+                      <Ionicons name="arrow-forward" size={20} color={T.text3} />
+                      <Text style={{ fontSize: 30, fontWeight: '800', color: result.ldl_target.after_achieved ? T.success : T.text1 }}>
+                        {result.ldl_target.after_ldl}
+                      </Text>
+                      <Text style={{ fontSize: 13, color: T.text2, marginTop: 6 }}>mg/dL</Text>
+                    </View>
+                    {result.ldl_target.after_achieved != null && (
+                      <View style={{ alignSelf: 'flex-start', marginTop: 12, backgroundColor: result.ldl_target.after_achieved ? T.successBg : T.warnBg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: T.radiusPill }}>
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: result.ldl_target.after_achieved ? T.success : T.warn }}>
+                          {result.ldl_target.after_achieved
+                            ? (result.ldl_target.before_achieved ? '목표 달성 유지' : '목표를 달성해요')
+                            : `목표까지 ${result.ldl_target.after_ldl - result.ldl_target.target_ldl}mg/dL 남아요`}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
 
                 {(!!result.groups.resolved.length || !!result.groups.added.length) && (
                   <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
