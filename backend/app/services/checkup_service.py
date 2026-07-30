@@ -18,6 +18,7 @@ from fastapi import HTTPException, status
 from supabase import Client
 
 from app.analyzer import ANALYZER_VERSION, analyze
+from app.analyzer._internal.population16 import build_population16
 from app.medication.categorizer import categorize_medications, has_any_records
 
 from app.services.timeseries_service import refresh_timeseries
@@ -126,7 +127,7 @@ async def analyze_and_save(
     # 단일그룹 판정(13개)·ASCVD 참고 시뮬도 combo_analysis(jsonb)에 함께 담아
     # 저장·조회 API로 내려준다. 구버전 저장 행에는 이 필드가 없다 → 프론트 null 처리.
     if combo_analysis and group_analysis:
-        _inject_group_extras(combo_analysis, group_analysis)
+        _inject_group_extras(combo_analysis, group_analysis, user_info)
     if "warnings" in result:
         warnings.extend(result.get("warnings", []))
 
@@ -271,6 +272,7 @@ def _empty_medications() -> dict[str, bool]:
 def _inject_group_extras(
     combo_analysis: dict[str, Any],
     group_analysis: dict[str, Any],
+    user_info: dict[str, Any] | None = None,
 ) -> None:
     """group_analysis에서만 계산되는 부가 결과를 combo_analysis(jsonb)에 담는다.
 
@@ -289,6 +291,29 @@ def _inject_group_extras(
     combo_analysis["metabolic_syndrome_detail"] = group_analysis.get(
         "metabolic_syndrome_detail"
     )
+
+    # 16년(1,596만 건) 모집단 통계 — 조합 O/E 안정성·또래 유병률·연령고정 추세·참고군 분포.
+    # 조회만 하므로 실패해도 분석 본체에 영향이 없다(모듈이 None을 돌려주면 키가 안 생긴다).
+    info = user_info or {}
+    matched = [
+        c.get("combo_name")
+        for c in ((combo_analysis.get("combo_groups") or {}).get("matched") or [])
+        if c.get("combo_name")
+    ]
+    pop16 = build_population16(
+        sex=_as_int(info.get("gender")),
+        age=_as_int(info.get("age")),
+        matched_combos=matched,
+    )
+    if pop16:
+        combo_analysis["population_16yr"] = pop16
+
+
+def _as_int(v: Any) -> int | None:
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
 
 
 # ──────────────────────────────────────────────────────────────────
