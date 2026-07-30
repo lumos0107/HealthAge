@@ -281,7 +281,7 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
       <View style={{ height: 18 }}>
         {anchor(pct(value), (
           <Text style={{ fontSize: 12, fontWeight: '700', color, width: 76, textAlign: 'center' }}>
-            {formatMetricValue(metric, value)}{metric.unit}
+            {formatMetricValue(metric, value)}
           </Text>
         ))}
       </View>

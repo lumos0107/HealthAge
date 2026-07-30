@@ -3,7 +3,7 @@ import { Animated, Dimensions, Easing, Pressable, ScrollView, Text, View } from 
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T } from '../components/UI';
 import { NORMAL_BAND, PeerRankSlider, Sparkline, scoreTone, SummaryCard } from '../components/v2';
-import { cardContent, isBadStatus, metricLabel, metricsForReport } from '../data';
+import { cardContent, directionLabel, isBadStatus, metricDirection, metricLabel, metricsForReport } from '../data';
 import { estimateRank, normalBounds, rankFromPercentile, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
 import type { RealTimeseries } from '../health';
@@ -29,6 +29,13 @@ const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 const LINE_COLORS = ['#1E88E5', '#8E24AA', '#3949AB', '#00897B', '#6D4C41'];
 
 // 키는 성인에서 사실상 변하지 않는 참고값, 요단백은 등급형(음성/1+…)이라 선그래프가 어울리지 않아 제외한다.
+//
+// ⚠️ keys의 순서에 의미가 있다 — 무해한 정리처럼 보이지만 화면 문장을 바꾼다.
+// 1뎁스의 대표 항목은 상태(위험>주의>정상)로 뽑는데 그 정렬이 안정적이라, 같은 상태가
+// 여럿이면 이 배열에서 앞선 항목이 이긴다. 지금 2024년 지질 4개는 전부 '주의'라 동점이고,
+// LDL이 첫 번째여서 카드가 "LDL이 33mg/dL 올랐어요"라고 말한다. data.ts의 category 순서
+// (총콜레스테롤이 먼저)로 되돌리면 문장의 주어가 총콜레스테롤로 조용히 바뀐다.
+// 순서를 바꿀 때는 그 카드가 무슨 문장을 말하게 되는지 함께 확인할 것.
 const chartGroups: { title: string; keys: MetricKey[] }[] = [
   { title: '혈압', keys: ['sbp', 'dbp'] },
   { title: '혈당·체중', keys: ['glucose', 'bmi', 'waist', 'weight'] },
@@ -457,7 +464,13 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
                 return (
                   <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 }}>
                     <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: color }} />
-                    <Text style={{ flex: 1, fontSize: 13, color: T.text2 }}>{metric.shortName}</Text>
+                    <Text style={{ flex: 1, fontSize: 13, color: T.text2 }}>
+                      {metric.shortName}
+                      {/* 방향 표시 — 한 축에 여러 선을 겹쳐 그리는 그래프라, HDL처럼 '높을수록 좋음'인
+                          항목은 선이 내려가는 게 나빠지는 것이다. 표시가 없으면 위로 가는 LDL과
+                          나란히 놓여 거꾸로 읽힌다. 기호 뜻은 아래 한 줄에서 풀어준다. */}
+                      <Text style={{ fontSize: 10, color: T.text3 }}>  {directionLabel(metricDirection(metric)).icon}</Text>
+                    </Text>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{r.values[k]}{metric.unit}</Text>
                     {bad && (
                       <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: metric.status === '주의' ? T.warn : T.danger }} />
@@ -465,6 +478,13 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
                   </View>
                 );
               })}
+              {/* 이 그룹에 실제로 나온 방향만 풀어 쓴다 — 전부 같은 방향이면 한 가지만 남는다. */}
+              <Text style={{ fontSize: 11, color: T.text3, marginTop: 8, lineHeight: 16 }}>
+                {[...new Map(presentKeys.map((k) => {
+                  const d = directionLabel(metricDirection(metricByKeyForYear(k)!));
+                  return [d.icon, d];
+                })).values()].map((d) => `${d.icon} ${d.text}`).join('  ·  ')}
+              </Text>
             </View>
           </FadeSwap>
         </View>
