@@ -358,6 +358,24 @@ export const metricGloss: Partial<Record<MetricKey, string>> = {
   urineProtein: '소변 속 단백질',
 };
 
+/** 1뎁스 요약 문장의 주어로 쓸 쉬운 말 — shortName이 약어라 문장에서 안 읽히는 항목만 담는다.
+ *  metricGloss(검사항목 탭의 부제)와 따로 둔 이유: 그건 이름 아래 붙는 뜻풀이라
+ *  "키·몸무게 비만도"처럼 명사구여도 되지만, 여기 값은 "…가 3.8 올랐어요"의 주어라
+ *  문장에 그대로 들어가야 읽힌다.
+ *  ⚠️ 간 수치 3종처럼 쉬운 말이 겹치는 항목은 괄호로 원래 이름을 남긴다 — 대표 항목이
+ *  AST에서 ALT로 바뀌었는데 문장이 똑같으면 1뎁스에서 주어가 바뀐 걸 알 수 없다.
+ *  BMI·혈색소·허리둘레처럼 이미 널리 쓰는 말은 넣지 않는다(바꾸면 오히려 길고 낯설어진다). */
+export const metricPlainName: Partial<Record<MetricKey, string>> = {
+  ldl: '나쁜 콜레스테롤',
+  hdl: '좋은 콜레스테롤',
+  ast: '간 수치(AST)',
+  alt: '간 수치(ALT)',
+  ggt: '간 수치(감마-GTP)',
+  sbp: '수축기 혈압',
+  dbp: '이완기 혈압',
+  creatinine: '신장 수치(크레아티닌)',
+};
+
 // 백엔드는 내부 검진항목 키를 그대로 쓴다(non_HDL, 식전혈당(공복혈당) 등).
 // 화면에는 사용자가 읽는 이름으로 바꿔 보여준다. 맵에 없으면 원래 키를 그대로 쓴다.
 const METRIC_LABEL: Record<string, string> = {

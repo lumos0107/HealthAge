@@ -3,7 +3,7 @@ import { Animated, Dimensions, Easing, Pressable, ScrollView, Text, View } from 
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T } from '../components/UI';
 import { NORMAL_BAND, PeerRankSlider, Sparkline, scoreTone, SummaryCard } from '../components/v2';
-import { cardContent, directionLabel, isBadStatus, metricDirection, metricLabel, metricsForReport } from '../data';
+import { cardContent, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { estimateRank, normalBounds, rankFromPercentile, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
 import type { RealTimeseries } from '../health';
@@ -306,10 +306,14 @@ function groupSummary(leadKey: MetricKey | null, reports: Report[], metricDefini
   if (pts.length < 2 || !m) return null;   // 비교할 해가 없으면 배지만 남긴다
 
   const delta = pts[pts.length - 1].v - pts[0].v;
+  // 주어는 쉬운 말로 — 1뎁스는 검진 수치를 모르는 사람이 읽는 자리다. "LDL가 33mg/dL"는
+  // 무슨 말인지 모르면 문장 전체가 버려진다. 약어는 2뎁스 범례·차트가 맡는다.
+  // (덤으로 "LDL가"의 조사 오류도 사라진다 — subjectJosa가 라틴 문자의 받침을 못 읽는다.)
+  const subject = metricPlainName[m.key] ?? m.shortName;
   const rel = Math.abs(delta) / (Math.abs(pts[0].v) || 1);
-  if (rel < 0.05) return `${m.shortName}${topicJosa(m.shortName)} 큰 변화 없이 비슷한 수준이에요.`;
+  if (rel < 0.05) return `${subject}${topicJosa(subject)} 큰 변화 없이 비슷한 수준이에요.`;
   const amount = Math.round(Math.abs(delta) * 10) / 10;
-  return `${pts[0].year}년 이후 ${m.shortName}${subjectJosa(m.shortName)} ${amount}${m.unit} ${delta > 0 ? '올랐어요' : '내렸어요'}.`;
+  return `${pts[0].year}년 이후 ${subject}${subjectJosa(subject)} ${amount}${m.unit} ${delta > 0 ? '올랐어요' : '내렸어요'}.`;
 }
 
 function ChartCard({ group, reports, metricDefinitions }: { group: { title: string; keys: MetricKey[] }; reports: Report[]; metricDefinitions: MetricDefinition[] }) {
