@@ -201,6 +201,32 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const scorePct = report.score;
   const { color: scoreColor, bg: scoreBg, label: scoreLabel } = scoreTone(scorePct);
 
+  // 점수 밖에 있는 신호 — 참고 점수는 '검사 항목 하나하나의 주의/위험 개수'만 감점한다.
+  // 심혈관 10년 위험·대사증후군·지방간 지표·LDL 개인 목표·신장 기능은 이 점수에 전혀 들어가지 않아
+  // "점수는 양호한데 아래 카드는 빨간" 상태가 구조적으로 생긴다.
+  // ⚠️ 산식은 건드리지 않는다 — 점수는 그 해 기록에 저장된 값이라 바꾸면 홈·기록·히스토리와 어긋난다.
+  // 대신 점수가 못 세는 것을 점수 바로 아래 모아 보여 단절을 감추지 않는다.
+  const outsideScore = useMemo(() => {
+    const out: { label: string; detail: string }[] = [];
+    if (egfr && egfr.severity !== 'normal') {
+      out.push({ label: '신장 기능', detail: `${egfr.egfr} ${egfr.unit} · ${egfr.stage} ${egfr.label}` });
+    }
+    if (msDetail?.is_metabolic_syndrome) {
+      out.push({ label: '대사증후군', detail: `5개 기준 중 ${msDetail.count}개 충족` });
+    }
+    // 'low'(낮은 편)만 빼고 경계 구간부터 싣는다 — 경계는 점수엔 흔적조차 없다.
+    if (ascvd?.available && ascvd.risk_level && ascvd.risk_level !== 'low') {
+      out.push({ label: '심혈관 10년 위험', detail: `${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}` });
+    }
+    for (const [name, idx] of [['FLI', flIndices?.fli], ['HSI', flIndices?.hsi]] as const) {
+      if (idx?.level === 'high') out.push({ label: `지방간 지표 ${name}`, detail: idx.interpretation });
+    }
+    if (ldlTarget?.achieved === false) {
+      out.push({ label: 'LDL 개인 목표', detail: `목표 ${ldlTarget.target_text}${ldlTarget.gap != null ? ` · ${ldlTarget.gap} 초과` : ''}` });
+    }
+    return out;
+  }, [egfr, msDetail, ascvd, flIndices, ldlTarget]);
+
   // 관리 참고군: 선택한 연도의 실제 측정값을 기준으로 매번 다시 계산한다 — 연도를 바꾸면 그 해 기준으로 갱신된다.
   // (단, 정렬은 매칭 개수 기준이라 1순위 그룹이 자연히 상단에 오게 되고, 보통 연도가 바뀌어도 같은 그룹이 1순위를 유지한다)
   const groups = useMemo(() => computeGroupsForReport(report, metricDefinitions), [report, metricDefinitions]);
@@ -261,6 +287,26 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
           </View>
         </View>
+        {/* 점수가 세지 않는 것 — 점수만 보고 "괜찮다"고 덮어버리지 않도록, 아래 상세 분석에서
+            나온 신호를 점수 바로 밑에 모은다. 점수가 양호할 때가 특히 중요하다. */}
+        {outsideScore.length > 0 && (
+          <View style={{ borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 14, marginBottom: 4 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
+              이 점수에 들어가지 않은 신호 {outsideScore.length}가지
+            </Text>
+            <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 10 }}>
+              점수는 검사 항목별 주의·위험 개수만 셉니다. 아래 항목은 여러 수치를 조합해 따로 판정한 것이라 점수에 반영되지 않아요.
+            </Text>
+            {outsideScore.map((o) => (
+              <View key={o.label} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: T.warn, marginTop: 7 }} />
+                <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, flex: 1 }}>
+                  <Text style={{ fontWeight: '700', color: T.text1 }}>{o.label}</Text> — {o.detail}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
         {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
         <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
       </View>

@@ -330,6 +330,12 @@ export function ScoreCalcNote({ score, manageCount, trackCount }: {
             100점에서 시작해 주의 항목은 {SCORE_PENALTY.manage}점, 위험 항목은 {SCORE_PENALTY.track}점씩 빼서 계산해요.{'\n'}
             100 − ({SCORE_PENALTY.manage}×주의 {manageCount}개) − ({SCORE_PENALTY.track}×위험 {trackCount}개) = {score}점
           </Text>
+          {/* 점수의 범위를 여기서 못 박는다 — 이 점수는 '검사 항목 판정 개수'일 뿐인데,
+              심혈관 위험·대사증후군·지방간처럼 여러 수치를 조합한 판정은 하나도 들어가지 않는다.
+              그 사실을 밝히지 않으면 점수가 종합 건강 점수로 읽힌다. */}
+          <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 16 }}>
+            검사 항목 하나하나의 판정만 셉니다. 여러 수치를 조합해 따로 판정하는 심혈관 10년 위험·대사증후군·지방간 지표는 이 점수에 들어가지 않아요 — 분석 탭에서 따로 확인하세요.
+          </Text>
           {/* 감점 기준 — 옅은 색칠 박스 없이, 색은 글자에만 사용해 구분선으로 나열 */}
           <View style={{ flexDirection: 'row' }}>
             {[
