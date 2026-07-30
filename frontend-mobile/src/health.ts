@@ -20,7 +20,7 @@
  */
 import { apiFetch, getAccessToken } from './api';
 import type { MetricDefinition, MetricKey, Report, Status, MetricDirection, OcrField, MedicationItem } from './data';
-import { metricDefinitions as dummyMetricDefinitions, ocrTemplate } from './data';
+import { metricDefinitions as dummyMetricDefinitions, ocrTemplate, SCORE_PENALTY } from './data';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://127.0.0.1:8000';
 
@@ -211,6 +211,34 @@ export type RealCalculators = {
   error?: string;
 } | null;
 
+/** 16년(2009~2024, 1,596만 건) 모집단 통계 — backend population16.py.
+ *  ⚠️ 최신 분석부터 담겨 온다. 구버전 저장분에는 없다 → 항상 null 처리. */
+export type RealPopulation16 = {
+  source: { years: string; total_rows: number; label: string };
+  /** 해당한 조합의 16년 O/E — 한 해 값 하나보다 "16년간 2.2~3.1배"가 강하다 */
+  combo_oe?: Record<string, {
+    median: number; min: number; max: number;
+    n_years: number; year_from: number; year_to: number;
+    /** 지질검사가 전원에게 실시된 2009~2017년만 집계한 조합 — 2018년부터 측정율이 34%로
+     *  떨어지고 검사받는 사람이 관리 중인 쪽으로 쏠려 O/E가 눌리기 때문. 화면에서 기준을 밝힌다. */
+    lipid_era_only?: boolean;
+    by_year?: { year: number; oe: number }[];
+  }>;
+  /** 같은 성별·연령대의 집단군 유병률(수치 기준) */
+  peer_prevalence?: Record<string, { name: string; pct: number; n_eval: number }>;
+  /** ⭐ 같은 나이대의 2009 vs 2024 — 고령화가 아니라 세대 자체가 나빠졌다는 근거 */
+  age_fixed_trend?: {
+    age_band: string; sex: string;
+    items: { group: string; name: string; y2009: number; y2024: number; diff: number; ratio: number }[];
+  };
+  /** 관리 참고군별 '벗어난 항목 수' 모집단 분포 */
+  care_distribution?: Record<string, {
+    total: number;
+    dist: { hits: number; n: number; pct: number }[];
+  }>;
+  disclaimer: string;
+};
+
 export type RealComboAnalysis = {
   combo_groups?: {
     matched: RealComboGroup[];
@@ -239,6 +267,19 @@ export type RealComboAnalysis = {
   } | null;
   // ⚠️ 아래 필드들은 최신 분석부터 저장된다 — 구버전 분석에는 없다 → null 처리.
   rarity?: RealRarity;
+  /** 대사증후군 5인자 세부 — 어느 인자가, 수치 때문인지 약 때문인지까지.
+   *  "대사증후군 해당"이라는 판정의 근거를 그대로 보여주기 위한 값. */
+  metabolic_syndrome_detail?: {
+    factors: Record<string, {
+      met: boolean; value?: number; threshold?: number;
+      reason: string; by_medication: boolean;
+    }>;
+    count: number;
+    evaluable: number;
+    is_metabolic_syndrome: boolean;
+  } | null;
+  /** 16년 모집단 통계 — 최신 분석부터. 구버전 저장분에는 없다. */
+  population_16yr?: RealPopulation16 | null;
   single_groups?: RealSingleGroup[] | null;
   ascvd_simulation?: RealAscvdSimulation | null;
   calculators?: RealCalculators;
@@ -290,17 +331,30 @@ export function adaptReport(payload: RealReportPayload): Report {
       statusByKey[key] = statusFromBackend(ev.status);
     }
   }
-  const manageCount = c.all_evaluations.filter((e) => e.status === 'high' || e.status === 'low').length;
-  const trackCount = c.all_evaluations.filter((e) => e.status.startsWith('very_') || e.status.startsWith('extremely_')).length;
+  // 개수는 statusFromBackend를 거쳐서 센다 — 상태 문자열 분류 규칙이 두 곳에 갈라지면
+  // statusByKey('caution'→주의)와 개수(caution 미포함)가 어긋나 점수가 화면 배지와 안 맞는다.
+  let manageCount = 0;
+  let trackCount = 0;
+  for (const ev of c.all_evaluations) {
+    const s = statusFromBackend(ev.status);
+    if (s === '주의') manageCount++;
+    else if (s === '위험') trackCount++;
+  }
   const badCount = manageCount + trackCount;
   const status: Status = badCount === 0 ? '정상' : badCount <= 3 ? '주의' : '위험';
+  // ⚠️ 백엔드 summary.risk_score를 그대로 쓰면 안 된다 — 그건 '나쁨 점수'(0=건강, 클수록 나쁨,
+  // 5×extremely + 3×very + 1×high/low + 0.5×caution)인데, 화면은 이 필드를 100점 만점의
+  // '좋음 점수'로 그린다(AnalysisScreen 색 임계값 70/40, reportExport "/ 100점").
+  // 그대로 넣으면 실계정에서 극성이 뒤집혀, 건강한 사람일수록 점수가 낮게 나온다.
+  // 더미(data.makeReport)와 홈(data.computeScore)이 쓰는 같은 감점식으로 통일한다.
+  const score = Math.max(0, 100 - SCORE_PENALTY.manage * manageCount - SCORE_PENALTY.track * trackCount);
   return {
     year: payload.year,
     date: String(payload.checkup?.exam_date ?? payload.checkup?.['검진일'] ?? `${payload.year}-01-01`),
     hospital: String(payload.checkup?.hospital ?? payload.checkup?.['검진기관'] ?? ''),
     status,
     summary: payload.basic_report?.summary ?? c.summary.overall_status,
-    score: Math.round(c.summary.risk_score),
+    score,
     manageCount,
     trackCount,
     values,
@@ -323,6 +377,8 @@ export function adaptEvaluation(ev: RealEvaluation): MetricDefinition & {
     unit: ev.unit || fallback?.unit || '',
     normalText: fallback?.normalText ?? '',
     normalValue: fallback?.normalValue ?? ev.value,
+    // 성별 기준이 다른 항목은 여성 기준도 같이 넘겨야 applyGender()가 치환할 수 있다.
+    female: fallback?.female,
     peerMean: ev.peer_mean ?? fallback?.peerMean,
     status: statusFromBackend(ev.status),
     description: ev.meaning || fallback?.description || '',

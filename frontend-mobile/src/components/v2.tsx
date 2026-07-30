@@ -1,8 +1,8 @@
 // 디자인 시스템 v2에서 새로 도입한 컴포넌트 모음.
 // 상태색(그린/앰버/레드)과 절대 겹치지 않는 카테고리 색을 쓴다 — 상태로 오인 방지.
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import type { MetricDefinition, Report } from '../data';
 import { normalBounds } from '../interpret';
@@ -36,8 +36,11 @@ export function SquircleIcon({ icon, color, bg, size = 42 }: {
 /** "같은 나이대 100명이라면 그중 N등" 슬라이더 — 1등~100등 트랙 위 '나' 마커 */
 export function PeerRankSlider({ rank, color }: { rank: number; color: string }) {
   const pct = ((rank - 1) / 99) * 100;
+  // 10칸(10명 단위)으로 나눠 내가 몇 번째 구간인지 한눈에 보이게 한다 — 점 하나만 있으면
+  // "어디쯤"이 눈대중이 되므로, 내가 속한 칸만 색으로 채워 위치를 셀 수 있게 만든다.
+  const myBin = Math.min(9, Math.floor((rank - 1) / 10));
   return (
-    <View style={{ marginTop: 6 }}>
+    <View style={{ marginTop: 10 }}>
       <View style={{ height: 26 }}>
         <View style={{ position: 'absolute', left: `${pct}%`, transform: [{ translateX: -16 }], alignItems: 'center' }}>
           <View style={{ backgroundColor: color, paddingHorizontal: 9, paddingVertical: 3, borderRadius: T.radiusPill }}>
@@ -46,20 +49,196 @@ export function PeerRankSlider({ rank, color }: { rank: number; color: string })
           <View style={{ width: 2, height: 5, backgroundColor: color }} />
         </View>
       </View>
-      <View style={{ height: 8, borderRadius: 4, backgroundColor: T.cardAlt, overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', left: `${pct}%`, transform: [{ translateX: -5 }], top: -1, width: 10, height: 10, borderRadius: 5, backgroundColor: color }} />
+      {/* 10칸 — 내가 속한 칸만 상태색, 나머지는 회색 */}
+      <View style={{ flexDirection: 'row', gap: 3 }}>
+        {Array.from({ length: 10 }, (_, i) => (
+          <View
+            key={i}
+            style={{ flex: 1, height: 14, borderRadius: 3, backgroundColor: i === myBin ? color : T.cardAlt }}
+          />
+        ))}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
         <Text style={{ fontSize: 12, color: T.text3 }}>1등</Text>
+        <Text style={{ fontSize: 12, fontWeight: '600', color: T.text2 }}>
+          상위 {myBin * 10 + 1}~{myBin * 10 + 10}등 구간
+        </Text>
         <Text style={{ fontSize: 12, color: T.text3 }}>100등</Text>
       </View>
     </View>
   );
 }
 
+/** 1뎁스 요약 카드 + 2뎁스 상세 오버레이 — 탭에는 제목·결론 한 줄만 두고,
+ *  누르면 검사항목 상세(MetricDetailScreen)와 같은 전체 화면 오버레이가 열린다.
+ *  오버레이 안은 항상 같은 순서로 읽힌다:
+ *    ① 결론  ② 이 지표는요(정의 + 2.5뎁스 '자세히 알아보기')  ③ 나의 위치(근거·차트)
+ *    ④ 그래서 이게 의미하는 건  ⑤ 그럼 뭘 하면 좋을까
+ *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다). */
+export function SummaryCard({ title, summary, badge, preview, definition, detail, meaning, meaningExtra, tips, positionTitle, positionExtra, children }: {
+  title: string;
+  summary?: string | null;
+  badge?: React.ReactNode;
+  /** 1뎁스 요약 아래에 얹는 작은 그림 — 스파크라인 등. 열지 않고도 흐름이 보이게 하는 자리다.
+   *  ⚠️ children은 2뎁스 모달로 들어가므로, 1뎁스에 그림을 두려면 반드시 이 prop을 써야 한다. */
+  preview?: React.ReactNode;
+  /** ② 이게 뭔지 한 문장 */
+  definition?: string;
+  /** ②의 2.5뎁스 — '자세히 알아보기'를 눌러야 보이는 심화 설명(용어 사용 가능) */
+  detail?: string;
+  /** ④ 그래서 이게 의미하는 것 */
+  meaning?: string;
+  /** ④에 덧붙이는 근거 — 설명만으로는 와닿지 않는 수치 비교 등 */
+  meaningExtra?: React.ReactNode;
+  /** ⑤ 그럼 뭘 하면 좋은지 */
+  tips?: string[];
+  /** ③ 근거 카드의 제목 — 기본 "나의 위치" */
+  positionTitle?: string;
+  /** ③ 근거 카드 맨 위에 얹는 요소 — 등수 슬라이더 등 */
+  positionExtra?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  return (
+    <>
+      <Pressable onPress={() => setOpen(true)} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, flex: 1 }}>{title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {badge}
+            <Ionicons name="chevron-forward" size={16} color={T.text3} />
+          </View>
+        </View>
+        {!!summary && <Text style={{ fontSize: 13, color: T.text2, marginTop: 4, lineHeight: 19 }}>{summary}</Text>}
+        {preview}
+      </Pressable>
+      <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
+        <View style={{ flex: 1, backgroundColor: T.bg }}>
+          {/* 헤더 — 검사항목 상세와 같은 규격(뒤로가기 + 제목) */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 54, paddingBottom: 10, backgroundColor: T.white }}>
+            <Pressable onPress={() => setOpen(false)} hitSlop={10} style={{ padding: 8 }}>
+              <Ionicons name="chevron-back" size={24} color={T.text1} />
+            </Pressable>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, flex: 1 }} numberOfLines={1}>{title}</Text>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+            {/* ① 결론 — 1뎁스에서 본 요약을 헤드라인으로 */}
+            {!!summary && (
+              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+                <Text style={{ fontSize: 19, fontWeight: '800', color: T.text1, lineHeight: 28 }}>{summary}</Text>
+              </View>
+            )}
+            {/* ② 이 지표는요 — 정의 한 문장, 심화는 2.5뎁스로 접어둔다 */}
+            {!!definition && (
+              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 지표는요</Text>
+                <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{definition}</Text>
+                {showDetail && !!detail && (
+                  <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21, marginTop: 10 }}>{detail}</Text>
+                )}
+                {!!detail && (
+                  <Pressable
+                    onPress={() => setShowDetail((v) => !v)}
+                    hitSlop={8}
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{showDetail ? '접기' : '자세히 알아보기'}</Text>
+                    <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+                  </Pressable>
+                )}
+              </View>
+            )}
+            {/* ③ 나의 위치 — 근거(차트·지표 행) */}
+            <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 12 }}>{positionTitle ?? '나의 위치'}</Text>
+              {positionExtra}
+              {children}
+            </View>
+            {/* ④ 그래서 이게 의미하는 건 */}
+            {(!!meaning || !!meaningExtra) && (
+              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>그래서 이게 의미하는 건</Text>
+                {!!meaning && <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{meaning}</Text>}
+                {meaningExtra}
+              </View>
+            )}
+            {/* ⑤ 그럼 뭘 하면 좋을까 */}
+            {!!tips?.length && (
+              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 10 }}>그럼 뭘 하면 좋을까요</Text>
+                {tips.map((tip, i) => (
+                  <View key={i} style={{ flexDirection: 'row', gap: 8, marginTop: i === 0 ? 0 : 8 }}>
+                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: T.text3, marginTop: 8 }} />
+                    <Text style={{ flex: 1, fontSize: 14, color: T.text2, lineHeight: 21 }}>{tip}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
+          </ScrollView>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+/** 1뎁스 미리보기용 스파크라인 — 축·격자·범례·라벨 없이 선 하나와 마지막 점만.
+ *
+ * ⚠️ 반드시 단일 시리즈로 쓴다. 축을 공유한 다중 시리즈는 단위가 다른 항목을
+ *    같은 높이로 보이게 해 오독을 만든다(LDL 밴드가 HDL을 정상처럼 덮은 건과 같은 구조).
+ *    큰 차트에서는 focus·dimming으로 막지만 40px에는 그 장치를 둘 자리가 없다.
+ * 선 색은 그 항목의 상태색을 쓴다 — 시리즈가 하나뿐이고 카드 배지와 같은 색이라
+ * 색이 판정으로 읽혀도 어긋나지 않는다(큰 차트는 반대로 상태색을 피한다).
+ */
+export function Sparkline({ values, color, height = 40 }: {
+  /** 연도순 값. 측정 안 된 해는 null로 두면 그 구간을 잇지 않고 끊는다. */
+  values: (number | null)[];
+  color: string;
+  height?: number;
+}) {
+  const w = W - 32 - 40;  // 카드 폭 - 좌우 패딩
+  const pad = 5;          // 점 반지름 + 선 굵기가 잘리지 않을 만큼만
+  const pts = values.map((v, i) => ({ i, v }));
+  const nums = pts.filter((p): p is { i: number; v: number } => p.v != null);
+  if (nums.length < 2) return null;   // 점 하나로는 흐름이 아니다 — 아무것도 그리지 않는다
+
+  const lo = Math.min(...nums.map((p) => p.v));
+  const hi = Math.max(...nums.map((p) => p.v));
+  // 자기 데이터 min~max에 딱 맞춰 늘리면 2% 변화도 화면 높이를 다 써서 급변처럼 보인다.
+  // (혈색소 15.0→15.3이 요약문 "큰 변화 없음"과 정반대로 그려졌다.)
+  // 그래서 값 크기의 12%를 최소 폭으로 두고, 그 안의 변화는 완만하게 눕힌다.
+  const mid = (hi + lo) / 2;
+  const span = Math.max(hi - lo, Math.abs(mid) * 0.12) || 1;
+  const base = mid - span / 2;   // 선을 세로 가운데에 둔다
+  const x = (i: number) => pad + (values.length === 1 ? 0 : (i / (values.length - 1)) * (w - pad * 2));
+  const y = (v: number) => pad + (1 - (v - base) / span) * (height - pad * 2);
+
+  // 결측으로 끊긴 구간마다 별도 path — 없는 값을 직선으로 이어 붙이지 않는다.
+  const segs: string[] = [];
+  let cur: string[] = [];
+  for (const p of pts) {
+    if (p.v == null) { if (cur.length > 1) segs.push(cur.join(' ')); cur = []; continue; }
+    cur.push(`${cur.length ? 'L' : 'M'}${x(p.i)},${y(p.v)}`);
+  }
+  if (cur.length > 1) segs.push(cur.join(' '));
+
+  const last = nums[nums.length - 1];
+  return (
+    <View style={{ marginTop: 10 }}>
+      <Svg width={w} height={height}>
+        {segs.map((d, i) => (
+          <Path key={i} d={d} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        ))}
+        <Circle cx={x(last.i)} cy={y(last.v)} r={3.5} fill={color} stroke="#fff" strokeWidth={1.5} />
+      </Svg>
+    </View>
+  );
+}
+
 // 정상범위 밴드 전용 색 — T.successBg(#EAF7F1)는 흰 카드 위에서 너무 연해 구분이 안 돼 한 단계 진하게 쓴다.
 // (배지·칩 배경은 기존 T.successBg 유지 — 글자가 올라가는 배경이라 연해야 한다.)
-const NORMAL_BAND = '#C9EDDC';
+export const NORMAL_BAND = '#C9EDDC';
 
 /** percentile이 없는 항목용 — 정상범위 밴드 위에 내 수치 위치만 보여준다(추정 등수를 지어내지 않는다). */
 export function RangeBar({ metric, value }: { metric: MetricDefinition; value: number }) {
@@ -97,6 +276,7 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
     </View>
   );
 }
+
 
 function statusTone(metric: MetricDefinition) {
   if (metric.status === '정상') return { color: T.success, bg: T.successBg };

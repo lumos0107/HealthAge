@@ -2,12 +2,21 @@
 import { metricDirection } from './data';
 import type { MetricDefinition, MetricKey, Report, Status } from './data';
 
+/** 마지막 글자에 받침이 있는지. 한글이 아니면(영문 약어 등) 없는 것으로 본다. */
+function hasFinalConsonant(word: string): boolean {
+  const code = word.charCodeAt(word.length - 1);
+  if (code < 0xac00 || code > 0xd7a3) return false;
+  return (code - 0xac00) % 28 > 0;
+}
+
 // 받침 유무에 따라 이/가를 고른다. 한글이 아니면(영문 약어 등) '가'.
-function subjectJosa(word: string): '이' | '가' {
-  const last = word.charAt(word.length - 1);
-  const code = last.charCodeAt(0);
-  if (code < 0xac00 || code > 0xd7a3) return '가';
-  return (code - 0xac00) % 28 > 0 ? '이' : '가';
+export function subjectJosa(word: string): '이' | '가' {
+  return hasFinalConsonant(word) ? '이' : '가';
+}
+
+/** 은/는 — 항목 이름 뒤에 붙는다. shortName은 '수축기'처럼 받침이 없는 경우가 많아 반드시 판별해야 한다. */
+export function topicJosa(word: string): '은' | '는' {
+  return hasFinalConsonant(word) ? '은' : '는';
 }
 
 /** 정상범위 경계 파싱 — 범위형은 normalText의 "a-b"에서, 상한/하한형은 normalValue에서.
@@ -53,6 +62,43 @@ export function deltaText(delta: { diff: number; prevYear: number }, unit: strin
   return `${delta.prevYear}년보다 ${Math.abs(delta.diff)}${unit} ${dir}`;
 }
 
+export type ScorePoint = { year: number; score: number; judged: number; complete: boolean };
+
+/** 점수 추이 시리즈 — 연도순 점수 + 그 해가 '온전한 검진'이었는지.
+ *
+ * ⚠️ 참고 점수는 판정된 항목만 감점한다(검사 안 한 항목은 감점 0). 지질검사가
+ *    4년주기라 지질 4항목이 빠진 해는 점수가 최대 12점 높게 나온다. 그 해를
+ *    그냥 이으면 "검사를 안 받아서 좋아진 것처럼" 보이는 위쪽 꺾임이 생기므로,
+ *    항목 수가 최대치보다 적은 해는 complete:false로 표시해 화면이 다르게 그린다.
+ */
+export function scoreSeries(reports: Report[]): ScorePoint[] {
+  const rows = [...reports]
+    .sort((a, b) => a.year - b.year)
+    .map((r) => ({ year: r.year, score: r.score, judged: Object.keys(r.statusByKey).length }));
+  const maxJudged = Math.max(...rows.map((r) => r.judged), 0);
+  return rows.map((r) => ({ ...r, complete: r.judged === maxJudged }));
+}
+
+/** 점수 추이 한 줄 결론 — "10년간 78점 내려갔어요".
+ *  기간은 회차 수가 아니라 첫 해와 마지막 해의 차이로 센다. */
+export function scoreTrendText(series: ScorePoint[]): string | null {
+  if (series.length < 2) return null;
+  const first = series[0];
+  const last = series[series.length - 1];
+  const span = last.year - first.year;
+  const diff = last.score - first.score;
+  const period = span > 0 ? `${span}년간 ` : '';
+  if (diff === 0) return `${period}점수는 그대로예요.`;
+  return `${period}${Math.abs(diff)}점 ${diff < 0 ? '내려갔어요' : '올라갔어요'}.`;
+}
+
+/** 검사 항목이 빠진 해가 있으면 그 사실을 알리는 문구. 없으면 null. */
+export function scoreGapNote(series: ScorePoint[]): string | null {
+  const gaps = series.filter((p) => !p.complete);
+  if (!gaps.length) return null;
+  return `${gaps.map((g) => g.year).join('·')}년은 검사한 항목이 적어(${gaps[0].judged}개) 점수가 높게 나옵니다. 점선으로 표시했어요.`;
+}
+
 const ATTENTION_ORDER: Record<Status, number> = { 위험: 0, 주의: 1, 정상: 2 };
 
 /** 위험→주의→정상 순, 같은 상태끼리는 원래 순서 유지(안정 정렬). */
@@ -83,4 +129,21 @@ export function formatMetricValue(metric: MetricDefinition, value: number): stri
 /** "같은 나이대 100명이라면 그중 N등" — 상위 percentile% ≈ N등. 1~100으로 clamp. */
 export function rankFromPercentile(percentile: number): number {
   return Math.min(100, Math.max(1, Math.round(percentile)));
+}
+
+/** percentile(실측)이 없을 때의 "100명 중 N등" 추정 — 또래 평균을 중심으로,
+ * 정상범위 폭의 1/4을 표준편차로 가정한 정규분포 근사(검사 수치의 정상범위 ≈ 평균±2SD 관행).
+ * 실제 분포 데이터가 아니므로 화면에는 반드시 '추정'임을 함께 표기해야 한다.
+ * 1등 = 가장 좋은 상태. HDL처럼 높을수록 좋은 항목은 방향을 뒤집는다. */
+export function estimateRank(metric: MetricDefinition, value: number): number | null {
+  if (metric.peerMean == null) return null;
+  const { low, high } = normalBounds(metric);
+  const span = (low != null && high != null ? high - low : Math.abs(low ?? high ?? 0) * 0.25) || 1;
+  const sd = span / 4;
+  const z = (value - metric.peerMean) / sd;
+  // 표준정규 누적분포 Φ(z)의 로지스틱 근사(오차 <1%p) — 의존성 없이 충분한 정밀도.
+  const phi = 1 / (1 + Math.exp(-1.702 * z));
+  // 나보다 좋은 사람 비율 ≈ 내 등수. 높을수록 나쁜 항목(범위형 포함)은 값이 낮은 쪽이 좋은 사람.
+  const betterFrac = metricDirection(metric) === 'low' ? 1 - phi : phi;
+  return Math.min(100, Math.max(1, Math.round(betterFrac * 100)));
 }
