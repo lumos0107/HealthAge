@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyGender, metricDefinitions, reports } from './data';
 import type { MetricDefinition } from './data';
-import { deltaText, estimateRank, formatMetricValue, headline, normalBounds, rankFromPercentile, scoreGapNote, scoreSeries, scoreTrendText, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
+import { deltaText, estimateRank, formatMetricValue, headline, normalBounds, rankFromPercentile, scoreGapNote, scoreGrade, scoreSeries, scoreTrendText, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
 
 const by = (key: string) => metricDefinitions.find((m) => m.key === key)!;
 const withStatus = (m: MetricDefinition, status: MetricDefinition['status']): MetricDefinition => ({ ...m, status });
@@ -77,6 +77,15 @@ describe('infoOnly / 등급 표시', () => {
   it('라벨이 없는 항목은 숫자 그대로', () => {
     const g = metricDefinitions.find((m) => m.key === 'glucose')!;
     expect(formatMetricValue(g, 112)).toBe('112');
+  });
+});
+
+describe('scoreGrade — 점수 색 경계', () => {
+  // 70/40 경계가 홈·분석·히스토리 세 곳에 흩어져 있었다. 한 곳으로 모은 뒤 경계값을 고정한다.
+  it('70 이상은 정상, 40~69는 주의, 그 아래는 위험', () => {
+    expect([100, 70].map(scoreGrade)).toEqual(['정상', '정상']);
+    expect([69, 40].map(scoreGrade)).toEqual(['주의', '주의']);
+    expect([39, 22, 0].map(scoreGrade)).toEqual(['위험', '위험', '위험']);
   });
 });
 

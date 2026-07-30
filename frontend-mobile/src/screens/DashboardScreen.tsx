@@ -3,7 +3,7 @@ import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { Eyebrow, FadeInUp, StatusBadge, T } from '../components/UI';
-import { categoryVisual, SquircleIcon } from '../components/v2';
+import { categoryVisual, scoreTone, SquircleIcon } from '../components/v2';
 import { computeScore } from '../data';
 import type { MetricDefinition, MetricKey, Report, TabKey } from '../data';
 import { headline, statusCounts, top3Alerts } from '../interpret';
@@ -62,9 +62,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   // 검사항목 탭과 같은 기준(statusCounts) — 판정 대상이 아닌 참고 항목(키·몸무게)은 세지 않는다.
   const counts = statusCounts(metricDefinitions);
   const { score } = computeScore(metricDefinitions);
-  const scoreColor = score >= 70 ? T.success : score >= 40 ? T.warn : T.danger;
-  const scoreBg = score >= 70 ? T.successBg : score >= 40 ? T.warnBg : T.dangerBg;
-  const scoreLabel = score >= 70 ? '양호해요' : score >= 40 ? '주의가 필요해요' : '관리가 필요해요';
+  const { color: scoreColor, bg: scoreBg, label: scoreLabel } = scoreTone(score);
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T } from '../components/UI';
-import { NORMAL_BAND, PeerRankSlider, Sparkline, SummaryCard } from '../components/v2';
+import { NORMAL_BAND, PeerRankSlider, Sparkline, scoreTone, SummaryCard } from '../components/v2';
 import { cardContent, isBadStatus, metricLabel, metricsForReport } from '../data';
 import { estimateRank, normalBounds, rankFromPercentile, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
@@ -212,7 +212,10 @@ function ScoreTrendHero({ reports }: { reports: Report[] }) {
   const y = (s: number) => pad.top + (1 - s / 100) * plotH;
 
   const last = series[series.length - 1];
-  const lastColor = last.score >= 70 ? T.success : last.score >= 40 ? T.warn : T.danger;
+  // 선은 중립 회색, 판단은 마지막 점에만 — 추이는 사실이고 판단은 현재값이다.
+  // 브랜드 초록으로 그렸을 때 100->22로 내려가는 선이 "좋아지는 중"으로 읽혔고,
+  // 같은 22점을 홈은 빨강 배지로 말해 색 메시지가 서로 반대였다.
+  const lastColor = scoreTone(last.score).color;
   const trend = scoreTrendText(series);
   const gapNote = scoreGapNote(series);
 
@@ -229,7 +232,8 @@ function ScoreTrendHero({ reports }: { reports: Report[] }) {
             <Line
               key={p.year}
               x1={x(i)} y1={y(prev.score)} x2={x(i + 1)} y2={y(p.score)}
-              stroke={partial ? T.text3 : T.primary}
+              // 실선은 진한 회색, 미완 구간은 연한 회색 점선 — 회색끼리도 톤이 갈려야 구분된다.
+              stroke={partial ? T.text3 : T.text2}
               strokeWidth={2.5}
               strokeDasharray={partial ? '4 4' : undefined}
               strokeLinecap="round"
@@ -241,7 +245,8 @@ function ScoreTrendHero({ reports }: { reports: Report[] }) {
             key={p.year}
             cx={x(i)} cy={y(p.score)} r={i === series.length - 1 ? 5 : 3.5}
             // 항목이 빠진 해는 빈 동그라미 — 값이 온전하지 않다는 표시.
-            fill={p.complete ? (i === series.length - 1 ? lastColor : T.primary) : '#fff'}
+            // 상태색은 마지막 점에만 준다(과거 점까지 칠하면 그 해의 판단으로 읽힌다).
+            fill={p.complete ? (i === series.length - 1 ? lastColor : T.text2) : '#fff'}
             stroke={p.complete ? '#fff' : T.text3}
             strokeWidth={p.complete ? 1.5 : 2}
           />
@@ -274,31 +279,25 @@ function FadeSwap({ children, swapKey }: { children: React.ReactNode; swapKey: n
 /** 1뎁스 요약 한 줄 — 여기서 끝내도 되는 '답'이어야 한다.
  * 검진 수치를 모르는 라이트 유저 기준으로 ① 뭘 보는 묶음인지 ② 어떻게 변했는지 ③ 지금 상태가 뭔지를 한 문장에 담는다.
  * (①은 카드 제목이 이미 말해주므로 문장에는 ②+③만 넣는다 — 제목과 겹쳐 읽히면 장황해진다.) */
-function groupSummary(leadKey: MetricKey | null, reports: Report[], metricDefinitions: MetricDefinition[], yearMetrics: MetricDefinition[], keys: MetricKey[]): string | null {
+function groupSummary(leadKey: MetricKey | null, reports: Report[], metricDefinitions: MetricDefinition[]): string | null {
   const isFiniteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-  // ② 어떻게 변했는지 — 반드시 '대표 항목'(=1뎁스 스파크라인이 그리는 항목)으로 말한다.
+  // '대표 항목'(=1뎁스 스파크라인이 그리는 항목)의 변화만 말한다.
   // 예전에는 상대 변화폭이 가장 큰 항목을 골랐는데, 그러면 문장은 A 항목을 말하고
   // 배지·스파크라인·2뎁스 밴드는 B 항목을 가리켜 카드 하나가 서로 다른 걸 말했다.
-  let lead: { name: string; unit: string; delta: number; fromYear: number; rel: number } | null = null;
-  if (leadKey) {
-    const pts = reports.map((r) => ({ year: r.year, v: r.values[leadKey] })).filter((p) => isFiniteNum(p.v));
-    const m = metricDefinitions.find((d) => d.key === leadKey);
-    if (pts.length >= 2 && m) {
-      const delta = pts[pts.length - 1].v - pts[0].v;
-      lead = { name: m.shortName, unit: m.unit, delta, fromYear: pts[0].year, rel: Math.abs(delta) / (Math.abs(pts[0].v) || 1) };
-    }
-  }
-  // ③ 지금 상태 — 이 묶음에서 가장 나쁜 판정을 결론으로 삼는다.
-  const present = keys.map((k) => yearMetrics.find((m) => m.key === k)).filter((m): m is MetricDefinition => !!m);
-  const worst = present.some((m) => m.status === '위험') ? '위험' : present.some((m) => m.status === '주의') ? '주의' : '정상';
-  const nowText = worst === '정상' ? '지금은 모두 정상 범위예요.'
-    : worst === '주의' ? '지금은 주의가 필요한 항목이 있어요.'
-    : '지금은 관리가 필요한 항목이 있어요.';
+  //
+  // "지금은 주의가 필요한 항목이 있어요" 같은 현재 상태 문장은 붙이지 않는다 —
+  // 오른쪽 배지가 이미 같은 말을 하고, 그 때문에 카드 5장이 전부 2줄이 되어
+  // 위쪽 한 줄 카드들과 스캔 리듬이 끊겼다. 상태는 배지가 담당한다(정상도 배지로).
+  if (!leadKey) return null;
+  const pts = reports.map((r) => ({ year: r.year, v: r.values[leadKey] })).filter((p) => isFiniteNum(p.v));
+  const m = metricDefinitions.find((d) => d.key === leadKey);
+  if (pts.length < 2 || !m) return null;   // 비교할 해가 없으면 배지만 남긴다
 
-  if (!lead) return present.length ? nowText : null; // 비교할 해가 없으면 현재 상태만
-  if (lead.rel < 0.05) return `${lead.name}${topicJosa(lead.name)} 큰 변화 없이 비슷한 수준이에요. ${nowText}`;
-  const amount = Math.round(Math.abs(lead.delta) * 10) / 10;
-  return `${lead.fromYear}년 이후 ${lead.name}${subjectJosa(lead.name)} ${amount}${lead.unit} ${lead.delta > 0 ? '올랐어요' : '내렸어요'}. ${nowText}`;
+  const delta = pts[pts.length - 1].v - pts[0].v;
+  const rel = Math.abs(delta) / (Math.abs(pts[0].v) || 1);
+  if (rel < 0.05) return `${m.shortName}${topicJosa(m.shortName)} 큰 변화 없이 비슷한 수준이에요.`;
+  const amount = Math.round(Math.abs(delta) * 10) / 10;
+  return `${pts[0].year}년 이후 ${m.shortName}${subjectJosa(m.shortName)} ${amount}${m.unit} ${delta > 0 ? '올랐어요' : '내렸어요'}.`;
 }
 
 function ChartCard({ group, reports, metricDefinitions }: { group: { title: string; keys: MetricKey[] }; reports: Report[]; metricDefinitions: MetricDefinition[] }) {
@@ -310,11 +309,6 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   // 이 그룹의 항목 중 그 해에 실제로 측정된 것만 추린다 — 검사하지 않은 항목을 측정한 것처럼
   // 그래프나 범례에 끼워 넣으면 사실과 다른 정보가 된다.
   const presentKeys = group.keys.filter((k) => !!metricByKeyForYear(k));
-  const hasBad = presentKeys.some((k) => isBadStatus(metricByKeyForYear(k)!.status));
-  // 테두리 대신 배지 틴트로만 상태를 표시한다(위험=빨강/주의=주황) — v2는 카드에 테두리를 쓰지 않는다.
-  const hasDanger = presentKeys.some((k) => metricByKeyForYear(k)!.status === '위험');
-  const accent = hasDanger ? T.danger : T.warn;
-  const accentBg = hasDanger ? T.dangerBg : T.warnBg;
   // 이 묶음의 대표 항목 = 가장 주의가 필요한 항목. 2뎁스의 밴드·등수 기본값이 된다(선택 연도 기준).
   const leadMetric = presentKeys.map((k) => metricByKeyForYear(k)!).sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0];
 
@@ -326,13 +320,23 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
     const latest = reports[reports.length - 1];
     const metrics = metricsForReport(latest, metricDefinitions);
     const present = group.keys.map((k) => metrics.find((m) => m.key === k)).filter((m): m is MetricDefinition => !!m);
-    return { metrics, lead: [...present].sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0] ?? null };
+    const lead = [...present].sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0] ?? null;
+    // 배지도 최신 연도 기준으로 만든다 — 선택 연도로 만들면 모달에서 2018년을 보고 나온 뒤
+    // 배지만 바뀌고 문장·스파크라인은 그대로여서 1뎁스 안에서 기준이 갈린다.
+    // 정상일 때도 배지를 달아 슬롯을 항상 채운다: 그래야 요약 문장에서 "지금은 …" 뒷문장을
+    // 빼도 상태 정보가 사라지지 않고, 카드마다 줄 수가 달라지지도 않는다.
+    const badge = lead
+      ? (lead.status === '위험' ? { text: '위험 포함', color: T.danger, bg: T.dangerBg }
+        : lead.status === '주의' ? { text: '주의 포함', color: T.warn, bg: T.warnBg }
+        : { text: '모두 정상', color: T.success, bg: T.successBg })
+      : null;
+    return { metrics, lead, badge };
   }, [reports, metricDefinitions, group.keys]);
 
   // 요약 먼저 원칙 — 차트(근거)를 읽기 전에 결론 문장을 한 줄 보여준다.
   const summary = useMemo(
-    () => groupSummary(latestLead.lead?.key ?? null, reports, metricDefinitions, latestLead.metrics, group.keys),
-    [latestLead, reports, metricDefinitions, group.keys],
+    () => groupSummary(latestLead.lead?.key ?? null, reports, metricDefinitions),
+    [latestLead, reports, metricDefinitions],
   );
 
   // 1뎁스 스파크라인 — 요약 문장이 말하는 그 항목의 연도별 값. 측정 안 한 해는 null로 둬 선을 끊는다.
@@ -374,9 +378,9 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
           color={latestLead.lead.status === '정상' ? T.success : latestLead.lead.status === '주의' ? T.warn : T.danger}
         />
       ) : undefined}
-      badge={hasBad ? (
-        <View style={{ backgroundColor: accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: accent }}>{hasDanger ? '위험 포함' : '주의 포함'}</Text>
+      badge={latestLead.badge ? (
+        <View style={{ backgroundColor: latestLead.badge.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: latestLead.badge.color }}>{latestLead.badge.text}</Text>
         </View>
       ) : undefined}
       positionExtra={focusMetric && focusRank != null ? (

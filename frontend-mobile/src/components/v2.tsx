@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import type { MetricDefinition, Report } from '../data';
-import { normalBounds } from '../interpret';
+import { normalBounds, scoreGrade } from '../interpret';
 import { T, W } from './UI';
 
 export const CATEGORY_VISUAL: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
@@ -282,6 +282,15 @@ function statusTone(metric: MetricDefinition) {
   if (metric.status === '정상') return { color: T.success, bg: T.successBg };
   if (metric.status === '주의') return { color: T.warn, bg: T.warnBg };
   return { color: T.danger, bg: T.dangerBg };
+}
+
+/** 참고 점수의 색·배경·라벨 — 홈·분석·히스토리가 같은 값을 쓰게 한 곳에 모았다.
+ *  (70/40 경계 자체는 interpret.scoreGrade가 갖는다.) */
+export function scoreTone(score: number) {
+  const grade = scoreGrade(score);
+  if (grade === '정상') return { color: T.success, bg: T.successBg, label: '양호해요' };
+  if (grade === '주의') return { color: T.warn, bg: T.warnBg, label: '주의가 필요해요' };
+  return { color: T.danger, bg: T.dangerBg, label: '관리가 필요해요' };
 }
 
 /** 하단 고정 CTA — 다음 행동 버튼을 항상 같은 위치에. 스크롤 콘텐츠에는 paddingBottom 100 이상을 줄 것. */

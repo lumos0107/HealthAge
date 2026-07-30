@@ -62,6 +62,14 @@ export function deltaText(delta: { diff: number; prevYear: number }, unit: strin
   return `${delta.prevYear}년보다 ${Math.abs(delta.diff)}${unit} ${dir}`;
 }
 
+/** 참고 점수를 항목 상태와 같은 3단계로 환산한다 — 색·라벨은 이 값 하나에서 파생시킨다.
+ *  70/40 경계가 홈·분석·히스토리 세 곳에 흩어져 있어 갈릴 위험이 있었다. */
+export function scoreGrade(score: number): Status {
+  if (score >= 70) return '정상';
+  if (score >= 40) return '주의';
+  return '위험';
+}
+
 export type ScorePoint = { year: number; score: number; judged: number; complete: boolean };
 
 /** 점수 추이 시리즈 — 연도순 점수 + 그 해가 '온전한 검진'이었는지.

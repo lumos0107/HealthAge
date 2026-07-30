@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
-import { PeerRankSlider, SummaryCard } from '../components/v2';
+import { PeerRankSlider, scoreTone, SummaryCard } from '../components/v2';
 import { estimateRank, rankFromPercentile } from '../interpret';
 import { WhatIfSimulator } from '../components/WhatIfSimulator';
 import { cardContent, computeGroupsForReport, directionLabel, metricLabel, metricsForReport, metricDirection, SCORE_PENALTY } from '../data';
@@ -192,7 +192,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 참고 점수: 그 해 검진 결과에 기록된 값을 그대로 보여준다(대시보드·기록 화면과 항상 일치).
   // 감점 근거(주의/위험 개수)도 그 해 기록과 함께 저장해 둔 값을 그대로 쓴다 — 연도가 바뀌어도 항상 점수와 일치한다.
   const scorePct = report.score;
-  const scoreColor = scorePct >= 70 ? T.success : scorePct >= 40 ? T.warn : T.danger;
+  const scoreColor = scoreTone(scorePct).color;
 
   // 관리 참고군: 선택한 연도의 실제 측정값을 기준으로 매번 다시 계산한다 — 연도를 바꾸면 그 해 기준으로 갱신된다.
   // (단, 정렬은 매칭 개수 기준이라 1순위 그룹이 자연히 상단에 오게 되고, 보통 연도가 바뀌어도 같은 그룹이 1순위를 유지한다)
