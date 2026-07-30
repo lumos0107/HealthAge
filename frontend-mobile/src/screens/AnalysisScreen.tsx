@@ -4,7 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
 import { metricPeerRank, rankFromPercentile } from '../interpret';
-import { WhatIfSimulator } from '../components/WhatIfSimulator';
+import { NextCheckupGoal } from '../components/NextCheckupGoal';
 import { cardContent, computeGroupsForReport, directionLabel, metricLabel, metricsForReport, metricDirection } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
@@ -15,6 +15,22 @@ function DomainHeader({ title }: { title: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginTop: 16, marginBottom: 6 }}>
       <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>{title}</Text>
+    </View>
+  );
+}
+
+/** 층 머리말 — 이 화면은 네 층으로 읽힌다: ① 판정 → ② 파생 → ③ 위치 → ④ 행동.
+ *  그동안 머리말이 장기별(신장/간/대사지질/심혈관)뿐이라 네 층과 직교했고, 그래서
+ *  "이 카드는 지금 무슨 일을 하고 있나"가 화면에 드러나지 않았다. 장기 머리말은
+ *  ②층 안의 소제목으로 남기고, 층은 그 위에 얹는다. */
+function LayerHeader({ step, title, sub }: { step: string; title: string; sub: string }) {
+  return (
+    <View style={{ marginHorizontal: 16, marginTop: 26, marginBottom: 4, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+        <Text style={{ fontSize: 15, fontWeight: '800', color: T.primary }}>{step}</Text>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1, letterSpacing: -0.3 }}>{title}</Text>
+      </View>
+      <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 4 }}>{sub}</Text>
     </View>
   );
 }
@@ -128,10 +144,16 @@ function levelSummary(levels: string[]): string | null {
     : `지표 ${judged.length}개 중 ${bad}개가 주의 이상 구간이에요.`;
 }
 
-export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendationsByYear, egfrByYear, comboAnalysisByYear }: {
+export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendationsByYear, egfrByYear, comboAnalysisByYear, gender, smoking, alcoholWeeklyG }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
+  // ④층 '다음 검진 목표'는 행동을 입력으로 받는다 — 어떤 행동을 제시할 수 있는지가
+  // 성별·흡연·음주량에 달려 있어(허리 계수는 성별로 다르고, 하루 2잔 이하면 절주를 권할 근거가 없다)
+  // 프로필의 이 세 값이 필요하다.
+  gender: 1 | 2;
+  smoking?: 'never' | 'former' | 'current' | null;
+  alcoholWeeklyG?: number | null;
   // 상세 분석은 **연도별**로 받는다. 예전엔 최신 연도 것 하나만 받아, 위쪽 연도 칩을 눌러도
   // 아래 카드(신장·간·대사·심혈관·권장사항)는 그대로여서 2018년 점수 옆에 2024년 분석이 놓였다.
   recommendationsByYear?: Record<number, RealRecommendations>;
@@ -245,6 +267,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <Eyebrow>ANALYSIS</Eyebrow>
         <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>건강분석</Text>
         <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>내 수치, 정상 기준, 연령대 평균을 비교합니다.</Text>
+        {/* 결론 한 줄 — 12장이나 되는 카드를 다 읽기 전에 "그래서 뭐였나"를 먼저 준다.
+            새 판단을 만들지 않는다: 그 해 기록의 주의·위험 개수와 아래에서 이미 계산된
+            '점수 밖 신호'를 문장으로 옮길 뿐이다. */}
+        <Text style={{ fontSize: 16, color: T.text1, fontWeight: '700', lineHeight: 25, marginTop: 14 }}>
+          {report.trackCount + report.manageCount === 0
+            ? `${report.year}년 검진은 검사 항목이 모두 기준 안이에요.`
+            : `${report.year}년 검진에서 ${[
+                report.trackCount ? `위험 ${report.trackCount}개` : null,
+                report.manageCount ? `주의 ${report.manageCount}개` : null,
+              ].filter(Boolean).join(' · ')}가 나왔어요.`}
+          {outsideScore.length > 0 && ` 점수에 안 잡히는 신호도 ${outsideScore.length}가지 있어요 — ${outsideScore[0].label}부터 보세요.`}
+        </Text>
       </View>
       </FadeInUp>
 
@@ -258,6 +292,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </Text>
       </View>
       </FadeInUp>
+
+      <LayerHeader
+        step="①"
+        title="기준을 벗어났나"
+        sub={`${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`}
+      />
 
       {/* ① 참고 점수 */}
       <FadeInUp delay={100}>
@@ -413,10 +453,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           예전엔 최신 연도 것만 내려받아, 위에서 연도를 바꿔도 아래는 그대로였다.
           이제 연도를 따라가므로 어느 해 기준인지 한 줄로 못 박아 둔다. */}
       <FadeIn key={`detail-${report.year}`}>
-      <View style={{ paddingHorizontal: 20, marginTop: 18, marginBottom: 2 }}>
-        <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>상세 분석 · {report.year}년 검진 기준</Text>
-        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 3 }}>
-          아래 카드는 모두 {report.year}년 수치로 계산한 결과예요. 위에서 연도를 바꾸면 함께 바뀝니다.
+      {/* 층 머리말이 구조를 맡았으므로 여기는 제목 없이 연도 기준만 못 박는 한 줄로 둔다. */}
+      <View style={{ paddingHorizontal: 20, marginTop: 14, marginBottom: 2 }}>
+        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+          여기부터 아래 모든 카드는 {report.year}년 수치로 계산한 결과예요. 위에서 연도를 바꾸면 함께 바뀝니다.
         </Text>
       </View>
 
@@ -435,6 +475,91 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </View>
       )}
       </FadeIn>
+
+      {/* ③-4 집단군 판정(13개) — 백엔드가 검진 수치·약물로 판정한 단일 집단군 목록.
+          판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
+      {!!singleGroups?.length && (
+        <FadeInUp delay={218}>
+        <SummaryCard
+          title="집단군 판정"
+          definition={cardContent['집단군 판정']?.definition}
+          detail={cardContent['집단군 판정']?.detail}
+          meaning={cardContent['집단군 판정']?.meaning}
+          tips={cardContent['집단군 판정']?.tips}
+          summary={rarity ? `임상 ${rarity.clinical_count}개 · 생활습관 ${rarity.lifestyle_count}개에 해당해요.` : null}
+        >
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
+
+          {/* 대사증후군 5인자 세부 — "해당/비해당"만으로는 왜 그렇게 판정됐는지 알 수 없다.
+              각 인자가 수치 때문인지 약 복용 때문인지까지 백엔드가 이미 보내주므로 그대로 보여준다. */}
+          {msDetail && (
+            <View style={{ marginTop: 12, marginBottom: 6, backgroundColor: T.bg, borderRadius: T.radiusSm, padding: 14 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
+                대사증후군 5개 기준 중 {msDetail.count}개 충족
+                {msDetail.evaluable < 5 ? ` (판정 가능 ${msDetail.evaluable}개)` : ''}
+              </Text>
+              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 8 }}>
+                3개 이상이면 대사증후군으로 봐요. {msDetail.is_metabolic_syndrome ? '지금은 해당해요.' : '지금은 해당하지 않아요.'}
+              </Text>
+              {Object.entries(msDetail.factors).map(([name, f], i) => (
+                <View key={name} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                  <Ionicons
+                    name={f.met ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={16}
+                    color={f.met ? T.danger : T.text3}
+                  />
+                  <Text style={{ fontSize: 13, fontWeight: f.met ? '700' : '500', color: f.met ? T.text1 : T.text3, width: 76 }}>{name}</Text>
+                  <Text style={{ flex: 1, fontSize: 12, color: T.text2, lineHeight: 17 }}>{f.reason}</Text>
+                  {/* 약으로 충족된 인자는 따로 표시 — 수치가 정상이어도 관리 중이라 충족된 것이다 */}
+                  {f.by_medication && (
+                    <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 7, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: T.primaryDark }}>약</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
+              백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
+              구버전 저장 분석에는 이 값이 없다 → 그때는 요약 없이 상세 목록만 보인다. */}
+          {rarity && (
+            <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 14, marginTop: 8, marginBottom: 2 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
+                임상 {rarity.clinical_count}개 · 생활습관 {rarity.lifestyle_count}개에 해당
+              </Text>
+              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, marginTop: 4 }}>{rarity.interpretation}</Text>
+            </View>
+          )}
+
+          {(['임상', '생활습관'] as const).map((cat) => {
+            const rows = singleGroups.filter((g) => g.category === cat);
+            if (!rows.length) return null;
+            return (
+              <View key={cat} style={{ marginTop: 10 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text3, marginBottom: 4 }}>{cat}</Text>
+                {rows.map((g, i) => (
+                  <View key={g.key} style={[{ paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
+                      {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
+                    </View>
+                    <View style={{ backgroundColor: g.applies == null ? T.cardAlt : g.applies ? T.dangerBg : T.successBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: g.applies == null ? T.text3 : g.applies ? T.danger : T.success }}>
+                        {g.applies == null ? '판정 불가' : g.applies ? '해당' : '비해당'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </SummaryCard>
+        </FadeInUp>
+      )}
+
+      <LayerHeader step="②" title="검진지에 없는 값을 만들어요" sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
 
       {/* 신장 — eGFR·CrCl */}
       {egfr && <DomainHeader title="신장 기능" />}
@@ -647,23 +772,84 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* 이 수치가 바뀌면? — 검진값을 바꿔 넣고 공식을 다시 계산(예측 아님).
-          ⚠️ 서버는 '가장 최근' 저장 검진값을 기준선으로 쓴다. 그래서 위 연도 선택과
-          무관하게 최신 회차를 넘겨야 스테퍼에 보이는 값과 계산 기준이 어긋나지 않는다. */}
-      {reports.length > 0 && (
-        <FadeInUp delay={215}>
-          <WhatIfSimulator
-            latest={reports[reports.length - 1]}
-            demoMode={!usingRealData}
-            disabledReason="데모 계정은 앱 안에서 대사증후군 기준·LDL 목표만 다시 셉니다. 실제 결과지를 올리면 계산기 22종까지 함께 갱신돼요."
-          />
+      {/* 심혈관 — ASCVD 위험 계산기 */}
+      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
+      {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
+          계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
+      {ascvd?.available && ascvd.risk_percent != null && (
+        <FadeInUp delay={221}>
+        <SummaryCard
+          title="심혈관 위험 참고 시뮬레이션"
+          definition={cardContent['심혈관 위험 참고 시뮬레이션']?.definition}
+          detail={cardContent['심혈관 위험 참고 시뮬레이션']?.detail}
+          meaning={cardContent['심혈관 위험 참고 시뮬레이션']?.meaning}
+          tips={cardContent['심혈관 위험 참고 시뮬레이션']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />}
+          summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
+        >
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산이에요.</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{ascvd.risk_percent}%</Text>
+            {!!ascvd.risk_label && (
+              <View style={{ marginLeft: 2, backgroundColor: ascvd.risk_level === 'low' ? T.successBg : ascvd.risk_level === 'high' ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: ascvd.risk_level === 'low' ? T.success : ascvd.risk_level === 'high' ? T.danger : T.warn }}>{ascvd.risk_label}</Text>
+              </View>
+            )}
+          </View>
+          {!!ascvd.how_to_read && (
+            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginBottom: 10 }}>{ascvd.how_to_read}</Text>
+          )}
+          {/* what-if — 절대값보다 "무엇을 바꾸면 얼마나 달라지는가"를 보여준다 */}
+          {!!ascvd.scenarios?.length && (
+            <View style={{ paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider, gap: 8 }}>
+              {ascvd.scenarios.map((s) => (
+                <View key={s.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{s.name}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>
+                    {s.risk_percent}%{' '}
+                    <Text style={{ color: s.delta < 0 ? T.success : T.text3, fontSize: 12 }}>({s.delta > 0 ? '+' : ''}{s.delta}%p)</Text>
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {/* 다른 위험엔진 3종(PREVENT·Framingham·SCORE2) — 계산은 되고 있었으나 그리지 않던 값.
+              엔진마다 코호트·공식이 달라 값이 조금씩 다르다. 그 차이를 보여주는 것 자체가
+              "절대값을 그대로 믿지 말라"는 메시지라, 숨기지 않고 2.5뎁스로 펼쳐 볼 수 있게 둔다. */}
+          {cvCalcs.length > 0 && (
+            <>
+              <Pressable
+                onPress={() => setShowEngines((v) => !v)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 11, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 10 }}
+              >
+                <Ionicons name={showEngines ? 'chevron-up' : 'chevron-down'} size={16} color={T.text2} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>
+                  {showEngines ? '다른 계산법 접기' : `다른 계산법 ${cvCalcs.length}종으로도 계산해보기`}
+                </Text>
+              </Pressable>
+              {showEngines && (
+                <>
+                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 4 }}>
+                    같은 위험을 다른 공식으로 계산한 값이에요. 서로 비슷하면 그만큼 믿을 만하고,
+                    많이 다르면 절대값보다 구간으로 이해하는 게 맞아요.
+                  </Text>
+                  <CalcRows items={cvCalcs} />
+                </>
+              )}
+            </>
+          )}
+          {!!ascvd.limitations?.length && (
+            <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
+              {ascvd.limitations.map((l, i) => (
+                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· {l}</Text>
+              ))}
+            </View>
+          )}
+        </SummaryCard>
         </FadeInUp>
       )}
 
-      {/* 함께 나타나는 패턴 · 집단군 (통계 참고) — 위험 정량이 아닌 동반·판정 통계 묶음 */}
-      {((comboGroups && comboGroups.matched_count > 0) || !!singleGroups?.length) && (
-        <DomainHeader title="함께 나타나는 패턴 · 집단군 (통계 참고)" />
-      )}
+      <LayerHeader step="③" title="나만 그런가" sub="같은 성별·연령대 사람들과 견줘 내 위치를 봅니다." />
+
       {/* ③-2 함께 나타나는 조합(조합 그룹) — 공단 표본 기준 '동반 경향(기술통계)'이며 위험도가 아니다.
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
       {comboGroups && comboGroups.matched_count > 0 && (
@@ -792,164 +978,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* ③-4 집단군 판정(13개) — 백엔드가 검진 수치·약물로 판정한 단일 집단군 목록.
-          판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
-      {!!singleGroups?.length && (
-        <FadeInUp delay={218}>
-        <SummaryCard
-          title="집단군 판정"
-          definition={cardContent['집단군 판정']?.definition}
-          detail={cardContent['집단군 판정']?.detail}
-          meaning={cardContent['집단군 판정']?.meaning}
-          tips={cardContent['집단군 판정']?.tips}
-          summary={rarity ? `임상 ${rarity.clinical_count}개 · 생활습관 ${rarity.lifestyle_count}개에 해당해요.` : null}
-        >
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
-
-          {/* 대사증후군 5인자 세부 — "해당/비해당"만으로는 왜 그렇게 판정됐는지 알 수 없다.
-              각 인자가 수치 때문인지 약 복용 때문인지까지 백엔드가 이미 보내주므로 그대로 보여준다. */}
-          {msDetail && (
-            <View style={{ marginTop: 12, marginBottom: 6, backgroundColor: T.bg, borderRadius: T.radiusSm, padding: 14 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
-                대사증후군 5개 기준 중 {msDetail.count}개 충족
-                {msDetail.evaluable < 5 ? ` (판정 가능 ${msDetail.evaluable}개)` : ''}
-              </Text>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 8 }}>
-                3개 이상이면 대사증후군으로 봐요. {msDetail.is_metabolic_syndrome ? '지금은 해당해요.' : '지금은 해당하지 않아요.'}
-              </Text>
-              {Object.entries(msDetail.factors).map(([name, f], i) => (
-                <View key={name} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                  <Ionicons
-                    name={f.met ? 'checkmark-circle' : 'ellipse-outline'}
-                    size={16}
-                    color={f.met ? T.danger : T.text3}
-                  />
-                  <Text style={{ fontSize: 13, fontWeight: f.met ? '700' : '500', color: f.met ? T.text1 : T.text3, width: 76 }}>{name}</Text>
-                  <Text style={{ flex: 1, fontSize: 12, color: T.text2, lineHeight: 17 }}>{f.reason}</Text>
-                  {/* 약으로 충족된 인자는 따로 표시 — 수치가 정상이어도 관리 중이라 충족된 것이다 */}
-                  {f.by_medication && (
-                    <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 7, paddingVertical: 2, borderRadius: T.radiusPill }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: T.primaryDark }}>약</Text>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
-              백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
-              구버전 저장 분석에는 이 값이 없다 → 그때는 요약 없이 상세 목록만 보인다. */}
-          {rarity && (
-            <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 14, marginTop: 8, marginBottom: 2 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
-                임상 {rarity.clinical_count}개 · 생활습관 {rarity.lifestyle_count}개에 해당
-              </Text>
-              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, marginTop: 4 }}>{rarity.interpretation}</Text>
-            </View>
-          )}
-
-          {(['임상', '생활습관'] as const).map((cat) => {
-            const rows = singleGroups.filter((g) => g.category === cat);
-            if (!rows.length) return null;
-            return (
-              <View key={cat} style={{ marginTop: 10 }}>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text3, marginBottom: 4 }}>{cat}</Text>
-                {rows.map((g, i) => (
-                  <View key={g.key} style={[{ paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
-                      {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
-                    </View>
-                    <View style={{ backgroundColor: g.applies == null ? T.cardAlt : g.applies ? T.dangerBg : T.successBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: g.applies == null ? T.text3 : g.applies ? T.danger : T.success }}>
-                        {g.applies == null ? '판정 불가' : g.applies ? '해당' : '비해당'}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            );
-          })}
-        </SummaryCard>
-        </FadeInUp>
-      )}
-
-      {/* 심혈관 — ASCVD 위험 계산기 */}
-      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
-      {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
-          계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
-      {ascvd?.available && ascvd.risk_percent != null && (
-        <FadeInUp delay={221}>
-        <SummaryCard
-          title="심혈관 위험 참고 시뮬레이션"
-          definition={cardContent['심혈관 위험 참고 시뮬레이션']?.definition}
-          detail={cardContent['심혈관 위험 참고 시뮬레이션']?.detail}
-          meaning={cardContent['심혈관 위험 참고 시뮬레이션']?.meaning}
-          tips={cardContent['심혈관 위험 참고 시뮬레이션']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />}
-          summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
-        >
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산이에요.</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-            <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{ascvd.risk_percent}%</Text>
-            {!!ascvd.risk_label && (
-              <View style={{ marginLeft: 2, backgroundColor: ascvd.risk_level === 'low' ? T.successBg : ascvd.risk_level === 'high' ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: ascvd.risk_level === 'low' ? T.success : ascvd.risk_level === 'high' ? T.danger : T.warn }}>{ascvd.risk_label}</Text>
-              </View>
-            )}
-          </View>
-          {!!ascvd.how_to_read && (
-            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginBottom: 10 }}>{ascvd.how_to_read}</Text>
-          )}
-          {/* what-if — 절대값보다 "무엇을 바꾸면 얼마나 달라지는가"를 보여준다 */}
-          {!!ascvd.scenarios?.length && (
-            <View style={{ paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider, gap: 8 }}>
-              {ascvd.scenarios.map((s) => (
-                <View key={s.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{s.name}</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>
-                    {s.risk_percent}%{' '}
-                    <Text style={{ color: s.delta < 0 ? T.success : T.text3, fontSize: 12 }}>({s.delta > 0 ? '+' : ''}{s.delta}%p)</Text>
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-          {/* 다른 위험엔진 3종(PREVENT·Framingham·SCORE2) — 계산은 되고 있었으나 그리지 않던 값.
-              엔진마다 코호트·공식이 달라 값이 조금씩 다르다. 그 차이를 보여주는 것 자체가
-              "절대값을 그대로 믿지 말라"는 메시지라, 숨기지 않고 2.5뎁스로 펼쳐 볼 수 있게 둔다. */}
-          {cvCalcs.length > 0 && (
-            <>
-              <Pressable
-                onPress={() => setShowEngines((v) => !v)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 11, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 10 }}
-              >
-                <Ionicons name={showEngines ? 'chevron-up' : 'chevron-down'} size={16} color={T.text2} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>
-                  {showEngines ? '다른 계산법 접기' : `다른 계산법 ${cvCalcs.length}종으로도 계산해보기`}
-                </Text>
-              </Pressable>
-              {showEngines && (
-                <>
-                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 4 }}>
-                    같은 위험을 다른 공식으로 계산한 값이에요. 서로 비슷하면 그만큼 믿을 만하고,
-                    많이 다르면 절대값보다 구간으로 이해하는 게 맞아요.
-                  </Text>
-                  <CalcRows items={cvCalcs} />
-                </>
-              )}
-            </>
-          )}
-          {!!ascvd.limitations?.length && (
-            <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
-              {ascvd.limitations.map((l, i) => (
-                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· {l}</Text>
-              ))}
-            </View>
-          )}
-        </SummaryCard>
-        </FadeInUp>
-      )}
+      <LayerHeader step="④" title="그래서 뭘 하면 되나" sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
 
       {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다 */}
       {recommendations && (recommendations.priority_messages?.length || recommendations.recommendations) && (
@@ -1026,6 +1055,23 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </SummaryCard>
         </FadeInUp>
       )}
+
+      {/* 다음 검진 목표 세우기 — 문제 → 행동 → 결과. 권장사항 바로 뒤에 둔다(같은 ④층).
+          ⚠️ 서버는 '가장 최근' 저장 검진값을 기준선으로 쓴다. 그래서 위 연도 선택과
+          무관하게 최신 회차를 넘겨야 화면에 보이는 값과 계산 기준이 어긋나지 않는다. */}
+      {reports.length > 0 && (
+        <FadeInUp delay={222}>
+          <NextCheckupGoal
+            latest={reports[reports.length - 1]}
+            gender={gender}
+            smoking={smoking}
+            alcoholWeeklyG={alcoholWeeklyG}
+            demoMode={!usingRealData}
+            demoNote="데모 계정은 앱 안에서 대사증후군 기준·LDL 목표만 다시 셉니다. 실제 결과지를 올리면 계산기 22종까지 함께 갱신돼요."
+          />
+        </FadeInUp>
+      )}
+
     </ScrollView>
   );
 }

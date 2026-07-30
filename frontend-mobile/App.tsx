@@ -355,7 +355,7 @@ export default function App() {
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendationsByYear={analysisByYear.rec} egfrByYear={analysisByYear.egfr} comboAnalysisByYear={analysisByYear.combo} />)}
+          : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendationsByYear={analysisByYear.rec} egfrByYear={analysisByYear.egfr} comboAnalysisByYear={analysisByYear.combo} gender={profile.gender} smoking={profile.smoking} alcoholWeeklyG={profile.drinking === 'yes' ? profile.alcohol_weekly_g : 0} />)}
         {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} />}
         {tab === 'profile' && loggedIn && (
           <ProfileScreen
