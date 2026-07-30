@@ -358,22 +358,28 @@ export const metricGloss: Partial<Record<MetricKey, string>> = {
   urineProtein: '소변 속 단백질',
 };
 
-/** 1뎁스 요약 문장의 주어로 쓸 쉬운 말 — shortName이 약어라 문장에서 안 읽히는 항목만 담는다.
+/** 1뎁스 요약 문장의 주어 — `쉬운 말(실제 용어)` 형식.
+ *  쉬운 말만 두면 검사 결과지·2뎁스와 이름이 달라 같은 항목인 줄 모르고, 실제 용어만 두면
+ *  약어라 안 읽힌다. 둘 다 적어 처음 보는 사람은 앞을, 결과지와 맞춰 보는 사람은 뒤를 읽는다.
+ *
  *  metricGloss(검사항목 탭의 부제)와 따로 둔 이유: 그건 이름 아래 붙는 뜻풀이라
  *  "키·몸무게 비만도"처럼 명사구여도 되지만, 여기 값은 "…가 3.8 올랐어요"의 주어라
  *  문장에 그대로 들어가야 읽힌다.
- *  ⚠️ 간 수치 3종처럼 쉬운 말이 겹치는 항목은 괄호로 원래 이름을 남긴다 — 대표 항목이
- *  AST에서 ALT로 바뀌었는데 문장이 똑같으면 1뎁스에서 주어가 바뀐 걸 알 수 없다.
- *  BMI·혈색소·허리둘레처럼 이미 널리 쓰는 말은 넣지 않는다(바꾸면 오히려 길고 낯설어진다). */
-export const metricPlainName: Partial<Record<MetricKey, string>> = {
-  ldl: '나쁜 콜레스테롤',
-  hdl: '좋은 콜레스테롤',
-  ast: '간 수치(AST)',
-  alt: '간 수치(ALT)',
-  ggt: '간 수치(감마-GTP)',
-  sbp: '수축기 혈압',
-  dbp: '이완기 혈압',
-  creatinine: '신장 수치(크레아티닌)',
+ *
+ *  ⚠️ 조사를 직접 적는다. 약어의 조사는 소리로 정해지는데(LDL은 '엘디엘'이라 "LDL이")
+ *  interpret.subjectJosa는 한글 받침만 읽어서 라틴 문자에서는 틀린다.
+ *  혈색소·중성지방·혈당·허리처럼 이미 쉬운 한글 이름인 항목은 넣지 않는다 —
+ *  shortName + subjectJosa로 정확히 처리되고, 괄호를 붙이면 길기만 하다. */
+export const metricPlainName: Partial<Record<MetricKey, { text: string; sub: '이' | '가'; top: '은' | '는' }>> = {
+  ldl: { text: '나쁜 콜레스테롤(LDL)', sub: '이', top: '은' },
+  hdl: { text: '좋은 콜레스테롤(HDL)', sub: '이', top: '은' },
+  ast: { text: '간 수치(AST)', sub: '가', top: '는' },
+  alt: { text: '간 수치(ALT)', sub: '가', top: '는' },
+  ggt: { text: '간 수치(감마-GTP)', sub: '가', top: '는' },
+  bmi: { text: '체질량지수(BMI)', sub: '가', top: '는' },
+  sbp: { text: '수축기 혈압', sub: '이', top: '은' },
+  dbp: { text: '이완기 혈압', sub: '이', top: '은' },
+  creatinine: { text: '신장 수치(크레아티닌)', sub: '이', top: '은' },
 };
 
 // 백엔드는 내부 검진항목 키를 그대로 쓴다(non_HDL, 식전혈당(공복혈당) 등).

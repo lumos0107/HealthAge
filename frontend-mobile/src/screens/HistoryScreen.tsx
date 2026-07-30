@@ -306,14 +306,41 @@ function groupSummary(leadKey: MetricKey | null, reports: Report[], metricDefini
   if (pts.length < 2 || !m) return null;   // 비교할 해가 없으면 배지만 남긴다
 
   const delta = pts[pts.length - 1].v - pts[0].v;
-  // 주어는 쉬운 말로 — 1뎁스는 검진 수치를 모르는 사람이 읽는 자리다. "LDL가 33mg/dL"는
-  // 무슨 말인지 모르면 문장 전체가 버려진다. 약어는 2뎁스 범례·차트가 맡는다.
-  // (덤으로 "LDL가"의 조사 오류도 사라진다 — subjectJosa가 라틴 문자의 받침을 못 읽는다.)
-  const subject = metricPlainName[m.key] ?? m.shortName;
+  // 주어는 `쉬운 말(실제 용어)`로 — 1뎁스는 검진 수치를 모르는 사람이 읽는 자리다.
+  // "LDL가 33mg/dL"는 LDL을 모르면 문장 전체가 버려진다.
+  const plain = metricPlainName[m.key];
+  const subject = plain?.text ?? m.shortName;
+  const josaSub = plain?.sub ?? subjectJosa(subject);
+  const josaTop = plain?.top ?? topicJosa(subject);
+
   const rel = Math.abs(delta) / (Math.abs(pts[0].v) || 1);
-  if (rel < 0.05) return `${subject}${topicJosa(subject)} 큰 변화 없이 비슷한 수준이에요.`;
+  if (rel < 0.05) return `${subject}${josaTop} 큰 변화 없이 비슷한 수준이에요.`;
+
+  // 단위(mg/dL·kg/m²·IU/L)는 붙이지 않는다 — 1뎁스에서 단위를 읽고 쓰는 사람은 없고,
+  // 필요한 사람은 2뎁스 수치 목록에서 단위까지 본다.
+  // 단, 단위가 작아 절대 변화량이 1도 안 되는 항목(크레아티닌 0.17)은 숫자만 두면
+  // 사소해 보인다. 20% 오른 것을 "0.2 올랐어요"로 말하면 실제 크기를 놓친다.
   const amount = Math.round(Math.abs(delta) * 10) / 10;
-  return `${pts[0].year}년 이후 ${subject}${subjectJosa(subject)} ${amount}${m.unit} ${delta > 0 ? '올랐어요' : '내렸어요'}.`;
+  const change = amount < 1 ? `${Math.round(rel * 100)}%` : `${amount}`;
+  return `${pts[0].year}년 이후 ${subject}${josaSub} ${change} ${delta > 0 ? '올랐어요' : '내렸어요'}.`;
+}
+
+/** 첫 회차 대비 상대 변화폭(부호 없음). 대표 항목 동점을 가르는 데 쓴다.
+ *  같은 상태끼리는 배열 순서 대신 이걸로 정렬한다 — 순서로 뽑으면 실제로 움직인 항목을
+ *  놓친다. 데모의 혈액·신장이 그랬다: 혈색소(+3.4%)와 크레아티닌(+20.2%)이 둘 다 정상인데
+ *  배열 첫 번째인 혈색소가 대표가 되어 카드가 "큰 변화 없이 비슷한 수준"이라고 말했다.
+ *  상태 등급 안에서만 순서를 바꾸므로 배지(위험 포함/주의 포함/모두 정상)는 그대로다. */
+function relChange(key: MetricKey, reports: Report[]): number {
+  const vs = reports.map((r) => r.values[key]).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  if (vs.length < 2) return 0;
+  return Math.abs(vs[vs.length - 1] - vs[0]) / (Math.abs(vs[0]) || 1);
+}
+
+/** 대표 항목 = 가장 주의가 필요한 항목, 동점이면 가장 많이 변한 항목. */
+function pickLead(metrics: MetricDefinition[], reports: Report[]): MetricDefinition | null {
+  return [...metrics].sort((a, b) =>
+    (ATTENTION[a.status] - ATTENTION[b.status]) || (relChange(b.key, reports) - relChange(a.key, reports))
+  )[0] ?? null;
 }
 
 function ChartCard({ group, reports, metricDefinitions }: { group: { title: string; keys: MetricKey[] }; reports: Report[]; metricDefinitions: MetricDefinition[] }) {
@@ -326,7 +353,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   // 그래프나 범례에 끼워 넣으면 사실과 다른 정보가 된다.
   const presentKeys = group.keys.filter((k) => !!metricByKeyForYear(k));
   // 이 묶음의 대표 항목 = 가장 주의가 필요한 항목. 2뎁스의 밴드·등수 기본값이 된다(선택 연도 기준).
-  const leadMetric = presentKeys.map((k) => metricByKeyForYear(k)!).sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0];
+  const leadMetric = pickLead(presentKeys.map((k) => metricByKeyForYear(k)!), reports) ?? undefined;
 
   // 1뎁스(요약 문장 + 스파크라인)는 **항상 최신 연도** 기준으로 고른다.
   // 2뎁스에서 연도 칩을 바꾸면 selIdx가 남아 있어, 그걸 쓰면 모달을 닫은 뒤 1뎁스 문장의
@@ -336,7 +363,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
     const latest = reports[reports.length - 1];
     const metrics = metricsForReport(latest, metricDefinitions);
     const present = group.keys.map((k) => metrics.find((m) => m.key === k)).filter((m): m is MetricDefinition => !!m);
-    const lead = [...present].sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0] ?? null;
+    const lead = pickLead(present, reports);
     // 배지도 최신 연도 기준으로 만든다 — 선택 연도로 만들면 모달에서 2018년을 보고 나온 뒤
     // 배지만 바뀌고 문장·스파크라인은 그대로여서 1뎁스 안에서 기준이 갈린다.
     // 정상일 때도 배지를 달아 슬롯을 항상 채운다: 그래야 요약 문장에서 "지금은 …" 뒷문장을
