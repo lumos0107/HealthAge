@@ -29,6 +29,11 @@ const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 const LINE_COLORS = ['#1E88E5', '#8E24AA', '#3949AB', '#00897B', '#6D4C41'];
 
 // 키는 성인에서 사실상 변하지 않는 참고값, 요단백은 등급형(음성/1+…)이라 선그래프가 어울리지 않아 제외한다.
+// 몸무게도 제외한다 — 성인은 키가 고정이라 BMI = 몸무게 ÷ 키²가 상수배 관계이고, 그래서 두 선의
+// 모양이 완전히 같다(데모: 몸무게 +17.0% / BMI +16.9%). 한 축에 겹친 4개 선 중 하나가 순수한 중복이었다.
+// 게다가 infoOnly라 판정이 없고 keys의 마지막이어서 대표 항목이 될 수도 없었다 — 1뎁스 문장과
+// 스파크라인에는 애초에 등장하지 못하고 모달 차트의 중복 선으로만 남아 있었다.
+// (몸무게 자체는 metricDefinitions에 그대로 있어 검사항목 탭에서 자기 추이를 갖는다.)
 //
 // ⚠️ keys의 순서에 의미가 있다 — 무해한 정리처럼 보이지만 화면 문장을 바꾼다.
 // 1뎁스의 대표 항목은 상태(위험>주의>정상)로 뽑는데 그 정렬이 안정적이라, 같은 상태가
@@ -38,7 +43,7 @@ const LINE_COLORS = ['#1E88E5', '#8E24AA', '#3949AB', '#00897B', '#6D4C41'];
 // 순서를 바꿀 때는 그 카드가 무슨 문장을 말하게 되는지 함께 확인할 것.
 const chartGroups: { title: string; keys: MetricKey[] }[] = [
   { title: '혈압', keys: ['sbp', 'dbp'] },
-  { title: '혈당·체중', keys: ['glucose', 'bmi', 'waist', 'weight'] },
+  { title: '혈당·체중', keys: ['glucose', 'bmi', 'waist'] },
   { title: '지질', keys: ['ldl', 'hdl', 'triglyceride', 'totalCholesterol'] },
   { title: '간 기능', keys: ['ast', 'alt', 'ggt'] },
   { title: '혈액·신장', keys: ['hemoglobin', 'creatinine'] },
