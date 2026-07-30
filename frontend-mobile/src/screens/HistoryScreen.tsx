@@ -559,7 +559,7 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
     }
   }
 
-  const BREAK_PX = 16;   // 물결이 들어갈 빈 띠
+  const BREAK_PX = 12;   // 물결이 들어갈 빈 띠 — 얇게 잡아 구간에 높이를 더 준다
   const segH = (PLOT_H - BREAK_PX * (segs.length - 1)) / segs.length;
   // 값이 작은 구간이 아래. 각 구간에 자기 데이터 폭의 12%씩 여유를 둬 점이 경계에 붙지 않게 한다.
   const layout = segs.map((g, i) => {
@@ -652,12 +652,12 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
           // x는 그래프 영역(0~PLOT_W) 안에서만 — 축 라벨 칸까지 나가면 눈금 숫자 왼쪽으로
           // 삐져나와 차트 밖에 걸친 선처럼 보인다.
           const wave = (dy: number) => {
-            const seg = 18;
+            const seg = 13;      // 마디 폭 — 좁을수록 잔물결이 되어 선처럼 가늘게 읽힌다
             let d = `M0,${y + dy}`;
             let up = true;
             for (let x = 0; x < PLOT_W; x += seg) {
               const w = Math.min(seg, PLOT_W - x);
-              d += ` q${w / 2},${up ? -3.5 : 3.5} ${w},0`;
+              d += ` q${w / 2},${up ? -2 : 2} ${w},0`;
               up = !up;
             }
             return d;
@@ -668,8 +668,8 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
                   눈금선과 같은 폭만 덮는다 — 라벨 칸까지 덮을 이유가 없다(그 자리에 눈금이 놓이지도 않는다). */}
               <Rect x={0} y={y - BREAK_PX / 2} width={PLOT_W} height={BREAK_PX} fill={T.white} />
               {/* 두 줄 — 한 줄이면 초록 밴드 경계선 같은 '기준선'으로 오인된다 */}
-              <Path d={wave(-2)} stroke={T.text3} strokeWidth={1} fill="none" opacity={0.45} />
-              <Path d={wave(2)} stroke={T.text3} strokeWidth={1} fill="none" opacity={0.45} />
+              <Path d={wave(-1.5)} stroke={T.text3} strokeWidth={0.8} fill="none" opacity={0.4} />
+              <Path d={wave(1.5)} stroke={T.text3} strokeWidth={0.8} fill="none" opacity={0.4} />
             </G>
           );
         })}
