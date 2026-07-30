@@ -643,17 +643,30 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
 
         {/* 물결(축 생략 기호) — 여기서 축이 끊겼다는 표시. 없으면 위아래 구간이 이어진
             하나의 축으로 읽혀 두 묶음 사이 거리가 실제보다 가까워 보인다.
-            축 라벨 칸에서 시작해 그래프 안까지 조금 들어오게 그려야 눈에 걸린다. */}
+            ⚠️ 그래프 폭 전체에 걸쳐 그린다. 이 차트에는 y축 세로선이 없어서, 축 라벨 칸에만
+            작게 그리면 아무것도 끊지 않은 채 왼쪽에 떠 있는 낙서로 보인다. 폭을 가로지르면
+            두 구간이 시각적으로도 갈라져 "잘렸다"가 바로 읽힌다. */}
         {layout.slice(0, -1).map((s, i) => {
           const y = s.yTop - BREAK_PX / 2;
-          const wave = (dy: number) =>
-            `M${-PAD.left + 8},${y + dy} q5,-4 10,0 t10,0 t10,0 t10,0 t10,0`;
+          // 한 마디씩 위아래로 번갈아 휜다. t(반사) 대신 마디마다 q를 써서 끝이 잘려도 모양이 유지된다.
+          const wave = (dy: number) => {
+            const seg = 18;
+            let d = `M${-PAD.left + 6},${y + dy}`;
+            let up = true;
+            for (let x = -PAD.left + 6; x < PLOT_W; x += seg) {
+              const w = Math.min(seg, PLOT_W - x);
+              d += ` q${w / 2},${up ? -3.5 : 3.5} ${w},0`;
+              up = !up;
+            }
+            return d;
+          };
           return (
             <G key={`brk${i}`}>
-              {/* 끊긴 자리를 카드 배경색으로 덮어 격자선이 지나가지 않게 한다 */}
+              {/* 끊긴 자리를 카드 배경색으로 덮어 격자선·연도 기준선이 지나가지 않게 한다 */}
               <Rect x={-PAD.left + 4} y={y - BREAK_PX / 2} width={PLOT_W + PAD.left} height={BREAK_PX} fill={T.white} />
-              <Path d={wave(-2)} stroke={T.text3} strokeWidth={1.2} fill="none" opacity={0.9} />
-              <Path d={wave(3)} stroke={T.text3} strokeWidth={1.2} fill="none" opacity={0.9} />
+              {/* 두 줄 — 한 줄이면 초록 밴드 경계선 같은 '기준선'으로 오인된다 */}
+              <Path d={wave(-2)} stroke={T.text3} strokeWidth={1} fill="none" opacity={0.45} />
+              <Path d={wave(2)} stroke={T.text3} strokeWidth={1} fill="none" opacity={0.45} />
             </G>
           );
         })}
@@ -684,6 +697,11 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
                 // 그래프 위에 여러 개를 얹으면 선을 가리기만 한다.
                 // 점도 작게 — 값이 붙어 있는 해에는 큰 원끼리 겹쳐 선이 끊겨 보였다.
                 if (!sel) return <Circle key={p.idx} cx={p.x} cy={p.y} r={dim ? 2 : 2.8} fill={color} />;
+                // 값이 구간 위쪽 끝에 있으면 라벨(점보다 10px 위)이 물결 띠에 얹힌다 — 그러면
+                // 숫자도 물결도 읽기 나빠진다. 겹칠 때만 점 아래로 내린다.
+                const above = p.y - 10;
+                const onWave = layout.slice(0, -1).some((s) => above - 8 <= s.yTop && above + 2 >= s.yTop - BREAK_PX);
+                const labelY = onWave ? p.y + 16 : above;
                 return (
                   <G key={p.idx}>
                     <Circle cx={p.x} cy={p.y} r={4.5} fill={color} stroke={T.white} strokeWidth={2} />
@@ -691,7 +709,7 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
                       <SvgText
                         // 마지막 해는 라벨을 왼쪽으로 붙여야 오른쪽 밖으로 잘리지 않는다.
                         x={p.idx === reports.length - 1 ? p.x - 2 : p.x}
-                        y={p.y - 10}
+                        y={labelY}
                         fontSize={11}
                         fill={color}
                         textAnchor={p.idx === reports.length - 1 ? 'end' : 'middle'}
