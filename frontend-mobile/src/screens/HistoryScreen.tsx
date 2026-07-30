@@ -541,10 +541,18 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
     .map((k) => reports.map((r) => r.values[k]).filter(isFiniteNum))
     .filter((vs) => vs.length > 0)
     .map((vs) => ({ lo: Math.min(...vs), hi: Math.max(...vs) }));
-  // 쪼개는 조건: 가장 폭이 좁은 계열이 전체 폭의 15% 미만일 때만. 혈압(이완기 74~88 ·
-  // 수축기 116~138)이나 간 기능처럼 그냥 봐도 읽히는 그룹에 물결을 넣으면 없는 복잡함만 늘어난다.
+  // 쪼개는 조건: 그냥 그렸을 때 가장 폭이 좁은 계열이 6px도 못 차지할 때만.
+  // (계열의 폭 = 그 항목이 세로로 차지하는 높이 = 변화가 보이는 정도)
+  //   BMI        3.8 / 115.9 * 138 =  4.5px → 자른다
+  //   크레아티닌 0.17 /  18.1 * 138 =  1.3px → 자른다
+  //   HDL         15  / 224.4 * 138 =  9.2px → 자르지 않는다
+  //   이완기 혈압 14  /  79.4 * 138 = 24.3px → 자르지 않는다
+  // 지질(HDL)이 경계다. 9px면 하강이 이미 읽히는데, 선이 4개인 데다 초록 밴드가 구간
+  // 아래쪽을 채우고 있어서 그 밑에 물결까지 얹으면 가로 요소가 하나 더 늘어 오히려
+  // 읽기 어려워진다. 비율(전체 폭의 몇 %)이 아니라 실제 픽셀로 재야 이 구분이 된다.
   const narrowest = seriesSpans.length ? Math.min(...seriesSpans.map((s) => s.hi - s.lo)) : rawRange;
-  const wantBreak = seriesSpans.length > 1 && narrowest < rawRange * 0.15;
+  const rangeNoBreak = rawRange + (rawRange * 0.12 || 5) * 2;
+  const wantBreak = seriesSpans.length > 1 && (narrowest / rangeNoBreak) * PLOT_H < 6;
 
   // 계열 하나하나가 원자 — 원자는 쪼개지지 않으므로 어떤 선도 물결을 넘어가지 않는다.
   const atoms = [...seriesSpans, ...bandEdges.map((v) => ({ lo: v, hi: v }))].sort((a, b) => a.lo - b.lo);
@@ -560,19 +568,29 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
   }
 
   const BREAK_PX = 12;   // 물결이 들어갈 빈 띠 — 얇게 잡아 구간에 높이를 더 준다
-  const segH = (PLOT_H - BREAK_PX * (segs.length - 1)) / segs.length;
-  // 값이 작은 구간이 아래. 각 구간에 자기 데이터 폭의 12%씩 여유를 둬 점이 경계에 붙지 않게 한다.
-  const layout = segs.map((g, i) => {
+  // 각 구간에 자기 데이터 폭의 12%씩 여유를 둬 점이 경계에 붙지 않게 한다. 값이 작은 구간이 아래.
+  const padded = segs.map((g) => {
     const pad = ((g.hi - g.lo) || rawRange * 0.05) * 0.12;
-    const lo = g.lo - pad;
-    const hi = g.hi + pad;
-    const yBottom = PLOT_H - i * (segH + BREAK_PX);
-    return { lo, hi, span: (hi - lo) || 1, yBottom, yTop: yBottom - segH };
+    return { lo: g.lo - pad, hi: g.hi + pad };
+  });
+  const totalSpan = padded.reduce((s, g) => s + (g.hi - g.lo), 0) || 1;
+  // 높이 배분 = 데이터 폭 비례 70% + 균등 30%.
+  // 순수 비례면 폭이 좁은 구간이 다시 눌린다(BMI 9.7 vs 혈당·허리 39.7 → BMI가 25px 높이).
+  // 순수 균등이면 반대로 좁은 구간이 과하게 부풀어, BMI의 3.8 변화가 원래 4.5px에서 25px로
+  // 5.5배 커지면서 실제보다 극적으로 보이고 위쪽 두 항목이 그만큼 눌린다. 그 사이를 택했다.
+  const PROP_WEIGHT = 0.7;
+  const usable = PLOT_H - BREAK_PX * (padded.length - 1);
+  let cum = 0;
+  const layout = padded.map((g) => {
+    const h = usable * (PROP_WEIGHT * ((g.hi - g.lo) / totalSpan) + (1 - PROP_WEIGHT) / padded.length);
+    const yBottom = PLOT_H - cum;
+    cum += h + BREAK_PX;
+    return { lo: g.lo, hi: g.hi, span: (g.hi - g.lo) || 1, h, yBottom, yTop: yBottom - h };
   });
 
   const xPos = (i: number) => reports.length === 1 ? PLOT_W / 2 : (i / (reports.length - 1)) * PLOT_W;
   const yPos = (val: number) => {
-    for (const s of layout) if (val >= s.lo && val <= s.hi) return s.yBottom - ((val - s.lo) / s.span) * segH;
+    for (const s of layout) if (val >= s.lo && val <= s.hi) return s.yBottom - ((val - s.lo) / s.span) * s.h;
     // 구간 밖이면 가장 가까운 경계에 붙인다 — 생략된 빈 칸 안에는 아무것도 그리지 않는다.
     if (val < layout[0].lo) return layout[0].yBottom;
     const last = layout[layout.length - 1];
@@ -587,10 +605,9 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
   // 눈금은 구간마다 따로 — 구간별로 배율이 다르니 전체를 한 간격으로 자를 수 없다.
   // 개수는 구간의 화면 높이로 정한다(약 30px에 하나) — 구간이 나뉘면 각 구간이 낮아지므로
   // 같은 간격을 쓰면 눈금이 하나만 남거나 반대로 빽빽해진다.
-  const ticksPerSeg = Math.max(2, Math.round(segH / 30));
   const gridTicks: { v: number; y: number }[] = [];
   for (const s of layout) {
-    const step = niceStep(s.span / ticksPerSeg);
+    const step = niceStep(s.span / Math.max(2, Math.round(s.h / 30)));
     for (let v = Math.ceil(s.lo / step) * step; v <= s.hi + 1e-9; v += step) gridTicks.push({ v, y: yPos(v) });
   }
 

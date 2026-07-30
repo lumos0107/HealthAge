@@ -231,6 +231,12 @@ export function Sparkline({ values, color, height = 40 }: {
         {segs.map((d, i) => (
           <Path key={i} d={d} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         ))}
+        {/* 회차 점 — 선만 있으면 몇 번 검진한 흐름인지 알 수 없다(6회차인지 2회차인지 구분 안 됨).
+            측정된 해에만 찍으므로 끊긴 구간이 어디였는지도 점 간격으로 드러난다.
+            마지막 회차는 아래에서 더 크게 다시 그리므로 여기서는 뺀다. */}
+        {nums.slice(0, -1).map((p) => (
+          <Circle key={p.i} cx={x(p.i)} cy={y(p.v)} r={2} fill={color} />
+        ))}
         <Circle cx={x(last.i)} cy={y(last.v)} r={3.5} fill={color} stroke="#fff" strokeWidth={1.5} />
       </Svg>
     </View>
