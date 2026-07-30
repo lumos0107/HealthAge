@@ -224,10 +224,12 @@ function ScoreTrendHero({ reports }: { reports: Report[] }) {
   const y = (s: number) => pad.top + (1 - s / 100) * plotH;
 
   const last = series[series.length - 1];
-  // 선은 중립 회색, 판단은 마지막 점에만 — 추이는 사실이고 판단은 현재값이다.
-  // 브랜드 초록으로 그렸을 때 100->22로 내려가는 선이 "좋아지는 중"으로 읽혔고,
-  // 같은 22점을 홈은 빨강 배지로 말해 색 메시지가 서로 반대였다.
-  const lastColor = scoreTone(last.score).color;
+  // 선 색은 **현재 점수**를 따라간다(scoreTone: 70↑ 초록 · 40↑ 앰버 · 그 아래 빨강).
+  // 예전에 이 선이 브랜드 초록이었을 때는 점수와 무관한 색이어서, 100→22로 내려가는 선이
+  // "좋아지는 중"으로 읽히고 같은 22점을 홈은 빨강 배지로 말해 색이 서로 반대였다.
+  // 색을 점수에서 파생시키면 그 모순이 생기지 않는다 — 홈 배지·점수와 언제나 같은 색이다.
+  // 기울기(좋아지는지 나빠지는지)는 선의 모양이 말하고, 색은 지금 어디에 있는지를 말한다.
+  const lineColor = scoreTone(last.score).color;
   const trend = scoreTrendText(series);
   const gapNote = scoreGapNote(series);
 
@@ -244,8 +246,10 @@ function ScoreTrendHero({ reports }: { reports: Report[] }) {
             <Line
               key={p.year}
               x1={x(i)} y1={y(prev.score)} x2={x(i + 1)} y2={y(p.score)}
-              // 실선은 진한 회색, 미완 구간은 연한 회색 점선 — 회색끼리도 톤이 갈려야 구분된다.
-              stroke={partial ? T.text3 : T.text2}
+              // 미완 구간은 같은 색 점선 + 흐리게 — 색을 바꾸면 다른 계열로 보인다.
+              // 점선·투명도만으로 "이 구간은 값이 온전하지 않다"를 말한다.
+              stroke={lineColor}
+              opacity={partial ? 0.4 : 1}
               strokeWidth={2.5}
               strokeDasharray={partial ? '4 4' : undefined}
               strokeLinecap="round"
@@ -257,14 +261,14 @@ function ScoreTrendHero({ reports }: { reports: Report[] }) {
             key={p.year}
             cx={x(i)} cy={y(p.score)} r={i === series.length - 1 ? 5 : 3.5}
             // 항목이 빠진 해는 빈 동그라미 — 값이 온전하지 않다는 표시.
-            // 상태색은 마지막 점에만 준다(과거 점까지 칠하면 그 해의 판단으로 읽힌다).
-            fill={p.complete ? (i === series.length - 1 ? lastColor : T.text2) : '#fff'}
-            stroke={p.complete ? '#fff' : T.text3}
+            // 점도 선과 같은 색. 마지막 점은 크기와 흰 테두리로 구분한다(색으로는 이미 구분이 안 된다).
+            fill={p.complete ? lineColor : '#fff'}
+            stroke={p.complete ? '#fff' : lineColor}
             strokeWidth={p.complete ? 1.5 : 2}
           />
         ))}
         {/* 마지막 점 값만 적는다 — 나머지는 축 라벨로 위치를 짐작하게 둔다. */}
-        <SvgText x={x(series.length - 1) - 6} y={y(last.score) - 12} fontSize={15} fontWeight="800" fill={lastColor} textAnchor="end">
+        <SvgText x={x(series.length - 1) - 6} y={y(last.score) - 12} fontSize={15} fontWeight="800" fill={lineColor} textAnchor="end">
           {last.score}
         </SvgText>
         {/* X축은 첫 해·마지막 해만 — 중간 라벨은 숫자만 늘리고 읽히지 않는다. */}
