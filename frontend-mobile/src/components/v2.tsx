@@ -6,7 +6,7 @@ import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View }
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import { normalBounds, scoreGrade } from '../interpret';
+import { formatMetricValue, normalBounds, scoreGrade } from '../interpret';
 import { T, W } from './UI';
 
 export const CATEGORY_VISUAL: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
@@ -273,6 +273,17 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
       <View style={{ height: 20, marginTop: 4 }}>
         {low != null && anchor(bandL, <Text style={{ fontSize: 12, color: T.text3, width: 60, textAlign: 'center' }}>{low}</Text>)}
         {high != null && anchor(bandR, <Text style={{ fontSize: 12, color: T.text3, width: 60, textAlign: 'center' }}>{high}</Text>)}
+      </View>
+      {/* 내 수치 — 점만 있고 숫자가 없어서 위치를 읽을 수 없었다.
+          점 위('정상 범위' 라벨 자리)에 두면 값이 밴드 안에 있을 때 글자가 겹친다(AST 34처럼).
+          경계 라벨과 같은 줄에 두면 값이 경계 근처일 때 겹친다. 그래서 한 줄 더 내려
+          점과 x를 맞추고, 색은 점과 같은 상태색으로 묶는다. */}
+      <View style={{ height: 18 }}>
+        {anchor(pct(value), (
+          <Text style={{ fontSize: 12, fontWeight: '700', color, width: 76, textAlign: 'center' }}>
+            {formatMetricValue(metric, value)}{metric.unit}
+          </Text>
+        ))}
       </View>
     </View>
   );
