@@ -357,6 +357,9 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   // 이 그룹의 항목 중 그 해에 실제로 측정된 것만 추린다 — 검사하지 않은 항목을 측정한 것처럼
   // 그래프나 범례에 끼워 넣으면 사실과 다른 정보가 된다.
   const presentKeys = group.keys.filter((k) => !!metricByKeyForYear(k));
+  // 선 색은 '그리는 순서'가 아니라 '항목'에 고정한다 — 그래프는 한 번에 한 항목만 그리므로
+  // 순서로 색을 뽑으면 어떤 항목을 골라도 늘 첫 번째 색이 되어 아래 범례의 색 표식과 어긋난다.
+  const colorOf = (k: MetricKey) => LINE_COLORS[Math.max(0, presentKeys.indexOf(k)) % LINE_COLORS.length];
   // 이 묶음의 대표 항목 = 가장 주의가 필요한 항목. 2뎁스의 밴드·등수 기본값이 된다(선택 연도 기준).
   const leadMetric = pickLead(presentKeys.map((k) => metricByKeyForYear(k)!), reports) ?? undefined;
 
@@ -398,15 +401,16 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   }, [latestLead, reports]);
   const c = cardContent[group.title];
 
-  // 지금 보고 있는 항목 — 사용자가 칩으로 바꾸기 전까지는 대표(가장 주의가 필요한) 항목을 따라간다.
-  // 이 하나가 밴드·포커스·"나의 위치" 등수를 전부 결정한다. 예전에는 칩이 밴드만 바꾸고
-  // 등수는 대표 항목에 고정돼 있어서, 기준을 바꿔도 위쪽 등수가 그대로라 서로 다른 항목을 가리켰다.
-  const [bandPick, setBandPick] = useState<MetricKey | null>(null);
-  const bandKey = bandPick ?? leadMetric?.key ?? null;
-  const setBandKey = (k: MetricKey) => setBandPick(k);
-  // 그 해에 측정되지 않은 항목이 선택돼 있으면 밴드를 그리지 않는다(없는 기준을 그릴 수는 없다).
-  const bandMetric = bandKey && presentKeys.includes(bandKey) ? metricByKeyForYear(bandKey) : null;
-  const focusMetric = bandMetric ?? leadMetric;
+  // 지금 보고 있는 항목 — null이면 '전체보기'(묶음 전체를 한 축에 겹쳐 그린다).
+  // 기본값이 전체보기인 이유: 이 카드는 '묶음'이 단위라, 먼저 네 항목이 같이 어떻게 움직였는지
+  // 보고 나서 궁금한 하나를 파고드는 순서가 자연스럽다. 항목을 고르면 그 항목만 단독으로 그려
+  // 축이 그 항목 전용이 되고(겹쳐 그릴 때 눌리던 변화 폭이 살아난다) 밴드·등수도 함께 따라간다.
+  const [pick, setPick] = useState<MetricKey | null>(null);
+  // 그 해에 측정되지 않은 항목이 골라져 있으면 전체보기로 돌아간다 — 없는 값을 단독으로 그릴 수는 없다.
+  const pickedMetric = pick && presentKeys.includes(pick) ? metricByKeyForYear(pick) : null;
+  // 전체보기에서도 밴드·등수는 하나를 골라야 한다(항목마다 정상범위가 달라 전부 깔면 못 읽는다).
+  // 그때의 기준은 대표 항목 — 대개 그게 보고 싶은 항목이다.
+  const focusMetric = pickedMetric ?? leadMetric;
   const focusRank = focusMetric
     ? (focusMetric.percentile != null ? rankFromPercentile(focusMetric.percentile) : estimateRank(focusMetric, r.values[focusMetric.key]))
     : null;
@@ -467,19 +471,25 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
         </Text>
       ) : (
         <View>
-          {/* 정상범위 밴드를 어느 항목 기준으로 깔지 고르는 줄. 항목마다 정상범위가 달라
-              전부 겹쳐 깔면 아무것도 읽히지 않으므로 한 번에 하나만 그린다.
-              기본값은 가장 주의가 필요한 항목 — 대개 그게 보고 싶은 항목이다. */}
+          {/* 그래프에 그릴 항목을 고르는 줄. 전체보기(기본)는 묶음이 같이 어떻게 움직였는지 보여주고,
+              항목을 고르면 그 항목만 단독으로 그린다 — 항목마다 단위가 달라(LDL mg/dL vs BMI kg/m²)
+              겹쳐 그리면 폭이 좁은 항목의 변화가 눌리는데, 단독이면 축이 그 항목 전용이라 그대로 보인다. */}
           {presentKeys.length > 1 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
               <Text style={{ fontSize: 11, color: T.text3, alignSelf: 'center', marginRight: 2 }}>기준 항목</Text>
+              <Pressable
+                onPress={() => setPick(null)}
+                style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: pickedMetric ? T.cardAlt : T.text1 }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: pickedMetric ? T.text3 : '#fff' }}>전체보기</Text>
+              </Pressable>
               {presentKeys.map((k) => {
                 const m = metricByKeyForYear(k)!;
-                const on = k === bandKey;
+                const on = k === pickedMetric?.key;
                 return (
                   <Pressable
                     key={k}
-                    onPress={() => setBandKey(k)}
+                    onPress={() => setPick(k)}
                     style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: on ? T.text1 : T.cardAlt }}
                   >
                     <Text style={{ fontSize: 11, fontWeight: '700', color: on ? '#fff' : T.text3 }}>{m.shortName}</Text>
@@ -488,18 +498,23 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
               })}
             </View>
           )}
+          {/* 전체보기면 묶음 전체를, 항목을 골랐으면 그 하나만. 초록 띠는 어느 쪽이든 하나뿐이라
+              전체보기에서는 밴드 주인(대표 항목)만 진하게 두고 나머지는 흐리게 깐다. */}
           <LineChart
-            keys={presentKeys}
+            keys={pickedMetric ? [pickedMetric.key] : presentKeys}
+            color={pickedMetric ? colorOf(pickedMetric.key) : undefined}
             selIdx={selIdx}
             onSelect={setSelIdx}
             reports={reports}
-            band={bandMetric ? normalBounds(bandMetric) : null}
-            focusKey={presentKeys.length > 1 ? bandMetric?.key ?? null : null}
+            band={focusMetric ? normalBounds(focusMetric) : null}
+            focusKey={!pickedMetric && presentKeys.length > 1 ? focusMetric?.key ?? null : null}
           />
           <Text style={{ fontSize: 11, color: T.text3, marginTop: 6, marginBottom: 4, lineHeight: 16 }}>
-            {bandMetric
-              ? `초록 띠 = ${bandMetric.shortName} 정상 ${bandMetric.normalText}${bandMetric.unit}. 진한 선만 이 띠로 판단하세요.`
-              : '그래프를 눌러 해당 연도의 수치를 확인하세요.'}
+            {!focusMetric
+              ? '그래프를 눌러 해당 연도의 수치를 확인하세요.'
+              : pickedMetric
+                ? `${pickedMetric.name} 하나만 그린 그래프예요. 초록 띠 = 정상 ${pickedMetric.normalText}${pickedMetric.unit}.`
+                : `초록 띠 = ${focusMetric.shortName} 정상 ${focusMetric.normalText}${focusMetric.unit}. 진한 선만 이 띠로 판단하세요. 항목을 누르면 그것만 크게 봐요.`}
           </Text>
 
           {/* 선택한 연도의 수치 = 그래프 범례. 예전에는 "검진 수치" 줄과 "범례" 줄이
@@ -507,26 +522,34 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
           <FadeSwap swapKey={selIdx}>
             <View style={{ borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12, marginTop: 4, marginBottom: 2 }}>
               <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, marginBottom: 8 }}>{r.year}년 검진 수치</Text>
-              {presentKeys.map((k, i) => {
+              {presentKeys.map((k) => {
                 // 그 해 실제 측정값을 가진 항목 정의를 그대로 쓴다 — 더미로 폴백하지 않아 항상 실제 정보만 보여준다.
                 const metric = metricByKeyForYear(k)!;
-                const color = LINE_COLORS[i % LINE_COLORS.length];
+                const color = colorOf(k);
                 const bad = isBadStatus(metric.status);
+                // 단독 보기에서는 그려지지 않은 항목의 선 표식을 흐리게 둔다 — 진하게 두면
+                // 화면에 없는 선이 있는 것처럼 읽힌다. 전체보기에서는 전부 그려지므로 전부 진하게.
+                // 줄을 눌러도 그 항목 단독 보기로 넘어간다(칩과 같은 동작).
+                const on = !pickedMetric || k === pickedMetric.key;
                 return (
-                  <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 }}>
-                    <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: color }} />
-                    <Text style={{ flex: 1, fontSize: 13, color: T.text2 }}>
+                  <Pressable
+                    key={k}
+                    onPress={() => setPick(k)}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 }}
+                  >
+                    <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: color, opacity: on ? 1 : 0.3 }} />
+                    <Text style={{ flex: 1, fontSize: 13, color: on ? T.text2 : T.text3, fontWeight: pickedMetric && on ? '700' : '400' }}>
                       {metric.shortName}
-                      {/* 방향 표시 — 한 축에 여러 선을 겹쳐 그리는 그래프라, HDL처럼 '높을수록 좋음'인
-                          항목은 선이 내려가는 게 나빠지는 것이다. 표시가 없으면 위로 가는 LDL과
-                          나란히 놓여 거꾸로 읽힌다. 기호 뜻은 아래 한 줄에서 풀어준다. */}
+                      {/* 방향 표시 — HDL처럼 '높을수록 좋음'인 항목은 선이 내려가는 게 나빠지는 것이다.
+                          표시가 없으면 같은 목록에서 위로 갈수록 나빠지는 LDL과 나란히 놓여 거꾸로
+                          읽힌다. 기호 뜻은 아래 한 줄에서 풀어준다. */}
                       <Text style={{ fontSize: 10, color: T.text3 }}>  {directionLabel(metricDirection(metric)).icon}</Text>
                     </Text>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{r.values[k]}{metric.unit}</Text>
                     {bad && (
                       <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: metric.status === '주의' ? T.warn : T.danger }} />
                     )}
-                  </View>
+                  </Pressable>
                 );
               })}
               {/* 이 그룹에 실제로 나온 방향만 풀어 쓴다 — 전부 같은 방향이면 한 가지만 남는다. */}
@@ -552,7 +575,7 @@ function niceStep(rough: number): number {
   return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
 }
 
-function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
+function LineChart({ keys, selIdx, onSelect, reports, band, focusKey, color: colorProp }: {
   keys: MetricKey[]; selIdx: number; onSelect: (i: number) => void; reports: Report[];
   /** 정상범위 밴드를 그릴 항목의 경계. 여러 항목의 밴드가 겹치면 읽을 수 없어 한 번에 하나만 그린다. */
   band?: { low?: number; high?: number } | null;
@@ -560,6 +583,9 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
    *  그 선들도 정상인 것처럼 보인다(HDL 39가 LDL 밴드에 들어가는 식). 그래서
    *  주인 선만 진하게 두고 나머지는 배경으로 흐리게 깐다. */
   focusKey?: MetricKey | null;
+  /** 선 색을 바깥에서 지정한다. keys가 한 항목뿐일 때 순서로 색을 뽑으면 어떤 항목이든
+   *  늘 첫 번째 색이 되어, 항목에 색을 고정해 둔 아래 범례와 어긋난다. */
+  color?: string;
 }) {
   // 일부 해에는 이 항목을 측정하지 않았을 수 있다 — 그런 해의 값(undefined)을 그래프 범위 계산에
   // 끼워 넣으면 축이 왜곡되거나 잘못된 값이 그려질 수 있으므로, 실제로 측정된 값만 사용한다.
@@ -744,7 +770,7 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
         {/* 포커스 항목을 마지막에 그려 다른 선 위로 올린다 */}
         {[...keys].sort((a, b) => (a === focusKey ? 1 : 0) - (b === focusKey ? 1 : 0)).map((k) => {
           const ki = keys.indexOf(k);
-          const color = LINE_COLORS[ki % LINE_COLORS.length];
+          const color = colorProp ?? LINE_COLORS[ki % LINE_COLORS.length];
           // focusKey가 없으면(항목 1개짜리 그룹 등) 전부 진하게 — 흐릴 이유가 없다.
           const dim = !!focusKey && k !== focusKey;
           // 측정하지 않은 해는 점/선을 그리지 않는다 — 0이나 보간값으로 채우면 검사한 것처럼
