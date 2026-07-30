@@ -411,10 +411,20 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
     ? (focusMetric.percentile != null ? rankFromPercentile(focusMetric.percentile) : estimateRank(focusMetric, r.values[focusMetric.key]))
     : null;
 
+  // 2뎁스 헤드라인은 '기준 항목' 칩을 따라간다 — 칩을 바꾸면 아래 차트·밴드·등수가 전부 그
+  // 항목으로 바뀌는데 맨 위 문장만 그대로면 한 화면이 서로 다른 항목을 말한다.
+  // 1뎁스 문장(summary)은 최신 연도 대표에 고정한다 — 모달에서 칩을 만지고 나온 뒤 카드
+  // 문장이 바뀌어 있으면 사용자에게는 이유 없는 변화로 보인다(배지를 최신 연도로 옮긴 것과 같은 이유).
+  const detailSummary = useMemo(
+    () => groupSummary(focusMetric?.key ?? null, reports, metricDefinitions),
+    [focusMetric, reports, metricDefinitions],
+  );
+
   return (
     <SummaryCard
       title={group.title}
       summary={summary}
+      detailSummary={detailSummary}
       definition={c?.definition}
       detail={c?.detail}
       meaning={c?.meaning}

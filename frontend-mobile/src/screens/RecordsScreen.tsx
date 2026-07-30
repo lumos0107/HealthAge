@@ -7,12 +7,15 @@ import { medicationDosageText, medicationPeriodText, medicationTemplate, metricG
 import type { MedicationItem, MetricDefinition, MetricKey, Report } from '../data';
 import { deleteReport } from '../health';
 import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
+import { exportReportPdf } from '../reportExport';
 
-export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, onDeleted, medications, onOpenDetail }: {
+export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
   userId?: string;
+  /** PDF 표지에 넣을 이름. 없으면 이름 없이 만든다(내보내기 자체는 막지 않는다). */
+  userName?: string;
   onDeleted?: (year: number) => void;
   // 실제 저장된 복약 정보 — 있으면 이걸, 없으면(데모/프리뷰) 예시 템플릿을 보여준다.
   medications?: MedicationItem[];
@@ -55,6 +58,21 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
         },
       ],
     );
+  };
+
+  // 지금 보고 있는 연도를 그대로 PDF로 — 프로필의 내보내기와 같은 함수를 쓴다(판단 로직 없음).
+  // 연도 선택기가 이미 이 화면 위에 있어서, 프로필처럼 연도를 다시 고르게 하지 않는다.
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await exportReportPdf(detailReport, yearMetrics, userName ?? '');
+    } catch (e) {
+      Alert.alert('내보내기 실패', e instanceof Error ? e.message : 'PDF를 만들지 못했습니다.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // 실제 사용자면 저장된 복약 정보를, 아니면(데모/프리뷰) 예시 템플릿을 효능군별로 묶는다.
@@ -139,6 +157,17 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
               <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: T.text1 }}>
                 {detailReport.year}년 · {detailReport.hospital}
               </Text>
+              {/* 이 검진을 PDF로 — 병원 지참·가족 공유용. 아이콘만 두면 무슨 기능인지 모호해서
+                  'PDF' 글자를 함께 둔다. 데모 계정도 눌러볼 수 있게 usingRealData로 막지 않는다. */}
+              <Pressable
+                hitSlop={8}
+                onPress={handleExport}
+                disabled={exporting}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 3, opacity: exporting ? 0.4 : 1 }}
+              >
+                <Ionicons name="document-text-outline" size={16} color={T.text3} />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text3 }}>PDF</Text>
+              </Pressable>
               {usingRealData && !!userId && (
                 <Pressable hitSlop={8} onPress={confirmDelete}>
                   <Ionicons name="trash-outline" size={17} color={T.text3} />

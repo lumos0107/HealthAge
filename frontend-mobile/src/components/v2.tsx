@@ -76,9 +76,14 @@ export function PeerRankSlider({ rank, color }: { rank: number; color: string })
  *    ① 결론  ② 이 지표는요(정의 + 2.5뎁스 '자세히 알아보기')  ③ 나의 위치(근거·차트)
  *    ④ 그래서 이게 의미하는 건  ⑤ 그럼 뭘 하면 좋을까
  *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다). */
-export function SummaryCard({ title, summary, badge, preview, definition, detail, meaning, meaningExtra, tips, positionTitle, positionExtra, children }: {
+export function SummaryCard({ title, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, positionTitle, positionExtra, children }: {
   title: string;
   summary?: string | null;
+  /** 2뎁스 ① 결론 자리에 쓸 문장. 없으면 summary를 그대로 쓴다.
+   *  나누는 이유: 2뎁스에서 사용자가 보는 항목을 바꿀 수 있는 카드(히스토리)는 모달 안에서
+   *  헤드라인이 따라가야 하는데, 그 문장을 1뎁스에도 쓰면 모달을 닫은 뒤 카드 문장이
+   *  이유 없이 바뀌어 있게 된다. 1뎁스는 고정, 2뎁스는 따라가게 하려면 두 개가 필요하다. */
+  detailSummary?: string | null;
   badge?: React.ReactNode;
   /** 1뎁스 요약 아래에 얹는 작은 그림 — 스파크라인 등. 열지 않고도 흐름이 보이게 하는 자리다.
    *  ⚠️ children은 2뎁스 모달로 들어가므로, 1뎁스에 그림을 두려면 반드시 이 prop을 써야 한다. */
@@ -124,10 +129,10 @@ export function SummaryCard({ title, summary, badge, preview, definition, detail
             <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, flex: 1 }} numberOfLines={1}>{title}</Text>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
-            {/* ① 결론 — 1뎁스에서 본 요약을 헤드라인으로 */}
-            {!!summary && (
+            {/* ① 결론 — 1뎁스에서 본 요약을 헤드라인으로(모달 안에서 항목을 바꾸는 카드는 detailSummary로 갈아끼운다) */}
+            {!!(detailSummary ?? summary) && (
               <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-                <Text style={{ fontSize: 19, fontWeight: '800', color: T.text1, lineHeight: 28 }}>{summary}</Text>
+                <Text style={{ fontSize: 19, fontWeight: '800', color: T.text1, lineHeight: 28 }}>{detailSummary ?? summary}</Text>
               </View>
             )}
             {/* ② 이 지표는요 — 정의 한 문장, 심화는 2.5뎁스로 접어둔다 */}
