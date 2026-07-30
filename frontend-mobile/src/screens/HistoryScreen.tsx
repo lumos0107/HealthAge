@@ -421,12 +421,13 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
         </Text>
       ) : (
         <View>
-          {/* 정상범위 밴드를 어느 항목 기준으로 깔지 고르는 줄. 항목마다 정상범위가 달라
-              전부 겹쳐 깔면 아무것도 읽히지 않으므로 한 번에 하나만 그린다.
+          {/* 그래프에 그릴 항목을 고르는 줄. 항목마다 단위 크기와 정상범위가 달라 한 번에
+              하나만 그린다 — 겹쳐 그리면 단위가 큰 항목이 축을 독차지해 작은 항목의 변화가
+              눌려 보인다(LineChart의 focusKey 주석 참고).
               기본값은 가장 주의가 필요한 항목 — 대개 그게 보고 싶은 항목이다. */}
           {presentKeys.length > 1 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-              <Text style={{ fontSize: 11, color: T.text3, alignSelf: 'center', marginRight: 2 }}>기준 항목</Text>
+              <Text style={{ fontSize: 11, color: T.text3, alignSelf: 'center', marginRight: 2 }}>보는 항목</Text>
               {presentKeys.map((k) => {
                 const m = metricByKeyForYear(k)!;
                 const on = k === bandKey;
@@ -448,11 +449,11 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
             onSelect={setSelIdx}
             reports={reports}
             band={bandMetric ? normalBounds(bandMetric) : null}
-            focusKey={presentKeys.length > 1 ? bandMetric?.key ?? null : null}
+            focusKey={focusMetric?.key ?? null}
           />
           <Text style={{ fontSize: 11, color: T.text3, marginTop: 6, marginBottom: 4, lineHeight: 16 }}>
             {bandMetric
-              ? `초록 띠 = ${bandMetric.shortName} 정상 ${bandMetric.normalText}${bandMetric.unit}. 진한 선만 이 띠로 판단하세요.`
+              ? `초록 띠 = ${bandMetric.shortName} 정상 ${bandMetric.normalText}${bandMetric.unit}.`
               : '그래프를 눌러 해당 연도의 수치를 확인하세요.'}
           </Text>
 
@@ -466,10 +467,12 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
                 const metric = metricByKeyForYear(k)!;
                 const color = LINE_COLORS[i % LINE_COLORS.length];
                 const bad = isBadStatus(metric.status);
+                // 지금 그래프에 그려진 항목만 색 선을 준다 — 셋 다 색이면 선이 세 개인 줄로 읽힌다.
+                const drawn = k === focusMetric?.key;
                 return (
                   <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 }}>
-                    <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: color }} />
-                    <Text style={{ flex: 1, fontSize: 13, color: T.text2 }}>
+                    <View style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: drawn ? color : T.border }} />
+                    <Text style={{ flex: 1, fontSize: 13, color: drawn ? T.text1 : T.text2, fontWeight: drawn ? '700' : '400' }}>
                       {metric.shortName}
                       {/* 방향 표시 — 한 축에 여러 선을 겹쳐 그리는 그래프라, HDL처럼 '높을수록 좋음'인
                           항목은 선이 내려가는 게 나빠지는 것이다. 표시가 없으면 위로 가는 LDL과
@@ -510,15 +513,21 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
   keys: MetricKey[]; selIdx: number; onSelect: (i: number) => void; reports: Report[];
   /** 정상범위 밴드를 그릴 항목의 경계. 여러 항목의 밴드가 겹치면 읽을 수 없어 한 번에 하나만 그린다. */
   band?: { low?: number; high?: number } | null;
-  /** 밴드의 주인 항목. 밴드는 이 항목에만 해당하는데 다른 선까지 띠 안에 들어가면
-   *  그 선들도 정상인 것처럼 보인다(HDL 39가 LDL 밴드에 들어가는 식). 그래서
-   *  주인 선만 진하게 두고 나머지는 배경으로 흐리게 깐다. */
+  /** 그릴 항목. 이 하나만 그리고 축도 이 항목에 맞춘다.
+   *  예전에는 그룹의 항목을 전부 겹쳐 그리고 주인 선만 진하게(나머지는 opacity 0.3) 뒀는데,
+   *  흐리게 하는 것으로는 축을 공유해서 생기는 크기 왜곡이 없어지지 않았다. 단위가 큰 항목이
+   *  축을 독차지해 작은 항목이 바닥에 눌리고, 그래서 화면 기울기가 실제 변화율과 역전됐다:
+   *  BMI +16.9%(화면 3.3%)가 허리 +16.3%(화면 11.2%)보다 3.4배 평평해 보였고,
+   *  크레아티닌 +20.2%는 혈색소 +3.4%보다 오히려 더 평평했다.
+   *  keys는 색 배정에만 쓴다 — 아래 수치 목록의 색과 어긋나지 않게 하려고 남겨둔다. */
   focusKey?: MetricKey | null;
 }) {
+  // 축은 그리는 항목 하나로만 계산한다 — 여기에 다른 항목 값이 섞이면 위 주석의 왜곡이 되돌아온다.
+  const drawKeys = focusKey ? [focusKey] : keys;
   // 일부 해에는 이 항목을 측정하지 않았을 수 있다 — 그런 해의 값(undefined)을 그래프 범위 계산에
   // 끼워 넣으면 축이 왜곡되거나 잘못된 값이 그려질 수 있으므로, 실제로 측정된 값만 사용한다.
   const isFiniteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-  const allVals = keys.flatMap((k) => reports.map((r) => r.values[k]).filter(isFiniteNum));
+  const allVals = drawKeys.flatMap((k) => reports.map((r) => r.values[k]).filter(isFiniteNum));
   // 밴드 경계도 범위에 넣는다 — 축 밖으로 밀려나면 정작 기준선이 화면에 안 보인다.
   // (low:0은 "하한 없음"의 표현이라 축을 0까지 늘리지 않도록 제외한다)
   const bandEdges = [band?.low, band?.high].filter((v): v is number => v != null && v > 0);
@@ -589,12 +598,10 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
           <SvgText key={r.year} x={xPos(i)} y={PLOT_H + 20} fontSize={11} fill={T.text3} textAnchor="middle" fontWeight="500">{r.year}</SvgText>
         ))}
 
-        {/* 포커스 항목을 마지막에 그려 다른 선 위로 올린다 */}
-        {[...keys].sort((a, b) => (a === focusKey ? 1 : 0) - (b === focusKey ? 1 : 0)).map((k) => {
+        {drawKeys.map((k) => {
+          // 색은 그룹 전체(keys) 기준으로 매긴다 — 아래 수치 목록의 색 점과 같아야 어느 항목인지 이어진다.
           const ki = keys.indexOf(k);
-          const color = LINE_COLORS[ki % LINE_COLORS.length];
-          // focusKey가 없으면(항목 1개짜리 그룹 등) 전부 진하게 — 흐릴 이유가 없다.
-          const dim = !!focusKey && k !== focusKey;
+          const color = LINE_COLORS[(ki < 0 ? 0 : ki) % LINE_COLORS.length];
           // 측정하지 않은 해는 점/선을 그리지 않는다 — 0이나 보간값으로 채우면 검사한 것처럼
           // 보여 사실과 다른 정보가 된다. 실제로 측정된 연도끼리만 선으로 잇는다.
           const pts = reports
@@ -603,30 +610,28 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
           const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
 
           return (
-            <G key={k} opacity={dim ? 0.3 : 1}>
-              <Path d={d} stroke={color} strokeWidth={dim ? 1.5 : 2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <G key={k}>
+              <Path d={d} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
               {pts.map((p) => {
                 const sel = p.idx === selIdx;
-                // 숫자는 선택한 해의 포커스 계열 하나만. 연도별 값은 아래 목록이 이미 보여주므로
+                // 숫자는 선택한 해에만. 연도별 값은 아래 목록이 이미 보여주므로
                 // 그래프 위에 여러 개를 얹으면 선을 가리기만 한다.
                 // 점도 작게 — 값이 붙어 있는 해에는 큰 원끼리 겹쳐 선이 끊겨 보였다.
-                if (!sel) return <Circle key={p.idx} cx={p.x} cy={p.y} r={dim ? 2 : 2.8} fill={color} />;
+                if (!sel) return <Circle key={p.idx} cx={p.x} cy={p.y} r={2.8} fill={color} />;
                 return (
                   <G key={p.idx}>
                     <Circle cx={p.x} cy={p.y} r={4.5} fill={color} stroke={T.white} strokeWidth={2} />
-                    {!dim && (
-                      <SvgText
-                        // 마지막 해는 라벨을 왼쪽으로 붙여야 오른쪽 밖으로 잘리지 않는다.
-                        x={p.idx === reports.length - 1 ? p.x - 2 : p.x}
-                        y={p.y - 10}
-                        fontSize={11}
-                        fill={color}
-                        textAnchor={p.idx === reports.length - 1 ? 'end' : 'middle'}
-                        fontWeight="700"
-                      >
-                        {p.v}
-                      </SvgText>
-                    )}
+                    <SvgText
+                      // 마지막 해는 라벨을 왼쪽으로 붙여야 오른쪽 밖으로 잘리지 않는다.
+                      x={p.idx === reports.length - 1 ? p.x - 2 : p.x}
+                      y={p.y - 10}
+                      fontSize={11}
+                      fill={color}
+                      textAnchor={p.idx === reports.length - 1 ? 'end' : 'middle'}
+                      fontWeight="700"
+                    >
+                      {p.v}
+                    </SvgText>
                   </G>
                 );
               })}
