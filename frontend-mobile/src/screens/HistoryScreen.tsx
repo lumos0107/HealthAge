@@ -525,20 +525,74 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
   const spanVals = [...allVals, ...bandEdges];
   const rawMin = Math.min(...spanVals);
   const rawMax = Math.max(...spanVals);
-  const margin = (rawMax - rawMin) * 0.12 || 5;
-  // 축 끝은 데이터에 밀착시키고(예전엔 눈금 배수로 잘라 0~300까지 늘어나 데이터가 가운데 뭉쳤다),
-  // 눈금선만 그 안쪽의 '읽기 좋은 수'에 놓는다.
-  const minVal = rawMin - margin;
-  const maxVal = rawMax + margin;
-  const range = maxVal - minVal || 1;
-  const step = niceStep(range / 5);
+  const rawRange = rawMax - rawMin || 1;
+
+  // ---- 축 구간 나누기 (물결 = 빈 칸 생략) ----
+  // 항목마다 단위 크기가 달라(BMI 22~26 vs 혈당 86~112) 축 중간에 데이터가 하나도 없는
+  // 넓은 빈 칸이 생긴다. 그 빈 칸이 화면 높이를 먹어 폭이 좁은 항목의 변화가 눌렸다 —
+  // 혈당·체중은 26.3~80 사이 53.7단위가 비어서 BMI의 3.8 변화가 4.5px밖에 안 됐고,
+  // 혈액·신장은 크레아티닌(폭 0.17)이 혈색소(폭 0.5) 옆에서 1.3px로 사라졌다.
+  //
+  // 빈 칸을 잘라내고 남은 구간에 화면 높이를 균등하게 나눠 준다. 구간마다 px/단위가
+  // 달라지지만, 이 차트는 애초에 kg/m²·cm·mg/dL를 한 축에 놓고 있어서 구간 사이의
+  // '같은 배율'이 보존하는 의미가 없다(1kg/m²와 1mg/dL는 같은 거리가 아니다).
+  // 판단 근거는 선끼리의 기울기 비교가 아니라 각 항목의 정상범위 밴드다.
+  const seriesSpans = keys
+    .map((k) => reports.map((r) => r.values[k]).filter(isFiniteNum))
+    .filter((vs) => vs.length > 0)
+    .map((vs) => ({ lo: Math.min(...vs), hi: Math.max(...vs) }));
+  // 쪼개는 조건: 가장 폭이 좁은 계열이 전체 폭의 15% 미만일 때만. 혈압(이완기 74~88 ·
+  // 수축기 116~138)이나 간 기능처럼 그냥 봐도 읽히는 그룹에 물결을 넣으면 없는 복잡함만 늘어난다.
+  const narrowest = seriesSpans.length ? Math.min(...seriesSpans.map((s) => s.hi - s.lo)) : rawRange;
+  const wantBreak = seriesSpans.length > 1 && narrowest < rawRange * 0.15;
+
+  // 계열 하나하나가 원자 — 원자는 쪼개지지 않으므로 어떤 선도 물결을 넘어가지 않는다.
+  const atoms = [...seriesSpans, ...bandEdges.map((v) => ({ lo: v, hi: v }))].sort((a, b) => a.lo - b.lo);
+  const segs: { lo: number; hi: number }[] = [];
+  if (!wantBreak || atoms.length === 0) {
+    segs.push({ lo: rawMin, hi: rawMax });
+  } else {
+    for (const a of atoms) {
+      const cur = segs[segs.length - 1];
+      if (cur && a.lo - cur.hi <= rawRange * 0.15) cur.hi = Math.max(cur.hi, a.hi);
+      else segs.push({ lo: a.lo, hi: a.hi });
+    }
+  }
+
+  const BREAK_PX = 16;   // 물결이 들어갈 빈 띠
+  const segH = (PLOT_H - BREAK_PX * (segs.length - 1)) / segs.length;
+  // 값이 작은 구간이 아래. 각 구간에 자기 데이터 폭의 12%씩 여유를 둬 점이 경계에 붙지 않게 한다.
+  const layout = segs.map((g, i) => {
+    const pad = ((g.hi - g.lo) || rawRange * 0.05) * 0.12;
+    const lo = g.lo - pad;
+    const hi = g.hi + pad;
+    const yBottom = PLOT_H - i * (segH + BREAK_PX);
+    return { lo, hi, span: (hi - lo) || 1, yBottom, yTop: yBottom - segH };
+  });
 
   const xPos = (i: number) => reports.length === 1 ? PLOT_W / 2 : (i / (reports.length - 1)) * PLOT_W;
-  const yPos = (val: number) => PLOT_H - ((val - minVal) / range) * PLOT_H;
+  const yPos = (val: number) => {
+    for (const s of layout) if (val >= s.lo && val <= s.hi) return s.yBottom - ((val - s.lo) / s.span) * segH;
+    // 구간 밖이면 가장 가까운 경계에 붙인다 — 생략된 빈 칸 안에는 아무것도 그리지 않는다.
+    if (val < layout[0].lo) return layout[0].yBottom;
+    const last = layout[layout.length - 1];
+    if (val > last.hi) return last.yTop;
+    for (let i = 0; i < layout.length - 1; i++) {
+      if (val > layout[i].hi && val < layout[i + 1].lo) return layout[i].yTop;
+    }
+    return PLOT_H;
+  };
   const clampY = (v: number) => Math.max(0, Math.min(PLOT_H, yPos(v)));
 
-  const gridVals: number[] = [];
-  for (let v = Math.ceil(minVal / step) * step; v <= maxVal + 1e-9; v += step) gridVals.push(v);
+  // 눈금은 구간마다 따로 — 구간별로 배율이 다르니 전체를 한 간격으로 자를 수 없다.
+  // 개수는 구간의 화면 높이로 정한다(약 30px에 하나) — 구간이 나뉘면 각 구간이 낮아지므로
+  // 같은 간격을 쓰면 눈금이 하나만 남거나 반대로 빽빽해진다.
+  const ticksPerSeg = Math.max(2, Math.round(segH / 30));
+  const gridTicks: { v: number; y: number }[] = [];
+  for (const s of layout) {
+    const step = niceStep(s.span / ticksPerSeg);
+    for (let v = Math.ceil(s.lo / step) * step; v <= s.hi + 1e-9; v += step) gridTicks.push({ v, y: yPos(v) });
+  }
 
   const handleTouch = (evt: any) => {
     const x = evt.nativeEvent.locationX - PAD.left;
@@ -556,18 +610,23 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
             검사항목 상세의 RangeBar와 같은 초록 띠를 배경에 깔아 선이 띠를 벗어나는 순간이 보이게 한다.
             격자·선보다 먼저 그려 배경으로 깔린다. */}
         {band && (() => {
-          const top = clampY(band.high ?? maxVal);
-          const bottom = clampY(band.low != null && band.low > 0 ? band.low : minVal);
+          // 밴드는 자기 구간 안에서만 그린다 — 하한이 0("하한 없음")일 때 화면 바닥까지
+          // 늘리면 물결 아래 다른 항목의 구간까지 초록으로 덮어 그 선들도 정상처럼 보인다.
+          const inSeg = (v: number | undefined) => v != null && v > 0
+            ? layout.find((s) => v >= s.lo && v <= s.hi) ?? null : null;
+          const seg = inSeg(band.high) ?? inSeg(band.low) ?? layout[0];
+          const top = clampY(band.high != null && band.high < seg.hi ? band.high : seg.hi);
+          const bottom = clampY(band.low != null && band.low > seg.lo ? band.low : seg.lo);
           if (bottom - top < 1) return null;
           return (
             <G>
               <Rect x={0} y={top} width={PLOT_W} height={bottom - top} fill={NORMAL_BAND} opacity={0.5} />
               {/* 경계는 선으로만 표시한다 — 경계 숫자는 그래프 밖 캡션이 맡는다.
                   그래프 안에 글자가 하나 늘 때마다 선과 점이 그만큼 안 보인다. */}
-              {band.high != null && band.high < maxVal && (
+              {band.high != null && band.high < seg.hi && (
                 <Line x1={0} y1={top} x2={PLOT_W} y2={top} stroke={T.success} strokeWidth={1} strokeDasharray="4,3" opacity={0.8} />
               )}
-              {band.low != null && band.low > minVal && band.low > 0 && (
+              {band.low != null && band.low > seg.lo && band.low > 0 && (
                 <Line x1={0} y1={bottom} x2={PLOT_W} y2={bottom} stroke={T.success} strokeWidth={1} strokeDasharray="4,3" opacity={0.8} />
               )}
             </G>
@@ -575,12 +634,26 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey }: {
         })()}
         {/* 선택한 연도를 가리키는 세로 기준선 */}
         <Line x1={xPos(selIdx)} y1={0} x2={xPos(selIdx)} y2={PLOT_H} stroke={T.text3} strokeWidth={1} strokeDasharray="3,4" opacity={0.5} />
-        {gridVals.map((v, i) => {
-          const y = yPos(v);
+        {gridTicks.map((t, i) => (
+          <G key={i}>
+            <Line x1={0} y1={t.y} x2={PLOT_W} y2={t.y} stroke={T.divider} strokeWidth={1} />
+            <SvgText x={-6} y={t.y + 4} fontSize={10} fill={T.text3} textAnchor="end">{t.v % 1 === 0 ? t.v : Math.round(t.v * 10) / 10}</SvgText>
+          </G>
+        ))}
+
+        {/* 물결(축 생략 기호) — 여기서 축이 끊겼다는 표시. 없으면 위아래 구간이 이어진
+            하나의 축으로 읽혀 두 묶음 사이 거리가 실제보다 가까워 보인다.
+            축 라벨 칸에서 시작해 그래프 안까지 조금 들어오게 그려야 눈에 걸린다. */}
+        {layout.slice(0, -1).map((s, i) => {
+          const y = s.yTop - BREAK_PX / 2;
+          const wave = (dy: number) =>
+            `M${-PAD.left + 8},${y + dy} q5,-4 10,0 t10,0 t10,0 t10,0 t10,0`;
           return (
-            <G key={i}>
-              <Line x1={0} y1={y} x2={PLOT_W} y2={y} stroke={T.divider} strokeWidth={1} />
-              <SvgText x={-6} y={y + 4} fontSize={10} fill={T.text3} textAnchor="end">{Math.round(v)}</SvgText>
+            <G key={`brk${i}`}>
+              {/* 끊긴 자리를 카드 배경색으로 덮어 격자선이 지나가지 않게 한다 */}
+              <Rect x={-PAD.left + 4} y={y - BREAK_PX / 2} width={PLOT_W + PAD.left} height={BREAK_PX} fill={T.white} />
+              <Path d={wave(-2)} stroke={T.text3} strokeWidth={1.2} fill="none" opacity={0.9} />
+              <Path d={wave(3)} stroke={T.text3} strokeWidth={1.2} fill="none" opacity={0.9} />
             </G>
           );
         })}
