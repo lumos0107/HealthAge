@@ -316,12 +316,13 @@ function groupSummary(leadKey: MetricKey | null, reports: Report[], metricDefini
   const rel = Math.abs(delta) / (Math.abs(pts[0].v) || 1);
   if (rel < 0.05) return `${subject}${josaTop} 큰 변화 없이 비슷한 수준이에요.`;
 
-  // 단위(mg/dL·kg/m²·IU/L)는 붙이지 않는다 — 1뎁스에서 단위를 읽고 쓰는 사람은 없고,
-  // 필요한 사람은 2뎁스 수치 목록에서 단위까지 본다.
-  // 단, 단위가 작아 절대 변화량이 1도 안 되는 항목(크레아티닌 0.17)은 숫자만 두면
-  // 사소해 보인다. 20% 오른 것을 "0.2 올랐어요"로 말하면 실제 크기를 놓친다.
+  // 단위를 붙인다 — 숫자만 있으면 "74 올랐어요"가 무엇의 74인지 안 걸려서, 결과지와
+  // 맞춰 보는 사람이 확인할 수 없다.
+  // 단, 단위가 작아 절대 변화량이 1도 안 되는 항목(크레아티닌 0.17)은 그대로 두면
+  // 사소해 보인다. 20% 오른 것을 "0.2mg/dL 올랐어요"로 말하면 실제 크기를 놓친다.
+  // 이때만 단위 대신 비율로 말한다(%는 그 자체가 단위다).
   const amount = Math.round(Math.abs(delta) * 10) / 10;
-  const change = amount < 1 ? `${Math.round(rel * 100)}%` : `${amount}`;
+  const change = amount < 1 ? `${Math.round(rel * 100)}%` : `${amount}${m.unit}`;
   return `${pts[0].year}년 이후 ${subject}${josaSub} ${change} ${delta > 0 ? '올랐어요' : '내렸어요'}.`;
 }
 
