@@ -3,8 +3,8 @@ import { Animated, Dimensions, Easing, Pressable, ScrollView, Text, View } from 
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T } from '../components/UI';
 import { NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard } from '../components/v2';
-import { cardContent, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
-import { metricPeerRank, normalBounds, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa } from '../interpret';
+import { cardContent, cardContentFor, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
+import { metricPeerRank, normalBounds, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa, trendDirection } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
 import type { RealTimeseries } from '../health';
 
@@ -318,7 +318,10 @@ function groupSummary(leadKey: MetricKey | null, reports: Report[], metricDefini
   const josaTop = plain?.top ?? topicJosa(subject);
 
   const rel = Math.abs(delta) / (Math.abs(pts[0].v) || 1);
-  if (rel < 0.05) return `${subject}${josaTop} 큰 변화 없이 비슷한 수준이에요.`;
+  // 방향 판정은 interpret.trendDirection 하나에서만 한다 — 2뎁스 해설(cardContentFor)이
+  // 같은 함수를 쓰므로, 이 문장이 "비슷한 수준"이라 할 때 아래 해설도 «유지» 갈래가 된다.
+  const dir = trendDirection(pts.map((p) => p.v));
+  if (dir === 'flat') return `${subject}${josaTop} 큰 변화 없이 비슷한 수준이에요.`;
 
   // 단위를 붙인다 — 숫자만 있으면 "74 올랐어요"가 무엇의 74인지 안 걸려서, 결과지와
   // 맞춰 보는 사람이 확인할 수 없다.
@@ -327,7 +330,7 @@ function groupSummary(leadKey: MetricKey | null, reports: Report[], metricDefini
   // 이때만 단위 대신 비율로 말한다(%는 그 자체가 단위다).
   const amount = Math.round(Math.abs(delta) * 10) / 10;
   const change = amount < 1 ? `${Math.round(rel * 100)}%` : `${amount}${m.unit}`;
-  return `${pts[0].year}년 이후 ${subject}${josaSub} ${change} ${delta > 0 ? '올랐어요' : '내렸어요'}.`;
+  return `${pts[0].year}년 이후 ${subject}${josaSub} ${change} ${dir === 'up' ? '올랐어요' : '내렸어요'}.`;
 }
 
 /** 첫 회차 대비 상대 변화폭(부호 없음). 대표 항목 동점을 가르는 데 쓴다.
@@ -397,7 +400,13 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
       return typeof v === 'number' && Number.isFinite(v) ? v : null;
     });
   }, [latestLead, reports]);
-  const c = cardContent[group.title];
+  // 2뎁스 해설은 이 사람의 추세·상태에 맞는 갈래를 고른다.
+  // ⚠️ 예전에는 카드마다 문장이 하나뿐이라, 혈압이 내려간 사람도 "혈압이 해마다 조금씩
+  //    올라가는 흐름은…"을 봤다. 바로 위 요약이 "18mmHg 내렸어요"라고 말하는데 아래는
+  //    올라간다고 말하는 상태였다. 대표 항목·5% 경계를 요약 문장(groupSummary)과 똑같이
+  //    쓰므로 두 문장이 갈릴 수 없다.
+  const trend = useMemo(() => trendDirection(sparkValues ?? []), [sparkValues]);
+  const c = cardContentFor(group.title, trend, latestLead.lead?.status);
 
   // 보기 상태 두 가지. 서로 독립이다.
   //   pick    = 기준 항목(초록 띠·등수·헤드라인·값 라벨의 주인). null이면 대표 항목을 따른다.

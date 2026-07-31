@@ -63,6 +63,24 @@ export function deltaText(delta: { diff: number; prevYear: number }, unit: strin
   return `${delta.prevYear}년보다 ${Math.abs(delta.diff)}${unit} ${dir}`;
 }
 
+export type TrendDirection = 'up' | 'down' | 'flat';
+
+/** 여러 해 값이 어느 쪽으로 움직였나 — 첫 회차 대비 마지막 회차.
+ *
+ * ⚠️ 5% 경계는 임의로 고른 값이 아니라 groupSummary가 "큰 변화 없이 비슷한 수준이에요"라고
+ *    말하는 바로 그 경계다. 두 곳이 다른 기준을 쓰면 한 카드 안에서 요약 문장은 "비슷한
+ *    수준"이라 하고 해설은 "올라가는 흐름은"이라 말하게 된다.
+ *
+ * 비교할 해가 둘 미만이면 null — 방향을 모를 때 아무 갈래나 고르지 않는다. */
+export function trendDirection(values: (number | null | undefined)[]): TrendDirection | null {
+  const pts = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+  if (pts.length < 2) return null;
+  const delta = pts[pts.length - 1] - pts[0];
+  const rel = Math.abs(delta) / (Math.abs(pts[0]) || 1);
+  if (rel < 0.05) return 'flat';
+  return delta > 0 ? 'up' : 'down';
+}
+
 /** 참고 점수를 항목 상태와 같은 3단계로 환산한다 — 색·라벨은 이 값 하나에서 파생시킨다.
  *  70/40 경계가 홈·분석·히스토리 세 곳에 흩어져 있어 갈릴 위험이 있었다. */
 export function scoreGrade(score: number): Status {
