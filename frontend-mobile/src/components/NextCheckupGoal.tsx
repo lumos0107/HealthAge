@@ -27,10 +27,21 @@ import type { Report } from '../data';
 // 한국 지침 원문 기준 1잔 순알코올 g(소주·맥주). 잔 수 환산에만 쓴다.
 const GRAMS_PER_DRINK = 7;
 
-type EffectKey = keyof SimulateChanges;
-
 /** 한 행동이 한 수치에 주는 변화 — 항상 범위다(점추정은 개인차를 감춘다). 음수 = 감소. */
-type Effect = { key: EffectKey; label: string; unit: string; lo: number; hi: number };
+type Effect = {
+  /** 현재 값을 읽어올 리포트 키. 표시용 식별자도 겸한다. */
+  from: keyof Report['values'];
+  /** 판정 재계산(POST /analyze/simulate)에 넣을 키. **없으면 표시만 하고 계산엔 안 들어간다.**
+   *  간 수치(ALT·AST)가 그렇다 — 대사증후군 5기준·LDL 목표 어느 판정식에도 들어가지 않는다.
+   *  조용히 빼면 "재계산에 반영된 줄" 알게 되므로 화면에서 그 사실을 밝힌다. */
+  sim?: keyof SimulateChanges;
+  label: string;
+  unit: string;
+  lo: number;
+  hi: number;
+  /** 그 효과만 근거 등급이 다를 때. (행동 전체 등급과 섞이지 않게 따로 적는다) */
+  note?: string;
+};
 
 type Ctx = {
   values: Report['values'];
@@ -71,17 +82,21 @@ const ACTIONS: ActionDef[] = [
       const e: Effect[] = [];
       // KSH 2026 표14: 1kg당 수축기 −1.1 / 이완기 −0.9. 다만 5kg 미만 감량은 효과가
       // 작아(−2.70 vs −6.63) 그대로 곱하면 과대평가라, 범위의 아래쪽을 넉넉히 잡는다.
-      if (c.values.sbp != null) e.push({ key: 'sbp', label: '수축기 혈압', unit: '', lo: -kg * 1.1, hi: -kg * 0.7 });
-      if (c.values.dbp != null) e.push({ key: 'dbp', label: '이완기 혈압', unit: '', lo: -kg * 0.9, hi: -kg * 0.6 });
+      if (c.values.sbp != null) e.push({ from: 'sbp', sim: 'sbp', label: '수축기 혈압', unit: '', lo: -kg * 1.1, hi: -kg * 0.7 });
+      if (c.values.dbp != null) e.push({ from: 'dbp', sim: 'dbp', label: '이완기 혈압', unit: '', lo: -kg * 0.9, hi: -kg * 0.6 });
       // 일본인 코호트(n=2,635) — A등급 중 유일한 동아시아인 표본. 성별로 계수가 다르다.
       if (c.values.waist != null) {
         const per = c.gender === 2 ? 0.94 : 1.15;
-        e.push({ key: 'waist', label: '허리둘레', unit: 'cm', lo: -kg * per, hi: -kg * per * 0.7 });
+        e.push({ from: 'waist', sim: 'waist', label: '허리둘레', unit: 'cm', lo: -kg * per, hi: -kg * per * 0.7 });
       }
       // 한국지질·동맥경화학회 2022: 1kg당 중성지방 −1.5mg/dL(또는 −1.9%).
-      if (c.values.triglyceride != null) e.push({ key: 'tg', label: '중성지방', unit: '', lo: -kg * 1.9, hi: -kg * 1.1 });
+      if (c.values.triglyceride != null) e.push({ from: 'triglyceride', sim: 'tg', label: '중성지방', unit: '', lo: -kg * 1.9, hi: -kg * 1.1 });
       // 같은 지침: 3~5% 감량에 HDL +2~3(총량이며 kg당이 아니다).
-      if (c.values.hdl != null) e.push({ key: 'hdl', label: 'HDL 콜레스테롤', unit: '', lo: 2, hi: 3 });
+      if (c.values.hdl != null) e.push({ from: 'hdl', sim: 'hdl', label: 'HDL 콜레스테롤', unit: '', lo: 2, hi: 3 });
+      // 간 수치 — NAFLD 메타분석(Clin Nutr 2020) 1kg당 ALT −0.83 / AST −0.56. 등급 B(서구 표본)라
+      // 행동 전체 등급(A)과 섞이지 않게 항목마다 따로 밝힌다. sim이 없어 판정 재계산엔 안 들어간다.
+      if (c.values.alt != null) e.push({ from: 'alt', label: 'ALT', unit: 'IU/L', lo: -kg * 0.83, hi: -kg * 0.5, note: '등급 B · 서구 NAFLD 메타분석' });
+      if (c.values.ast != null) e.push({ from: 'ast', label: 'AST', unit: 'IU/L', lo: -kg * 0.56, hi: -kg * 0.35, note: '등급 B · 서구 NAFLD 메타분석' });
       return e;
     },
     noEffect: [
@@ -100,13 +115,13 @@ const ACTIONS: ActionDef[] = [
     effects: (c) => {
       const e: Effect[] = [];
       // KSH 2018 지침 Table 10 — 30~50분 · 주 5일 이상 기준.
-      if (c.values.sbp != null) e.push({ key: 'sbp', label: '수축기 혈압', unit: '', lo: -4.9, hi: -3.0 });
-      if (c.values.dbp != null) e.push({ key: 'dbp', label: '이완기 혈압', unit: '', lo: -3.7, hi: -2.0 });
+      if (c.values.sbp != null) e.push({ from: 'sbp', sim: 'sbp', label: '수축기 혈압', unit: '', lo: -4.9, hi: -3.0 });
+      if (c.values.dbp != null) e.push({ from: 'dbp', sim: 'dbp', label: '이완기 혈압', unit: '', lo: -3.7, hi: -2.0 });
       // Kodama 메타분석 — 주 120분 이상 & 회당 30분 초과일 때만 나온 값이라 조건을 detail에 적었다.
-      if (c.values.hdl != null) e.push({ key: 'hdl', label: 'HDL 콜레스테롤', unit: '', lo: 1.5, hi: 2.5 });
+      if (c.values.hdl != null) e.push({ from: 'hdl', sim: 'hdl', label: 'HDL 콜레스테롤', unit: '', lo: 1.5, hi: 2.5 });
       if (c.values.triglyceride != null) {
         const tg = c.values.triglyceride;
-        e.push({ key: 'tg', label: '중성지방', unit: '', lo: -tg * 0.05, hi: -tg * 0.02 });
+        e.push({ from: 'triglyceride', sim: 'tg', label: '중성지방', unit: '', lo: -tg * 0.05, hi: -tg * 0.02 });
       }
       return e;
     },
@@ -118,6 +133,30 @@ const ACTIONS: ActionDef[] = [
     grade: 'A',
   },
   {
+    // 간 수치를 겨냥한 유일한 행동. 운동만으로는 ALT·AST가 안 내려간다는 것이
+    // A등급으로 확인돼 있어서(운동 단독 유의하지 않음), 식이를 반드시 함께 건다.
+    id: 'diet_liver',
+    title: () => '식단 바꾸고 운동 병행하기',
+    detail: () => '정제 곡물·당·술을 줄인 식단에 유산소를 함께. 식이 없이 운동만 하면 간 수치는 안 내려가요.',
+    // 간 수치가 하나라도 기준을 벗어났을 때만 제시한다 — 정상인 사람에게 간 목표를 만들지 않는다.
+    applies: (c) => (c.values.alt != null || c.values.ast != null),
+    effects: (c) => {
+      const e: Effect[] = [];
+      // 병행 ALT −13.27(CI −21.39~−5.16) / 식이 단독 −4.48. 병행의 점추정과 식이 단독을
+      // 범위의 양 끝으로 잡아, 병행이 덜 지켜졌을 때까지 포함한다.
+      if (c.values.alt != null) e.push({ from: 'alt', label: 'ALT', unit: 'IU/L', lo: -13.3, hi: -4.5 });
+      // 같은 메타분석의 병행 AST −7.02(CI −11.26~−2.78).
+      if (c.values.ast != null) e.push({ from: 'ast', label: 'AST', unit: 'IU/L', lo: -7.0, hi: -2.8 });
+      return e;
+    },
+    noEffect: [
+      '운동만 해서는 ALT·AST가 유의하게 내려가지 않았어요(간 내 지방량은 −1.95%로 줄었지만 효소 수치는 그대로). 식이 병행이 조건이에요.',
+      '혈압·지질 변화는 위 「유산소 운동」 항목에서 따로 보세요. 두 항목의 효과를 더하면 과대평가가 됩니다.',
+    ],
+    source: 'NAFLD 체계적 문헌고찰·메타분석 (병행 ALT −13.27 / 식이 단독 −4.48)',
+    grade: 'A',
+  },
+  {
     id: 'sodium',
     title: () => '소금 하루 3g 줄이기',
     detail: () => '한국인 평균 8g에서 지침 목표 5g(나트륨 2,000mg)까지. 국·찌개 국물과 김치가 절반을 차지해요.',
@@ -125,8 +164,8 @@ const ACTIONS: ActionDef[] = [
     applies: (c) => c.hypertensive,
     effects: (c) => {
       const e: Effect[] = [];
-      if (c.values.sbp != null) e.push({ key: 'sbp', label: '수축기 혈압', unit: '', lo: -6, hi: -4 });
-      if (c.values.dbp != null) e.push({ key: 'dbp', label: '이완기 혈압', unit: '', lo: -3, hi: -2 });
+      if (c.values.sbp != null) e.push({ from: 'sbp', sim: 'sbp', label: '수축기 혈압', unit: '', lo: -6, hi: -4 });
+      if (c.values.dbp != null) e.push({ from: 'dbp', sim: 'dbp', label: '이완기 혈압', unit: '', lo: -3, hi: -2 });
       return e;
     },
     source: '대한고혈압학회 2026 제6판 (고혈압군 기준)',
@@ -145,16 +184,20 @@ const ACTIONS: ActionDef[] = [
       const [sLo, sHi] = perDay >= 6 ? [-5.5, -3.0] : perDay >= 4 ? [-3.0, -1.5] : [-1.2, -0.6];
       const [dLo, dHi] = perDay >= 6 ? [-3.97, -2.0] : perDay >= 4 ? [-1.88, -1.0] : [-1.09, -0.5];
       const e: Effect[] = [];
-      if (c.values.sbp != null) e.push({ key: 'sbp', label: '수축기 혈압', unit: '', lo: sLo, hi: sHi });
-      if (c.values.dbp != null) e.push({ key: 'dbp', label: '이완기 혈압', unit: '', lo: dLo, hi: dHi });
+      if (c.values.sbp != null) e.push({ from: 'sbp', sim: 'sbp', label: '수축기 혈압', unit: '', lo: sLo, hi: sHi });
+      if (c.values.dbp != null) e.push({ from: 'dbp', sim: 'dbp', label: '이완기 혈압', unit: '', lo: dLo, hi: dHi });
       // 1일 알코올 1g당 중성지방 −0.2mg/dL.
       if (c.values.triglyceride != null) {
         const g = c.alcoholWeeklyG / 7;
-        e.push({ key: 'tg', label: '중성지방', unit: '', lo: -g * 0.2, hi: -g * 0.1 });
+        e.push({ from: 'triglyceride', sim: 'tg', label: '중성지방', unit: '', lo: -g * 0.2, hi: -g * 0.1 });
       }
       return e;
     },
-    noEffect: ['감마-GTP는 여기 수치로 세지 않았지만, 술을 끊으면 4~8주에 걸쳐 정상화되는 것으로 알려져 있어요(반감기 26일).'],
+    // 감마-GTP는 변화량 계수가 없어 수치로 못 쓴다. 대신 시간축이 다르다는 사실이 더 유용하다 —
+    // 반감기 26일이라 '다음 검진'이 아니라 1~2개월 뒤 재검에서 확인된다.
+    noEffect: [
+      '감마-GTP는 변화량 계수가 없어 수치로 적지 않았어요. 다만 반감기가 약 26일이라 술을 끊으면 4~8주에 정상화되는 것으로 알려져 있습니다 — 다음 검진까지 기다리지 않고 1~2개월 뒤 재검으로 확인할 수 있는 항목이에요.',
+    ],
     source: '음주-혈압 메타분석(잔수 층별) · 한국지질·동맥경화학회 2022',
     grade: 'A',
   },
@@ -168,7 +211,7 @@ const ACTIONS: ActionDef[] = [
     effects: (c) => {
       const e: Effect[] = [];
       // 금연 3~6주에 최대, 이후 감쇠.
-      if (c.values.hdl != null) e.push({ key: 'hdl', label: 'HDL 콜레스테롤', unit: '', lo: 2.3, hi: 4.1 });
+      if (c.values.hdl != null) e.push({ from: 'hdl', sim: 'hdl', label: 'HDL 콜레스테롤', unit: '', lo: 2.3, hi: 4.1 });
       return e;
     },
     noEffect: [
@@ -191,6 +234,10 @@ const WATCH: { key: keyof Report['values']; label: string; unit: string }[] = [
   { key: 'triglyceride', label: '중성지방', unit: '' },
   { key: 'hdl', label: 'HDL 콜레스테롤', unit: '' },
   { key: 'ldl', label: 'LDL 콜레스테롤', unit: '' },
+  // 간 수치 — 지방간 유형(MASLD/MetALD/ALD) 판정의 근거 항목이면서 행동으로 움직일 수 있다.
+  { key: 'ast', label: 'AST', unit: 'IU/L' },
+  { key: 'alt', label: 'ALT', unit: 'IU/L' },
+  { key: 'ggt', label: '감마-GTP', unit: 'IU/L' },
 ];
 
 const fmt = (n: number) => `${n > 0 ? '+' : ''}${round1(n)}`;
@@ -238,12 +285,17 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
     try {
       const changes: SimulateChanges = {};
       for (const e of effects) {
-        const base = e.key === 'fbs' ? latest.values.glucose : e.key === 'tg' ? latest.values.triglyceride : latest.values[e.key as keyof Report['values']];
+        // sim이 없는 항목(간 수치)은 어느 판정식에도 안 들어간다 — 보내면 서버가 거절한다.
+        if (!e.sim) continue;
+        const base = latest.values[e.from];
         if (typeof base !== 'number') continue;
         // hi가 '변화가 작은 쪽'이 되도록 각 effect에서 lo=큰 변화, hi=작은 변화로 넣어 두었다.
-        (changes as any)[e.key] = round1(base + e.hi);
+        changes[e.sim] = round1(base + e.hi);
       }
-      if (!Object.keys(changes).length) { setError('이 행동으로 움직이는 검진 항목이 이번 회차에 없어요.'); return; }
+      if (!Object.keys(changes).length) {
+        setError('이 행동이 움직이는 값은 대사증후군·LDL 목표 판정식에 들어가지 않아, 다시 셀 판정이 없어요. 위 수치 변화까지가 이 행동으로 말할 수 있는 전부입니다.');
+        return;
+      }
       setResult(demoMode ? simulateDemo(latest, changes) : await simulateCheckup(changes));
     } catch (e) {
       setError(e instanceof Error ? `재계산에 실패했어요: ${e.message}` : '재계산에 실패했어요.');
@@ -357,23 +409,32 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                     아래는 <Text style={{ fontWeight: '700' }}>그 변화가 실제로 일어났을 때</Text>의 문헌 평균 범위예요. 내 몸에 대한 예측이 아닙니다.
                   </Text>
                   {effects.map((e) => {
-                    const base = e.key === 'fbs' ? latest.values.glucose : e.key === 'tg' ? latest.values.triglyceride : latest.values[e.key as keyof Report['values']];
+                    const base = latest.values[e.from] as number;
                     // lo/hi는 '변화가 큰 쪽/작은 쪽'이라 부호에 따라 대소가 뒤집힌다. 읽을 때는 늘 작은 수부터.
                     const dMin = Math.min(e.lo, e.hi), dMax = Math.max(e.lo, e.hi);
                     return (
-                      <View key={e.key} style={{ paddingVertical: 9, borderTopWidth: 1, borderTopColor: T.divider }}>
+                      <View key={e.from} style={{ paddingVertical: 9, borderTopWidth: 1, borderTopColor: T.divider }}>
                         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
                           <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{e.label}</Text>
                           <Text style={{ fontSize: 14, color: T.text2 }}>
                             {base}{e.unit} → <Text style={{ fontWeight: '800', color: T.text1 }}>
-                              {round1((base as number) + dMin)}~{round1((base as number) + dMax)}{e.unit}
+                              {round1(base + dMin)}~{round1(base + dMax)}{e.unit}
                             </Text>
                           </Text>
                         </View>
-                        <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>{fmt(dMin)} ~ {fmt(dMax)}{e.unit}</Text>
+                        <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>
+                          {fmt(dMin)} ~ {fmt(dMax)}{e.unit}{e.note ? ` · ${e.note}` : ''}
+                        </Text>
                       </View>
                     );
                   })}
+                  {/* 판정 재계산에 못 들어가는 항목을 밝힌다 — 안 밝히면 아래 '대사증후군 5→4'가
+                      간 수치까지 반영한 결과로 읽힌다. */}
+                  {effects.some((e) => !e.sim) && (
+                    <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
+                      · {effects.filter((e) => !e.sim).map((e) => e.label).join('·')}는 대사증후군 5기준·LDL 목표 어느 판정식에도 들어가지 않아, 아래 판정 재계산에는 반영되지 않아요.
+                    </Text>
+                  )}
                   {!!action.noEffect?.length && (
                     <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
                       <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 4 }}>이건 안 움직여요</Text>
