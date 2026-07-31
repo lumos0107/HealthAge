@@ -567,22 +567,37 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             return (
               <View key={cat} style={{ marginTop: 10 }}>
                 <Text style={{ fontSize: 12, fontWeight: '700', color: T.text3, marginBottom: 4 }}>{cat}</Text>
-                {rows.map((g, i) => (
-                  <View key={g.key} style={[{ paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
-                      {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
+                {rows.map((g, i) => {
+                  // A2' — 같은 키 공간(g_*)의 또래 유병률(peer_prevalence)을 줄에 병합.
+                  // 유병률이 없는 그룹(전단계·흡연 등 6/13)은 줄 자체를 생략한다 — 빈칸을 만들지 않는다.
+                  const pp = pop16?.peer_prevalence?.[g.key];
+                  return (
+                    <View key={g.key} style={[{ paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
+                        {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
+                        {!!pp && (
+                          <Text style={{ fontSize: 11, color: T.text2, lineHeight: 16, marginTop: 2 }}>
+                            같은 또래는 100명 중 {Math.round(pp.pct)}명이 해당해요
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{ backgroundColor: g.applies == null ? T.cardAlt : g.applies ? T.dangerBg : T.successBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: g.applies == null ? T.text3 : g.applies ? T.danger : T.success }}>
+                          {g.applies == null ? '판정 불가' : g.applies ? '해당' : '비해당'}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={{ backgroundColor: g.applies == null ? T.cardAlt : g.applies ? T.dangerBg : T.successBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: g.applies == null ? T.text3 : g.applies ? T.danger : T.success }}>
-                        {g.applies == null ? '판정 불가' : g.applies ? '해당' : '비해당'}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             );
           })}
+          {singleGroups.some((g) => pop16?.peer_prevalence?.[g.key]) && (
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
+              '같은 또래 100명 중 N명'은 공단 표본에서 나와 같은 성별·연령대를 수치 기준으로 센 유병률이에요. 원자료에 약 복용 정보가 없어 앱 판정보다 좁게 잡힙니다.
+            </Text>
+          )}
         </SummaryCard>
         </FadeInUp>
       )}
