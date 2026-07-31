@@ -103,6 +103,14 @@ export const initialProfile: UserProfile = {
   // 앞의 둘만 지질이 빠져 또래비교가 '해당 연령 검진 항목 아님'으로 빠진다.
   birth_year: 1968,
   birth_md: 101,
+  // 생활습관은 8회차 내내 같다 — 분석(음주자·현재 흡연자 판정)과 프로필이 어긋나지 않게 맞춘다.
+  // 예전에는 이 셋이 비어 있어, 분석 탭은 "음주자 · MetALD 의심"이라 말하는데 ④층
+  // 「다음 검진 목표」는 절주·금연 행동을 아예 못 내놓는 상태였다.
+  smoking: 'current',
+  drinking: 'yes',
+  // 주당 순알코올 280g — MetALD 구간(남 210~420g) 안이라 지금 지방간 유형 판정과 앞뒤가 맞고,
+  // 값이 있으면 '잠정'이 풀려 MASLD/MetALD/ALD를 정식으로 가른다.
+  alcohol_weekly_g: 280,
 };
 
 export const initialSettings: UserSettings = {

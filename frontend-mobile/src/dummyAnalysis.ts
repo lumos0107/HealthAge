@@ -238,21 +238,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -272,7 +272,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 0.7,
+  "risk_percent": 2.1,
   "risk_level": "low",
   "risk_label": "낮은 편",
   "inputs": {
@@ -281,15 +281,20 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "total_cholesterol": 175.0,
    "hdl": 58.0,
    "sbp": 110.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
-    "name": "HDL이 60이라면",
+    "name": "금연했다면",
     "risk_percent": 0.7,
-    "delta": 0.0
+    "delta": -1.4
+   },
+   {
+    "name": "HDL이 60이라면",
+    "risk_percent": 2.0,
+    "delta": -0.1
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -471,20 +476,20 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 0.9,
+    "value": 1.6,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
-    "value_30yr": 6.9,
+    "value_30yr": 10.2,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 6.9%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 10.2%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 0.9,
+    "value": 3.7,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 관상동맥질환 위험 낮음",
@@ -496,7 +501,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 1.0,
+    "value": 2.2,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
@@ -519,8 +524,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "ldl_reliable": true,
   "reliability_note": null,
   "tg_value": 89.0,
-  "risk_factors": [],
-  "basis": "주요 위험인자 0개",
+  "risk_factors": [
+   "현재 흡연"
+  ],
+  "basis": "주요 위험인자 1개: 현재 흡연",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -531,10 +538,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "rarity": {
   "clinical_groups": [],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 0,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "임상 위험 요인 없음 (건강 상태)"
  },
  "metabolic_syndrome_detail": {
@@ -707,51 +715,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
      }
     ]
    },
-   "신장 기능 관찰군": {
-    "total": 62461,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 59980,
-      "pct": 96.0
-     },
-     {
-      "hits": 1,
-      "n": 2407,
-      "pct": 3.9
-     },
-     {
-      "hits": 2,
-      "n": 74,
-      "pct": 0.1
-     }
-    ]
-   },
-   "간 기능 관찰군": {
-    "total": 62563,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 41331,
-      "pct": 66.1
-     },
-     {
-      "hits": 1,
-      "n": 11567,
-      "pct": 18.5
-     },
-     {
-      "hits": 2,
-      "n": 6392,
-      "pct": 10.2
-     },
-     {
-      "hits": 3,
-      "n": 3273,
-      "pct": 5.2
-     }
-    ]
-   },
    "대사 관리 참고군": {
     "total": 30593,
     "dist": [
@@ -814,6 +777,51 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 4,
       "n": 899,
       "pct": 3.1
+     }
+    ]
+   },
+   "신장 기능 관찰군": {
+    "total": 62461,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 59980,
+      "pct": 96.0
+     },
+     {
+      "hits": 1,
+      "n": 2407,
+      "pct": 3.9
+     },
+     {
+      "hits": 2,
+      "n": 74,
+      "pct": 0.1
+     }
+    ]
+   },
+   "간 기능 관찰군": {
+    "total": 62563,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 41331,
+      "pct": 66.1
+     },
+     {
+      "hits": 1,
+      "n": 11567,
+      "pct": 18.5
+     },
+     {
+      "hits": 2,
+      "n": 6392,
+      "pct": 10.2
+     },
+     {
+      "hits": 3,
+      "n": 3273,
+      "pct": 5.2
      }
     ]
    }
@@ -926,21 +934,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -960,7 +968,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 1.0,
+  "risk_percent": 2.9,
   "risk_level": "low",
   "risk_label": "낮은 편",
   "inputs": {
@@ -969,15 +977,20 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "total_cholesterol": 180.0,
    "hdl": 56.0,
    "sbp": 113.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
-    "name": "HDL이 60이라면",
+    "name": "금연했다면",
     "risk_percent": 1.0,
-    "delta": 0.0
+    "delta": -1.9
+   },
+   {
+    "name": "HDL이 60이라면",
+    "risk_percent": 2.7,
+    "delta": -0.2
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -1159,23 +1172,23 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 1.2,
+    "value": 2.1,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
-    "value_30yr": 9.0,
+    "value_30yr": 12.7,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 9.0%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 12.7%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 1.3,
+    "value": 5.0,
     "unit": "%",
-    "level": "low",
-    "interpretation": "10년 관상동맥질환 위험 낮음",
+    "level": "intermediate",
+    "interpretation": "10년 관상동맥질환 위험 경계",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "Framingham Hard CHD 10년 (Wilson 1998, MDCalc calc/38)",
     "note": "당뇨 미반영·서구 코호트 기반 참고용. 진단 아님."
@@ -1184,7 +1197,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 1.3,
+    "value": 2.8,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
@@ -1207,8 +1220,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "ldl_reliable": true,
   "reliability_note": null,
   "tg_value": 96.0,
-  "risk_factors": [],
-  "basis": "주요 위험인자 0개",
+  "risk_factors": [
+   "현재 흡연"
+  ],
+  "basis": "주요 위험인자 1개: 현재 흡연",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -1219,10 +1234,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "rarity": {
   "clinical_groups": [],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 0,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "임상 위험 요인 없음 (건강 상태)"
  },
  "metabolic_syndrome_detail": {
@@ -1375,6 +1391,31 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    ]
   },
   "care_distribution": {
+   "간 기능 관찰군": {
+    "total": 62563,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 41331,
+      "pct": 66.1
+     },
+     {
+      "hits": 1,
+      "n": 11567,
+      "pct": 18.5
+     },
+     {
+      "hits": 2,
+      "n": 6392,
+      "pct": 10.2
+     },
+     {
+      "hits": 3,
+      "n": 3273,
+      "pct": 5.2
+     }
+    ]
+   },
    "신장 기능 관찰군": {
     "total": 62461,
     "dist": [
@@ -1412,31 +1453,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 2,
       "n": 12958,
       "pct": 20.7
-     }
-    ]
-   },
-   "간 기능 관찰군": {
-    "total": 62563,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 41331,
-      "pct": 66.1
-     },
-     {
-      "hits": 1,
-      "n": 11567,
-      "pct": 18.5
-     },
-     {
-      "hits": 2,
-      "n": 6392,
-      "pct": 10.2
-     },
-     {
-      "hits": 3,
-      "n": 3273,
-      "pct": 5.2
      }
     ]
    },
@@ -1614,21 +1630,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -1648,7 +1664,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 1.6,
+  "risk_percent": 4.0,
   "risk_level": "low",
   "risk_label": "낮은 편",
   "inputs": {
@@ -1657,15 +1673,20 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "total_cholesterol": 187.0,
    "hdl": 54.0,
    "sbp": 116.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
+    "name": "금연했다면",
+    "risk_percent": 1.6,
+    "delta": -2.4
+   },
+   {
     "name": "HDL이 60이라면",
-    "risk_percent": 1.4,
-    "delta": -0.2
+    "risk_percent": 3.6,
+    "delta": -0.4
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -1847,23 +1868,23 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 1.6,
+    "value": 2.7,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
-    "value_30yr": 11.5,
+    "value_30yr": 15.7,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 11.5%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 15.7%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 2.0,
+    "value": 6.6,
     "unit": "%",
-    "level": "low",
-    "interpretation": "10년 관상동맥질환 위험 낮음",
+    "level": "intermediate",
+    "interpretation": "10년 관상동맥질환 위험 경계",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "Framingham Hard CHD 10년 (Wilson 1998, MDCalc calc/38)",
     "note": "당뇨 미반영·서구 코호트 기반 참고용. 진단 아님."
@@ -1872,7 +1893,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 1.7,
+    "value": 3.7,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
@@ -1885,20 +1906,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "disclaimer": "검진 수치로 산출하는 선별용 참고 지표입니다. 진단을 대체하지 않으며, 컷오프는 연구·위험군에 따라 달라질 수 있습니다. 위험엔진(PREVENT·Framingham)은 서구 코호트 기반 참고용 시뮬레이션입니다."
  },
  "ldl_target": {
-  "risk_level": "low",
-  "label": "저위험군",
-  "target_ldl": 160,
-  "target_text": "LDL 160mg/dL 미만",
+  "risk_level": "moderate",
+  "label": "중등도위험군",
+  "target_ldl": 130,
+  "target_text": "LDL 130mg/dL 미만",
   "current_ldl": 112.0,
   "achieved": true,
-  "gap": -48.0,
+  "gap": -18.0,
   "ldl_reliable": true,
   "reliability_note": null,
   "tg_value": 104.0,
   "risk_factors": [
+   "현재 흡연",
    "연령(남 45세 이상)"
   ],
-  "basis": "주요 위험인자 1개: 연령(남 45세 이상)",
+  "basis": "주요 위험인자 2개: 현재 흡연, 연령(남 45세 이상)",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -1909,10 +1931,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "rarity": {
   "clinical_groups": [],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 0,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "임상 위험 요인 없음 (건강 상태)"
  },
  "metabolic_syndrome_detail": {
@@ -2065,6 +2088,26 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    ]
   },
   "care_distribution": {
+   "혈압 관리 참고군": {
+    "total": 50548,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 29269,
+      "pct": 57.9
+     },
+     {
+      "hits": 1,
+      "n": 10202,
+      "pct": 20.2
+     },
+     {
+      "hits": 2,
+      "n": 11077,
+      "pct": 21.9
+     }
+    ]
+   },
    "간 기능 관찰군": {
     "total": 50544,
     "dist": [
@@ -2087,6 +2130,26 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 3,
       "n": 2328,
       "pct": 4.6
+     }
+    ]
+   },
+   "신장 기능 관찰군": {
+    "total": 50436,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 48449,
+      "pct": 96.1
+     },
+     {
+      "hits": 1,
+      "n": 1900,
+      "pct": 3.8
+     },
+     {
+      "hits": 2,
+      "n": 87,
+      "pct": 0.2
      }
     ]
    },
@@ -2122,46 +2185,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 5,
       "n": 239,
       "pct": 1.5
-     }
-    ]
-   },
-   "혈압 관리 참고군": {
-    "total": 50548,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 29269,
-      "pct": 57.9
-     },
-     {
-      "hits": 1,
-      "n": 10202,
-      "pct": 20.2
-     },
-     {
-      "hits": 2,
-      "n": 11077,
-      "pct": 21.9
-     }
-    ]
-   },
-   "신장 기능 관찰군": {
-    "total": 50436,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 48449,
-      "pct": 96.1
-     },
-     {
-      "hits": 1,
-      "n": 1900,
-      "pct": 3.8
-     },
-     {
-      "hits": 2,
-      "n": 87,
-      "pct": 0.2
      }
     ]
    },
@@ -2304,21 +2327,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -2338,29 +2361,34 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 2.4,
-  "risk_level": "low",
-  "risk_label": "낮은 편",
+  "risk_percent": 5.7,
+  "risk_level": "borderline",
+  "risk_label": "경계 구간",
   "inputs": {
    "age": 48,
    "gender": "남",
    "total_cholesterol": 195.0,
    "hdl": 51.0,
    "sbp": 121.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
-    "name": "수축기혈압이 120이라면",
+    "name": "금연했다면",
     "risk_percent": 2.4,
+    "delta": -3.3
+   },
+   {
+    "name": "수축기혈압이 120이라면",
+    "risk_percent": 5.7,
     "delta": 0.0
    },
    {
     "name": "HDL이 60이라면",
-    "risk_percent": 2.0,
-    "delta": -0.4
+    "risk_percent": 4.8,
+    "delta": -0.9
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -2542,23 +2570,23 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 2.3,
+    "value": 3.7,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
-    "value_30yr": 15.0,
+    "value_30yr": 19.6,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 15.0%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 19.6%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 3.1,
+    "value": 8.8,
     "unit": "%",
-    "level": "low",
-    "interpretation": "10년 관상동맥질환 위험 낮음",
+    "level": "borderline",
+    "interpretation": "10년 관상동맥질환 위험 중간",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "Framingham Hard CHD 10년 (Wilson 1998, MDCalc calc/38)",
     "note": "당뇨 미반영·서구 코호트 기반 참고용. 진단 아님."
@@ -2567,7 +2595,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 2.4,
+    "value": 4.9,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
@@ -2580,20 +2608,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "disclaimer": "검진 수치로 산출하는 선별용 참고 지표입니다. 진단을 대체하지 않으며, 컷오프는 연구·위험군에 따라 달라질 수 있습니다. 위험엔진(PREVENT·Framingham)은 서구 코호트 기반 참고용 시뮬레이션입니다."
  },
  "ldl_target": {
-  "risk_level": "low",
-  "label": "저위험군",
-  "target_ldl": 160,
-  "target_text": "LDL 160mg/dL 미만",
+  "risk_level": "moderate",
+  "label": "중등도위험군",
+  "target_ldl": 130,
+  "target_text": "LDL 130mg/dL 미만",
   "current_ldl": 120.0,
   "achieved": true,
-  "gap": -40.0,
+  "gap": -10.0,
   "ldl_reliable": true,
   "reliability_note": null,
   "tg_value": 122.0,
   "risk_factors": [
+   "현재 흡연",
    "연령(남 45세 이상)"
   ],
-  "basis": "주요 위험인자 1개: 연령(남 45세 이상)",
+  "basis": "주요 위험인자 2개: 현재 흡연, 연령(남 45세 이상)",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -2604,10 +2633,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "rarity": {
   "clinical_groups": [],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 0,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "임상 위험 요인 없음 (건강 상태)"
  },
  "metabolic_syndrome_detail": {
@@ -2760,23 +2790,38 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    ]
   },
   "care_distribution": {
-   "신장 기능 관찰군": {
-    "total": 50436,
+   "대사 관리 참고군": {
+    "total": 15863,
     "dist": [
      {
       "hits": 0,
-      "n": 48449,
-      "pct": 96.1
+      "n": 2999,
+      "pct": 18.9
      },
      {
       "hits": 1,
-      "n": 1900,
-      "pct": 3.8
+      "n": 4146,
+      "pct": 26.1
      },
      {
       "hits": 2,
-      "n": 87,
-      "pct": 0.2
+      "n": 4166,
+      "pct": 26.3
+     },
+     {
+      "hits": 3,
+      "n": 2957,
+      "pct": 18.6
+     },
+     {
+      "hits": 4,
+      "n": 1356,
+      "pct": 8.5
+     },
+     {
+      "hits": 5,
+      "n": 239,
+      "pct": 1.5
      }
     ]
    },
@@ -2835,41 +2880,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
      }
     ]
    },
-   "대사 관리 참고군": {
-    "total": 15863,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 2999,
-      "pct": 18.9
-     },
-     {
-      "hits": 1,
-      "n": 4146,
-      "pct": 26.1
-     },
-     {
-      "hits": 2,
-      "n": 4166,
-      "pct": 26.3
-     },
-     {
-      "hits": 3,
-      "n": 2957,
-      "pct": 18.6
-     },
-     {
-      "hits": 4,
-      "n": 1356,
-      "pct": 8.5
-     },
-     {
-      "hits": 5,
-      "n": 239,
-      "pct": 1.5
-     }
-    ]
-   },
    "혈압 관리 참고군": {
     "total": 50548,
     "dist": [
@@ -2887,6 +2897,26 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 2,
       "n": 11077,
       "pct": 21.9
+     }
+    ]
+   },
+   "신장 기능 관찰군": {
+    "total": 50436,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 48449,
+      "pct": 96.1
+     },
+     {
+      "hits": 1,
+      "n": 1900,
+      "pct": 3.8
+     },
+     {
+      "hits": 2,
+      "n": 87,
+      "pct": 0.2
      }
     ]
    }
@@ -2999,21 +3029,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -3033,29 +3063,34 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 3.6,
-  "risk_level": "low",
-  "risk_label": "낮은 편",
+  "risk_percent": 7.9,
+  "risk_level": "intermediate",
+  "risk_label": "중간 구간",
   "inputs": {
    "age": 50,
    "gender": "남",
    "total_cholesterol": 205.0,
    "hdl": 48.0,
    "sbp": 125.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
+    "name": "금연했다면",
+    "risk_percent": 3.6,
+    "delta": -4.3
+   },
+   {
     "name": "수축기혈압이 120이라면",
-    "risk_percent": 3.3,
-    "delta": -0.3
+    "risk_percent": 7.4,
+    "delta": -0.5
    },
    {
     "name": "HDL이 60이라면",
-    "risk_percent": 2.8,
-    "delta": -0.8
+    "risk_percent": 6.3,
+    "delta": -1.6
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -3237,23 +3272,23 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 3.1,
+    "value": 4.9,
     "unit": "%",
     "level": "low",
     "interpretation": "10년 심혈관(CVD) 위험 낮음",
-    "value_30yr": 18.7,
+    "value_30yr": 23.6,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 18.7%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 23.6%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 4.5,
+    "value": 11.5,
     "unit": "%",
-    "level": "low",
-    "interpretation": "10년 관상동맥질환 위험 낮음",
+    "level": "borderline",
+    "interpretation": "10년 관상동맥질환 위험 중간",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "Framingham Hard CHD 10년 (Wilson 1998, MDCalc calc/38)",
     "note": "당뇨 미반영·서구 코호트 기반 참고용. 진단 아님."
@@ -3262,10 +3297,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 3.3,
+    "value": 6.5,
     "unit": "%",
-    "level": "low",
-    "interpretation": "10년 심혈관(CVD) 위험 낮음",
+    "level": "intermediate",
+    "interpretation": "10년 심혈관(CVD) 위험 경계",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "SCORE2 (ESC 2021, High-risk 지역 보정)",
     "note": "유럽 모델을 한국에 High-risk 지역으로 근사한 참고값. 진단 아님."
@@ -3275,20 +3310,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "disclaimer": "검진 수치로 산출하는 선별용 참고 지표입니다. 진단을 대체하지 않으며, 컷오프는 연구·위험군에 따라 달라질 수 있습니다. 위험엔진(PREVENT·Framingham)은 서구 코호트 기반 참고용 시뮬레이션입니다."
  },
  "ldl_target": {
-  "risk_level": "low",
-  "label": "저위험군",
-  "target_ldl": 160,
-  "target_text": "LDL 160mg/dL 미만",
+  "risk_level": "moderate",
+  "label": "중등도위험군",
+  "target_ldl": 130,
+  "target_text": "LDL 130mg/dL 미만",
   "current_ldl": 129.0,
   "achieved": true,
-  "gap": -31.0,
+  "gap": -1.0,
   "ldl_reliable": true,
   "reliability_note": null,
   "tg_value": 140.0,
   "risk_factors": [
+   "현재 흡연",
    "연령(남 45세 이상)"
   ],
-  "basis": "주요 위험인자 1개: 연령(남 45세 이상)",
+  "basis": "주요 위험인자 2개: 현재 흡연, 연령(남 45세 이상)",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -3301,10 +3337,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "고혈압 전단계"
   ],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 1,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "단일 위험 요인 (관리 필요)"
  },
  "metabolic_syndrome_detail": {
@@ -3457,6 +3494,26 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    ]
   },
   "care_distribution": {
+   "혈압 관리 참고군": {
+    "total": 63913,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 36738,
+      "pct": 57.5
+     },
+     {
+      "hits": 1,
+      "n": 13058,
+      "pct": 20.4
+     },
+     {
+      "hits": 2,
+      "n": 14117,
+      "pct": 22.1
+     }
+    ]
+   },
    "간 기능 관찰군": {
     "total": 63909,
     "dist": [
@@ -3479,26 +3536,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 3,
       "n": 2794,
       "pct": 4.4
-     }
-    ]
-   },
-   "신장 기능 관찰군": {
-    "total": 63727,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 61003,
-      "pct": 95.7
-     },
-     {
-      "hits": 1,
-      "n": 2573,
-      "pct": 4.0
-     },
-     {
-      "hits": 2,
-      "n": 151,
-      "pct": 0.2
      }
     ]
    },
@@ -3567,23 +3604,23 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
      }
     ]
    },
-   "혈압 관리 참고군": {
-    "total": 63913,
+   "신장 기능 관찰군": {
+    "total": 63727,
     "dist": [
      {
       "hits": 0,
-      "n": 36738,
-      "pct": 57.5
+      "n": 61003,
+      "pct": 95.7
      },
      {
       "hits": 1,
-      "n": 13058,
-      "pct": 20.4
+      "n": 2573,
+      "pct": 4.0
      },
      {
       "hits": 2,
-      "n": 14117,
-      "pct": 22.1
+      "n": 151,
+      "pct": 0.2
      }
     ]
    }
@@ -3696,21 +3733,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -3730,29 +3767,34 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 5.0,
-  "risk_level": "borderline",
-  "risk_label": "경계 구간",
+  "risk_percent": 10.3,
+  "risk_level": "intermediate",
+  "risk_label": "중간 구간",
   "inputs": {
    "age": 52,
    "gender": "남",
    "total_cholesterol": 209.0,
    "hdl": 45.0,
    "sbp": 129.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
+    "name": "금연했다면",
+    "risk_percent": 5.0,
+    "delta": -5.3
+   },
+   {
     "name": "수축기혈압이 120이라면",
-    "risk_percent": 4.4,
-    "delta": -0.6
+    "risk_percent": 9.1,
+    "delta": -1.2
    },
    {
     "name": "HDL이 60이라면",
-    "risk_percent": 3.8,
-    "delta": -1.2
+    "risk_percent": 7.8,
+    "delta": -2.5
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -3934,23 +3976,23 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 4.0,
+    "value": 6.2,
     "unit": "%",
-    "level": "low",
-    "interpretation": "10년 심혈관(CVD) 위험 낮음",
-    "value_30yr": 22.4,
+    "level": "intermediate",
+    "interpretation": "10년 심혈관(CVD) 위험 경계",
+    "value_30yr": 27.3,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 22.4%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 27.3%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 6.1,
+    "value": 13.8,
     "unit": "%",
-    "level": "intermediate",
-    "interpretation": "10년 관상동맥질환 위험 경계",
+    "level": "borderline",
+    "interpretation": "10년 관상동맥질환 위험 중간",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "Framingham Hard CHD 10년 (Wilson 1998, MDCalc calc/38)",
     "note": "당뇨 미반영·서구 코호트 기반 참고용. 진단 아님."
@@ -3959,10 +4001,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 4.3,
+    "value": 8.2,
     "unit": "%",
-    "level": "low",
-    "interpretation": "10년 심혈관(CVD) 위험 낮음",
+    "level": "borderline",
+    "interpretation": "10년 심혈관(CVD) 위험 중간",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "SCORE2 (ESC 2021, High-risk 지역 보정)",
     "note": "유럽 모델을 한국에 High-risk 지역으로 근사한 참고값. 진단 아님."
@@ -3972,20 +4014,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "disclaimer": "검진 수치로 산출하는 선별용 참고 지표입니다. 진단을 대체하지 않으며, 컷오프는 연구·위험군에 따라 달라질 수 있습니다. 위험엔진(PREVENT·Framingham)은 서구 코호트 기반 참고용 시뮬레이션입니다."
  },
  "ldl_target": {
-  "risk_level": "low",
-  "label": "저위험군",
-  "target_ldl": 160,
-  "target_text": "LDL 160mg/dL 미만",
+  "risk_level": "moderate",
+  "label": "중등도위험군",
+  "target_ldl": 130,
+  "target_text": "LDL 130mg/dL 미만",
   "current_ldl": 134.0,
-  "achieved": true,
-  "gap": -26.0,
+  "achieved": false,
+  "gap": 4.0,
   "ldl_reliable": true,
   "reliability_note": null,
   "tg_value": 152.0,
   "risk_factors": [
+   "현재 흡연",
    "연령(남 45세 이상)"
   ],
-  "basis": "주요 위험인자 1개: 연령(남 45세 이상)",
+  "basis": "주요 위험인자 2개: 현재 흡연, 연령(남 45세 이상)",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -3999,10 +4042,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "당뇨 전단계"
   ],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 2,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "복합 위험 요인 (적극 관리 필요)"
  },
  "metabolic_syndrome_detail": {
@@ -4175,6 +4219,61 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
      }
     ]
    },
+   "신장 기능 관찰군": {
+    "total": 63727,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 61003,
+      "pct": 95.7
+     },
+     {
+      "hits": 1,
+      "n": 2573,
+      "pct": 4.0
+     },
+     {
+      "hits": 2,
+      "n": 151,
+      "pct": 0.2
+     }
+    ]
+   },
+   "대사 관리 참고군": {
+    "total": 16844,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 2919,
+      "pct": 17.3
+     },
+     {
+      "hits": 1,
+      "n": 4606,
+      "pct": 27.3
+     },
+     {
+      "hits": 2,
+      "n": 4547,
+      "pct": 27.0
+     },
+     {
+      "hits": 3,
+      "n": 3199,
+      "pct": 19.0
+     },
+     {
+      "hits": 4,
+      "n": 1321,
+      "pct": 7.8
+     },
+     {
+      "hits": 5,
+      "n": 252,
+      "pct": 1.5
+     }
+    ]
+   },
    "지질 관리 참고군": {
     "total": 16217,
     "dist": [
@@ -4227,61 +4326,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 3,
       "n": 2794,
       "pct": 4.4
-     }
-    ]
-   },
-   "대사 관리 참고군": {
-    "total": 16844,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 2919,
-      "pct": 17.3
-     },
-     {
-      "hits": 1,
-      "n": 4606,
-      "pct": 27.3
-     },
-     {
-      "hits": 2,
-      "n": 4547,
-      "pct": 27.0
-     },
-     {
-      "hits": 3,
-      "n": 3199,
-      "pct": 19.0
-     },
-     {
-      "hits": 4,
-      "n": 1321,
-      "pct": 7.8
-     },
-     {
-      "hits": 5,
-      "n": 252,
-      "pct": 1.5
-     }
-    ]
-   },
-   "신장 기능 관찰군": {
-    "total": 63727,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 61003,
-      "pct": 95.7
-     },
-     {
-      "hits": 1,
-      "n": 2573,
-      "pct": 4.0
-     },
-     {
-      "hits": 2,
-      "n": 151,
-      "pct": 0.2
      }
     ]
    }
@@ -4394,6 +4438,112 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     }
    },
    {
+    "combo_name": "흡연+음주+비만",
+    "category": "생활습관 트리플",
+    "meaning": "생활습관 위험 가중",
+    "components": [
+     "현재 흡연자",
+     "음주자",
+     "비만"
+    ],
+    "is_ascvd_risk": false,
+    "population": {
+     "n_in_combo": 69670,
+     "pct_of_total": 7.01,
+     "expected_n_if_independent": 43621,
+     "observed_to_expected": 1.6,
+     "top_metrics": [
+      {
+       "metric": "BMI",
+       "combo_mean": 28.48,
+       "non_combo_mean": 23.91,
+       "diff": 4.58,
+       "cohens_d": 1.2,
+       "single_means": {
+        "현재 흡연자": 21.92,
+        "음주자": 21.83,
+        "비만": 28.21
+       }
+      },
+      {
+       "metric": "허리둘레",
+       "combo_mean": 92.79,
+       "non_combo_mean": 80.7,
+       "diff": 12.09,
+       "cohens_d": 1.17,
+       "single_means": {
+        "현재 흡연자": 78.95,
+        "음주자": 75.44,
+        "비만": 89.83
+       }
+      },
+      {
+       "metric": "혈색소",
+       "combo_mean": 15.5,
+       "non_combo_mean": 14.12,
+       "diff": 1.38,
+       "cohens_d": 0.923,
+       "single_means": {
+        "현재 흡연자": 14.73,
+        "음주자": 13.93,
+        "비만": 14.05
+       }
+      }
+     ]
+    }
+   },
+   {
+    "combo_name": "대사증후군+흡연",
+    "category": "심혈관",
+    "meaning": "심혈관 위험 매우 증가",
+    "components": [
+     "대사증후군",
+     "현재 흡연자"
+    ],
+    "is_ascvd_risk": true,
+    "population": {
+     "n_in_combo": 30427,
+     "pct_of_total": 3.06,
+     "expected_n_if_independent": 23081,
+     "observed_to_expected": 1.32,
+     "top_metrics": [
+      {
+       "metric": "트리글리세라이드",
+       "combo_mean": 248.08,
+       "non_combo_mean": 121.65,
+       "diff": 126.43,
+       "cohens_d": 1.458,
+       "single_means": {
+        "대사증후군": 189.95,
+        "현재 흡연자": 130.26
+       }
+      },
+      {
+       "metric": "허리둘레",
+       "combo_mean": 94.88,
+       "non_combo_mean": 81.12,
+       "diff": 13.75,
+       "cohens_d": 1.307,
+       "single_means": {
+        "대사증후군": 92.56,
+        "현재 흡연자": 83.59
+       }
+      },
+      {
+       "metric": "BMI",
+       "combo_mean": 28.33,
+       "non_combo_mean": 24.1,
+       "diff": 4.23,
+       "cohens_d": 1.08,
+       "single_means": {
+        "대사증후군": 27.92,
+        "현재 흡연자": 24.35
+       }
+      }
+     ]
+    }
+   },
+   {
     "combo_name": "비만+당뇨전단계",
     "category": "대사",
     "meaning": "당뇨 진행 위험군",
@@ -4496,33 +4646,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     }
    }
   ],
-  "not_evaluable": [
-   {
-    "combo_name": "대사증후군+흡연",
-    "category": "심혈관",
-    "met": [
-     "대사증후군"
-    ],
-    "missing": [
-     "현재 흡연자"
-    ],
-    "reason": "현재 흡연자 정보가 없어 판정할 수 없습니다."
-   },
-   {
-    "combo_name": "흡연+음주+비만",
-    "category": "생활습관 트리플",
-    "met": [
-     "음주자",
-     "비만"
-    ],
-    "missing": [
-     "현재 흡연자"
-    ],
-    "reason": "현재 흡연자 정보가 없어 판정할 수 없습니다."
-   }
+  "not_evaluable": [],
+  "matched_count": 6,
+  "ascvd_risk_combos": [
+   "대사증후군+흡연"
   ],
-  "matched_count": 4,
-  "ascvd_risk_combos": [],
   "highest_synergy": {
    "combo_name": "대사증후군+비만",
    "category": "대사",
@@ -4588,15 +4716,14 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "fatty_liver": {
   "applicable": true,
   "type": "MetALD 의심 (대사이상 + 유의한 음주 동반)",
-  "provisional": true,
-  "basis": "음주 여부만 확인됨(음주) — 음주량 미수집으로 210/420g 구간을 적용하지 못했습니다.",
+  "provisional": false,
+  "basis": "주당 순알코올 280.0g (남 경계 210/420g)",
   "cardiometabolic_factors": [
    "비만/복부비만",
    "혈당 이상",
    "혈압 이상",
    "고중성지방"
   ],
-  "note": "음주량(주당 순알코올)이 없어 잠정 분류입니다. 정식 기준(2025 MASLD 지침): MASLD 남≤210/여≤140g·주, MetALD 그 사이, ALD 남>420/여>350g·주.",
   "indices": {
    "fli": {
     "value": 58.2,
@@ -4679,21 +4806,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -4713,29 +4840,34 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 7.0,
-  "risk_level": "borderline",
-  "risk_label": "경계 구간",
+  "risk_percent": 13.2,
+  "risk_level": "intermediate",
+  "risk_label": "중간 구간",
   "inputs": {
    "age": 54,
    "gender": "남",
    "total_cholesterol": 215.0,
    "hdl": 42.0,
    "sbp": 133.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
+    "name": "금연했다면",
+    "risk_percent": 7.0,
+    "delta": -6.2
+   },
+   {
     "name": "수축기혈압이 120이라면",
-    "risk_percent": 5.8,
-    "delta": -1.2
+    "risk_percent": 11.2,
+    "delta": -2.0
    },
    {
     "name": "HDL이 60이라면",
-    "risk_percent": 5.0,
-    "delta": -2.0
+    "risk_percent": 9.7,
+    "delta": -3.5
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -4915,20 +5047,20 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 5.1,
+    "value": 7.8,
     "unit": "%",
-    "level": "intermediate",
-    "interpretation": "10년 심혈관(CVD) 위험 경계",
-    "value_30yr": 26.7,
+    "level": "borderline",
+    "interpretation": "10년 심혈관(CVD) 위험 중간",
+    "value_30yr": 31.4,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 26.7%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 31.4%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 8.2,
+    "value": 16.6,
     "unit": "%",
     "level": "borderline",
     "interpretation": "10년 관상동맥질환 위험 중간",
@@ -4940,10 +5072,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 5.5,
+    "value": 10.3,
     "unit": "%",
-    "level": "intermediate",
-    "interpretation": "10년 심혈관(CVD) 위험 경계",
+    "level": "borderline",
+    "interpretation": "10년 심혈관(CVD) 위험 중간",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "SCORE2 (ESC 2021, High-risk 지역 보정)",
     "note": "유럽 모델을 한국에 High-risk 지역으로 근사한 참고값. 진단 아님."
@@ -4953,20 +5085,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "disclaimer": "검진 수치로 산출하는 선별용 참고 지표입니다. 진단을 대체하지 않으며, 컷오프는 연구·위험군에 따라 달라질 수 있습니다. 위험엔진(PREVENT·Framingham)은 서구 코호트 기반 참고용 시뮬레이션입니다."
  },
  "ldl_target": {
-  "risk_level": "low",
-  "label": "저위험군",
-  "target_ldl": 160,
-  "target_text": "LDL 160mg/dL 미만",
+  "risk_level": "moderate",
+  "label": "중등도위험군",
+  "target_ldl": 130,
+  "target_text": "LDL 130mg/dL 미만",
   "current_ldl": 140.0,
-  "achieved": true,
-  "gap": -20.0,
+  "achieved": false,
+  "gap": 10.0,
   "ldl_reliable": true,
   "reliability_note": null,
   "tg_value": 166.0,
   "risk_factors": [
+   "현재 흡연",
    "연령(남 45세 이상)"
   ],
-  "basis": "주요 위험인자 1개: 연령(남 45세 이상)",
+  "basis": "주요 위험인자 2개: 현재 흡연, 연령(남 45세 이상)",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -4983,10 +5116,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "대사증후군"
   ],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 5,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "고위험 패턴 (즉각 의료 진료 권장)"
  },
  "metabolic_syndrome_detail": {
@@ -5157,6 +5291,84 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
      {
       "year": 2024,
       "oe": 1.68
+     }
+    ]
+   },
+   "흡연+음주+비만": {
+    "median": 1.59,
+    "min": 1.58,
+    "max": 1.61,
+    "n_years": 5,
+    "year_from": 2020,
+    "year_to": 2024,
+    "lipid_era_only": false,
+    "by_year": [
+     {
+      "year": 2020,
+      "oe": 1.593
+     },
+     {
+      "year": 2021,
+      "oe": 1.607
+     },
+     {
+      "year": 2022,
+      "oe": 1.591
+     },
+     {
+      "year": 2023,
+      "oe": 1.585
+     },
+     {
+      "year": 2024,
+      "oe": 1.597
+     }
+    ]
+   },
+   "대사증후군+흡연": {
+    "median": 1.17,
+    "min": 1.11,
+    "max": 1.26,
+    "n_years": 9,
+    "year_from": 2009,
+    "year_to": 2017,
+    "lipid_era_only": true,
+    "by_year": [
+     {
+      "year": 2009,
+      "oe": 1.108
+     },
+     {
+      "year": 2010,
+      "oe": 1.143
+     },
+     {
+      "year": 2011,
+      "oe": 1.146
+     },
+     {
+      "year": 2012,
+      "oe": 1.171
+     },
+     {
+      "year": 2013,
+      "oe": 1.173
+     },
+     {
+      "year": 2014,
+      "oe": 1.201
+     },
+     {
+      "year": 2015,
+      "oe": 1.222
+     },
+     {
+      "year": 2016,
+      "oe": 1.234
+     },
+     {
+      "year": 2017,
+      "oe": 1.263
      }
     ]
    },
@@ -5368,6 +5580,36 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    ]
   },
   "care_distribution": {
+   "지질 관리 참고군": {
+    "total": 16217,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 4794,
+      "pct": 29.6
+     },
+     {
+      "hits": 1,
+      "n": 3296,
+      "pct": 20.3
+     },
+     {
+      "hits": 2,
+      "n": 5253,
+      "pct": 32.4
+     },
+     {
+      "hits": 3,
+      "n": 2476,
+      "pct": 15.3
+     },
+     {
+      "hits": 4,
+      "n": 398,
+      "pct": 2.5
+     }
+    ]
+   },
    "대사 관리 참고군": {
     "total": 16844,
     "dist": [
@@ -5400,56 +5642,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 5,
       "n": 252,
       "pct": 1.5
-     }
-    ]
-   },
-   "지질 관리 참고군": {
-    "total": 16217,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 4794,
-      "pct": 29.6
-     },
-     {
-      "hits": 1,
-      "n": 3296,
-      "pct": 20.3
-     },
-     {
-      "hits": 2,
-      "n": 5253,
-      "pct": 32.4
-     },
-     {
-      "hits": 3,
-      "n": 2476,
-      "pct": 15.3
-     },
-     {
-      "hits": 4,
-      "n": 398,
-      "pct": 2.5
-     }
-    ]
-   },
-   "신장 기능 관찰군": {
-    "total": 63727,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 61003,
-      "pct": 95.7
-     },
-     {
-      "hits": 1,
-      "n": 2573,
-      "pct": 4.0
-     },
-     {
-      "hits": 2,
-      "n": 151,
-      "pct": 0.2
      }
     ]
    },
@@ -5495,6 +5687,26 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 2,
       "n": 14117,
       "pct": 22.1
+     }
+    ]
+   },
+   "신장 기능 관찰군": {
+    "total": 63727,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 61003,
+      "pct": 95.7
+     },
+     {
+      "hits": 1,
+      "n": 2573,
+      "pct": 4.0
+     },
+     {
+      "hits": 2,
+      "n": 151,
+      "pct": 0.2
      }
     ]
    }
@@ -5662,6 +5874,112 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     }
    },
    {
+    "combo_name": "흡연+음주+비만",
+    "category": "생활습관 트리플",
+    "meaning": "생활습관 위험 가중",
+    "components": [
+     "현재 흡연자",
+     "음주자",
+     "비만"
+    ],
+    "is_ascvd_risk": false,
+    "population": {
+     "n_in_combo": 69670,
+     "pct_of_total": 7.01,
+     "expected_n_if_independent": 43621,
+     "observed_to_expected": 1.6,
+     "top_metrics": [
+      {
+       "metric": "BMI",
+       "combo_mean": 28.48,
+       "non_combo_mean": 23.91,
+       "diff": 4.58,
+       "cohens_d": 1.2,
+       "single_means": {
+        "현재 흡연자": 21.92,
+        "음주자": 21.83,
+        "비만": 28.21
+       }
+      },
+      {
+       "metric": "허리둘레",
+       "combo_mean": 92.79,
+       "non_combo_mean": 80.7,
+       "diff": 12.09,
+       "cohens_d": 1.17,
+       "single_means": {
+        "현재 흡연자": 78.95,
+        "음주자": 75.44,
+        "비만": 89.83
+       }
+      },
+      {
+       "metric": "혈색소",
+       "combo_mean": 15.5,
+       "non_combo_mean": 14.12,
+       "diff": 1.38,
+       "cohens_d": 0.923,
+       "single_means": {
+        "현재 흡연자": 14.73,
+        "음주자": 13.93,
+        "비만": 14.05
+       }
+      }
+     ]
+    }
+   },
+   {
+    "combo_name": "대사증후군+흡연",
+    "category": "심혈관",
+    "meaning": "심혈관 위험 매우 증가",
+    "components": [
+     "대사증후군",
+     "현재 흡연자"
+    ],
+    "is_ascvd_risk": true,
+    "population": {
+     "n_in_combo": 30427,
+     "pct_of_total": 3.06,
+     "expected_n_if_independent": 23081,
+     "observed_to_expected": 1.32,
+     "top_metrics": [
+      {
+       "metric": "트리글리세라이드",
+       "combo_mean": 248.08,
+       "non_combo_mean": 121.65,
+       "diff": 126.43,
+       "cohens_d": 1.458,
+       "single_means": {
+        "대사증후군": 189.95,
+        "현재 흡연자": 130.26
+       }
+      },
+      {
+       "metric": "허리둘레",
+       "combo_mean": 94.88,
+       "non_combo_mean": 81.12,
+       "diff": 13.75,
+       "cohens_d": 1.307,
+       "single_means": {
+        "대사증후군": 92.56,
+        "현재 흡연자": 83.59
+       }
+      },
+      {
+       "metric": "BMI",
+       "combo_mean": 28.33,
+       "non_combo_mean": 24.1,
+       "diff": 4.23,
+       "cohens_d": 1.08,
+       "single_means": {
+        "대사증후군": 27.92,
+        "현재 흡연자": 24.35
+       }
+      }
+     ]
+    }
+   },
+   {
     "combo_name": "비만+당뇨전단계",
     "category": "대사",
     "meaning": "당뇨 진행 위험군",
@@ -5764,33 +6082,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     }
    }
   ],
-  "not_evaluable": [
-   {
-    "combo_name": "대사증후군+흡연",
-    "category": "심혈관",
-    "met": [
-     "대사증후군"
-    ],
-    "missing": [
-     "현재 흡연자"
-    ],
-    "reason": "현재 흡연자 정보가 없어 판정할 수 없습니다."
-   },
-   {
-    "combo_name": "흡연+음주+비만",
-    "category": "생활습관 트리플",
-    "met": [
-     "음주자",
-     "비만"
-    ],
-    "missing": [
-     "현재 흡연자"
-    ],
-    "reason": "현재 흡연자 정보가 없어 판정할 수 없습니다."
-   }
+  "not_evaluable": [],
+  "matched_count": 7,
+  "ascvd_risk_combos": [
+   "대사증후군+흡연"
   ],
-  "matched_count": 5,
-  "ascvd_risk_combos": [],
   "highest_synergy": {
    "combo_name": "비만+이상지질혈증+지방간의심",
    "category": "메타볼릭 트리오",
@@ -5860,8 +6156,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "fatty_liver": {
   "applicable": true,
   "type": "MetALD 의심 (대사이상 + 유의한 음주 동반)",
-  "provisional": true,
-  "basis": "음주 여부만 확인됨(음주) — 음주량 미수집으로 210/420g 구간을 적용하지 못했습니다.",
+  "provisional": false,
+  "basis": "주당 순알코올 280.0g (남 경계 210/420g)",
   "cardiometabolic_factors": [
    "비만/복부비만",
    "혈당 이상",
@@ -5869,7 +6165,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "고중성지방",
    "낮은 HDL"
   ],
-  "note": "음주량(주당 순알코올)이 없어 잠정 분류입니다. 정식 기준(2025 MASLD 지침): MASLD 남≤210/여≤140g·주, MetALD 그 사이, ALD 남>420/여>350g·주.",
   "indices": {
    "fli": {
     "value": 69.2,
@@ -5952,21 +6247,21 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "name": "현재 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": true
   },
   {
    "key": "g_smoker_former",
    "name": "과거 흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_non_smoker",
    "name": "비흡연자",
    "category": "생활습관",
    "desc": null,
-   "applies": null
+   "applies": false
   },
   {
    "key": "g_drinker",
@@ -5986,7 +6281,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
  "ascvd_simulation": {
   "available": true,
   "is_simulation": true,
-  "risk_percent": 9.5,
+  "risk_percent": 16.8,
   "risk_level": "intermediate",
   "risk_label": "중간 구간",
   "inputs": {
@@ -5995,20 +6290,25 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "total_cholesterol": 220.0,
    "hdl": 39.0,
    "sbp": 138.0,
-   "smoker": false,
+   "smoker": true,
    "diabetes": false,
    "on_bp_medication": false
   },
   "scenarios": [
    {
+    "name": "금연했다면",
+    "risk_percent": 9.5,
+    "delta": -7.3
+   },
+   {
     "name": "수축기혈압이 120이라면",
-    "risk_percent": 7.5,
-    "delta": -2.0
+    "risk_percent": 13.4,
+    "delta": -3.4
    },
    {
     "name": "HDL이 60이라면",
-    "risk_percent": 6.6,
-    "delta": -2.9
+    "risk_percent": 11.9,
+    "delta": -4.9
    }
   ],
   "method": "Pooled Cohort Equations (2013 ACC/AHA)",
@@ -6188,20 +6488,20 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "prevent",
     "title": "AHA PREVENT (10·30년)",
     "category": "cardiovascular",
-    "value": 6.6,
+    "value": 9.8,
     "unit": "%",
-    "level": "intermediate",
-    "interpretation": "10년 심혈관(CVD) 위험 경계",
-    "value_30yr": 31.2,
+    "level": "borderline",
+    "interpretation": "10년 심혈관(CVD) 위험 중간",
+    "value_30yr": 35.6,
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "AHA PREVENT Total CVD (Khan 2024, race-free·eGFR 반영)",
-    "note": "30년 위험 31.2%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
+    "note": "30년 위험 35.6%. PCE 후속 모델(30~79세). 참고용, 진단 아님."
    },
    {
     "key": "framingham",
     "title": "Framingham Hard CHD (10년)",
     "category": "cardiovascular",
-    "value": 10.7,
+    "value": 19.5,
     "unit": "%",
     "level": "borderline",
     "interpretation": "10년 관상동맥질환 위험 중간",
@@ -6213,10 +6513,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "key": "score2",
     "title": "SCORE2 / OP (10년)",
     "category": "cardiovascular",
-    "value": 7.2,
+    "value": 12.9,
     "unit": "%",
-    "level": "intermediate",
-    "interpretation": "10년 심혈관(CVD) 위험 경계",
+    "level": "borderline",
+    "interpretation": "10년 심혈관(CVD) 위험 중간",
     "cutoffs": "<5 낮음 / 5~7.5 경계 / 7.5~20 중간 / ≥20 높음",
     "formula": "SCORE2 (ESC 2021, High-risk 지역 보정)",
     "note": "유럽 모델을 한국에 High-risk 지역으로 근사한 참고값. 진단 아님."
@@ -6237,10 +6537,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "reliability_note": null,
   "tg_value": 178.0,
   "risk_factors": [
+   "현재 흡연",
    "낮은 HDL(<40)",
    "연령(남 45세 이상)"
   ],
-  "basis": "주요 위험인자 2개: 낮은 HDL(<40), 연령(남 45세 이상)",
+  "basis": "주요 위험인자 3개: 현재 흡연, 낮은 HDL(<40), 연령(남 45세 이상)",
   "on_medication": false,
   "limitations": [
    "검진 결과만으로는 심혈관 질환 병력·가족력을 알 수 없어, 실제 위험도는 여기 표시된 등급보다 높을 수 있습니다.",
@@ -6258,10 +6559,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    "대사증후군"
   ],
   "lifestyle_groups": [
+   "현재 흡연자",
    "음주자"
   ],
   "clinical_count": 6,
-  "lifestyle_count": 1,
+  "lifestyle_count": 2,
   "interpretation": "고위험 패턴 (즉각 의료 진료 권장)"
  },
  "metabolic_syndrome_detail": {
@@ -6482,6 +6784,84 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
      }
     ]
    },
+   "흡연+음주+비만": {
+    "median": 1.59,
+    "min": 1.58,
+    "max": 1.61,
+    "n_years": 5,
+    "year_from": 2020,
+    "year_to": 2024,
+    "lipid_era_only": false,
+    "by_year": [
+     {
+      "year": 2020,
+      "oe": 1.593
+     },
+     {
+      "year": 2021,
+      "oe": 1.607
+     },
+     {
+      "year": 2022,
+      "oe": 1.591
+     },
+     {
+      "year": 2023,
+      "oe": 1.585
+     },
+     {
+      "year": 2024,
+      "oe": 1.597
+     }
+    ]
+   },
+   "대사증후군+흡연": {
+    "median": 1.17,
+    "min": 1.11,
+    "max": 1.26,
+    "n_years": 9,
+    "year_from": 2009,
+    "year_to": 2017,
+    "lipid_era_only": true,
+    "by_year": [
+     {
+      "year": 2009,
+      "oe": 1.108
+     },
+     {
+      "year": 2010,
+      "oe": 1.143
+     },
+     {
+      "year": 2011,
+      "oe": 1.146
+     },
+     {
+      "year": 2012,
+      "oe": 1.171
+     },
+     {
+      "year": 2013,
+      "oe": 1.173
+     },
+     {
+      "year": 2014,
+      "oe": 1.201
+     },
+     {
+      "year": 2015,
+      "oe": 1.222
+     },
+     {
+      "year": 2016,
+      "oe": 1.234
+     },
+     {
+      "year": 2017,
+      "oe": 1.263
+     }
+    ]
+   },
    "비만+당뇨전단계": {
     "median": 1.25,
     "min": 1.22,
@@ -6690,86 +7070,6 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
    ]
   },
   "care_distribution": {
-   "간 기능 관찰군": {
-    "total": 50463,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 36846,
-      "pct": 73.0
-     },
-     {
-      "hits": 1,
-      "n": 7890,
-      "pct": 15.6
-     },
-     {
-      "hits": 2,
-      "n": 3904,
-      "pct": 7.7
-     },
-     {
-      "hits": 3,
-      "n": 1823,
-      "pct": 3.6
-     }
-    ]
-   },
-   "신장 기능 관찰군": {
-    "total": 50278,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 48000,
-      "pct": 95.5
-     },
-     {
-      "hits": 1,
-      "n": 2141,
-      "pct": 4.3
-     },
-     {
-      "hits": 2,
-      "n": 137,
-      "pct": 0.3
-     }
-    ]
-   },
-   "대사 관리 참고군": {
-    "total": 16294,
-    "dist": [
-     {
-      "hits": 0,
-      "n": 2649,
-      "pct": 16.3
-     },
-     {
-      "hits": 1,
-      "n": 4571,
-      "pct": 28.1
-     },
-     {
-      "hits": 2,
-      "n": 4544,
-      "pct": 27.9
-     },
-     {
-      "hits": 3,
-      "n": 3022,
-      "pct": 18.5
-     },
-     {
-      "hits": 4,
-      "n": 1285,
-      "pct": 7.9
-     },
-     {
-      "hits": 5,
-      "n": 223,
-      "pct": 1.4
-     }
-    ]
-   },
    "지질 관리 참고군": {
     "total": 15791,
     "dist": [
@@ -6817,6 +7117,86 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
       "hits": 2,
       "n": 10742,
       "pct": 21.3
+     }
+    ]
+   },
+   "대사 관리 참고군": {
+    "total": 16294,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 2649,
+      "pct": 16.3
+     },
+     {
+      "hits": 1,
+      "n": 4571,
+      "pct": 28.1
+     },
+     {
+      "hits": 2,
+      "n": 4544,
+      "pct": 27.9
+     },
+     {
+      "hits": 3,
+      "n": 3022,
+      "pct": 18.5
+     },
+     {
+      "hits": 4,
+      "n": 1285,
+      "pct": 7.9
+     },
+     {
+      "hits": 5,
+      "n": 223,
+      "pct": 1.4
+     }
+    ]
+   },
+   "간 기능 관찰군": {
+    "total": 50463,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 36846,
+      "pct": 73.0
+     },
+     {
+      "hits": 1,
+      "n": 7890,
+      "pct": 15.6
+     },
+     {
+      "hits": 2,
+      "n": 3904,
+      "pct": 7.7
+     },
+     {
+      "hits": 3,
+      "n": 1823,
+      "pct": 3.6
+     }
+    ]
+   },
+   "신장 기능 관찰군": {
+    "total": 50278,
+    "dist": [
+     {
+      "hits": 0,
+      "n": 48000,
+      "pct": 95.5
+     },
+     {
+      "hits": 1,
+      "n": 2141,
+      "pct": 4.3
+     },
+     {
+      "hits": 2,
+      "n": 137,
+      "pct": 0.3
      }
     ]
    }
@@ -6876,6 +7256,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "metabolic_factors": [],
   "group_specific": [
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -6889,7 +7278,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -6942,6 +7331,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "metabolic_factors": [],
   "group_specific": [
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -6955,7 +7353,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7008,6 +7406,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "metabolic_factors": [],
   "group_specific": [
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -7021,7 +7428,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7074,6 +7481,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "metabolic_factors": [],
   "group_specific": [
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -7087,7 +7503,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7140,6 +7556,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "metabolic_factors": [],
   "group_specific": [
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -7153,7 +7578,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7234,6 +7659,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   ],
   "group_specific": [
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -7247,7 +7681,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7375,6 +7809,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     ]
    },
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -7388,7 +7831,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7529,6 +7972,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     ]
    },
    {
+    "group_id": "g_smoker_current",
+    "title": "금연",
+    "details": [
+     "금연이 모든 만성 질환 위험을 줄입니다.",
+     "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
+     "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
+    ]
+   },
+   {
     "group_id": "g_drinker",
     "title": "음주 관리",
     "details": [
@@ -7542,7 +7994,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T03:45:09",
+  "generated_at": "2026-08-01T04:11:20",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7610,9 +8062,6 @@ export const dummyChangePace: NonNullable<RealTimeseries['change_pace']> = [
  }
 ];
 
-// 백엔드 highlights는 항목명을 원문 그대로 쓰고(예: "혈청지오티(AST)이(가)") 21건이 나온다.
-// 1뎁스에서 읽히는 문장이 되게 쉬운 이름·구간 서사로 추린 수작업분이다.
-// 값은 전부 data.ts reports의 2010년 첫 회차 → 2024년 마지막 회차 실제 수치다.
 export const dummyHighlights: NonNullable<RealTimeseries['highlights']> = [
   { metric: '체질량지수(BMI)', type: '구간 상승', severity: 'high', message: '2010년 정상(21.6)에서 2024년 비만(26.3)으로, 8회차에 걸쳐 정상→주의→위험 구간으로 올라섰어요.' },
   { metric: '허리둘레', type: '구간 상승', severity: 'high', message: '76cm에서 93cm로 늘며 복부비만 위험 구간에 들어섰어요. 대사증후군과 함께 보는 지표예요.' },
@@ -7621,11 +8070,11 @@ export const dummyHighlights: NonNullable<RealTimeseries['highlights']> = [
 ];
 
 export const dummyInsight: NonNullable<RealTimeseries['insight']> = {
-  summary: '지난 14년간 대사 지표가 전반적으로 악화됐어요. 특히 체중·허리둘레·혈당이 정상에서 위험 구간으로 올라섰고, 대사증후군 5개 기준을 모두 충족하는 상태예요. 지금이 생활습관을 바꿔 흐름을 되돌릴 중요한 시점이에요.',
+  summary: '지난 14년간 대사 지표가 전반적으로 악화됐어요. 특히 체중·허리둘레·혈당이 정상에서 위험 구간으로 올라섰고, 대사증후군 5개 기준을 모두 충족하는 상태예요. 여기에 흡연이 겹쳐 심혈관 10년 위험이 16.8%까지 올라왔어요. 지금이 생활습관을 바꿔 흐름을 되돌릴 중요한 시점이에요.',
   top_concerns: [
     { title: '대사증후군 (5개 기준 모두 충족)', metric: '대사증후군', level: 'high', current_value: '5/5', details: '허리·혈압·혈당·중성지방·HDL 5개를 모두 충족해 심혈관 위험이 높아요. 의료진 상담을 권장해요.' },
+    { title: '흡연 + 대사증후군이 겹침', metric: '심혈관 10년 위험', level: 'high', current_value: '16.8%', details: '흡연은 심혈관 위험을 가장 크게 올리는 요인이에요. 금연하면 이 숫자가 가장 많이 내려갑니다.' },
     { title: '비만·복부비만 진행', metric: 'BMI·허리둘레', level: 'high', current_value: 'BMI 26.3 · 허리 93cm', details: '14년간 정상에서 위험 구간으로 올라섰어요. 체중 5~10% 감량만으로도 대사 지표가 크게 개선돼요.' },
-    { title: '공복혈당 상승 (당뇨 전단계)', metric: '공복혈당', level: 'warn', current_value: '112mg/dL', details: '당뇨병 전단계(100~125)에 진입했어요. HbA1c 추가 검사로 3개월 평균 혈당 확인을 권장해요.' },
   ],
   next_exam_year: 2026,
 };

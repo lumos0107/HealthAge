@@ -71,10 +71,10 @@ def build_ocr(row: dict) -> dict:
             "patient_gender": GENDER,
         },
         "measurements": {k: {"value": row[k]} for k in MEASURE_KEYS},
-        # 데모 페르소나의 생활습관 — 음주만 알고 흡연은 모른다.
-        # 기존 더미와 같은 상태다: 흡연 3종은 applies=null(판정 불가)로 남아,
-        # "입력이 없으면 지어내지 않는다"가 데모에서 그대로 보인다.
-        "lifestyle": {"drinking": "yes"},
+        # 생활습관 — 8회차 전부 동일. data.ts initialProfile과 같은 값이어야
+        # 분석(음주자·현재 흡연자)과 ④층 행동 제안(절주·금연)이 어긋나지 않는다.
+        # 주당 280g은 MetALD 구간(남 210~420) 안이라 지방간 유형 판정과 앞뒤가 맞는다.
+        "lifestyle": {"smoking": "current", "drinking": "yes", "alcohol_weekly_g": 280},
     }
 
 

@@ -371,9 +371,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       <FadeInUp delay={100}>
       <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
         <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500', marginBottom: 8 }}>참고 점수</Text>
-        {/* 연도 선택 — 기록이 늘어나도 가로 스크롤로 자유롭게 비교 */}
+        {/* 연도 선택 — 기록이 늘어나도 가로 스크롤로 자유롭게 비교.
+            최신이 왼쪽에 온다(검사항목 탭 선택기와 같은 순서). 기본 선택이 최신 회차라
+            오름차순이면 선택된 칩을 보려고 끝까지 스크롤해야 했다.
+            reports 자체는 오래된 순이므로, 표시만 뒤집고 인덱스(i)는 원래 것을 그대로 넘긴다. */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
-          {reports.map((r, i) => (
+          {reports.map((r, i) => ({ r, i })).reverse().map(({ r, i }) => (
             <Pressable
               key={r.year}
               onPress={() => setYearIdx(i)}
