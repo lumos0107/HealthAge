@@ -96,6 +96,34 @@ function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
   );
 }
 
+/** 관리 참고군의 '벗어난 항목 수' 또래 분포 막대 — 참고군 카드 meaningExtra의 막대와 같은 모양.
+ *  ③층 '같은 또래 분포' 카드(1뎁스 preview + 2뎁스)에서 쓰려고 컴포넌트로 뽑았다.
+ *  기존 meaningExtra 쪽은 건드리지 않았다(A3 보류 중 — 참고군 처리가 정해지면 그때 정리). */
+function CareDistBars({ dist, mine, height = 46 }: { dist: { hits: number; pct: number }[]; mine: number; height?: number }) {
+  const peak = Math.max(...dist.map((x) => x.pct), 1);
+  return (
+    <View style={{ flexDirection: 'row', gap: 4, alignItems: 'flex-end' }}>
+      {dist.map((x) => {
+        const isMine = x.hits === mine;
+        return (
+          <View key={x.hits} style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={{ fontSize: 10, fontWeight: isMine ? '800' : '500', color: isMine ? T.danger : T.text3, marginBottom: 3 }}>{x.pct}%</Text>
+            <View style={{ height, width: '100%', justifyContent: 'flex-end' }}>
+              <View style={{
+                width: '100%', height: Math.max(3, (x.pct / peak) * height), borderRadius: 3,
+                backgroundColor: isMine ? T.danger : T.cardAlt,
+              }} />
+            </View>
+            <Text style={{ fontSize: 10, fontWeight: isMine ? '800' : '500', color: isMine ? T.danger : T.text3, marginTop: 4 }}>
+              {x.hits}개
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 /** 조합의 '그래서 뭐가 다른가' — 같은 조합인 사람들과 아닌 사람들의 검진 수치 평균 비교.
  *  O/E비(얼마나 자주 같이 나타나는지)만으로는 조합이 무슨 의미인지 와닿지 않는다.
  *  차이가 가장 큰 항목을 백엔드가 골라 보내주므로(top_metrics) 그대로 나란히 놓는다.
@@ -851,6 +879,60 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ③층 이름은 "같은 또래는 어떤가" — "나만 그런가"였을 때 '같은 나이대의 16년 변화'(집단 추세)가
           층 이름(내 위치)과 안 맞았다. 또래 분포·16년 변화·내 위치를 모두 덮는 이름으로. */}
       <LayerHeader step="③" title="같은 또래는 어떤가" sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
+
+      {/* ③-1 같은 또래 분포 (A1') — care_distribution은 그동안 참고군 카드의 meaningExtra(2뎁스)에만
+          있어 카드를 열어야만 보였다. "나 같은 사람은 100명 중 N명"은 쉬운 문장이라 1뎁스로 올린다.
+          참고군 쪽 기존 표시는 그대로 두었다(순수 추가 — A3 결정 전까지 중복 허용). */}
+      {(() => {
+        const cd = pop16?.care_distribution;
+        if (!cd) return null;
+        const withDist = groups.filter((g) => cd[g.name]);
+        if (!withDist.length) return null;
+        const samePct = (g: (typeof groups)[number]) => cd[g.name]!.dist.find((x) => x.hits === g.matches)?.pct ?? 0;
+        // 대표 = 걸린 항목이 가장 많은 참고군, 동수면 같은 상태가 더 드문 쪽 — 가장 할 말이 많은 분포를 앞세운다.
+        const lead = [...withDist].sort((a, b) => (b.matches - a.matches) || (samePct(a) - samePct(b)))[0];
+        const dLead = cd[lead.name]!;
+        const p = samePct(lead);
+        const fmtN = (v: number) => (v >= 10 ? String(Math.round(v)) : String(Math.max(0.1, Math.round(v * 10) / 10)));
+        return (
+          <FadeInUp delay={205}>
+            <SummaryCard
+              title="같은 또래 분포"
+              summary={lead.matches > 0
+                ? `${lead.name} 항목 ${lead.matches}개가 함께 걸린 나 같은 사람은, 같은 또래 100명 중 ${fmtN(p)}명이에요.`
+                : `${lead.name} 기준을 하나도 안 벗어난 사람은 같은 또래 100명 중 ${fmtN(p)}명이에요.`}
+              definition="검사 항목 묶음(관리 참고군)마다 '기준을 벗어난 항목 수'가 같은 성별·연령대에서 어떻게 분포하는지 본 거예요. 빨간 막대가 지금 나의 자리예요."
+              meaning="막대가 낮을수록 같은 또래에서 드문 상태라는 뜻이에요. 드물다고 곧 더 위험한 것은 아니고, 위험이 얼마나 되는지는 위 ②층 계산기(심혈관 위험 등)가 따로 맡아요."
+              positionTitle={`묶음별 또래 분포 — ${report.year}년 기준`}
+              preview={
+                <View style={{ marginTop: 12 }}>
+                  <CareDistBars dist={dLead.dist} mine={lead.matches} height={36} />
+                </View>
+              }
+            >
+              {withDist.map((g, i) => {
+                const d = cd[g.name]!;
+                const gp = samePct(g);
+                return (
+                  <View key={g.name} style={[{ paddingVertical: 14 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{g.name}</Text>
+                    <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginBottom: 10 }}>
+                      {g.matches > 0 ? `${g.keys.length}개 중 ${g.matches}개 해당 — 나 같은 사람은 100명 중 ${fmtN(gp)}명` : `해당 없음 — 나 같은 사람은 100명 중 ${fmtN(gp)}명`}
+                    </Text>
+                    <CareDistBars dist={d.dist} mine={g.matches} />
+                    <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 8 }}>
+                      같은 성별·연령대 {d.total.toLocaleString()}명 기준
+                    </Text>
+                  </View>
+                );
+              })}
+              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>
+                공단 표본 1,596만 건에서 나와 같은 성별·연령대만 골라 센 값이에요. 모집단은 학회 기준 수치로만 세어 앱 판정과 조금 다를 수 있어요.
+              </Text>
+            </SummaryCard>
+          </FadeInUp>
+        );
+      })()}
 
       {/* ③-2 함께 나타나는 조합(조합 그룹) — 공단 표본 기준 '동반 경향(기술통계)'이며 위험도가 아니다.
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
