@@ -88,7 +88,7 @@ export function scoreSeries(reports: Report[]): ScorePoint[] {
   return rows.map((r) => ({ ...r, complete: r.judged === maxJudged }));
 }
 
-/** 점수 추이 한 줄 결론 — "10년간 78점 내려갔어요".
+/** 점수 추이 한 줄 결론 — "14년간 78점 내려갔어요".
  *  기간은 회차 수가 아니라 첫 해와 마지막 해의 차이로 센다. */
 export function scoreTrendText(series: ScorePoint[]): string | null {
   if (series.length < 2) return null;

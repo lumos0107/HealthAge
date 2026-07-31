@@ -98,7 +98,10 @@ export type GroupDef = {
 export const initialProfile: UserProfile = {
   name: '홍길동',
   gender: 1,
-  birth_year: 1974,
+  // 1968년생 — 2010년 첫 회차에 만 42세가 되게 잡았다. 지질 4종(총콜·LDL·HDL·중성지방)이
+  // 만 40세부터의 검진 항목이라(peer_compare.SCREENING_AGE_MIN), 그보다 어리면 8개 회차 중
+  // 앞의 둘만 지질이 빠져 또래비교가 '해당 연령 검진 항목 아님'으로 빠진다.
+  birth_year: 1968,
   birth_md: 101,
 };
 
@@ -133,10 +136,30 @@ function makeReport(base: Pick<Report, 'year' | 'date' | 'hospital' | 'summary' 
   return { ...base, score, manageCount, trackCount, status };
 }
 
-// 건강검진은 2년에 한 번(만 40세 이상 일반검진 기준) — 2년 단위로 6개년치를 둔다.
-// 홍길동(1974년생, 남)이 40세→50세에 걸쳐 대사 지표가 서서히 악화되는 흐름:
-// 참고 점수 100 → 88 → 82 → 64 → 40 → 28. 시계열·검진패턴·추세가 한 흐름으로 읽힌다.
+// 건강검진은 2년에 한 번(만 40세 이상 일반검진 기준) — 2년 단위로 8개년치를 둔다.
+// 홍길동(1968년생, 남)이 42세→56세에 걸쳐 대사 지표가 서서히 악화되는 흐름:
+// 참고 점수 100 → 100 → 100 → 88 → 76 → 58 → 34 → 22.
+// 시계열·검진패턴·추세가 한 흐름으로 읽힌다. 앞의 세 회차가 모두 100인 것은 꾸며내지
+// 않은 결과다 — 그 해 수치가 전부 정상범위 안이면 감점이 없다.
 export const reports: Report[] = [
+  makeReport({
+    year: 2010,
+    date: '2010-04-19',
+    hospital: '한국건강관리협회 서울강남지부',
+    summary: '전 항목이 정상 범위로, 특별히 관리가 필요한 항목이 없습니다.',
+    values: { sbp: 110, dbp: 70, glucose: 82, bmi: 21.6, waist: 76, ldl: 101, hdl: 58, triglyceride: 89, ast: 21, alt: 22, ggt: 23, hemoglobin: 14.7, creatinine: 0.82, height: 165.9, weight: 59.5, totalCholesterol: 175, urineProtein: 1 },
+    // 감점 없음 → 100
+    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
+  }),
+  makeReport({
+    year: 2012,
+    date: '2012-05-08',
+    hospital: '한국건강관리협회 서울강남지부',
+    summary: '전 항목이 정상 범위이며, 2년 전과 큰 차이가 없습니다.',
+    values: { sbp: 113, dbp: 72, glucose: 84, bmi: 22.0, waist: 78, ldl: 106, hdl: 56, triglyceride: 96, ast: 22, alt: 23, ggt: 25, hemoglobin: 14.8, creatinine: 0.83, height: 165.9, weight: 60.6, totalCholesterol: 180, urineProtein: 1 },
+    // 감점 없음 → 100
+    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
+  }),
   makeReport({
     year: 2014,
     date: '2014-05-20',

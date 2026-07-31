@@ -35,7 +35,8 @@ describe('yearDelta / deltaText', () => {
     expect(yearDelta(reports, 'glucose', 2024)).toEqual({ diff: 5, prevYear: 2022 });
   });
   it('첫 검진(이전 기록 없음)이면 null', () => {
-    expect(yearDelta(reports, 'glucose', 2014)).toBeNull();
+    // reports의 첫 회차. 앞에 비교할 기록이 없으므로 변화량을 만들지 않는다.
+    expect(yearDelta(reports, 'glucose', reports[0].year)).toBeNull();
   });
   it('문장으로 만든다', () => {
     expect(deltaText({ diff: 5, prevYear: 2022 }, 'mg/dL')).toBe('2022년보다 5mg/dL 올랐어요');

@@ -20,7 +20,7 @@ import { Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { applyGender, initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
-import { dummyComboAnalysis, dummyEgfr, dummyRecommendations, dummyInsight, dummyHighlights, dummyChangePace } from './src/dummyAnalysis';
+import { dummyComboAnalysisByYear, dummyEgfrByYear, dummyRecommendationsByYear, dummyInsight, dummyHighlights, dummyChangePace } from './src/dummyAnalysis';
 import { fetchAllReports, latestEvaluationsAsMetricDefinitions, fetchTimeseries, recommendationsByYear, comboAnalysisByYear, egfrByYear, refreshTimeseries, fetchMedications, deleteAccount as deleteAccountApi } from './src/health';
 import type { RealTimeseries, RealRecommendations, RealEgfr, RealComboAnalysis } from './src/health';
 import AnalysisScreen from './src/screens/AnalysisScreen';
@@ -151,13 +151,12 @@ export default function App() {
   const metricDefinitionsForScreens = applyGender(usingRealData ? realMetricDefinitions! : dummyMetricDefinitions, profile.gender);
 
   // 분석 탭에 내려줄 연도별 상세 분석.
-  // 데모는 더미 분석이 한 벌뿐이라 **최신 연도에만** 붙인다 — 전 연도에 같은 걸 복사해 두면
-  // 연도를 바꿔도 아래가 안 바뀌는(=고치려는 바로 그) 상태를 데모에서 그대로 재현하게 된다.
-  const demoYear = dummyReports[dummyReports.length - 1].year;
+  // 데모도 8개 회차를 각각 백엔드에 넣어 뽑은 실산출을 연도별로 갖고 있다 —
+  // 한 벌을 복사한 게 아니라 회차마다 다른 결과라, 연도를 바꾸면 아래가 실제로 따라 바뀐다.
   const analysisByYear = usingRealData
     ? { rec: recommendations, egfr, combo: comboAnalysis }
     : isDemoAccount
-      ? { rec: { [demoYear]: dummyRecommendations }, egfr: { [demoYear]: dummyEgfr }, combo: { [demoYear]: dummyComboAnalysis } }
+      ? { rec: dummyRecommendationsByYear, egfr: dummyEgfrByYear, combo: dummyComboAnalysisByYear }
       : { rec: {}, egfr: {}, combo: {} };
 
   const showToast = (msg: string) => {
