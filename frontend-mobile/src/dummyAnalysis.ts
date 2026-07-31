@@ -7240,8 +7240,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7251,6 +7250,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [],
@@ -7278,7 +7283,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7315,8 +7320,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7326,6 +7330,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [],
@@ -7353,7 +7363,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7390,8 +7400,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7401,6 +7410,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [],
@@ -7428,7 +7443,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7465,8 +7480,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7476,6 +7490,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [],
@@ -7503,7 +7523,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7540,8 +7560,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7551,6 +7570,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [],
@@ -7578,7 +7603,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7615,8 +7640,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7626,6 +7650,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [
@@ -7681,7 +7711,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7721,8 +7751,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7732,6 +7761,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [
@@ -7831,7 +7866,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7871,8 +7906,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
     "category": "식사 요법",
     "items": [
      "포화지방, 트랜스지방, 단순당 섭취를 줄입니다.",
-     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장).",
-     "나트륨 섭취 1일 2,000mg 이하로 제한."
+     "통곡물, 채소, 과일, 견과류, 생선 위주의 식단(지중해식 권장)."
     ]
    },
    {
@@ -7882,6 +7916,12 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 근력 운동 병행.",
      "앉아 있는 시간을 최소화합니다."
     ]
+   }
+  ],
+  "omitted": [
+   {
+    "category": "저염 (나트륨 제한)",
+    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, 또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. 소금을 줄이는 것 자체는 여전히 권장됩니다."
    }
   ],
   "metabolic_factors": [
@@ -7994,7 +8034,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T04:11:20",
+  "generated_at": "2026-08-01T05:21:49",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }

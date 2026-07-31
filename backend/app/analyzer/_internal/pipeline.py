@@ -465,6 +465,81 @@ def _medication_notes(
 
 
 # ============================================================
+# 공통 권장사항의 조건 필터 (A-1)
+# ============================================================
+# 흡연·음주 여부는 이미 user_groups에 판정돼 있는데 쓰이지 않아서, 비흡연·비음주인
+# 사람에게도 "금연 클리닉 상담을 권장합니다"가 붙었다. 재료가 있는데 안 쓴 것이다.
+#
+# ⚠️ '아니오'와 '모름'을 구분한다. classify_user_groups는 문진 값이 없으면 흡연/음주
+#    키를 아예 넣지 않는다(있으면 세 키가 모두 들어온다). 그래서 키의 유무가 곧
+#    "물어봤는가"이고, 값의 True/False가 "그렇다/아니다"다. 둘을 뭉개면 문진을 안 한
+#    사람을 비흡연자로 단정하게 된다.
+_SMOKING_KEYS = ("g_smoker_current", "g_smoker_former", "g_non_smoker")
+_DRINKING_KEYS = ("g_drinker", "g_non_drinker")
+
+
+def _filter_common(user_groups: dict, medications: dict) -> tuple[list[dict], list[dict]]:
+    """공통 권장 5종을 조건에 맞게 추린다. (붙일 것, 뺀 것+이유)를 함께 돌려준다.
+
+    뺀 것을 조용히 사라지게 두지 않는 이유: 화면에서 항목이 없으면 사용자는 "나한테는
+    해당 없음"으로 읽는데, 실제로는 "몰라서 못 붙임"인 경우가 섞여 있다.
+    """
+    from .recommendation_generator import COMMON_RECOMMENDATIONS, SODIUM_ITEM
+
+    smoking_known = any(k in user_groups for k in _SMOKING_KEYS)
+    drinking_known = any(k in user_groups for k in _DRINKING_KEYS)
+    is_smoker = bool(user_groups.get("g_smoker_current"))
+    is_drinker = bool(user_groups.get("g_drinker"))
+    # 약으로 혈압이 잡혀 있어도 저염은 유지해야 하는 대상이라 약물도 함께 본다.
+    # (classify_user_groups의 g_hypertension이 이미 약물을 포함하지만, 혈압값이
+    #  없어 그룹 판정 자체가 빠진 경우까지 덮으려면 여기서 한 번 더 본다.)
+    is_hypertensive = bool(user_groups.get("g_hypertension")) or bool(
+        medications.get("hypertension")
+    )
+
+    common: list[dict] = []
+    omitted: list[dict] = []
+
+    for name, items in COMMON_RECOMMENDATIONS.items():
+        if name == "금연":
+            if not smoking_known:
+                omitted.append({
+                    "category": name,
+                    "reason": "흡연 여부를 입력하지 않아 금연 권고는 넣지 않았어요. "
+                              "내정보에서 입력하면 다음 분석부터 반영됩니다.",
+                })
+                continue
+            if not is_smoker:
+                continue
+        elif name == "절주 / 음주 관리":
+            if not drinking_known:
+                omitted.append({
+                    "category": name,
+                    "reason": "음주 여부를 입력하지 않아 절주 권고는 넣지 않았어요. "
+                              "내정보에서 입력하면 다음 분석부터 반영됩니다.",
+                })
+                continue
+            if not is_drinker:
+                continue
+
+        entry_items = list(items)
+        if name == "식사 요법":
+            if is_hypertensive:
+                entry_items.append(SODIUM_ITEM)
+            else:
+                omitted.append({
+                    "category": "저염 (나트륨 제한)",
+                    "reason": "나트륨 1일 2,000mg 제한은 고혈압군(수축기 140 또는 이완기 90 이상, "
+                              "또는 고혈압약 복용) 기준 권고라 목표 수치로는 넣지 않았어요. "
+                              "소금을 줄이는 것 자체는 여전히 권장됩니다.",
+                })
+
+        common.append({"category": name, "items": entry_items})
+
+    return common, omitted
+
+
+# ============================================================
 # Step 4: 그룹 분석 → 맞춤 권장사항
 # ============================================================
 def run_recommendations(
@@ -483,7 +558,6 @@ def run_recommendations(
     """
     # recommendation_generator의 로직만 import해서 활용
     from .recommendation_generator import (
-        COMMON_RECOMMENDATIONS,
         FACTOR_RECOMMENDATIONS,
         GROUP_RECOMMENDATIONS,
     )
@@ -497,13 +571,14 @@ def run_recommendations(
 
     recommendations = {
         "common": [],
+        "omitted": [],
         "metabolic_factors": [],
         "group_specific": [],
         "medication_notes": [],
         "elderly_notes": [],
     }
 
-    # 1. 공통 기본 권장사항
+    # 1. 공통 기본 권장사항 — 흡연·음주·혈압 판정에 따라 조건부로 붙인다(_filter_common).
     has_any_risk = (
         ms_detail.get("count", 0) >= 1 or
         any(user_groups.get(g, False) for g in [
@@ -513,11 +588,9 @@ def run_recommendations(
     )
 
     if has_any_risk:
-        for name, items in COMMON_RECOMMENDATIONS.items():
-            recommendations["common"].append({
-                "category": name,
-                "items": items,
-            })
+        common, omitted = _filter_common(user_groups, medications)
+        recommendations["common"] = common
+        recommendations["omitted"] = omitted
 
     # 2. 대사증후군 인자별
     if ms_detail and "factors" in ms_detail:

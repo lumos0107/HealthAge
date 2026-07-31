@@ -1103,6 +1103,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           )}
 
+          {/* 조건에 안 맞아 뺀 권장 — 조용히 빼면 "나한테는 해당 없음"으로 읽히는데, 실제로는
+              "문진을 안 해서 못 붙임"인 경우가 섞인다. ④층 「다음 검진 목표」가 목록에서 뺀
+              행동의 이유를 밝히는 것과 같은 규칙이다. */}
+          {!!recommendations.recommendations?.omitted?.length && (
+            <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: T.text2, marginBottom: 4 }}>넣지 않은 항목</Text>
+              {recommendations.recommendations!.omitted!.map((o, i) => (
+                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· [{o.category}] {o.reason}</Text>
+              ))}
+            </View>
+          )}
+
           {recommendations._meta?.disclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, marginTop: 14, lineHeight: 17 }}>{recommendations._meta.disclaimer}</Text>
           )}
