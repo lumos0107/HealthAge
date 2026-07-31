@@ -398,7 +398,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             title={group.name}
             summary={group.matches > 0 ? `${group.keys.length}개 항목 중 ${group.matches}개가 이 그룹 기준에 해당해요.` : '해당하는 항목이 없어요.'}
             definition={group.description}
-            detail={group.related}
+            // A7 — 묶음의 근거(basis)를 2.5뎁스에 함께 밝힌다. 다른 카드가 formula/reference를
+            // 다는 자리와 같은 깊이다. 타입에만 두면 없는 것(§1-1①)이라 반드시 그린다.
+            detail={`${group.related}\n\n묶음 근거 — ${group.basis}`}
             meaning={group.meaning}
             positionTitle={`나의 위치 — ${report.year}년 항목별 비교`}
             badge={

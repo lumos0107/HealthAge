@@ -88,6 +88,9 @@ export type GroupDef = {
   description: string;
   meaning: string;
   related: string;
+  /** 이 묶음의 근거(§1-1③) — 학회 기준에 대응하면 그 기준을, 앱이 편의상 묶은 것이면
+   *  "임상 분류가 아니라 함께 보기 위한 묶음"임을 밝힌다. 화면 2뎁스에 그대로 나간다. */
+  basis: string;
   matches: number;
   metrics: string[];
 };
@@ -536,12 +539,14 @@ export function historyRows(keys: MetricKey[], reportList: Report[] = reports) {
   }));
 }
 
+// basis(§1-1③) — 다른 카드는 전부 formula/cutoffs/reference를 다는데 참고군만 근거 필드가
+// 없었다. 대사 참고군만 학회 진단기준에 대응하고, 나머지 넷은 검진표의 검사 패널 묶음이다.
 const groupDefs = [
-  { name: '대사 관리 참고군', keys: ['waist', 'glucose', 'triglyceride', 'hdl', 'sbp'] as MetricKey[], description: '허리둘레, 혈당, 지질, 혈압 항목이 함께 겹칠 때 먼저 확인하는 그룹입니다.', meaning: '대사증후군 기준과 가까운 항목을 묶어 보는 참고군입니다.', related: '복부비만, 혈당 상승, 혈압 상승, 중성지방 상승, HDL 저하와 관련해 볼 수 있습니다.' },
-  { name: '혈압 관리 참고군', keys: ['sbp', 'dbp'] as MetricKey[], description: '수축기와 이완기 혈압 흐름을 우선 살펴보는 그룹입니다.', meaning: '혈압 수치가 반복해서 기준을 벗어나는지 확인하는 참고군입니다.', related: '두통, 어지럼, 혈관 부담과 관련해 상담이 필요할 수 있지만 증상 없이 나타나기도 합니다.' },
-  { name: '지질 관리 참고군', keys: ['ldl', 'hdl', 'triglyceride', 'totalCholesterol'] as MetricKey[], description: '콜레스테롤과 중성지방 항목을 묶어서 보는 그룹입니다.', meaning: '혈관 건강과 관련된 지질 수치를 함께 보는 참고군입니다.', related: 'LDL 상승, HDL 저하, 중성지방 상승은 심혈관 위험 요인과 함께 확인합니다.' },
-  { name: '간 기능 관찰군', keys: ['ast', 'alt', 'ggt'] as MetricKey[], description: '간 효소 수치가 생활습관, 약물, 음주와 함께 영향을 받을 수 있는 그룹입니다.', meaning: '간세포나 간담도계 상태를 참고하는 효소 수치를 묶은 그룹입니다.', related: '음주, 약물, 피로, 지방간 가능성 등 여러 요인과 함께 확인합니다.' },
-  { name: '신장 기능 관찰군', keys: ['creatinine', 'urineProtein'] as MetricKey[], description: '혈청 크레아티닌 흐름을 따로 추적하는 그룹입니다.', meaning: '신장 기능 추정에 쓰이는 혈청 크레아티닌을 관찰하는 참고군입니다.', related: '신장 기능 변화는 eGFR 계산과 함께 확인하며 평균 비교에는 사용하지 않습니다.' },
+  { name: '대사 관리 참고군', keys: ['waist', 'glucose', 'triglyceride', 'hdl', 'sbp'] as MetricKey[], description: '허리둘레, 혈당, 지질, 혈압 항목이 함께 겹칠 때 먼저 확인하는 그룹입니다.', meaning: '대사증후군 기준과 가까운 항목을 묶어 보는 참고군입니다.', related: '복부비만, 혈당 상승, 혈압 상승, 중성지방 상승, HDL 저하와 관련해 볼 수 있습니다.', basis: '대사증후군 진단기준(허리둘레·혈당·중성지방·HDL·혈압 5인자)과 같은 항목 묶음이에요. 정식 판정은 위 집단군 판정 카드가 약 복용까지 반영해 따로 셉니다.' },
+  { name: '혈압 관리 참고군', keys: ['sbp', 'dbp'] as MetricKey[], description: '수축기와 이완기 혈압 흐름을 우선 살펴보는 그룹입니다.', meaning: '혈압 수치가 반복해서 기준을 벗어나는지 확인하는 참고군입니다.', related: '두통, 어지럼, 혈관 부담과 관련해 상담이 필요할 수 있지만 증상 없이 나타나기도 합니다.', basis: '검진표의 혈압 두 항목을 함께 보기 위한 묶음이에요. 임상 분류가 아닙니다.' },
+  { name: '지질 관리 참고군', keys: ['ldl', 'hdl', 'triglyceride', 'totalCholesterol'] as MetricKey[], description: '콜레스테롤과 중성지방 항목을 묶어서 보는 그룹입니다.', meaning: '혈관 건강과 관련된 지질 수치를 함께 보는 참고군입니다.', related: 'LDL 상승, HDL 저하, 중성지방 상승은 심혈관 위험 요인과 함께 확인합니다.', basis: '검진표의 지질 패널(총콜레스테롤·LDL·HDL·중성지방)을 함께 보기 위한 묶음이에요. 임상 분류가 아닙니다.' },
+  { name: '간 기능 관찰군', keys: ['ast', 'alt', 'ggt'] as MetricKey[], description: '간 효소 수치가 생활습관, 약물, 음주와 함께 영향을 받을 수 있는 그룹입니다.', meaning: '간세포나 간담도계 상태를 참고하는 효소 수치를 묶은 그룹입니다.', related: '음주, 약물, 피로, 지방간 가능성 등 여러 요인과 함께 확인합니다.', basis: '검진표의 간효소 패널(AST·ALT·감마-GTP)을 함께 보기 위한 묶음이에요. 임상 분류가 아닙니다.' },
+  { name: '신장 기능 관찰군', keys: ['creatinine', 'urineProtein'] as MetricKey[], description: '혈청 크레아티닌과 요단백 흐름을 따로 추적하는 그룹입니다.', meaning: '신장 기능 추정에 쓰이는 혈청 크레아티닌을 관찰하는 참고군입니다.', related: '신장 기능 변화는 eGFR 계산과 함께 확인하며 평균 비교에는 사용하지 않습니다.', basis: '검진표의 신장 패널(혈청 크레아티닌·요단백)을 함께 보기 위한 묶음이에요. 임상 분류가 아닙니다.' },
 ];
 
 /**
