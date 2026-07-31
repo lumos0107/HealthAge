@@ -35,6 +35,48 @@ function LayerHeader({ step, title, sub }: { step: string; title: string; sub: s
   );
 }
 
+/** 분석 탭의 네 층 — **이름은 여기 한 곳에만 둔다.**
+ *  층 머리말(LayerHeader)과 상단 자기소개(TabIntroNote)가 같은 값을 참조하므로,
+ *  이름을 바꿔도 두 곳이 조용히 갈라지지 않는다(A4에서 ③층 이름을 한 번 바꿨다).
+ *  intro는 '이 탭이 무엇을 하나'를 말하는 문장이라, 구획을 표시하는 머리말 sub와 따로 둔다. */
+const LAYERS = [
+  { step: '①', title: '기준을 벗어났나', intro: '그 해 검진 수치가 학회 기준 안에 있는지 가립니다.' },
+  { step: '②', title: '검진지에 없는 값을 만들어요', intro: '여러 수치를 묶어 결과지에 없던 지표를 계산합니다. 크레아티닌·나이·성별을 묶으면 신장 여과율이 되는 식이에요.' },
+  { step: '③', title: '같은 또래는 어떤가', intro: '공단 표본 1,596만 건에서 같은 성별·연령대를 골라 견줍니다.' },
+  { step: '④', title: '그래서 뭘 하면 되나', intro: '①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다.' },
+];
+
+/** 탭 자기소개 — "이 화면은 무엇을 하나요?".
+ *  1뎁스는 헤더 한 줄이 맡고(네 층 이름을 그대로 써서 목차 역할을 한다), 여기는 그 확장이다.
+ *  펼침 문법은 점수 카드의 ScoreCalcNote와 같게 두어 새로 배울 몸짓이 없다. */
+function TabIntroNote() {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ marginTop: 16 }}>
+      {open && (
+        <View style={{ marginBottom: 4 }}>
+          {LAYERS.map((l) => (
+            <View key={l.step} style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: T.primary }}>{l.step}</Text>
+              <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
+                <Text style={{ fontWeight: '700', color: T.text1 }}>{l.title}</Text> — {l.intro}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        hitSlop={8}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+      >
+        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : '이 화면은 무엇을 하나요?'}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+      </Pressable>
+    </View>
+  );
+}
+
 // 계산기 level → 상태색 (info=중립 회색, 나머지는 구간색)
 const calcLevelColor = (level: string) => level === 'info' ? T.text3 : level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
 const calcLevelBg = (level: string) => level === 'info' ? T.cardAlt : level === 'low' ? T.successBg : (level === 'high' || level === 'very_high') ? T.dangerBg : T.warnBg;
@@ -285,7 +327,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
         <Eyebrow>ANALYSIS</Eyebrow>
         <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>건강분석</Text>
-        <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>내 수치, 정상 기준, 연령대 평균을 비교합니다.</Text>
+        {/* 이 한 줄이 탭의 자기소개다. 예전 문구("내 수치, 정상 기준, 연령대 평균을 비교합니다")는
+            4층 재구성 이전 것이라 지금은 ③층 하나만 설명하고 있었다. 네 층 이름을 그대로 써서
+            아래로 스크롤하면 같은 네 문구가 소제목으로 다시 나오는 목차가 되게 한다. */}
+        <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>
+          기준을 벗어났는지 보고, 검진지에 없는 값을 만들고, 또래와 견준 뒤, 할 일로 옮깁니다.
+        </Text>
         {/* 결론 한 줄 — 12장이나 되는 카드를 다 읽기 전에 "그래서 뭐였나"를 먼저 준다.
             새 판단을 만들지 않는다: 그 해 기록의 주의·위험 개수와 아래에서 이미 계산된
             '점수 밖 신호'를 문장으로 옮길 뿐이다. */}
@@ -298,6 +345,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               ].filter(Boolean).join(' · ')}가 나왔어요.`}
           {outsideScore.length > 0 && ` 점수에 안 잡히는 신호도 ${outsideScore.length}가지 있어요 — ${outsideScore[0].label}부터 보세요.`}
         </Text>
+        {/* 결론 다음에 둔다 — 결론이 계속 맨 위에 오게 하고, 자세한 소개는 원하는 사람만 펼친다. */}
+        <TabIntroNote />
       </View>
       </FadeInUp>
 
@@ -313,8 +362,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       </FadeInUp>
 
       <LayerHeader
-        step="①"
-        title="기준을 벗어났나"
+        step={LAYERS[0].step}
+        title={LAYERS[0].title}
         sub={`${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`}
       />
 
@@ -501,7 +550,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      <LayerHeader step="②" title="검진지에 없는 값을 만들어요" sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
+      <LayerHeader step={LAYERS[1].step} title={LAYERS[1].title} sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
 
       {/* 신장 — eGFR·CrCl */}
       {egfr && <DomainHeader title="신장 기능" />}
@@ -792,7 +841,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {/* ③층 이름은 "같은 또래는 어떤가" — "나만 그런가"였을 때 '같은 나이대의 16년 변화'(집단 추세)가
           층 이름(내 위치)과 안 맞았다. 또래 분포·16년 변화·내 위치를 모두 덮는 이름으로. */}
-      <LayerHeader step="③" title="같은 또래는 어떤가" sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
+      <LayerHeader step={LAYERS[2].step} title={LAYERS[2].title} sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
 
       {/* ③-1 같은 또래 분포 (A1') — "나 같은 사람은 100명 중 N명"은 쉬운 문장이라 1뎁스에 둔다.
           A3에서 참고군 카드 5장이 제거되어 지금은 이 카드가 care_distribution의 유일한 표시이고,
@@ -980,7 +1029,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      <LayerHeader step="④" title="그래서 뭘 하면 되나" sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
+      <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
 
       {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다 */}
       {recommendations && (recommendations.priority_messages?.length || recommendations.recommendations) && (
