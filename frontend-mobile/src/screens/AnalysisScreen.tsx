@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { AnimatedScore, DirectionalBar, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
-import { metricPeerRank, rankFromPercentile } from '../interpret';
+import { rankFromPercentile } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
-import { cardContent, computeGroupsForReport, directionLabel, metricLabel, metricsForReport, metricDirection } from '../data';
+import { cardContent, computeGroupsForReport, metricLabel } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
@@ -34,9 +34,6 @@ function LayerHeader({ step, title, sub }: { step: string; title: string; sub: s
     </View>
   );
 }
-
-// 그룹의 '대표 항목'을 고르는 순서 — 가장 나쁜 상태를 대표로 삼는다.
-const ATTENTION: Record<string, number> = { 위험: 0, 주의: 1, 정상: 2 };
 
 // 계산기 level → 상태색 (info=중립 회색, 나머지는 구간색)
 const calcLevelColor = (level: string) => level === 'info' ? T.text3 : level === 'low' ? T.success : (level === 'high' || level === 'very_high') ? T.danger : T.warn;
@@ -96,9 +93,9 @@ function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
   );
 }
 
-/** 관리 참고군의 '벗어난 항목 수' 또래 분포 막대 — 참고군 카드 meaningExtra의 막대와 같은 모양.
- *  ③층 '같은 또래 분포' 카드(1뎁스 preview + 2뎁스)에서 쓰려고 컴포넌트로 뽑았다.
- *  기존 meaningExtra 쪽은 건드리지 않았다(A3 보류 중 — 참고군 처리가 정해지면 그때 정리). */
+/** 관리 참고군 묶음의 '벗어난 항목 수' 또래 분포 막대 — ③층 '같은 또래 분포' 카드
+ *  (1뎁스 preview + 2뎁스)가 유일한 사용처다. 참고군 카드 5장은 A3에서 제거됐다
+ *  — 묶음 판정은 집단군 판정(A2'), 또래 분포는 이 카드가 이어받았다. */
 function CareDistBars({ dist, mine, height = 46 }: { dist: { hits: number; pct: number }[]; mine: number; height?: number }) {
   const peak = Math.max(...dist.map((x) => x.pct), 1);
   return (
@@ -276,16 +273,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
     return out;
   }, [egfr, msDetail, ascvd, flIndices, ldlTarget]);
 
-  // 관리 참고군: 선택한 연도의 실제 측정값을 기준으로 매번 다시 계산한다 — 연도를 바꾸면 그 해 기준으로 갱신된다.
-  // (단, 정렬은 매칭 개수 기준이라 1순위 그룹이 자연히 상단에 오게 되고, 보통 연도가 바뀌어도 같은 그룹이 1순위를 유지한다)
+  // 관리 참고군 묶음: 선택한 연도의 실제 측정값 기준으로 매번 다시 계산한다.
+  // 카드 5장은 A3에서 제거됐지만 이 계산은 ③층 '같은 또래 분포' 카드가
+  // 대표 묶음을 고르고 묶음별 분포를 그리는 데 그대로 쓴다 — 삭제 금지.
   const groups = useMemo(() => computeGroupsForReport(report, metricDefinitions), [report, metricDefinitions]);
-  const topGroup = groups[0];
-  // 그 해 기준 항목 상태 — 점수·뱃지·그룹 매칭이 모두 이 데이터 하나에서 파생되어 항상 일치한다.
-  const yearMetrics = useMemo(() => metricsForReport(report, metricDefinitions), [report, metricDefinitions]);
-  // 그 해에 실제로 측정된 항목만 골라 보여준다 — 검사하지 않은 항목까지 끼워 넣으면
-  // 사용자에게 사실과 다른 정보를 전달하게 되므로, yearMetrics(그 해 측정 항목)에 없는 키는 제외한다.
-  const metricsByKeys = (keys: typeof topGroup.keys) =>
-    keys.map((k) => yearMetrics.find((m) => m.key === k)).filter((m): m is MetricDefinition => !!m);
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
@@ -379,105 +370,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       </View>
       </FadeInUp>
 
-      {/* ② 관리 참고군 — 카드를 누르면 그 그룹에 해당하는 검사 항목들이 바로 아래에 펼쳐진다.
-          연도를 바꾸면 살짝 페이드되며 갱신되어 변화가 자연스럽게 보인다 */}
-      <FadeInUp delay={150}>
-      <FadeIn key={`groups-${report.year}`}>
-      <View style={{ paddingHorizontal: 20, marginTop: 8, marginBottom: 6 }}>
-        <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>나의 관리 참고군 · {report.year}년 기준</Text>
-      </View>
-      {groups.map((group) => {
-        const groupMetrics = metricsByKeys(group.keys);
-        // 그룹의 대표 항목 = 가장 주의가 필요한 항목. 그 항목으로 "100명 중 몇 등"을 보여준다.
-        const lead = [...groupMetrics].sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])[0];
-        const leadRank = lead ? metricPeerRank(lead, report.values[lead.key]) : null;
-        const leadColor = lead ? (lead.status === '정상' ? T.success : lead.status === '주의' ? T.warn : T.danger) : T.text3;
-        return (
-          <SummaryCard
-            key={group.name}
-            title={group.name}
-            summary={group.matches > 0 ? `${group.keys.length}개 항목 중 ${group.matches}개가 이 그룹 기준에 해당해요.` : '해당하는 항목이 없어요.'}
-            definition={group.description}
-            // A7 — 묶음의 근거(basis)를 2.5뎁스에 함께 밝힌다. 다른 카드가 formula/reference를
-            // 다는 자리와 같은 깊이다. 타입에만 두면 없는 것(§1-1①)이라 반드시 그린다.
-            detail={`${group.related}\n\n묶음 근거 — ${group.basis}`}
-            meaning={group.meaning}
-            positionTitle={`나의 위치 — ${report.year}년 항목별 비교`}
-            badge={
-              <View style={{ backgroundColor: group.matches > 0 ? T.dangerBg : T.cardAlt, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: group.matches > 0 ? T.danger : T.text3 }}>{group.matches}개 해당</Text>
-              </View>
-            }
-            meaningExtra={(() => {
-              // 관리 참고군은 그동안 "5개 중 5개 해당"이라고만 말할 뿐 모집단 근거가 없었다.
-              // 같은 성별·연령대에서 나처럼 걸린 사람이 몇 %인지 붙여 처음으로 위치를 준다.
-              const d = pop16?.care_distribution?.[group.name];
-              if (!d) return undefined;
-              const same = d.dist.find((x) => x.hits === group.matches);
-              const worse = d.dist.filter((x) => x.hits > group.matches).reduce((s, x) => s + x.pct, 0);
-              return (
-                <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
-                    같은 또래에서 나 같은 사람은
-                  </Text>
-                  <Text style={{ fontSize: 15, color: T.text2, lineHeight: 23 }}>
-                    {group.matches}개가 걸린 사람은 100명 중{' '}
-                    <Text style={{ fontWeight: '800', color: T.text1 }}>{Math.max(1, Math.round(same?.pct ?? 0))}명</Text>
-                    이에요.
-                    {worse > 0.05 && ` 나보다 많이 걸린 사람은 ${worse.toFixed(1)}%예요.`}
-                  </Text>
-                  {/* 막대는 공통 바닥선에서 자라야 한다 — 높이만큼 위로 밀리면 아래 라벨이 들쭉날쭉해진다. */}
-                  <View style={{ flexDirection: 'row', gap: 4, marginTop: 12, alignItems: 'flex-end' }}>
-                    {(() => {
-                      const peak = Math.max(...d.dist.map((x) => x.pct), 1);
-                      return d.dist.map((x) => {
-                        const mine = x.hits === group.matches;
-                        return (
-                          <View key={x.hits} style={{ flex: 1, alignItems: 'center' }}>
-                            <Text style={{ fontSize: 10, fontWeight: mine ? '800' : '500', color: mine ? T.danger : T.text3, marginBottom: 3 }}>{x.pct}%</Text>
-                            <View style={{ height: 46, width: '100%', justifyContent: 'flex-end' }}>
-                              <View style={{
-                                width: '100%', height: Math.max(3, (x.pct / peak) * 46), borderRadius: 3,
-                                backgroundColor: mine ? T.danger : T.cardAlt,
-                              }} />
-                            </View>
-                            <Text style={{ fontSize: 10, fontWeight: mine ? '800' : '500', color: mine ? T.danger : T.text3, marginTop: 4 }}>
-                              {x.hits}개
-                            </Text>
-                          </View>
-                        );
-                      });
-                    })()}
-                  </View>
-                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
-                    공단 표본 1,596만 건 중 같은 성별·연령대 {d.total.toLocaleString()}명 기준이에요. 모집단은 학회 기준 수치로만 세어 앱 판정과 조금 다를 수 있어요.
-                  </Text>
-                </View>
-              );
-            })()}
-            positionExtra={lead && leadRank ? (
-              <View style={{ marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-                <PeerRankBlock subject={lead.name} color={leadColor} {...leadRank} />
-              </View>
-            ) : undefined}
-          >
-            {groupMetrics.length === 0 ? (
-              <Text style={{ fontSize: 13, color: T.text3, paddingVertical: 14 }}>이 그룹에 해당하는 검사 항목이 없습니다.</Text>
-            ) : (
-              groupMetrics.map((metric, i) => (
-                <View
-                  key={metric.key}
-                  style={[{ paddingVertical: 14 }, i < groupMetrics.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}
-                >
-                  <CompareRow metric={metric} value={report.values[metric.key]} />
-                </View>
-              ))
-            )}
-          </SummaryCard>
-        );
-      })}
-      </FadeIn>
-      </FadeInUp>
+      {/* 관리 참고군 카드 5장은 A3에서 제거했다(§1-1② — 무엇을 왜 뺐는지 기록).
+          하던 일과 간 곳: 묶음 판정("N개 중 M개") → 집단군 판정 카드(A2'가 또래 유병률까지 병합),
+          또래 분포 → ③층 '같은 또래 분포' 카드(A1'), 패널별 상태 요약 → ②층 계산기 카드들,
+          항목별 수치·판정 → 검사항목 탭. 상세 분석이 없는 연도에서 묶음 시각이 사라지는 손실은
+          감수하기로 결정(2026-07-31). 약·고령 배지(CompareRow)는 참고군과 함께 내려갔다. */}
 
       {/* 여기부터는 그 해 검진 수치로 따로 계산해 저장해 둔 상세 분석이다.
           예전엔 최신 연도 것만 내려받아, 위에서 연도를 바꿔도 아래는 그대로였다.
@@ -897,9 +794,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           층 이름(내 위치)과 안 맞았다. 또래 분포·16년 변화·내 위치를 모두 덮는 이름으로. */}
       <LayerHeader step="③" title="같은 또래는 어떤가" sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
 
-      {/* ③-1 같은 또래 분포 (A1') — care_distribution은 그동안 참고군 카드의 meaningExtra(2뎁스)에만
-          있어 카드를 열어야만 보였다. "나 같은 사람은 100명 중 N명"은 쉬운 문장이라 1뎁스로 올린다.
-          참고군 쪽 기존 표시는 그대로 두었다(순수 추가 — A3 결정 전까지 중복 허용). */}
+      {/* ③-1 같은 또래 분포 (A1') — "나 같은 사람은 100명 중 N명"은 쉬운 문장이라 1뎁스에 둔다.
+          A3에서 참고군 카드 5장이 제거되어 지금은 이 카드가 care_distribution의 유일한 표시이고,
+          묶음 근거(basis, A7)도 여기 2뎁스에서 밝힌다. */}
       {(() => {
         const cd = pop16?.care_distribution;
         if (!cd) return null;
@@ -939,6 +836,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                     <CareDistBars dist={d.dist} mine={g.matches} />
                     <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 8 }}>
                       같은 성별·연령대 {d.total.toLocaleString()}명 기준
+                    </Text>
+                    {/* 묶음 근거(A7·§1-1③) — 참고군 카드가 제거된 뒤 이 묶음이 노출되는 유일한 자리라 근거도 여기서 밝힌다. */}
+                    <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 4 }}>
+                      {g.basis}
                     </Text>
                   </View>
                 );
@@ -1178,61 +1079,5 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 }
 
 
-function CompareRow({ metric, value }: { metric: MetricDefinition; value: number }) {
-  const [showInfo, setShowInfo] = useState(false);
-  const mine = value;
-  const max = Math.max(mine, metric.normalValue, metric.peerMean ?? 0, 1);
-  const statusColor = metric.status === '정상' ? T.success : metric.status === '주의' ? T.warn : T.danger;
-  const statusBg = metric.status === '정상' ? T.successBg : metric.status === '주의' ? T.warnBg : T.dangerBg;
-  const dir = metricDirection(metric);
-  const dirInfo = directionLabel(dir);
-
-  return (
-    <>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <Pressable onPress={() => setShowInfo((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, marginRight: 10 }}>
-          <Text style={{ fontWeight: '700', color: T.text1, fontSize: 15 }}>{metric.name}</Text>
-          <Ionicons name={showInfo ? 'chevron-up' : 'information-circle-outline'} size={15} color={T.text3} />
-        </Pressable>
-        <View style={{ backgroundColor: statusBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: statusColor }}>{metric.status}</Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 12 }}>
-        <Text style={{ fontSize: 11, color: T.primaryDark, fontWeight: '600' }}>{dirInfo.icon} {dirInfo.text}</Text>
-      </View>
-      {/* 또래 비교(백분위) · 약물 복용 중 · 고령 주의 — 실제 분석 데이터에 있을 때만 표시한다(추정해서 만들어 보여주지 않음) */}
-      {(metric.percentile != null || metric.onMedication || metric.isElderlyWarning) && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12, marginTop: -6 }}>
-          {metric.percentile != null && (
-            <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: T.text2 }}>또래 중 상위 {Math.round(metric.percentile)}%</Text>
-            </View>
-          )}
-          {metric.onMedication && (
-            <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: T.primaryDark }}>약으로 관리 중인 항목</Text>
-            </View>
-          )}
-          {metric.isElderlyWarning && (
-            <View style={{ backgroundColor: T.dangerBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: T.danger }}>고령 기준 추가 주의</Text>
-            </View>
-          )}
-        </View>
-      )}
-      {showInfo && (
-        <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginBottom: 12, marginTop: -6 }}>{metric.description}  {metric.note}</Text>
-      )}
-      <DirectionalBar
-        myValue={mine}
-        normalValue={metric.normalValue}
-        peerMean={metric.peerMean}
-        max={max}
-        color={statusColor}
-        valueText={`내 ${mine}${metric.unit} · 기준 ${metric.normalText}`}
-        direction={dir}
-      />
-    </>
-  );
-}
+// CompareRow(항목별 비교 행)는 관리 참고군 카드에서만 쓰여 A3와 함께 제거됐다.
+// 안에 있던 약·고령 배지(onMedication·isElderlyWarning)도 같이 내려갔다 — 손실 감수 결정(2026-07-31).
