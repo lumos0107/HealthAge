@@ -24,6 +24,91 @@ from app.ocr.pipeline.utils.schemas import RegionInfo, RegionType, SplitResult
 SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 
+# ----------------------------------------
+# 문서 기울기 · 원근 보정
+# ----------------------------------------
+# ⚠️ 왜 필요한가: 뒤따르는 표 검출(opencv_table_detector)이 «가로선/세로선
+#    morphological opening»으로 격자를 찾는다. 문서가 기울면 선이 가로도 세로도
+#    아니게 되어 표가 통째로 안 잡히고, 그러면 수치 추출이 0이 된다.
+#    지금까지 문제가 안 된 건 테스트가 전부 PDF 렌더링본(반듯함)이었기 때문이다.
+#    폰 카메라로 찍는 실제 사용 경로에서는 기울기와 원근이 항상 생긴다.
+#
+# ⚠️ 설계 원칙: **확신이 없으면 손대지 않는다.** 잘못 편 이미지는 안 편 이미지보다
+#    나쁘다(표가 오히려 더 안 잡힌다). 그래서 각 단계에 «안 하는 조건»을 명시해 둔다.
+
+# 기울기로 인정할 최대 각도. 이보다 크면 «기운 문서»가 아니라 다른 상황(가로/세로 촬영 등).
+_MAX_SKEW_DEG = 20.0
+# 이보다 작으면 보정 이득이 없다. 굳이 리샘플링해서 화질만 깎을 이유가 없다.
+_MIN_SKEW_DEG = 0.4
+
+# ⚠️ 원근(4점 투시) 보정은 **일부러 넣지 않았다.**
+#    시도해 봤고, 반듯한 스캔본에서 «표 테두리»를 문서 사각형으로 오인해 표만 잘라내는
+#    문제가 나왔다. 제대로 하려면 "배경 위에 놓인 문서"와 "종이 안의 표"를 가려야 하는데
+#    (윤곽 밖 영역의 밝기·질감을 종이와 비교하는 식), 잘못 판단하면 이미지를 통째로
+#    망가뜨린다. 회전 보정만으로도 표 격자 검출이 살아나는 것이 주 목적이므로
+#    거기까지만 한다. 원근은 실제 폰 촬영 샘플을 모은 뒤에 붙이는 게 맞다.
+
+
+def _skew_angle(gray: "np.ndarray") -> "float | None":
+    """글자·선 픽셀의 최소외접사각형 각도로 기울기를 잰다. 판단 불가면 None."""
+    import cv2
+    import numpy as np
+
+    bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    coords = cv2.findNonZero(bw)
+    if coords is None or len(coords) < 50:
+        return None                      # 내용이 거의 없는 이미지
+    angle = cv2.minAreaRect(coords)[-1]
+    # ⚠️ OpenCV 버전마다 각도 범위가 다르다. 4.5 이후는 (-90, 0], 그 이전은 [0, 90).
+    #    한쪽만 정규화하면 반대 방향 기울기를 통째로 놓친다 —
+    #    실제로 `> 45`만 처리했다가 -3·-5·-8도가 전부 감지 실패했다.
+    if angle < -45:
+        angle += 90
+    elif angle > 45:
+        angle -= 90
+    return float(angle)
+
+
+def correct_document_orientation(image: "Image.Image") -> "tuple[Image.Image, dict]":
+    """문서 사진의 기울기를 편다. 보정할 수 없거나 필요 없으면 원본 그대로.
+
+    Returns:
+        (보정된 RGB 이미지, {"method": "rotate"|"none", "angle": float})
+        **어떤 입력에도 예외를 던지지 않는다.** 보정 실패는 원본 통과여야 한다 —
+        여기서 터지면 업로드 전체가 실패한다.
+    """
+    info: dict = {"method": "none", "angle": 0.0}
+    try:
+        import cv2
+        import numpy as np
+
+        rgb = image.convert("RGB")
+        arr = np.array(rgb)
+        if arr.shape[0] < 50 or arr.shape[1] < 50:
+            return rgb, info             # 너무 작아 판단 불가
+
+        gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+        angle = _skew_angle(gray)
+        if angle is None or abs(angle) < _MIN_SKEW_DEG or abs(angle) > _MAX_SKEW_DEG:
+            return rgb, info             # 반듯하거나, 기울기로 볼 수 없는 각도
+
+        h, w = arr.shape[:2]
+        matrix = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)
+        rotated = cv2.warpAffine(
+            arr, matrix, (w, h),
+            flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE,
+        )
+        info = {"method": "rotate", "angle": round(angle, 2)}
+        return Image.fromarray(rotated), info
+
+    except Exception as e:                # noqa: BLE001 — 보정 실패로 업로드를 죽이지 않는다
+        info["error"] = f"{type(e).__name__}: {e}"
+        try:
+            return image.convert("RGB"), info
+        except Exception:
+            return image, info
+
+
 def load_image(image_path: str | Path) -> Image.Image:
     """이미지를 PIL Image로 로드. 형식 검증 포함."""
     path = Path(image_path).resolve()

@@ -122,7 +122,9 @@ class GraphicPipeline(BasePipeline):
         model: str | None = None,
         save_debug: bool = True,
     ):
-        self.model = model or config.OLLAMA_MODEL_VISION
+        # None으로 둔다 — 각 백엔드(Ollama/Gemini)가 자기 default_model을 쓴다.
+        # 여기에 Ollama 모델명을 박으면 Gemini 백엔드에서 404 NOT_FOUND가 난다.
+        self.model = model
         self.save_debug = save_debug
     
     @property

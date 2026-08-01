@@ -25,6 +25,7 @@ from PIL import Image
 
 from .merger import PageMerger
 from .merger.med_label_merger import MedLabelMerger
+from .utils import image_utils
 from .pipelines.med_label_pipeline import MedLabelPipeline
 from .run_multipage import process_single_page_from_image
 
@@ -154,7 +155,14 @@ def _process_checkup(
                 f"페이지 {idx + 1} ({page_name}) 이미지 로드 실패 "
                 f"({type(e).__name__}): {e}"
             )
-        
+
+        # 기울기 보정 — 뒤따르는 표 검출이 «가로선/세로선 opening»이라 문서가 기울면
+        # 격자를 통째로 못 잡는다. 폰으로 찍으면 항상 기운다.
+        # 반듯하면 손대지 않고, 어떤 입력에도 예외를 던지지 않는다(원본 통과).
+        image, orient = image_utils.correct_document_orientation(image)
+        if orient["method"] != "none":
+            print(f"  기울기 보정: {orient['method']} {orient['angle']}도 ({page_name})")
+
         page_result = process_single_page_from_image(
             image=image,
             page_name=page_name,

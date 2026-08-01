@@ -393,7 +393,10 @@ def page_has_measurement_values(
             system_prompt=PAGE_GATE_SYSTEM_PROMPT,
             user_prompt=PAGE_GATE_USER_PROMPT,
             image_base64=b64,
-            model=model or config.OLLAMA_MODEL_VISION,
+            # ⚠️ 여기서 Ollama 모델명을 기본값으로 박으면 안 된다. 백엔드가 Gemini일 때
+            #    'qwen2.5vl:7b-q8_0'이 그대로 넘어가 404 NOT_FOUND가 난다(실제로 그랬다).
+            #    None을 주면 OllamaBackend·GeminiBackend 둘 다 자기 default_model을 쓴다.
+            model=model,
         )
     except Exception as e:
         print(f"[PageGate] 호출 실패 ({type(e).__name__}) — 수치 추출 진행(fail-open)")
@@ -778,7 +781,9 @@ class TablePipeline(BasePipeline):
         model: str | None = None,
         save_debug: bool = True,
     ):
-        self.model = model or config.OLLAMA_MODEL_VISION
+        # None으로 둔다 — 각 백엔드(Ollama/Gemini)가 자기 default_model을 쓴다.
+        # 여기에 Ollama 모델명을 박으면 Gemini 백엔드에서 404 NOT_FOUND가 난다.
+        self.model = model
         self.save_debug = save_debug
         # 페이지 단위 게이트 결과 주입점. run_multipage가 페이지 처리 전에 세팅.
         # False면 이 페이지의 수치는 환각으로 보고 추출/보존하지 않는다.
