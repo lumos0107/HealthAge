@@ -211,6 +211,55 @@ function levelSummary(levels: string[]): string | null {
     : `지표 ${judged.length}개 중 ${bad}개가 주의 이상 구간이에요.`;
 }
 
+/** 1뎁스 판정 배지 — 카드를 열지 않고도 «이 카드가 나쁜가»를 알 수 있게 한다.
+ *
+ *  ⚠️ 이 배지가 없을 때는 카드 13장의 제목이 전부 같은 검정, 요약문이 전부 같은 회색이라
+ *  「지표 2개 모두 양호」와 「7개 중 6개가 주의 이상」이 시각적으로 완전히 같았다.
+ *  맨 위 결론이 "신장 기능부터 보세요"라고 말해도 아래에서 그 카드를 색으로 찾을 수 없었다.
+ *  검사항목 탭에는 있는 배지가 여기만 없던 것이다.
+ *
+ *  ⚠️ **판정이 아닌 카드에는 달지 않는다** — 집단군 판정·같은 또래 분포·함께 나타나는 조합·
+ *  16년 변화는 관찰이지 판정이 아니다. 관찰에 배지를 달면 없는 판단을 만들어내는 것이다.
+ *  지방간 «유형»(MASLD/MetALD/ALD)도 분류이지 강도가 아니라 달지 않는다. */
+type Verdict = 'good' | 'watch' | 'bad';
+
+const VERDICT: Record<Verdict, { text: string; color: string; bg: string }> = {
+  good: { text: '양호', color: T.success, bg: T.successBg },
+  watch: { text: '주의', color: T.warn, bg: T.warnBg },
+  // '위험'이 아니라 '높음' — 선별용 참고 지표라 진단 강도의 낱말을 쓰지 않는다(§7 진단 단정 금지).
+  bad: { text: '높음', color: T.danger, bg: T.dangerBg },
+};
+
+function VerdictBadge({ v }: { v: Verdict | null }) {
+  if (!v) return null;
+  const s = VERDICT[v];
+  return (
+    <View style={{ backgroundColor: s.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: s.color }}>{s.text}</Text>
+    </View>
+  );
+}
+
+/** 계산기 여러 개를 배지 하나로 접는다 — 가장 나쁜 것이 카드를 대표한다.
+ *  'info'(판정 없는 참고값)는 세지 않는다. 전부 info면 배지 없음. */
+function worstVerdict(levels: string[]): Verdict | null {
+  const judged = levels.filter((l) => l !== 'info');
+  if (!judged.length) return null;
+  if (judged.some((l) => l === 'high' || l === 'very_high')) return 'bad';
+  return judged.every((l) => l === 'low') ? 'good' : 'watch';
+}
+
+/** 1뎁스 요약은 우선 안내의 «머리»만 쓴다 — 전문을 그대로 두면 이 카드만 세 줄이 되어
+ *  한 줄짜리 다른 카드들과 스캔 리듬이 끊긴다. 전문은 2뎁스에 그대로 있다. */
+function priorityHead(messages: string[] | undefined): string | null {
+  const first = messages?.[0];
+  if (!first) return null;
+  const dash = first.indexOf('—');
+  const head = (dash > 0 ? first.slice(0, dash) : first.split('. ')[0]).trim();
+  const rest = (messages?.length ?? 0) - 1;
+  return rest > 0 ? `${head} 외 ${rest}건` : head;
+}
+
 export default function AnalysisScreen({ reports, metricDefinitions, usingRealData, recommendationsByYear, egfrByYear, comboAnalysisByYear, gender, smoking, alcoholWeeklyG }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
@@ -544,11 +593,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       <LayerHeader step={LAYERS[1].step} title={LAYERS[1].title} sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
 
       {/* 신장 — eGFR·CrCl */}
-      {egfr && <DomainHeader title="신장 기능" />}
+      {/* 소제목은 장기 이름으로 통일한다(간·대사·지질·심혈관과 같은 층위).
+          「신장 기능」이면 바로 아래 카드 「신장 기능 (eGFR)」과 같은 말을 두 번 한다. */}
+      {egfr && <DomainHeader title="신장" />}
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
       {egfr && (
         <FadeInUp delay={180}>
-        <SummaryCard title="신장 기능 (eGFR)" definition={cardContent['신장 기능 (eGFR)']?.definition} detail={cardContent['신장 기능 (eGFR)']?.detail} meaning={cardContent['신장 기능 (eGFR)']?.meaning} tips={cardContent['신장 기능 (eGFR)']?.tips} summary={`${egfr.egfr} ${egfr.unit} · ${egfr.label}`}>
+        <SummaryCard title="신장 기능 (eGFR)" definition={cardContent['신장 기능 (eGFR)']?.definition} detail={cardContent['신장 기능 (eGFR)']?.detail} meaning={cardContent['신장 기능 (eGFR)']?.meaning} tips={cardContent['신장 기능 (eGFR)']?.tips} summary={`${egfr.egfr} ${egfr.unit} · ${egfr.label}`}
+          badge={<VerdictBadge v={egfr.severity === 'normal' ? 'good' : egfr.severity === 'high' ? 'bad' : 'watch'} />}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>혈청 크레아티닌 수치를 바탕으로 추정한 신장 여과 기능이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{egfr.egfr}</Text>
@@ -584,7 +636,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
-        <SummaryCard title="지방간 보조지표" definition={cardContent['지방간 보조지표']?.definition} detail={cardContent['지방간 보조지표']?.detail} meaning={cardContent['지방간 보조지표']?.meaning} tips={cardContent['지방간 보조지표']?.tips} summary={levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))}>
+        <SummaryCard title="지방간 보조지표" definition={cardContent['지방간 보조지표']?.definition} detail={cardContent['지방간 보조지표']?.detail} meaning={cardContent['지방간 보조지표']?.meaning} tips={cardContent['지방간 보조지표']?.tips} summary={levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))}
+          badge={<VerdictBadge v={worstVerdict([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))} />}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표예요.</Text>
           {([
             { title: 'FLI', idx: flIndices.fli },
@@ -656,7 +709,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <SummaryCard title="간 계산기" definition={cardContent['간 계산기']?.definition} detail={cardContent['간 계산기']?.detail} meaning={cardContent['간 계산기']?.meaning} tips={cardContent['간 계산기']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} summary={levelSummary(liverCalcs.map((it) => it.level))}>
+        <SummaryCard title="간 계산기" definition={cardContent['간 계산기']?.definition} detail={cardContent['간 계산기']?.detail} meaning={cardContent['간 계산기']?.meaning} tips={cardContent['간 계산기']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} summary={levelSummary(liverCalcs.map((it) => it.level))}
+          badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
           <CalcRows items={liverCalcs} />
         </SummaryCard>
         </FadeInUp>
@@ -666,7 +720,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
-        <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} summary={levelSummary(metabolicCalcs.map((it) => it.level))}>
+        <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
+          badge={<VerdictBadge v={worstVerdict(metabolicCalcs.map((it) => it.level))} />}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
           <CalcRows items={metabolicPrimary} />
           {metabolicRedundant.length > 0 && (
@@ -706,7 +761,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* LDL 개인 목표 — 같은 LDL이라도 위험군에 따라 목표가 다르다(초고위험<55 … 저위험<160). */}
+      {/* LDL 개인 목표 — 같은 LDL이라도 위험군에 따라 목표가 다르다(초고위험<55 … 저위험<160).
+          배지: achieved가 null이면 판정 보류다(TG≥400이면 Friedewald LDL의 신뢰도가 떨어진다).
+          그때는 배지를 달지 않는다 — 모르는 것을 양호나 주의로 말하지 않는다. */}
       {ldlTarget && (
         <FadeInUp delay={205}>
         <SummaryCard
@@ -716,6 +773,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           meaning={cardContent['LDL 콜레스테롤 개인 목표']?.meaning}
           tips={cardContent['LDL 콜레스테롤 개인 목표']?.tips}
           summary={`목표 ${ldlTarget.target_text}${ldlTarget.achieved == null ? '' : ldlTarget.achieved ? ' · 달성했어요' : ` · 초과했어요${ldlTarget.gap != null ? ` (+${ldlTarget.gap})` : ''}`}`}
+          badge={<VerdictBadge v={ldlTarget.achieved == null ? null : ldlTarget.achieved ? 'good' : 'watch'} />}
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>같은 LDL 수치라도 위험군에 따라 목표가 달라져요. 내 위험군 기준 목표예요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -757,7 +815,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 심혈관 — ASCVD 위험 계산기 */}
       {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
       {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
-          계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다. */}
+          계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다.
+          배지는 2뎁스 안 배지(아래)와 같은 갈래를 쓴다 — 한 카드가 겉과 속에서 다른 색을 말하면 안 된다. */}
       {ascvd?.available && ascvd.risk_percent != null && (
         <FadeInUp delay={221}>
         <SummaryCard
@@ -767,6 +826,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           meaning={cardContent['심혈관 위험 참고 시뮬레이션']?.meaning}
           tips={cardContent['심혈관 위험 참고 시뮬레이션']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />}
           summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
+          badge={<VerdictBadge v={ascvd.risk_level === 'low' ? 'good' : ascvd.risk_level === 'high' ? 'bad' : 'watch'} />}
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
@@ -1031,7 +1091,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           detail={cardContent['맞춤 권장사항']?.detail}
           meaning={cardContent['맞춤 권장사항']?.meaning}
           tips={cardContent['맞춤 권장사항']?.tips}
-          summary={recommendations.priority_messages?.[0] ?? '내 검진 결과 기반 생활습관·검진 참고 안내예요.'}
+          summary={priorityHead(recommendations.priority_messages) ?? '내 검진 결과 기반 생활습관·검진 참고 안내예요.'}
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보예요.</Text>
 
