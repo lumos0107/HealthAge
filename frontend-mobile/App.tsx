@@ -391,7 +391,9 @@ export default function App() {
       {detail && (() => {
         const rep = reportsForScreens.find((r) => r.year === detail.year) ?? reportsForScreens[reportsForScreens.length - 1];
         const m = metricsForReport(rep, metricDefinitionsForScreens).find((x) => x.key === detail.key);
-        return m ? <MetricDetailScreen metric={m} report={rep} reports={reportsForScreens} onClose={() => setDetail(null)} /> : null;
+        // 연도는 여기 detail.year 한 곳에만 둔다 — 상세 화면이 따로 상태를 들면
+        // 목록에서 고른 해와 상세가 보는 해가 갈린다.
+        return m ? <MetricDetailScreen metric={m} report={rep} reports={reportsForScreens} onYear={(year) => setDetail({ key: detail.key, year })} onClose={() => setDetail(null)} /> : null;
       })()}
 
       {/* 토스트 */}

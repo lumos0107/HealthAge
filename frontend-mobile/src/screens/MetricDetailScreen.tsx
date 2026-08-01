@@ -2,17 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
-import { metricContent } from '../data';
+import { metricContent, yearsWithMetric } from '../data';
 import { deltaText, formatMetricValue, headline, metricPeerRank, yearDelta } from '../interpret';
 import { StatusBadge, T } from '../components/UI';
 import { categoryVisual, MetricTrendChart, PeerRankBlock, RangeBar, SquircleIcon } from '../components/v2';
 
 // L2 항목 상세 — 이야기 순서로 읽힌다: 판단 → 이 항목이 뭔지(정의, 펼치면 심화) → 내 위치 → 근거 → 그래서 뭘 하면 되는지.
 // 화면 전환은 이 오버레이 한 번만. 심화 설명만 2.5뎁스(펼치기)로 접어둔다 — 기본 설명으로 충분한 사람에게는 안 보여도 되는 층.
-export default function MetricDetailScreen({ metric, report, reports, onClose }: {
+export default function MetricDetailScreen({ metric, report, reports, onYear, onClose }: {
   metric: MetricDefinition;
   report: Report;
   reports: Report[];
+  /** 있으면 화면 안에서 해를 바꿀 수 있다 — 값·배지·헤드라인·전년 대비·등수·차트가 전부 따라간다. */
+  onYear?: (year: number) => void;
   onClose: () => void;
 }) {
   const value = report.values[metric.key];
@@ -26,6 +28,9 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
   // 행동 카드 프레임 — 같은 습관 팁이라도 상태에 따라 읽히는 맥락이 다르다:
   // 정상은 유지, 주의는 개선 제안, 위험은 우선순위로 프레이밍한다.
   const tipsTitle = metric.status === '정상' ? '지금처럼 유지하려면' : metric.status === '주의' ? '이렇게 하면 좋아요' : '먼저 이것부터';
+  // 이 항목을 실제로 잰 해만 고를 수 있게 한다 — 안 잰 해에는 그 해의 판정이 없어
+  // 상세 화면을 만들 수 없고, 고르는 순간 화면이 통째로 사라진다.
+  const years = yearsWithMetric(reports, metric.key);
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
@@ -39,6 +44,25 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
+          {/* 연도 — 분석 탭과 같은 방식으로 여기서도 해를 바꾼다. 예전에는 들어올 때의 해로 고정이라
+              다른 해를 보려면 목록으로 나갔다 다시 들어와야 했다. */}
+          {onYear && years.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
+              {[...years].reverse().map((y) => {
+                const active = y === report.year;
+                return (
+                  <Pressable
+                    key={y}
+                    onPress={() => onYear(y)}
+                    style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.white }}
+                  >
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text2 }}>{y}년</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+
           {/* L2 상단 — 판단 먼저: 배지 → 쉬운 문장 → 값·전년 대비 */}
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -104,7 +128,7 @@ export default function MetricDetailScreen({ metric, report, reports, onClose }:
               <DetailCell label="정상 기준" value={metric.normalText} />
               {metric.peerMean != null && <DetailCell label="또래 평균" value={`${metric.peerMean}${metric.unit}`} />}
             </View>
-            <MetricTrendChart metric={metric} reports={reports} />
+            <MetricTrendChart metric={metric} reports={reports} highlightYear={report.year} />
           </View>
 
           {/* 행동 — 그래서 뭘 하면 되는지. 참고값(infoOnly)이나 팁이 없는 항목은 카드를 그리지 않는다. */}

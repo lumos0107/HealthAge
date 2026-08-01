@@ -605,6 +605,14 @@ export function metricsForReport(report: Report, defs: MetricDefinition[] = metr
     .map((m) => ({ ...m, status: report.statusByKey[m.key]! }));
 }
 
+/** 그 항목을 실제로 측정한 해만 오름차순으로. L2 상세의 연도 칩이 쓴다.
+ *  판정 기준을 metricsForReport와 똑같이(statusByKey 유무) 두는 것이 핵심이다 —
+ *  안 잰 해를 고를 수 있게 두면 그 해엔 MetricDefinition이 만들어지지 않아
+ *  상세 화면 자체가 조용히 사라진다. */
+export function yearsWithMetric(reports: Report[], key: MetricKey): number[] {
+  return reports.filter((r) => r.statusByKey[key] !== undefined).map((r) => r.year);
+}
+
 export function isBadStatus(status: Status) {
   return status !== '정상';
 }

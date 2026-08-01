@@ -431,7 +431,15 @@ const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 const LINE = '#1E88E5'; // 상태색과 겹치지 않는 추이선 색
 
-export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition; reports: Report[] }) {
+/** @param highlightYear 지금 화면이 말하고 있는 해. 이 점을 크게·채워서 그리고 값을 적는다.
+ *  ⚠️ 예전에는 무조건 마지막 점을 강조했다. 2018년 상세를 열면 "내 수치 23.9" 바로 아래에서
+ *  차트만 26.3(2024)을 강조해, 한 카드가 서로 다른 해를 말했다. 화면이 고른 해를 받아 쓴다.
+ */
+export function MetricTrendChart({ metric, reports, highlightYear }: {
+  metric: MetricDefinition;
+  reports: Report[];
+  highlightYear: number;
+}) {
   const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
   const pts0 = reports
     .map((r, i) => ({ i, year: r.year, v: r.values[metric.key] }))
@@ -455,7 +463,9 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
   const bandBottom = Math.min(PLOT_H, yPos(low ?? minVal));
   const pts = pts0.map((p) => ({ ...p, x: xPos(p.i), y: yPos(p.v) }));
   const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-  const last = pts[pts.length - 1];
+  // 그 해에 이 항목을 안 쟀으면 강조할 점이 없다 — 마지막 점으로 돌아간다(그 상태로는 상세가 열리지 않지만,
+  // 차트만 따로 쓰이는 경우에도 빈 화면이 되지 않게 둔다).
+  const focus = pts.find((p) => p.year === highlightYear) ?? pts[pts.length - 1];
   const gridVals = Array.from({ length: 4 }, (_, i) => minVal + (i / 3) * (maxVal - minVal));
 
   return (
@@ -477,10 +487,10 @@ export function MetricTrendChart({ metric, reports }: { metric: MetricDefinition
           ))}
           <Path d={d} stroke={LINE} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           {pts.map((p) => (
-            <Circle key={p.i} cx={p.x} cy={p.y} r={p.i === last.i ? 6.5 : 4.5} fill={p.i === last.i ? LINE : T.white} stroke={LINE} strokeWidth={2.5} />
+            <Circle key={p.i} cx={p.x} cy={p.y} r={p.i === focus.i ? 6.5 : 4.5} fill={p.i === focus.i ? LINE : T.white} stroke={LINE} strokeWidth={2.5} />
           ))}
-          {/* 최신 값 강조 라벨 */}
-          <SvgText x={last.x} y={last.y - 12} fontSize={12} fill={LINE} textAnchor="middle" fontWeight="700">{last.v}</SvgText>
+          {/* 지금 보고 있는 해의 값 라벨 */}
+          <SvgText x={focus.x} y={focus.y - 12} fontSize={12} fill={LINE} textAnchor="middle" fontWeight="700">{focus.v}</SvgText>
         </G>
       </Svg>
       <Text style={{ fontSize: 11, color: T.text3, marginTop: 2 }}>초록 밴드가 정상 범위예요. 단위: {metric.unit}</Text>
