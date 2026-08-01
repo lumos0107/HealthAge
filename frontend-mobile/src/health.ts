@@ -111,8 +111,10 @@ export type RealRecommendations = {
     /** 조건에 안 맞아 뺀 권장과 그 이유. 없으면 화면에 아무것도 안 나온다.
      *  ⚠️ 조건 필터(A-1) 이전에 저장된 분석에는 이 필드가 없다 → 항상 옵셔널로 다룰 것. */
     omitted?: { category: string; reason: string }[];
-    metabolic_factors?: { factor: string; title: string; target?: string; details: string[]; by_medication?: boolean; reason?: string }[];
-    group_specific?: { group_id: string; title: string; details: string[] }[];
+    /** gap_note = "지금 178mg/dL — 목표 150mg/dL 미만까지 28mg/dL 남았어요."
+     *  ⚠️ #30 이전에 저장된 분석에는 없다 → 항상 옵셔널로 다룰 것. */
+    metabolic_factors?: { factor: string; title: string; target?: string; details: string[]; by_medication?: boolean; reason?: string; gap_note?: string | null }[];
+    group_specific?: { group_id: string; title: string; details: string[]; gap_note?: string | null }[];
     medication_notes?: { medication: string; note: string }[];
     elderly_notes?: string[];
   };

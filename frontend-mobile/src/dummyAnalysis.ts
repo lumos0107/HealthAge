@@ -7267,7 +7267,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -7276,14 +7277,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7347,7 +7349,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -7356,14 +7359,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7427,7 +7431,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -7436,14 +7441,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7507,7 +7513,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -7516,14 +7523,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7587,7 +7595,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -7596,14 +7605,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7671,7 +7681,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "HbA1c 추가 검사로 3개월 평균 혈당 확인 권장."
     ],
     "by_medication": false,
-    "reason": "공복혈당 102.0 (기준 ≥100)"
+    "reason": "공복혈당 102.0 (기준 ≥100)",
+    "gap_note": "지금 102mg/dL — 목표 100mg/dL 미만까지 2mg/dL 남았어요."
    },
    {
     "factor": "고중성지방",
@@ -7684,7 +7695,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "오메가-3 보충제는 의료진과 상담 후 결정."
     ],
     "by_medication": false,
-    "reason": "TG 152.0 (기준 ≥150)"
+    "reason": "TG 152.0 (기준 ≥150)",
+    "gap_note": "지금 152mg/dL — 목표 150mg/dL 미만까지 2mg/dL 남았어요."
    }
   ],
   "group_specific": [
@@ -7695,7 +7707,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -7704,14 +7717,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7721,7 +7735,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
  "user_name": "홍길동",
  "age": 54,
  "priority_messages": [
-  "대사증후군에 해당합니다 (4/5개 충족). 심혈관 질환 위험이 매우 높으니 의료진 상담을 권장합니다.",
+  "대사증후군에 해당합니다 — 5개 기준 중 4개(복부비만 · 고혈압 · 고혈당 · 고중성지방)를 충족합니다. 심혈관 질환 위험이 매우 높으니 의료진 상담을 권장합니다.",
   "지방간 의심 - 간 초음파 검사 및 절주 권장."
  ],
  "recommendations": {
@@ -7780,7 +7794,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "체중의 5% 감량 시 허리둘레가 평균 3~5cm 줄어듭니다."
     ],
     "by_medication": false,
-    "reason": "허리둘레 90.0cm (기준 ≥90)"
+    "reason": "허리둘레 90.0cm (기준 ≥90)",
+    "gap_note": "지금 90cm — 목표 90cm 미만 안에 있어요. 약물 치료로 관리되는 상태입니다."
    },
    {
     "factor": "고혈압",
@@ -7793,7 +7808,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "약물 복용 중이라면 임의 중단 금지, 의료진 상담 필수."
     ],
     "by_medication": false,
-    "reason": "혈압 133.0/85.0 (기준 ≥130/85)"
+    "reason": "혈압 133.0/85.0 (기준 ≥130/85)",
+    "gap_note": "지금 133/85mmHg — 목표 130/85mmHg 미만까지 수축기 3 · 이완기 0 남았어요."
    },
    {
     "factor": "고혈당",
@@ -7807,7 +7823,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "HbA1c 추가 검사로 3개월 평균 혈당 확인 권장."
     ],
     "by_medication": false,
-    "reason": "공복혈당 107.0 (기준 ≥100)"
+    "reason": "공복혈당 107.0 (기준 ≥100)",
+    "gap_note": "지금 107mg/dL — 목표 100mg/dL 미만까지 7mg/dL 남았어요."
    },
    {
     "factor": "고중성지방",
@@ -7820,7 +7837,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "오메가-3 보충제는 의료진과 상담 후 결정."
     ],
     "by_medication": false,
-    "reason": "TG 166.0 (기준 ≥150)"
+    "reason": "TG 166.0 (기준 ≥150)",
+    "gap_note": "지금 166mg/dL — 목표 150mg/dL 미만까지 16mg/dL 남았어요."
    }
   ],
   "group_specific": [
@@ -7831,7 +7849,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "단계적 체중 감량 (3~6개월에 5~10%).",
      "지속 가능한 식습관 변화를 우선.",
      "BMI 25 미만 도달을 목표로 설정."
-    ]
+    ],
+    "gap_note": "지금 BMI 25.2 — 목표 25 미만까지 0.2 남았어요."
    },
    {
     "group_id": "g_fatty_liver_suspect",
@@ -7841,7 +7860,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "알코올 섭취 중단/제한.",
      "간 초음파 등 추가 검사 권장.",
      "간 효소 수치를 3~6개월 후 재검사."
-    ]
+    ],
+    "gap_note": "지금 ALT 41(기준 40 초과) — 3~6개월 뒤 이 수치를 다시 재는 것이 목표예요."
    },
    {
     "group_id": "g_smoker_current",
@@ -7850,7 +7870,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -7859,14 +7880,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }
@@ -7876,7 +7898,7 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
  "user_name": "홍길동",
  "age": 56,
  "priority_messages": [
-  "대사증후군에 해당합니다 (5/5개 충족). 심혈관 질환 위험이 매우 높으니 의료진 상담을 권장합니다.",
+  "대사증후군에 해당합니다 — 5개 기준 중 5개(복부비만 · 고혈압 · 고혈당 · 낮은 HDL · 고중성지방)를 충족합니다. 심혈관 질환 위험이 매우 높으니 의료진 상담을 권장합니다.",
   "지방간 의심 - 간 초음파 검사 및 절주 권장."
  ],
  "recommendations": {
@@ -7935,7 +7957,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "체중의 5% 감량 시 허리둘레가 평균 3~5cm 줄어듭니다."
     ],
     "by_medication": false,
-    "reason": "허리둘레 93.0cm (기준 ≥90)"
+    "reason": "허리둘레 93.0cm (기준 ≥90)",
+    "gap_note": "지금 93cm — 목표 90cm 미만까지 3cm 남았어요."
    },
    {
     "factor": "고혈압",
@@ -7948,7 +7971,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "약물 복용 중이라면 임의 중단 금지, 의료진 상담 필수."
     ],
     "by_medication": false,
-    "reason": "혈압 138.0/88.0 (기준 ≥130/85)"
+    "reason": "혈압 138.0/88.0 (기준 ≥130/85)",
+    "gap_note": "지금 138/88mmHg — 목표 130/85mmHg 미만까지 수축기 8 · 이완기 3 남았어요."
    },
    {
     "factor": "고혈당",
@@ -7962,7 +7986,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "HbA1c 추가 검사로 3개월 평균 혈당 확인 권장."
     ],
     "by_medication": false,
-    "reason": "공복혈당 112.0 (기준 ≥100)"
+    "reason": "공복혈당 112.0 (기준 ≥100)",
+    "gap_note": "지금 112mg/dL — 목표 100mg/dL 미만까지 12mg/dL 남았어요."
    },
    {
     "factor": "낮은 HDL",
@@ -7975,7 +8000,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연 시 HDL이 평균 5~10% 상승합니다."
     ],
     "by_medication": false,
-    "reason": "HDL 39.0 (기준 <40)"
+    "reason": "HDL 39.0 (기준 <40)",
+    "gap_note": "지금 39mg/dL — 목표 40mg/dL 이상까지 1mg/dL 남았어요."
    },
    {
     "factor": "고중성지방",
@@ -7988,7 +8014,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "오메가-3 보충제는 의료진과 상담 후 결정."
     ],
     "by_medication": false,
-    "reason": "TG 178.0 (기준 ≥150)"
+    "reason": "TG 178.0 (기준 ≥150)",
+    "gap_note": "지금 178mg/dL — 목표 150mg/dL 미만까지 28mg/dL 남았어요."
    }
   ],
   "group_specific": [
@@ -7999,7 +8026,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "단계적 체중 감량 (3~6개월에 5~10%).",
      "지속 가능한 식습관 변화를 우선.",
      "BMI 25 미만 도달을 목표로 설정."
-    ]
+    ],
+    "gap_note": "지금 BMI 26.3 — 목표 25 미만까지 1.3 남았어요."
    },
    {
     "group_id": "g_fatty_liver_suspect",
@@ -8009,7 +8037,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "알코올 섭취 중단/제한.",
      "간 초음파 등 추가 검사 권장.",
      "간 효소 수치를 3~6개월 후 재검사."
-    ]
+    ],
+    "gap_note": "지금 ALT 45(기준 40 초과) — 3~6개월 뒤 이 수치를 다시 재는 것이 목표예요."
    },
    {
     "group_id": "g_smoker_current",
@@ -8018,7 +8047,8 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "금연이 모든 만성 질환 위험을 줄입니다.",
      "금연 시작 후 1년이면 심혈관 위험 절반 감소.",
      "금연 클리닉, 니코틴 대체제 등 의료 도움 권장."
-    ]
+    ],
+    "gap_note": null
    },
    {
     "group_id": "g_drinker",
@@ -8027,14 +8057,15 @@ export const dummyRecommendationsByYear: Record<number, RealRecommendations> = {
      "주 2회 이상 금주일 유지.",
      "1회 음주량 제한.",
      "간 효소 수치가 높다면 절주 우선."
-    ]
+    ],
+    "gap_note": null
    }
   ],
   "medication_notes": [],
   "elderly_notes": []
  },
  "_meta": {
-  "generated_at": "2026-08-01T05:21:49",
+  "generated_at": "2026-08-01T09:48:32",
   "version": "v1 (약대 자문)",
   "disclaimer": "본 권장사항은 일반 가이드라인이며, 개인별 의료 상담을 대체할 수 없습니다."
  }

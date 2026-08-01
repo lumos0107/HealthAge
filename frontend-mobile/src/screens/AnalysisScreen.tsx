@@ -1067,6 +1067,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {recommendations.recommendations?.metabolic_factors?.map((f, i) => (
             <View key={`mf-${i}`} style={{ marginBottom: 12, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{f.title}{f.target ? ` · 목표 ${f.target}` : ''}</Text>
+              {/* 목표선만 말하면 누구에게나 같은 문장이다. 내 값과의 거리를 목표 바로 아래에 둔다. */}
+              {!!f.gap_note && (
+                <Text style={{ fontSize: 12, color: T.primary, fontWeight: '600', lineHeight: 19, marginBottom: 4 }}>{f.gap_note}</Text>
+              )}
               {f.details.map((d, j) => (
                 <Text key={j} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {d}</Text>
               ))}
@@ -1079,6 +1083,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {recommendations.recommendations?.group_specific?.map((g, i) => (
             <View key={`gs-${i}`} style={{ marginBottom: 12, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{g.title}</Text>
+              {!!g.gap_note && (
+                <Text style={{ fontSize: 12, color: T.primary, fontWeight: '600', lineHeight: 19, marginBottom: 4 }}>{g.gap_note}</Text>
+              )}
               {g.details.map((d, j) => (
                 <Text key={j} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {d}</Text>
               ))}

@@ -540,18 +540,136 @@ def _filter_common(user_groups: dict, medications: dict) -> tuple[list[dict], li
 
 
 # ============================================================
+# 목표까지의 거리 (#30·#31)
+# ============================================================
+# 권장사항은 "목표 <150mg/dL"까지만 말하고 "지금 178이라 28 남았어요"를 말하지 않았다.
+# 목표선은 누구에게나 같으니, 그 문장만으로는 개인화가 한 줄도 들어가지 않은 셈이다.
+# 재료(value·threshold)는 이미 같은 응답 안 factors[*]에 들어 있었다.
+#
+# ⚠️ threshold의 타입이 인자마다 다르다 — 90(int) / "130/85"(str) / "<40"(str) / 150(int).
+#    evaluate_metabolic_syndrome이 각 인자를 사람이 읽을 모양으로 적어 둔 것이라
+#    통일을 강요하지 않고, 인자별로 어떻게 재는지를 여기 적는다.
+
+_GAP_UNIT = {"복부비만": "cm"}          # 나머지는 mg/dL
+_HDL_LIKE = {"낮은 HDL"}                 # 목표가 «기준 이상»이라 방향이 반대인 인자
+
+
+def _num(x) -> Optional[float]:
+    """'<40' · '≥40' · 150 → 40.0 · 40.0 · 150.0. 못 읽으면 None."""
+    if isinstance(x, (int, float)):
+        return float(x)
+    try:
+        return float(str(x).lstrip("<≥>=").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _fmt(n: float) -> str:
+    return f"{n:g}"
+
+
+def _bp_gap_note(value, threshold) -> Optional[str]:
+    """혈압만 수치가 둘이라 따로 만든다. '138/88' · '130/85' 형태를 받는다."""
+    try:
+        sbp, dbp = (float(v) for v in str(value).split("/"))
+        s_cut, d_cut = (float(v) for v in str(threshold).split("/"))
+    except (TypeError, ValueError):
+        return None
+
+    over = []
+    if sbp >= s_cut:
+        over.append(f"수축기 {_fmt(sbp - s_cut)}")
+    if dbp >= d_cut:
+        over.append(f"이완기 {_fmt(dbp - d_cut)}")
+
+    now = f"지금 {_fmt(sbp)}/{_fmt(dbp)}mmHg"
+    target = f"목표 {_fmt(s_cut)}/{_fmt(d_cut)}mmHg 미만"
+    if not over:
+        # 약 때문에 인자가 충족된 경우 — 수치는 목표 안이다.
+        return f"{now} — {target} 안에 있어요. 약물 치료로 관리되는 상태입니다."
+    return f"{now} — {target}까지 {' · '.join(over)} 남았어요."
+
+
+def _factor_gap_note(name: str, info: dict) -> Optional[str]:
+    """이 인자에서 내 값이 목표까지 얼마나 남았는지 한 줄로."""
+    value = info.get("value")
+    if value is None:
+        return None                      # 수치 없이 약만 복용 — 거리를 말할 수 없다
+
+    if name == "고혈압":
+        return _bp_gap_note(value, info.get("threshold"))
+
+    cut = _num(info.get("threshold"))
+    val = _num(value)
+    if cut is None or val is None:
+        return None
+
+    unit = _GAP_UNIT.get(name, "mg/dL")
+    # HDL은 목표가 «기준 이상»이라 모자란 만큼을, 나머지는 넘은 만큼을 잰다.
+    gap = (cut - val) if name in _HDL_LIKE else (val - cut)
+    target = f"목표 {_fmt(cut)}{unit} {'이상' if name in _HDL_LIKE else '미만'}"
+    now = f"지금 {_fmt(val)}{unit}"
+
+    if gap <= 0:
+        return f"{now} — {target} 안에 있어요. 약물 치료로 관리되는 상태입니다."
+    return f"{now} — {target}까지 {_fmt(round(gap, 1))}{unit} 남았어요."
+
+
+def _bmi_of(checkup: dict) -> Optional[float]:
+    bmi = checkup.get("BMI")
+    if bmi is None:
+        h, w = checkup.get("신장"), checkup.get("체중")
+        if h and w:
+            bmi = w / ((h / 100) ** 2)
+    return round(bmi, 1) if bmi is not None else None
+
+
+def _group_gap_note(group_id: str, checkup: Optional[dict]) -> Optional[str]:
+    """그룹 권장의 숫자 목표에 내 값을 넣는다. 숫자 목표가 없는 그룹(금연·음주)은 None."""
+    if not checkup:
+        return None                      # 구버전 호출부·저장분 — 조용히 건너뛴다
+
+    if group_id == "g_obesity":
+        bmi = _bmi_of(checkup)
+        if bmi is None:
+            return None
+        if bmi < 25:
+            return f"지금 BMI {bmi} — 목표 25 미만 안에 있어요."
+        return f"지금 BMI {bmi} — 목표 25 미만까지 {_fmt(round(bmi - 25, 1))} 남았어요."
+
+    if group_id == "g_fatty_liver_suspect":
+        # 이 그룹은 ALT>40 또는 감마-GTP>75로 판정된다. 걸린 쪽만 말해야
+        # "간 수치 재검사"가 어느 수치 얘기인지 알 수 있다.
+        over = []
+        alt, ggt = checkup.get("혈청지피티(ALT)"), checkup.get("감마지티피")
+        if alt is not None and alt > 40:
+            over.append(f"ALT {_fmt(alt)}(기준 40 초과)")
+        if ggt is not None and ggt > 75:
+            over.append(f"감마-GTP {_fmt(ggt)}(기준 75 초과)")
+        if not over:
+            return None
+        return f"지금 {' · '.join(over)} — 3~6개월 뒤 이 수치를 다시 재는 것이 목표예요."
+
+    return None
+
+
+# ============================================================
 # Step 4: 그룹 분석 → 맞춤 권장사항
 # ============================================================
 def run_recommendations(
     group_analysis: dict,
     user_info: Optional[dict] = None,
+    checkup: Optional[dict] = None,
 ) -> dict:
     """
     그룹 분석 결과로부터 맞춤 권장사항 생성.
-    
+
     Args:
         group_analysis: run_group_analysis 결과
         user_info: 사용자 정보 (옵션)
+        checkup: {항목명: 값} — 그룹 권장(비만·지방간)의 목표에 내 값을 넣는 데 쓴다.
+                 대사증후군 인자별 거리는 group_analysis 안에 이미 값이 있어 필요 없다.
+                 **없어도 동작한다** — 구버전 호출부는 그룹 거리만 빠진다.
 
     Returns:
         권장사항 dict
@@ -609,6 +727,8 @@ def run_recommendations(
                 "details": factor_rec["details"].copy(),
                 "by_medication": factor_info.get("by_medication", False),
                 "reason": factor_info.get("reason"),
+                # 목표선만 말하면 누구에게나 같은 문장이 된다. 내 값과의 거리를 함께 준다.
+                "gap_note": _factor_gap_note(factor_name, factor_info),
             }
 
             if entry["by_medication"]:
@@ -625,6 +745,7 @@ def run_recommendations(
                 "group_id": group_id,
                 "title": info["title"],
                 "details": info["details"],
+                "gap_note": _group_gap_note(group_id, checkup),
             })
 
     # 4. 약물 복용 주의사항 — 조절 상태에 따라 3단계로 차등한다.
@@ -646,8 +767,12 @@ def run_recommendations(
     priority_messages = []
 
     if ms_detail.get("is_metabolic_syndrome"):
+        # 개수만 말하면 "5/5 충족"인 두 사람이 같은 문장을 받는다. 어느 5개인지가 사람마다 다르다.
+        met_names = [n for n, f in (ms_detail.get("factors") or {}).items() if f.get("met")]
+        which = f"({' · '.join(met_names)})" if met_names else ""
         priority_messages.append(
-            f"대사증후군에 해당합니다 ({ms_detail['count']}/{ms_detail['evaluable']}개 충족). "
+            f"대사증후군에 해당합니다 — {ms_detail['evaluable']}개 기준 중 "
+            f"{ms_detail['count']}개{which}를 충족합니다. "
             "심혈관 질환 위험이 매우 높으니 의료진 상담을 권장합니다."
         )
 
@@ -706,7 +831,9 @@ def run_full_pipeline(
     recommendations = None
     try:
         group_analysis = run_group_analysis(basic, user_info)
-        recommendations = run_recommendations(group_analysis, user_info)
+        # 그룹 권장(비만·지방간)의 목표에 내 값을 넣으려면 검진 수치가 필요하다.
+        checkup = {i["항목"]: i["값"] for i in basic.get("전체결과", []) if "항목" in i}
+        recommendations = run_recommendations(group_analysis, user_info, checkup=checkup)
     except Exception as e:
         # 그룹 분석은 group_stats.parquet 등 의존성이 있어 실패 가능
         # 기본 분석은 성공했으므로 경고만 추가
