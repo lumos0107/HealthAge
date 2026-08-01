@@ -434,11 +434,13 @@ const LINE = '#1E88E5'; // 상태색과 겹치지 않는 추이선 색
 /** @param highlightYear 지금 화면이 말하고 있는 해. 이 점을 크게·채워서 그리고 값을 적는다.
  *  ⚠️ 예전에는 무조건 마지막 점을 강조했다. 2018년 상세를 열면 "내 수치 23.9" 바로 아래에서
  *  차트만 26.3(2024)을 강조해, 한 카드가 서로 다른 해를 말했다. 화면이 고른 해를 받아 쓴다.
+ *  @param onSelectYear 있으면 그래프를 눌러 해를 바꿀 수 있다. 없으면 읽기 전용.
  */
-export function MetricTrendChart({ metric, reports, highlightYear }: {
+export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear }: {
   metric: MetricDefinition;
   reports: Report[];
   highlightYear: number;
+  onSelectYear?: (year: number) => void;
 }) {
   const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
   const pts0 = reports
@@ -468,8 +470,21 @@ export function MetricTrendChart({ metric, reports, highlightYear }: {
   const focus = pts.find((p) => p.year === highlightYear) ?? pts[pts.length - 1];
   const gridVals = Array.from({ length: 4 }, (_, i) => minVal + (i / 3) * (maxVal - minVal));
 
+  // 누른 x를 «측정한 해»로 스냅한다. 안 잰 해로는 못 가게 막는 것이 핵심이다 —
+  // 그 해엔 이 항목의 판정이 없어 상세 화면이 통째로 사라진다.
+  // 세로 스크롤 안에 있으므로 onPress만 쓴다(히스토리 차트처럼 onTouchMove까지 잡으면 스크롤을 뺏는다).
+  const handlePress = (evt: any) => {
+    if (!onSelectYear) return;
+    const x = evt.nativeEvent.locationX - PAD.left;
+    const ratio = reports.length <= 1 ? 0 : Math.min(1, Math.max(0, x / PLOT_W));
+    const idx = Math.round(ratio * (reports.length - 1));
+    const nearest = pts.reduce((a, b) => (Math.abs(b.i - idx) < Math.abs(a.i - idx) ? b : a));
+    onSelectYear(nearest.year);
+  };
+
   return (
     <View>
+      <Pressable onPress={handlePress} disabled={!onSelectYear}>
       <Svg width={CHART_W} height={CHART_H}>
         <G x={PAD.left} y={PAD.top}>
           {/* 정상범위 밴드 — infoOnly는 판정 기준이 없으므로 그리지 않는다 */}
@@ -493,7 +508,11 @@ export function MetricTrendChart({ metric, reports, highlightYear }: {
           <SvgText x={focus.x} y={focus.y - 12} fontSize={12} fill={LINE} textAnchor="middle" fontWeight="700">{focus.v}</SvgText>
         </G>
       </Svg>
-      <Text style={{ fontSize: 11, color: T.text3, marginTop: 2 }}>초록 밴드가 정상 범위예요. 단위: {metric.unit}</Text>
+      </Pressable>
+      <Text style={{ fontSize: 11, color: T.text3, marginTop: 2 }}>
+        초록 밴드가 정상 범위예요. 단위: {metric.unit}
+        {onSelectYear && pts.length > 1 ? ' · 그래프를 눌러 그해 수치를 봅니다.' : ''}
+      </Text>
     </View>
   );
 }

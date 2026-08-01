@@ -128,7 +128,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
               <DetailCell label="정상 기준" value={metric.normalText} />
               {metric.peerMean != null && <DetailCell label="또래 평균" value={`${metric.peerMean}${metric.unit}`} />}
             </View>
-            <MetricTrendChart metric={metric} reports={reports} highlightYear={report.year} />
+            <MetricTrendChart metric={metric} reports={reports} highlightYear={report.year} onSelectYear={onYear} />
           </View>
 
           {/* 행동 — 그래서 뭘 하면 되는지. 참고값(infoOnly)이나 팁이 없는 항목은 카드를 그리지 않는다. */}
