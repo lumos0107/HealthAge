@@ -145,10 +145,16 @@ function makeReport(base: Pick<Report, 'year' | 'date' | 'hospital' | 'summary' 
 }
 
 // 건강검진은 2년에 한 번(만 40세 이상 일반검진 기준) — 2년 단위로 8개년치를 둔다.
-// 홍길동(1968년생, 남)이 42세→56세에 걸쳐 대사 지표가 서서히 악화되는 흐름:
-// 참고 점수 100 → 100 → 100 → 88 → 76 → 58 → 34 → 22.
-// 시계열·검진패턴·추세가 한 흐름으로 읽힌다. 앞의 세 회차가 모두 100인 것은 꾸며내지
-// 않은 결과다 — 그 해 수치가 전부 정상범위 안이면 감점이 없다.
+// 홍길동(1968년생, 남)이 42세→56세. 2020년(52세)에 바닥을 찍고 돌아서는 흐름:
+// 참고 점수 100 → 100 → 100 → 88 → 58 → **22** → 40 → 58.
+// 앞의 세 회차가 모두 100인 것은 꾸며내지 않은 결과다 — 그 해 수치가 전부 정상범위
+// 안이면 감점이 없다. 2024년에 위험 항목이 하나도 없는 것도 마찬가지다(BMI 24.1·허리 88).
+//
+// ⚠️ 여기 values를 고치면 tools/gen_demo_analysis.py 의 YEARS 도 **같이** 고쳐야 한다.
+//    두 곳이 갈리면 화면 위쪽(수치·점수)과 아래쪽(대사증후군·계산기·ASCVD)이
+//    서로 다른 사람을 말하게 된다. 고친 뒤에는 두 생성 스크립트를 차례로 돌린다:
+//      uv run python ../tools/gen_demo_analysis.py      → tools/dummy_by_year.json
+//      uv run python ../tools/gen_dummy_analysis_ts.py  → src/dummyAnalysis.ts
 export const reports: Report[] = [
   makeReport({
     year: 2010,
@@ -190,37 +196,37 @@ export const reports: Report[] = [
     year: 2018,
     date: '2018-05-30',
     hospital: '한국건강관리협회 서울강남지부',
-    summary: '혈압이 이완기까지 올라오고 체중 관리가 필요한 시점입니다.',
-    values: { sbp: 125, dbp: 80, glucose: 96, bmi: 23.9, waist: 85, ldl: 129, hdl: 48, triglyceride: 140, ast: 26, alt: 30, ggt: 41, hemoglobin: 15.1, creatinine: 0.87, height: 165.9, weight: 65.8, totalCholesterol: 205, urineProtein: 1 },
-    // 100 - 6×4 = 76 (총콜레스테롤 주의 추가)
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+    summary: '혈압·혈당·지질이 한꺼번에 기준을 넘어 대사증후군 3개 기준에 해당합니다.',
+    values: { sbp: 133, dbp: 86, glucose: 103, bmi: 24.3, waist: 88, ldl: 136, hdl: 43, triglyceride: 155, ast: 28, alt: 34, ggt: 48, hemoglobin: 15.1, creatinine: 0.88, height: 165.9, weight: 67.0, totalCholesterol: 210, urineProtein: 1 },
+    // 100 - 6×7 = 58
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2020,
     date: '2020-07-08',
     hospital: '서울대병원 강남센터',
-    summary: '혈당·지질까지 함께 올라 대사 지표를 묶어서 확인합니다.',
-    values: { sbp: 129, dbp: 82, glucose: 102, bmi: 24.4, waist: 87, ldl: 134, hdl: 45, triglyceride: 152, ast: 29, alt: 35, ggt: 50, hemoglobin: 15.2, creatinine: 0.89, height: 165.9, weight: 67.2, totalCholesterol: 209, urineProtein: 1 },
-    // 100 - 6×7 = 58 (총콜레스테롤 주의 추가)
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+    summary: '대사증후군 5개 기준을 모두 충족한 회차입니다. 여기가 가장 나빴던 시점입니다.',
+    values: { sbp: 139, dbp: 89, glucose: 116, bmi: 26.9, waist: 95, ldl: 148, hdl: 38, triglyceride: 185, ast: 36, alt: 48, ggt: 72, hemoglobin: 15.3, creatinine: 1.02, height: 165.9, weight: 74.0, totalCholesterol: 223, urineProtein: 1 },
+    // 100 - 6×9 - 12×2 = 22 — 8회차 중 최저
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2022,
     date: '2022-06-15',
     hospital: '서울대병원 강남센터',
-    summary: '비만·복부비만이 위험 수준에 들어 대사증후군 위험이 커집니다.',
-    values: { sbp: 133, dbp: 85, glucose: 107, bmi: 25.2, waist: 90, ldl: 140, hdl: 42, triglyceride: 166, ast: 31, alt: 41, ggt: 59, hemoglobin: 15.3, creatinine: 0.95, height: 165.9, weight: 69.4, totalCholesterol: 215, urineProtein: 1 },
-    // 100 - 6×7 - 12×2 = 34 (총콜레스테롤 주의 추가)
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+    summary: '체중을 4.2kg 줄여 지난 회차보다 나아졌지만 아직 복부비만·대사증후군이 남아 있습니다.',
+    values: { sbp: 136, dbp: 87, glucose: 112, bmi: 25.4, waist: 91, ldl: 145, hdl: 41, triglyceride: 175, ast: 29, alt: 37, ggt: 45, hemoglobin: 15.2, creatinine: 1.00, height: 165.9, weight: 69.8, totalCholesterol: 218, urineProtein: 1 },
+    // 100 - 6×6 - 12×2 = 40
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2024,
     date: '2024-03-15',
     hospital: '서울대병원 강남센터',
-    summary: '대사증후군 관련 항목이 여러 개 겹쳐 위험 수준의 확인이 필요합니다.',
-    values: { sbp: 138, dbp: 88, glucose: 112, bmi: 26.3, waist: 93, ldl: 145, hdl: 39, triglyceride: 178, ast: 34, alt: 45, ggt: 68, hemoglobin: 15.4, creatinine: 1.01, height: 165.9, weight: 72.4, totalCholesterol: 220, urineProtein: 1 },
-    // 100 - 6×9 - 12×2 = 22 (총콜레스테롤 주의 추가)
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+    summary: '허리둘레·HDL이 기준 안으로 돌아왔고, 혈압·혈당·중성지방 3개가 남았습니다.',
+    values: { sbp: 134, dbp: 86, glucose: 108, bmi: 24.1, waist: 88, ldl: 141, hdl: 45, triglyceride: 165, ast: 25, alt: 29, ggt: 33, hemoglobin: 15.1, creatinine: 0.98, height: 165.9, weight: 66.2, totalCholesterol: 212, urineProtein: 1 },
+    // 100 - 6×7 = 58 — 위험 항목이 하나도 없다(2020년의 BMI·허리 위험이 풀렸다)
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
 ];
 

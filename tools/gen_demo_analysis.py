@@ -43,18 +43,31 @@ YEARS = [
     dict(year=2016, date="2016-06-11", sbp=121, dbp=77, fbs=91, waist=82, ldl=120, hdl=51,
          tg=122, ast=24, alt=27, ggt=33, hb=15.0, creatinine=0.85, height=165.9, weight=64.1,
          total_cholesterol=195, urine_protein=1),
-    dict(year=2018, date="2018-05-30", sbp=125, dbp=80, fbs=96, waist=85, ldl=129, hdl=48,
-         tg=140, ast=26, alt=30, ggt=41, hb=15.1, creatinine=0.87, height=165.9, weight=65.8,
-         total_cholesterol=205, urine_protein=1),
-    dict(year=2020, date="2020-07-08", sbp=129, dbp=82, fbs=102, waist=87, ldl=134, hdl=45,
-         tg=152, ast=29, alt=35, ggt=50, hb=15.2, creatinine=0.89, height=165.9, weight=67.2,
-         total_cholesterol=209, urine_protein=1),
-    dict(year=2022, date="2022-06-15", sbp=133, dbp=85, fbs=107, waist=90, ldl=140, hdl=42,
-         tg=166, ast=31, alt=41, ggt=59, hb=15.3, creatinine=0.95, height=165.9, weight=69.4,
-         total_cholesterol=215, urine_protein=1),
-    dict(year=2024, date="2024-03-15", sbp=138, dbp=88, fbs=112, waist=93, ldl=145, hdl=39,
-         tg=178, ast=34, alt=45, ggt=68, hb=15.4, creatinine=1.01, height=165.9, weight=72.4,
-         total_cholesterol=220, urine_protein=1),
+    # 2018~2020 급격히 악화 → 2020 바닥 → 2022·2024 연속 회복.
+    # 회복 곡선을 지어내지 않고 근거문서(2026-07-30-생활습관-효과크기-근거.md)에 맞췄다:
+    #   · 감마-GTP는 절주에 빠르게 반응한다(반감기 26일) → 72 → 45 → 33
+    #   · ALT는 식이+운동 병행에서 크게 떨어진다(−13.27, 등급 A) → 48 → 37 → 29
+    #   · **LDL은 체중 감량으로 움직이지 않는다(§6-9)** → 148 → 145 → 141 로 거의 그대로.
+    #     함께 떨어뜨리면 「다음 검진 목표」가 "체중을 줄여도 LDL은 안 움직입니다"라고
+    #     말하는 바로 그 화면과 데모가 모순된다.
+    #   · 신장은 회복이 느리다 → 크레아티닌 1.02 → 1.00 → 0.98 로 조금만
+    dict(year=2018, date="2018-05-30", sbp=133, dbp=86, fbs=103, waist=88, ldl=136, hdl=43,
+         tg=155, ast=28, alt=34, ggt=48, hb=15.1, creatinine=0.88, height=165.9, weight=67.0,
+         total_cholesterol=210, urine_protein=1),
+    dict(year=2020, date="2020-07-08", sbp=139, dbp=89, fbs=116, waist=95, ldl=148, hdl=38,
+         tg=185, ast=36, alt=48, ggt=72, hb=15.3, creatinine=1.02, height=165.9, weight=74.0,
+         total_cholesterol=223, urine_protein=1),
+    dict(year=2022, date="2022-06-15", sbp=136, dbp=87, fbs=112, waist=91, ldl=145, hdl=41,
+         tg=175, ast=29, alt=37, ggt=45, hb=15.2, creatinine=1.00, height=165.9, weight=69.8,
+         total_cholesterol=218, urine_protein=1),
+    # ⚠️ 2024를 더 좋게 만들면 안 된다. 이탈도(대사증후군 5기준에서 벗어난 정도)가
+    #    0.05까지 내려가면 「다음 검진 목표」에서 체중·유산소·절주 세 행동이 **완전 동점**이
+    #    되고 금연은 0%가 되어 사라진다 — 어떤 행동이든 한 번에 전부 기준 아래로
+    #    내려버리기 때문이다. 효과크기로 우선순위를 매기는 기능(A-2)이 데모에서 안 보인다.
+    #    지금 값의 이탈도는 0.22로, 행동마다 감소폭이 갈린다.
+    dict(year=2024, date="2024-03-15", sbp=134, dbp=86, fbs=108, waist=88, ldl=141, hdl=45,
+         tg=165, ast=25, alt=29, ggt=33, hb=15.1, creatinine=0.98, height=165.9, weight=66.2,
+         total_cholesterol=212, urine_protein=1),
 ]
 
 MEASURE_KEYS = [

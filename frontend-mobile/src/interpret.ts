@@ -106,8 +106,16 @@ export function scoreSeries(reports: Report[]): ScorePoint[] {
   return rows.map((r) => ({ ...r, complete: r.judged === maxJudged }));
 }
 
+/** 반등을 «추세»로 인정하는 최소 폭. 1점은 회차 간 흔들림이라 문장으로 만들지 않는다. */
+const REBOUND_MIN = 2;
+
 /** 점수 추이 한 줄 결론 — "14년간 78점 내려갔어요".
- *  기간은 회차 수가 아니라 첫 해와 마지막 해의 차이로 센다. */
+ *  기간은 회차 수가 아니라 첫 해와 마지막 해의 차이로 센다.
+ *
+ *  ⚠️ 첫 해와 마지막 해만 비교하면 «내려갔다가 올라온» 흐름을 말할 수 없다.
+ *  그래프는 V자를 그리는데 문장은 "42점 내려갔어요"만 해서, 한 카드 안에서
+ *  그림과 글이 다른 이야기를 했다. 바닥을 찍고 올라왔으면 그 사실을 뒤에 붙인다.
+ *  (전체가 올라간 해에는 붙이지 않는다 — "내려갔지만"이 성립하지 않는다.) */
 export function scoreTrendText(series: ScorePoint[]): string | null {
   if (series.length < 2) return null;
   const first = series[0];
@@ -116,7 +124,18 @@ export function scoreTrendText(series: ScorePoint[]): string | null {
   const diff = last.score - first.score;
   const period = span > 0 ? `${span}년간 ` : '';
   if (diff === 0) return `${period}점수는 그대로예요.`;
-  return `${period}${Math.abs(diff)}점 ${diff < 0 ? '내려갔어요' : '올라갔어요'}.`;
+  if (diff > 0) return `${period}${Math.abs(diff)}점 올라갔어요.`;
+
+  // 바닥 = 최저점. 같은 값이 여럿이면 **마지막** 것을 쓴다 — 회복이 시작된 지점이 거기다.
+  let trough = 0;
+  for (let i = 1; i < series.length; i++) {
+    if (series[i].score <= series[trough].score) trough = i;
+  }
+  const rebound = last.score - series[trough].score;
+  if (trough === series.length - 1 || rebound < REBOUND_MIN) {
+    return `${period}${Math.abs(diff)}점 내려갔어요.`;
+  }
+  return `${period}${Math.abs(diff)}점 내려갔지만, ${series[trough].year}년 이후로는 ${rebound}점 올랐어요.`;
 }
 
 /** 검사 항목이 빠진 해가 있으면 그 사실을 알리는 문구. 없으면 null. */

@@ -31,8 +31,8 @@ describe('headline', () => {
 
 describe('yearDelta / deltaText', () => {
   it('직전 검진 연도와의 차이를 계산한다', () => {
-    // glucose 2024=112, 2022=107 → diff +5
-    expect(yearDelta(reports, 'glucose', 2024)).toEqual({ diff: 5, prevYear: 2022 });
+    // glucose 2024=108, 2022=112 → diff −4 (2020년 바닥 이후 내려가는 중이라 음수다)
+    expect(yearDelta(reports, 'glucose', 2024)).toEqual({ diff: -4, prevYear: 2022 });
   });
   it('첫 검진(이전 기록 없음)이면 null', () => {
     // reports의 첫 회차. 앞에 비교할 기록이 없으므로 변화량을 만들지 않는다.
@@ -128,6 +128,24 @@ describe('scoreSeries / scoreTrendText / scoreGapNote', () => {
 
   it('한 해뿐이면 추이 문장이 없다', () => {
     expect(scoreTrendText(scoreSeries([rep(2024, 22, full)]))).toBeNull();
+  });
+
+  // 첫 해와 마지막 해만 비교하면 «내려갔다가 올라온» 흐름을 못 말한다.
+  // 데모 페르소나가 정확히 그 모양이다(100 → 22 → 58): 그래프는 V자인데
+  // 문장은 "42점 내려갔어요"만 말해, 화면 위아래가 서로 다른 이야기를 했다.
+  it('바닥을 찍고 올라왔으면 반등도 함께 말한다', () => {
+    const s = scoreSeries([rep(2018, 100, full), rep(2020, 22, full), rep(2022, 40, full), rep(2024, 58, full)]);
+    expect(scoreTrendText(s)).toBe('6년간 42점 내려갔지만, 2020년 이후로는 36점 올랐어요.');
+  });
+
+  it('바닥이 마지막 해면 반등을 말하지 않는다', () => {
+    const s = scoreSeries([rep(2020, 100, full), rep(2022, 60, full), rep(2024, 22, full)]);
+    expect(scoreTrendText(s)).toBe('4년간 78점 내려갔어요.');
+  });
+
+  it('반등이 1점이면 말하지 않는다 — 흔들림을 추세로 부풀리지 않는다', () => {
+    const s = scoreSeries([rep(2020, 100, full), rep(2022, 40, full), rep(2024, 41, full)]);
+    expect(scoreTrendText(s)).toBe('4년간 59점 내려갔어요.');
   });
 
   it('항목이 빠진 해가 있으면 그 사실을 문구로 알린다', () => {
