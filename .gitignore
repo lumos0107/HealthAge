@@ -72,3 +72,7 @@ frontend-reference-preview/
 
 # 개인정보 원칙상 테스트 검진지 이미지는 커밋하지 않음
 **/테스트검진지_마스킹/
+
+# 데모 더미 생성 중간 산출물 — 내용은 frontend-mobile/src/dummyAnalysis.ts에 임베드된다.
+# 재생성: uv run python tools/gen_demo_analysis.py
+tools/dummy_by_year.json
