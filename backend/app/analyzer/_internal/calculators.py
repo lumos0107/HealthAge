@@ -444,16 +444,44 @@ def calculate_vai(
 # category: lipid(지질) / insulin(인슐린저항성) / adiposity(내장지방) /
 #           liver(간) / bp(혈압)  → 프론트가 도메인 섹션에 배치.
 
+# CKD-EPI 2021 성별 계수: (kappa, alpha)
+_CKD_EPI_COEF = {1: (0.9, -0.302), 2: (0.7, -0.241)}   # 1=남, 2=여
+
+
+def ckd_epi_2021(serum_cr, age, gender: int) -> Optional[float]:
+    """eGFR (CKD-EPI 2021 크레아티닌 식, 인종 항 제거). 계산 불가하면 None.
+
+        eGFR = 142 × (Scr/κ)^B × 0.9938^age × (1.012 if 여)
+            B = alpha   (Scr ≤ κ)
+            B = −1.200  (Scr > κ)
+
+    ⚠️ 같은 공식이 app/renal/gfr.calculate_egfr에도 있다. 여기 한 벌을 더 두는 이유:
+       _internal/은 별도 서비스로 떼어낼 수 있어야 해서 app.* 을 import할 수 없다
+       (tests/test_analyzer_isolation.py가 강제). 주입으로 풀면 run_full_pipeline부터
+       what_if까지 시그니처 네 곳이 바뀌는데, 발표된 5줄 공식이라 그만한 값이 없다고 봤다.
+
+       두 벌이 갈라지는 것이 이 선택의 유일한 위험이라, tests/test_egfr_parity.py가
+       두 구현의 출력이 항상 같은지 고정한다. 한쪽만 고치면 거기서 깨진다.
+
+    ⚠️ app/renal 쪽은 잘못된 입력에 ValueError를 던지지만 여기는 None을 돌려준다.
+       계산기 목록은 «계산 불가한 지표는 목록에서 빠진다»가 규칙이라 예외가 아니라 결측이다.
+    """
+    if not (_valid(serum_cr) and serum_cr > 0):
+        return None
+    if not (isinstance(age, (int, float)) and age > 0):
+        return None
+
+    kappa, alpha = _CKD_EPI_COEF.get(gender, _CKD_EPI_COEF[1])
+    exponent = alpha if serum_cr <= kappa else -1.200
+    egfr = 142.0 * (serum_cr / kappa) ** exponent * 0.9938 ** int(age)
+    if gender == 2:
+        egfr *= 1.012
+    return round(egfr, 1)
+
+
 def _egfr_of(checkup: dict[str, Any], age: Optional[int], gender: int) -> Optional[float]:
     """검진 크레아티닌·나이·성별로 eGFR(CKD-EPI 2021) 계산. 불가하면 None."""
-    scr = checkup.get("혈청크레아티닌")
-    if not (_valid(scr) and isinstance(age, (int, float)) and age > 0):
-        return None
-    try:
-        from app.renal.gfr import calculate_egfr, Sex
-        return calculate_egfr(scr, int(age), Sex.MALE if gender == 1 else Sex.FEMALE)
-    except Exception:
-        return None
+    return ckd_epi_2021(checkup.get("혈청크레아티닌"), age, gender)
 
 
 def additional_calculators(
