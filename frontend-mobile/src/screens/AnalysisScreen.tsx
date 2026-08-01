@@ -327,37 +327,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
         <Eyebrow>ANALYSIS</Eyebrow>
         <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>건강분석</Text>
-        {/* 이 한 줄이 탭의 자기소개다. 예전 문구("내 수치, 정상 기준, 연령대 평균을 비교합니다")는
-            4층 재구성 이전 것이라 지금은 ③층 하나만 설명하고 있었다. 네 층 이름을 그대로 써서
-            아래로 스크롤하면 같은 네 문구가 소제목으로 다시 나오는 목차가 되게 한다. */}
-        <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>
-          기준을 벗어났는지 보고, 검진지에 없는 값을 만들고, 또래와 견준 뒤, 할 일로 옮깁니다.
-        </Text>
-        {/* 결론 한 줄 — 12장이나 되는 카드를 다 읽기 전에 "그래서 뭐였나"를 먼저 준다.
-            새 판단을 만들지 않는다: 그 해 기록의 주의·위험 개수와 아래에서 이미 계산된
-            '점수 밖 신호'를 문장으로 옮길 뿐이다. */}
-        <Text style={{ fontSize: 16, color: T.text1, fontWeight: '700', lineHeight: 25, marginTop: 14 }}>
-          {report.trackCount + report.manageCount === 0
-            ? `${report.year}년 검진은 검사 항목이 모두 기준 안이에요.`
-            : `${report.year}년 검진에서 ${[
-                report.trackCount ? `위험 ${report.trackCount}개` : null,
-                report.manageCount ? `주의 ${report.manageCount}개` : null,
-              ].filter(Boolean).join(' · ')}가 나왔어요.`}
-          {outsideScore.length > 0 && ` 점수에 안 잡히는 신호도 ${outsideScore.length}가지 있어요 — ${outsideScore[0].label}부터 보세요.`}
-        </Text>
-        {/* 결론 다음에 둔다 — 결론이 계속 맨 위에 오게 하고, 자세한 소개는 원하는 사람만 펼친다. */}
+        {/* 네 층을 나열하던 부제는 지웠다 — 바로 아래 「이 화면은 무엇을 하나요?」가 같은 LAYERS를
+            펼쳐 보여주고, 스크롤하면 층 머리말로 세 번째 나왔다. 같은 말을 첫 화면에서 두 번 하는
+            자리라, 정작 내 수치가 첫 화면 밖으로 밀려나 있었다. */}
         <TabIntroNote />
-      </View>
-      </FadeInUp>
-
-      {/* 안내 — 박스 대신 구분선과 텍스트만으로 */}
-      <FadeInUp delay={50}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-        {/* 경고 성격의 기호에 브랜드 그린(=누를 수 있는 것)을 쓰면 안 된다 — 히스토리에서 같은 이유로 고쳤다. */}
-        <Text style={{ fontSize: 13, color: T.warn, fontWeight: '700' }}>!</Text>
-        <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>
-          이 화면은 건강검진 수치를 이해하기 위한 참고 정보입니다. 질병 진단이나 치료 판단을 대체하지 않습니다.
-        </Text>
       </View>
       </FadeInUp>
 
@@ -389,6 +362,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </Pressable>
           ))}
         </ScrollView>
+        {/* 결론 한 줄 — 카드 13장을 다 읽기 전에 "그래서 뭐였나"를 먼저 준다.
+            새 판단을 만들지 않는다: 그 해 기록의 주의·위험 개수와 아래에서 이미 계산된
+            '점수 밖 신호'를 문장으로 옮길 뿐이다.
+            ⚠️ 예전에는 화면 맨 위 헤더에 있었다. 그런데 점수와 결론은 같은 사실의 두 표현인데
+            그 사이에 부제·펼치기·면책·층 머리말이 끼어 있어, 첫 화면에서 둘이 만나지 못했다.
+            숫자를 말하는 자리(점수 카드)로 내려 붙인다. */}
+        <Text style={{ fontSize: 16, color: T.text1, fontWeight: '700', lineHeight: 25, marginBottom: 16 }}>
+          {report.trackCount + report.manageCount === 0
+            ? `${report.year}년 검진은 검사 항목이 모두 기준 안이에요.`
+            : `${report.year}년 검진에서 ${[
+                report.trackCount ? `위험 ${report.trackCount}개` : null,
+                report.manageCount ? `주의 ${report.manageCount}개` : null,
+              ].filter(Boolean).join(' · ')}가 나왔어요.`}
+          {outsideScore.length > 0 && ` 점수에 안 잡히는 신호도 ${outsideScore.length}가지 있어요 — ${outsideScore[0].label}부터 보세요.`}
+        </Text>
         {/* 연도를 바꿀 때마다 점수가 0에서부터 채워지며 그려져, 변화가 자연스럽게 느껴진다 */}
         <View style={{ marginBottom: 16 }}>
           <AnimatedScore score={scorePct} color={scoreColor} />
@@ -1144,6 +1132,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           />
         </FadeInUp>
       )}
+
+      {/* 면책 — 히스토리 탭과 같이 맨 아래 회색 한 줄로 둔다.
+          예전에는 헤더 바로 아래에 경고 기호 + 두 줄이라, 첫 화면에서 내 수치보다 먼저 읽혔다.
+          내용은 그대로다 — 위치만 옮긴다(스펙 §7 "첫 화면을 텍스트로 막지 않는다"). */}
+      <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, paddingHorizontal: 20, paddingTop: 20 }}>
+        이 화면은 건강검진 수치를 이해하기 위한 참고 정보입니다. 질병 진단이나 치료 판단을 대체하지 않습니다.
+      </Text>
 
     </ScrollView>
   );
