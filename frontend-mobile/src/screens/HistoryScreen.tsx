@@ -406,7 +406,13 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
   //    올라간다고 말하는 상태였다. 대표 항목·5% 경계를 요약 문장(groupSummary)과 똑같이
   //    쓰므로 두 문장이 갈릴 수 없다.
   const trend = useMemo(() => trendDirection(sparkValues ?? []), [sparkValues]);
-  const c = cardContentFor(group.title, trend, latestLead.lead?.status);
+  // 해설·팁의 상태는 **선택한 연도**를 따른다. 2018년을 보고 있는데 "지금은 정상이니
+  // 이대로 유지하세요"가 떠 있으면, 바로 위 「2018년 검진 수치」와 한 화면에서 다른 해를 말한다.
+  // 항목은 latestLead에 고정한다 — 추세(trend)도 그 항목의 연도별 값으로 계산하므로,
+  // 항목만 선택을 따라가게 하면 한 문장 안에서 추세와 상태가 서로 다른 항목을 가리킨다.
+  // 그 해에 대표 항목을 측정하지 않았으면 undefined가 되어 상태와 무관한 기본 팁으로 돌아간다.
+  const contentStatus = latestLead.lead ? metricByKeyForYear(latestLead.lead.key)?.status : undefined;
+  const c = cardContentFor(group.title, trend, contentStatus);
 
   // 보기 상태 두 가지. 서로 독립이다.
   //   pick    = 기준 항목(초록 띠·등수·헤드라인·값 라벨의 주인). null이면 대표 항목을 따른다.
@@ -471,6 +477,27 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
         </View>
       ) : undefined}
     >
+      {/* 연도 — 그래프를 눌러도 바뀌지만, 눌러도 된다는 걸 알 방법이 없어 칩을 함께 둔다.
+          검사항목·분석 탭은 연도 칩으로 해를 고르는데 이 카드만 그래프 터치가 유일한 수단이었다.
+          ⚠️ 아래 분기 **바깥**에 둔다 — 그 해에 이 묶음을 하나도 측정하지 않았으면 아래가
+             통째로 안내문으로 바뀌는데, 칩까지 같이 사라지면 다른 해로 돌아올 방법이 없어진다. */}
+      {reports.length > 1 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          <Text style={{ fontSize: 11, color: T.text3, alignSelf: 'center', marginRight: 2 }}>연도</Text>
+          {reports.map((rep, i) => ({ rep, i })).reverse().map(({ rep, i }) => {
+            const on = i === selIdx;
+            return (
+              <Pressable
+                key={rep.year}
+                onPress={() => setSelIdx(i)}
+                style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: on ? T.primary : T.cardAlt }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: on ? '#fff' : T.text3 }}>{rep.year}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
       {presentKeys.length === 0 ? (
         // 이 그룹에 속한 항목 중 그 해에 측정된 것이 하나도 없을 때 — 빈 그래프나 가짜 수치 대신
         // 측정하지 않았다는 사실을 그대로 안내한다.
