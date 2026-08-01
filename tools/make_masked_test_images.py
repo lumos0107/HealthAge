@@ -42,6 +42,33 @@ CONTACT_PATTERNS = [
 NAME_LABEL = re.compile(r"성\s*명|이\s*름|수검자|대상자")
 ADDRESS_LABEL = re.compile(r"주\s*소|전\s*화|연락처|휴대")
 
+# ── 검진의사 인적사항 ────────────────────────────────────────────────────────
+# ⚠️ 수검자만 가리면 부족하다. 결과통보서 마지막 장에는 **실존 검진의사의 이름과
+#    면허(자격)번호**, 요양기관기호가 그대로 있다. 이 이미지는 시연 부스·발표에서
+#    화면에 띄우는 자료라, 남겨두면 실존 의료인의 면허번호를 공개 전시하게 된다.
+#    (실제로 1차 산출물 general_01_p3에 "(검진의사 이름) / (면허번호) / (요양기관기호)"가 남아 있었다)
+#
+#    수검자 이름 치환 로직(real_names)이 이걸 못 잡은 이유: 표 셀이라 '성명' 라벨과
+#    값이 PDF 텍스트 스트림에서 떨어져 있어 `성명\s*(이름)` 정규식이 안 걸린다.
+#    그래서 라벨이 아니라 **라인 단위**로 잡는다.
+DOCTOR_LINE = re.compile(r"검진의사|판정의사|면허\s*\(?\s*자격\s*\)?\s*번호|요양기관기호")
+FAKE_DOCTOR = "김의사"
+NUM_TOKEN = re.compile(r"^\d{4,12}$")
+# 이 라인 안에서 «값»이 아니라 «라벨»인 한글 토막들 — 치환 대상에서 뺀다.
+DOCTOR_LABELS = {
+    "성명", "이름", "번호", "면허", "자격", "검진의사", "판정의사",
+    "요양기관기호", "판정일", "귀하", "직인",
+}
+
+
+def _is_date_like(token: str) -> bool:
+    """20200101처럼 날짜로 읽히는 8자리는 남긴다 — 판정일이 000000으로 바뀌면
+    화면이 고장 난 것처럼 보인다. 면허번호·요양기관기호만 지우는 게 목적이다."""
+    if len(token) != 8 or not token.isdigit():
+        return False
+    year, month, day = int(token[:4]), int(token[4:6]), int(token[6:])
+    return 1900 <= year <= 2100 and 1 <= month <= 12 and 1 <= day <= 31
+
 
 def real_names(doc) -> set[str]:
     """원본에 등장하는 사람 이름(소견 본문의 '○○○님' 포함)."""
@@ -63,6 +90,43 @@ def replace(page, rect: fitz.Rect, text: str, size: float) -> None:
         fontname="malgun",
         color=(0, 0, 0),
     )
+
+
+def mask_issuer_block(page) -> None:
+    """발급 정보의 «검진의사 실명 · 면허번호 · 요양기관기호»를 지운다.
+
+    ⚠️ 라벨로는 못 잡는다. 이 양식은 «검진의사» «면허(자격)번호» «성명» «요양기관기호»가
+       전부 **텍스트가 아니라 양식 그림**이라 page.search_for()가 0 hit이다.
+       (라인 매칭·라벨 오른쪽 마스킹을 두 번 시도해 둘 다 실패한 뒤 PDF span을 열어 확인)
+       텍스트로 존재하는 건 **값뿐**이다: '(판정일)' '(면허번호)' '(검진의사 이름)' '(요양기관기호)'.
+
+    그래서 값을 직접 잡는다:
+      ① 5자리 이상 순수 숫자 중 날짜로 안 읽히는 것 → 면허번호·요양기관기호 → 0으로
+      ② 그 숫자와 **같은 y 띠**에 있는 한글 2~4자 → 검진의사 이름 → 가짜 이름
+
+    ②를 y 띠로 좁히는 이유: 페이지 전체에서 «한글 2~4자»를 지우면 '기타질환'·'내원' 같은
+    양식 값까지 날아간다. 병원명(13자)은 길이에서 걸러진다.
+    """
+    spans = [
+        (s["text"].strip(), fitz.Rect(s["bbox"]), s["size"])
+        for b in page.get_text("dict")["blocks"]
+        for ln in b.get("lines", [])
+        for s in ln["spans"]
+        if s["text"].strip()
+    ]
+
+    id_bands: list[float] = []
+    for text, rect, size in spans:
+        if text.isdigit() and len(text) >= 5 and not _is_date_like(text):
+            replace(page, rect, "0" * len(text), size)
+            id_bands.append((rect.y0 + rect.y1) / 2)
+
+    for text, rect, size in spans:
+        if not re.fullmatch(r"[가-힣]{2,4}", text):
+            continue
+        mid = (rect.y0 + rect.y1) / 2
+        if any(abs(mid - band) <= 4 for band in id_bands):
+            replace(page, rect, FAKE_DOCTOR, size)
 
 
 def process_page(page, fake_name: str, fake_rrn: str, names: set[str]) -> None:
@@ -92,6 +156,12 @@ def process_page(page, fake_name: str, fake_rrn: str, names: set[str]) -> None:
                 if idx > 0 and NAME_LABEL.search(spans[idx - 1]["text"]):
                     if text.strip() and len(text.strip()) <= 5:
                         replace(page, rect, fake_name, size)
+
+    # 1-b) 검진의사 인적사항 — 라벨의 «오른쪽 띠»를 통째로 가린다.
+    #      ⚠️ 라인 단위로는 못 잡는다. 표 셀이라 PDF 텍스트 스트림에서 '검진의사'와
+    #         '(검진의사 이름)'이 서로 다른 line으로 떨어져 나온다(1차 시도 실패 원인).
+    #         그래서 라벨 rect를 찾아 그 y 띠의 오른쪽을 지우는 방식으로 간다.
+    mask_issuer_block(page)
 
     # 2) 소견 본문에 섞인 실명 → 가짜 이름
     for name in names:
