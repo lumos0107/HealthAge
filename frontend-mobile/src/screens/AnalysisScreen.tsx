@@ -202,13 +202,19 @@ function ComboMeanCompare({ combo }: { combo: RealComboGroup }) {
 
 /** 지표 카드의 결론 한 줄 — 행(근거)을 읽기 전에 요약부터 보여준다.
  *  level: info=판정 없음(제외), low=양호, 그 외(moderate/high/very_high)=주의 이상. */
+/** 1뎁스 요약 — «몇 개가» 걸렸는지만 센다.
+ *  «얼마나 나쁜가»는 배지가 말하므로 여기서 '양호/주의' 낱말을 다시 쓰지 않는다.
+ *  ⚠️ 걸린 지표의 «이름»을 대는 쪽이 더 유용하겠지만 그럴 수 없다 — 항목명이
+ *  「Castelli 지수 I」·「AIP 죽상형성지수」·「METS-IR」처럼 전문용어라
+ *  1뎁스에 늘어놓으면 스펙 §2(1뎁스에 전문 용어 금지)를 어기고 읽히지도 않는다.
+ *  이름은 카드를 열면 CalcRows가 값·기준과 함께 보여준다. */
 function levelSummary(levels: string[]): string | null {
   const judged = levels.filter((l) => l !== 'info');
   if (!judged.length) return null;
   const bad = judged.filter((l) => l !== 'low').length;
   return bad === 0
-    ? `지표 ${judged.length}개 모두 양호 구간이에요.`
-    : `지표 ${judged.length}개 중 ${bad}개가 주의 이상 구간이에요.`;
+    ? `지표 ${judged.length}개 모두 기준 안`
+    : `지표 ${judged.length}개 중 ${bad}개가 기준 밖`;
 }
 
 /** 1뎁스 판정 배지 — 카드를 열지 않고도 «이 카드가 나쁜가»를 알 수 있게 한다.
@@ -502,7 +508,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           detail={cardContent['집단군 판정']?.detail}
           meaning={cardContent['집단군 판정']?.meaning}
           tips={cardContent['집단군 판정']?.tips}
-          summary={rarity ? `임상 ${rarity.clinical_count}개 · 생활습관 ${rarity.lifestyle_count}개에 해당해요.` : null}
+          summary={rarity ? `해당 ${rarity.clinical_count + rarity.lifestyle_count}개 — 임상 ${rarity.clinical_count} · 생활습관 ${rarity.lifestyle_count}` : null}
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
 
@@ -956,7 +962,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
-        <SummaryCard title="함께 나타나는 조합 (동반 경향)" definition={cardContent['함께 나타나는 조합 (동반 경향)']?.definition} detail={cardContent['함께 나타나는 조합 (동반 경향)']?.detail} meaning={cardContent['함께 나타나는 조합 (동반 경향)']?.meaning} tips={cardContent['함께 나타나는 조합 (동반 경향)']?.tips} summary={`${comboGroups.matched_count}개 조합에 해당해요.`} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
+        <SummaryCard title="함께 나타나는 조합 (동반 경향)" definition={cardContent['함께 나타나는 조합 (동반 경향)']?.definition} detail={cardContent['함께 나타나는 조합 (동반 경향)']?.detail} meaning={cardContent['함께 나타나는 조합 (동반 경향)']?.meaning} tips={cardContent['함께 나타나는 조합 (동반 경향)']?.tips} summary={`해당 조합 ${comboGroups.matched_count}개`} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
             여러 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
             {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 동반 경향(통계)이며, 위험도 자체는 아니에요. 위험 정량은 위 계산기(ASCVD 등)를 참고하세요.
@@ -1046,7 +1052,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           positionTitle={`${pop16.age_fixed_trend.sex} ${pop16.age_fixed_trend.age_band} · 2009년 vs 2024년`}
           summary={(() => {
             const top = pop16.age_fixed_trend!.items[0];
-            return top ? `${pop16.age_fixed_trend!.age_band} ${top.name}이 16년 만에 ${top.y2009}% → ${top.y2024}%로 늘었어요.` : null;
+            return top ? `${pop16.age_fixed_trend!.age_band} ${top.name} ${top.y2009}% → ${top.y2024}% (16년)` : null;
           })()}
         >
           <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
