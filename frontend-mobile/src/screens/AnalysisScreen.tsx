@@ -21,7 +21,7 @@ import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, Re
  *  「층 안의 작은 구획」으로 읽히고, 카드 이름이 이미 뜻을 말하므로 중복도 거슬리지 않는다. */
 function DomainHeader({ title }: { title: string }) {
   return (
-    <Text style={{ fontSize: 11, fontWeight: '700', color: T.text3, marginHorizontal: 20, marginTop: 14, marginBottom: 4, letterSpacing: 0.3 }}>
+    <Text style={{ fontSize: 11, fontWeight: '700', color: T.text3, textAlign: 'center', marginHorizontal: 20, marginTop: 16, marginBottom: 6, letterSpacing: 0.3 }}>
       {title}
     </Text>
   );
@@ -1053,7 +1053,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다.
           배지는 2뎁스 안 배지(아래)와 같은 갈래를 쓴다 — 한 카드가 겉과 속에서 다른 색을 말하면 안 된다. */}
-      {(ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0 && <DomainHeader title="심혈관" />}
+      {/* ⚠️ 괄호가 필요하다. `A || B && <X/>`는 `A || (B && <X/>)`로 묶여서,
+          A가 참이면 식 전체가 true가 되고 React는 true를 아무것도 그리지 않는다 —
+          ascvd가 있는 해에는 「심혈관」 구획이 조용히 사라졌다. */}
+      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
       {ascvd?.available && ascvd.risk_percent != null && (
         <FadeInUp delay={221}>
         <SummaryCard
