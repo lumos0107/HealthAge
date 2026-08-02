@@ -30,9 +30,33 @@ COMBO_STATS_PATH = PROJECT_ROOT / "data" / "combo_groups.json"
 
 
 # ============================================================
+# 관계 유형 — 조합이 «무엇을 더 말해주는가»
+# ============================================================
+# 조합 카드는 그동안 「흔한가 / 드문가」까지만 말하고 끝났다. 그래서 ③층에서
+# 「조합 4개 · 100명 중 10명」을 알려주고도 ④층은 그 조합의 존재를 몰랐다.
+#
+# 조합이 개별 판정에 더해 주는 것은 **두 항목의 관계**다. 관계를 알면 순서가 나온다 —
+# 같은 원인이면 하나만 잡아도 둘이 움직이고, 다른 축이면 따로 잡아야 한다.
+# 이 «순서»가 조합만이 줄 수 있는 행동 정보다.
+#
+# ⚠️ 관계는 사람마다 달라지지 않는 **조합의 성질**이라 여기 상수로 둔다.
+#    사람마다 달라지는 것(어느 조합에 해당하나·얼마나 흔한가)은 지금처럼 계산한다.
+RELATION_LABELS = {
+    "same_cause": "같은 원인에서 함께 나옵니다",
+    "one_worsens": "하나가 다른 하나를 밀어붙입니다",
+    "different_axis": "서로 다른 축이라 위험이 곱해집니다",
+    "shared_criterion": "판정 항목을 공유합니다",
+}
+
+
+# ============================================================
 # 조합 정의 12개 (모집단 분석 스크립트와 동일한 이름·구성)
 # ============================================================
 # combo_name은 combo_groups.json의 키와 정확히 일치해야 통계가 붙는다.
+#
+# relation — 위 네 유형 중 하나.
+# action   — 그 관계에서 나오는 «순서». 개별 그룹 권장(run_recommendations)과 겹치지
+#            않게, **둘을 같이 볼 때만 할 수 있는 말**만 적는다. 해요체(§7).
 
 COMBO_DEFINITIONS: dict[str, dict[str, Any]] = {
     # A. 심혈관 위험 조합
@@ -40,64 +64,88 @@ COMBO_DEFINITIONS: dict[str, dict[str, Any]] = {
         "components": ["g_diabetes", "g_hypertension"],
         "category": "심혈관",
         "meaning": "당뇨 합병증 위험 가중 (신장, 심혈관)",
+        "relation": "one_worsens",
+        "action": "혈압을 목표까지 낮추면 당뇨로 인한 신장·심혈관 부담이 함께 줄어요. 둘 중 혈압이 먼저 움직입니다.",
     },
     "고혈압+이상지질혈증": {
         "components": ["g_hypertension", "g_dyslipidemia"],
         "category": "심혈관",
         "meaning": "동맥경화 가속화",
+        "relation": "different_axis",
+        "action": "압력과 지질은 서로 다른 축이라 하나만 잡으면 다른 하나는 그대로예요. 두 가지를 함께 봐야 합니다.",
     },
     "당뇨+이상지질혈증": {
         "components": ["g_diabetes", "g_dyslipidemia"],
         "category": "심혈관",
         "meaning": "당뇨성 이상지질혈증",
+        "relation": "same_cause",
+        "action": "둘 다 인슐린이 잘 안 듣는 상태에서 나와요. 체중과 탄수화물을 줄이면 함께 움직입니다.",
     },
     "대사증후군+흡연": {
         "components": ["g_metabolic_syndrome", "g_smoker_current"],
         "category": "심혈관",
         "meaning": "심혈관 위험 매우 증가",
+        "relation": "different_axis",
+        "action": "대사 쪽과 혈관 쪽이 겹쳐 위험이 곱해져요. 금연이 단일 항목 중 가장 크게 낮춥니다.",
     },
     # B. 간 질환 조합
     "음주+지방간의심": {
         "components": ["g_drinker", "g_fatty_liver_suspect"],
         "category": "간 질환",
         "meaning": "알코올성 지방간 의심",
+        "relation": "one_worsens",
+        "action": "술이 지방간의 직접 원인일 수 있어요. 절주가 첫 순서입니다.",
     },
     "비만+지방간의심": {
         "components": ["g_obesity", "g_fatty_liver_suspect"],
         "category": "간 질환",
         "meaning": "대사이상 관련 지방간 (MASLD)",
+        "relation": "same_cause",
+        "action": "내장지방이 둘을 같이 만들어요. 체중을 5~10%만 줄여도 간에 낀 지방이 함께 빠집니다.",
     },
     "당뇨+지방간의심": {
         "components": ["g_diabetes", "g_fatty_liver_suspect"],
         "category": "간 질환",
         "meaning": "지방간 + 당뇨 (지방간염 진행 위험)",
+        "relation": "same_cause",
+        "action": "혈당이 지방간을 밀고 지방간이 다시 혈당을 올려요. 체중 관리가 두 고리를 같이 끊습니다.",
     },
     # C. 대사 조합
     "비만+당뇨전단계": {
         "components": ["g_obesity", "g_pre_diabetes"],
         "category": "대사",
         "meaning": "당뇨 진행 위험군",
+        "relation": "same_cause",
+        "action": "아직 당뇨로 넘어가기 전 단계예요. 이 구간에서는 체중 감량이 진행을 되돌릴 수 있습니다.",
     },
     "대사증후군+비만": {
         "components": ["g_metabolic_syndrome", "g_obesity"],
         "category": "대사",
         "meaning": "대사 이상 가중",
+        "relation": "shared_criterion",
+        "action": "허리둘레가 두 판정에 모두 들어가 있어요. 허리 하나가 둘을 같이 움직입니다.",
     },
     # D. 다중 위험 조합 (3개)
     "흡연+음주+비만": {
         "components": ["g_smoker_current", "g_drinker", "g_obesity"],
         "category": "생활습관 트리플",
         "meaning": "생활습관 위험 가중",
+        "relation": "different_axis",
+        "action": "셋이 서로 다른 경로라 하나씩 줄여야 해요. 금연이 가장 크게 낮추는 한 걸음입니다.",
     },
     "당뇨+고혈압+이상지질혈증": {
         "components": ["g_diabetes", "g_hypertension", "g_dyslipidemia"],
         "category": "메타볼릭 트라이어드",
         "meaning": "전형적인 대사 위험 조합",
+        "relation": "same_cause",
+        "action": "셋 다 인슐린이 잘 안 듣는 상태와 이어져 있어요. 생활습관만으로 어려우면 진료에서 약물 조절을 함께 상의하세요.",
     },
     "비만+이상지질혈증+지방간의심": {
         "components": ["g_obesity", "g_dyslipidemia", "g_fatty_liver_suspect"],
         "category": "메타볼릭 트리오",
         "meaning": "대사이상 지방간 증후군 패턴",
+        "relation": "same_cause",
+        "action": "내장지방 하나가 셋을 같이 만들어요. 체중이 움직이면 셋이 함께 움직입니다.",
     },
 }
 
@@ -241,6 +289,11 @@ def classify_combo_groups(user_groups: dict[str, bool]) -> dict[str, Any]:
             "category": info["category"],
             "meaning": info["meaning"],
             "components": [GROUP_LABELS.get(c, c) for c in info["components"]],
+            # 관계와 그로부터 나오는 순서 — 조합만이 줄 수 있는 행동 정보다.
+            # relation_label은 프론트가 다시 쓰지 않도록 여기서 풀어 보낸다(§2-1).
+            "relation": info.get("relation"),
+            "relation_label": RELATION_LABELS.get(info.get("relation", ""), None),
+            "action": info.get("action"),
             "is_ascvd_risk": combo_name in ASCVD_RISK_COMBOS,
             "population": None,
         }

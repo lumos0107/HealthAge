@@ -129,6 +129,14 @@ export type RealComboGroup = {
   category: string;
   meaning: string;
   components: string[];
+  /** 조합의 «관계 유형» — same_cause / one_worsens / different_axis / shared_criterion.
+   *  relation_label은 그 유형을 사람 말로 푼 것이고, action은 거기서 나오는 «순서»다.
+   *  ⚠️ 조합이 개별 판정에 더해 주는 것이 바로 이 관계다. 같은 원인이면 하나만 잡아도
+   *  둘이 움직이고, 다른 축이면 따로 잡아야 한다 — 개별 그룹 권장은 이 말을 못 한다.
+   *  구버전 분석에는 없다 → 항상 옵셔널로 다룰 것. */
+  relation?: string | null;
+  relation_label?: string | null;
+  action?: string | null;
   is_ascvd_risk: boolean;
   population: {
     n_in_combo: number;

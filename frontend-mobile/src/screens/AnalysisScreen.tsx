@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { Expandable, PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
-import { formatMetricValue, rankFromPercentile, sortByAttention } from '../interpret';
+import { formatMetricValue, metricPeerRank, rankFromPercentile, sortByAttention } from '../interpret';
 import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
 import { calcGloss, cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricLabel, metricsForReport } from '../data';
@@ -176,19 +176,38 @@ function CalcFormulas({ items }: { items: RealCalcItem[] }) {
  *  아래 「상태로 보면」이 한 화면 안에 함께 보이는 선이다. */
 const OFF_RANGE_HEAD = 4;
 
-/** 기준을 벗어난 항목 한 줄 — 이름 · 값+단위 · 상태 배지. 접힌 쪽과 펼친 쪽이 같은 줄을 쓴다. */
+/** 기준을 벗어난 항목 한 줄 — 이름 · 값+단위 · 상태 배지 · 또래 등수.
+ *
+ *  또래 한 줄을 붙이는 이유 — 분석 탭 ③층 이름이 「같은 또래는 어떤가」인데, 정작
+ *  **단순 검진 수치의 또래 비교는 검사항목 탭에만** 있었다. 그래서 「분석 탭이 또래와
+ *  비교해준다」가 절반만 참이었다. 바로 아래 「상태로 보면」이 단일그룹마다
+ *  「같은 또래는 100명 중 N명이 해당해요」를 붙이고 있으므로, 항목 쪽도 같은 모양으로 맞춘다.
+ *
+ *  ⚠️ 판정이 «주», 또래는 «보조»다. 등수는 배지 아래 작은 회색 줄로만 둔다 —
+ *  기준을 벗어난 항목에 등수를 나란히 크게 쓰면 「또래 평균 근처면 괜찮다」로 읽히는데,
+ *  그건 ③층 「또래 자체가 나빠졌나」가 경고하는 오독이다(기준선이 내려앉은 집단의 순위).
+ *  어림값(estimateRank)이면 그 사실을 문장에 밝힌다 — 지어낸 등수로 보이면 안 된다. */
 function OffRangeRow({ metric, report, first }: { metric: MetricDefinition; report: Report; first?: boolean }) {
   const bad = metric.status === '위험';
+  const value = report.values[metric.key];
+  const peer = typeof value === 'number' ? metricPeerRank(metric, value) : null;
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9 }, !first && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-      <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 }}>{metric.name}</Text>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: bad ? T.danger : T.warn }}>
-        {formatMetricValue(metric, report.values[metric.key])}
-        <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text>
-      </Text>
-      <View style={{ backgroundColor: bad ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-        <Text style={{ fontSize: 11, fontWeight: '700', color: bad ? T.danger : T.warn }}>{metric.status}</Text>
+    <View style={[{ paddingVertical: 9 }, !first && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 }}>{metric.name}</Text>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: bad ? T.danger : T.warn }}>
+          {formatMetricValue(metric, value)}
+          <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text>
+        </Text>
+        <View style={{ backgroundColor: bad ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: bad ? T.danger : T.warn }}>{metric.status}</Text>
+        </View>
       </View>
+      {!!peer && (
+        <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 3 }}>
+          같은 또래 100명 중 {peer.rank}등{peer.measured ? '' : ' (어림)'}이에요
+        </Text>
+      )}
     </View>
   );
 }
@@ -223,6 +242,29 @@ function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
         ].filter(Boolean).join(' · ')}
       />
     </View>
+  );
+}
+
+/** ⑤ 조합에서 나오는 «순서» — 조합 카드의 행동 칸.
+ *
+ *  ⚠️ 개별 그룹 권장(맞춤 권장사항)과 겹치지 않는다. 그쪽은 「고혈압이니 저염」처럼
+ *  **판정 하나**에서 나오는 말이고, 여기는 **둘을 같이 볼 때만** 할 수 있는 말이다 —
+ *  같은 원인이면 하나만 잡아도 둘이 움직이고, 다른 축이면 따로 잡아야 한다.
+ *  그동안 이 칸이 비어 있어서, ③층이 「조합 4개」를 알려주고도 «그래서 뭘»이 없었다.
+ *
+ *  문구는 백엔드 것을 그대로 쓴다(§2-1) — 프론트에서 다시 쓰면 지어내는 것이 된다. */
+function ComboActions({ combos }: { combos: RealComboGroup[] }) {
+  const withAction = combos.filter((c) => c.action);
+  if (!withAction.length) return null;
+  return (
+    <>
+      {withAction.slice(0, 4).map((c, i) => (
+        <View key={c.combo_name} style={[{ paddingTop: 10 }, i > 0 && { marginTop: 10, borderTopWidth: 1, borderTopColor: T.divider }]}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 3 }}>{c.combo_name}</Text>
+          <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21 }}>{c.action}</Text>
+        </View>
+      ))}
+    </>
   );
 }
 
@@ -1315,7 +1357,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <FadeInUp delay={210}>
         <SummaryCard title="이 조합이 흔한가" definition={cardContent['이 조합이 흔한가']?.definition} detail={cardContent['이 조합이 흔한가']?.detail} meaning={cardContent['이 조합이 흔한가']?.meaning} tips={cardContent['이 조합이 흔한가']?.tips} summary={leadCombo?.population
             ? `조합 ${comboGroups.matched_count}개 · 같은 조합인 사람은 100명 중 ${leadCombo.population.pct_of_total < 1 ? '1명 미만' : `${Math.round(leadCombo.population.pct_of_total)}명`}이에요`
-            : `조합 ${comboGroups.matched_count}개에 해당해요`} axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
+            : `조합 ${comboGroups.matched_count}개에 해당해요`} axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}
+          tipsExtra={<ComboActions combos={comboGroups.matched} />}>
           {/* 앞머리의 "여러 요인이 함께 나타나는 조합이에요"와 "위험도 자체는 아니에요"는 지웠다 —
               각각 ②와 ④가 이미 말한다. 표본 크기만 남긴다(§1-1③ 근거). */}
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
@@ -1334,6 +1377,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 )}
               </View>
               <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginBottom: 6 }}>{c.meaning}</Text>
+              {/* 관계 유형 — 이 조합이 «개별 판정에 더해» 말해주는 것. 두 항목이 같은
+                  원인에서 나오는지, 하나가 다른 하나를 미는지, 서로 다른 축인지에 따라
+                  «무엇부터 잡아야 하나»가 달라진다. 그 순서가 ⑤의 행동이 된다. */}
+              {!!c.relation_label && (
+                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 19, marginBottom: 6 }}>
+                  두 항목은 {c.relation_label}
+                </Text>
+              )}
               {c.population && (
                 <Text style={{ fontSize: 12, color: T.text3, lineHeight: 19 }}>
                   같은 조합 {c.population.n_in_combo.toLocaleString()}명 (표본의 {c.population.pct_of_total}%)

@@ -3086,6 +3086,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+흡연",
     "category": "심혈관",
     "meaning": "심혈관 위험 매우 증가",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "대사 쪽과 혈관 쪽이 겹쳐 위험이 곱해져요. 금연이 단일 항목 중 가장 크게 낮춥니다.",
     "components": [
      "대사증후군",
      "현재 흡연자"
@@ -3975,6 +3978,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+비만",
     "category": "대사",
     "meaning": "대사 이상 가중",
+    "relation": "shared_criterion",
+    "relation_label": "판정 항목을 공유합니다",
+    "action": "허리둘레가 두 판정에 모두 들어가 있어요. 허리 하나가 둘을 같이 움직입니다.",
     "components": [
      "대사증후군",
      "비만"
@@ -4026,6 +4032,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "흡연+음주+비만",
     "category": "생활습관 트리플",
     "meaning": "생활습관 위험 가중",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "셋이 서로 다른 경로라 하나씩 줄여야 해요. 금연이 가장 크게 낮추는 한 걸음입니다.",
     "components": [
      "현재 흡연자",
      "음주자",
@@ -4081,6 +4090,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+흡연",
     "category": "심혈관",
     "meaning": "심혈관 위험 매우 증가",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "대사 쪽과 혈관 쪽이 겹쳐 위험이 곱해져요. 금연이 단일 항목 중 가장 크게 낮춥니다.",
     "components": [
      "대사증후군",
      "현재 흡연자"
@@ -4132,6 +4144,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "비만+당뇨전단계",
     "category": "대사",
     "meaning": "당뇨 진행 위험군",
+    "relation": "same_cause",
+    "relation_label": "같은 원인에서 함께 나옵니다",
+    "action": "아직 당뇨로 넘어가기 전 단계예요. 이 구간에서는 체중 감량이 진행을 되돌릴 수 있습니다.",
     "components": [
      "비만",
      "당뇨 전단계"
@@ -5175,6 +5190,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "비만+이상지질혈증+지방간의심",
     "category": "메타볼릭 트리오",
     "meaning": "대사이상 지방간 증후군 패턴",
+    "relation": "same_cause",
+    "relation_label": "같은 원인에서 함께 나옵니다",
+    "action": "내장지방 하나가 셋을 같이 만들어요. 체중이 움직이면 셋이 함께 움직입니다.",
     "components": [
      "비만",
      "이상지질혈증",
@@ -5230,6 +5248,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+비만",
     "category": "대사",
     "meaning": "대사 이상 가중",
+    "relation": "shared_criterion",
+    "relation_label": "판정 항목을 공유합니다",
+    "action": "허리둘레가 두 판정에 모두 들어가 있어요. 허리 하나가 둘을 같이 움직입니다.",
     "components": [
      "대사증후군",
      "비만"
@@ -5281,6 +5302,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "비만+지방간의심",
     "category": "간 질환",
     "meaning": "대사이상 관련 지방간 (MASLD)",
+    "relation": "same_cause",
+    "relation_label": "같은 원인에서 함께 나옵니다",
+    "action": "내장지방이 둘을 같이 만들어요. 체중을 5~10%만 줄여도 간에 낀 지방이 함께 빠집니다.",
     "components": [
      "비만",
      "지방간 의심"
@@ -5332,6 +5356,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "흡연+음주+비만",
     "category": "생활습관 트리플",
     "meaning": "생활습관 위험 가중",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "셋이 서로 다른 경로라 하나씩 줄여야 해요. 금연이 가장 크게 낮추는 한 걸음입니다.",
     "components": [
      "현재 흡연자",
      "음주자",
@@ -5387,6 +5414,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+흡연",
     "category": "심혈관",
     "meaning": "심혈관 위험 매우 증가",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "대사 쪽과 혈관 쪽이 겹쳐 위험이 곱해져요. 금연이 단일 항목 중 가장 크게 낮춥니다.",
     "components": [
      "대사증후군",
      "현재 흡연자"
@@ -5438,6 +5468,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "비만+당뇨전단계",
     "category": "대사",
     "meaning": "당뇨 진행 위험군",
+    "relation": "same_cause",
+    "relation_label": "같은 원인에서 함께 나옵니다",
+    "action": "아직 당뇨로 넘어가기 전 단계예요. 이 구간에서는 체중 감량이 진행을 되돌릴 수 있습니다.",
     "components": [
      "비만",
      "당뇨 전단계"
@@ -5489,6 +5522,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "음주+지방간의심",
     "category": "간 질환",
     "meaning": "알코올성 지방간 의심",
+    "relation": "one_worsens",
+    "relation_label": "하나가 다른 하나를 밀어붙입니다",
+    "action": "술이 지방간의 직접 원인일 수 있어요. 절주가 첫 순서입니다.",
     "components": [
      "음주자",
      "지방간 의심"
@@ -6696,6 +6732,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+비만",
     "category": "대사",
     "meaning": "대사 이상 가중",
+    "relation": "shared_criterion",
+    "relation_label": "판정 항목을 공유합니다",
+    "action": "허리둘레가 두 판정에 모두 들어가 있어요. 허리 하나가 둘을 같이 움직입니다.",
     "components": [
      "대사증후군",
      "비만"
@@ -6747,6 +6786,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "흡연+음주+비만",
     "category": "생활습관 트리플",
     "meaning": "생활습관 위험 가중",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "셋이 서로 다른 경로라 하나씩 줄여야 해요. 금연이 가장 크게 낮추는 한 걸음입니다.",
     "components": [
      "현재 흡연자",
      "음주자",
@@ -6802,6 +6844,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+흡연",
     "category": "심혈관",
     "meaning": "심혈관 위험 매우 증가",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "대사 쪽과 혈관 쪽이 겹쳐 위험이 곱해져요. 금연이 단일 항목 중 가장 크게 낮춥니다.",
     "components": [
      "대사증후군",
      "현재 흡연자"
@@ -6853,6 +6898,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "비만+당뇨전단계",
     "category": "대사",
     "meaning": "당뇨 진행 위험군",
+    "relation": "same_cause",
+    "relation_label": "같은 원인에서 함께 나옵니다",
+    "action": "아직 당뇨로 넘어가기 전 단계예요. 이 구간에서는 체중 감량이 진행을 되돌릴 수 있습니다.",
     "components": [
      "비만",
      "당뇨 전단계"
@@ -7896,6 +7944,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+비만",
     "category": "대사",
     "meaning": "대사 이상 가중",
+    "relation": "shared_criterion",
+    "relation_label": "판정 항목을 공유합니다",
+    "action": "허리둘레가 두 판정에 모두 들어가 있어요. 허리 하나가 둘을 같이 움직입니다.",
     "components": [
      "대사증후군",
      "비만"
@@ -7947,6 +7998,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "흡연+음주+비만",
     "category": "생활습관 트리플",
     "meaning": "생활습관 위험 가중",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "셋이 서로 다른 경로라 하나씩 줄여야 해요. 금연이 가장 크게 낮추는 한 걸음입니다.",
     "components": [
      "현재 흡연자",
      "음주자",
@@ -8002,6 +8056,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "대사증후군+흡연",
     "category": "심혈관",
     "meaning": "심혈관 위험 매우 증가",
+    "relation": "different_axis",
+    "relation_label": "서로 다른 축이라 위험이 곱해집니다",
+    "action": "대사 쪽과 혈관 쪽이 겹쳐 위험이 곱해져요. 금연이 단일 항목 중 가장 크게 낮춥니다.",
     "components": [
      "대사증후군",
      "현재 흡연자"
@@ -8053,6 +8110,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "combo_name": "비만+당뇨전단계",
     "category": "대사",
     "meaning": "당뇨 진행 위험군",
+    "relation": "same_cause",
+    "relation_label": "같은 원인에서 함께 나옵니다",
+    "action": "아직 당뇨로 넘어가기 전 단계예요. 이 구간에서는 체중 감량이 진행을 되돌릴 수 있습니다.",
     "components": [
      "비만",
      "당뇨 전단계"
