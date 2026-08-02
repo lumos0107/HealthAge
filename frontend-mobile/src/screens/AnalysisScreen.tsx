@@ -3,10 +3,10 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { Expandable, PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
-import { rankFromPercentile } from '../interpret';
+import { formatMetricValue, rankFromPercentile, sortByAttention } from '../interpret';
 import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
-import { cardContent, computeGroupsForReport, metricLabel } from '../data';
+import { cardContent, computeGroupsForReport, metricLabel, metricsForReport } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
@@ -396,6 +396,15 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 카드 5장은 A3에서 제거됐지만 이 계산은 ③층 '같은 또래 분포' 카드가
   // 대표 묶음을 고르고 묶음별 분포를 그리는 데 그대로 쓴다 — 삭제 금지.
   const groups = useMemo(() => computeGroupsForReport(report, metricDefinitions), [report, metricDefinitions]);
+
+  /** 그 해 «기준을 벗어난» 검사 항목만, 위험 → 주의 순. 「항목으로 보면」이 쓴다.
+   *  점수와 같은 출처(metricsForReport)를 쓰므로 개수가 어긋날 수 없다 —
+   *  「위험 1 · 주의 8」이라 해놓고 목록이 7줄인 일이 생기지 않는다.
+   *  infoOnly(키·몸무게)는 판정 대상이 아니라 statusByKey에서 이미 빠져 있다. */
+  const offRangeMetrics = useMemo(
+    () => sortByAttention(metricsForReport(report, metricDefinitions).filter((m) => !m.infoOnly && m.status !== '정상')),
+    [report, metricDefinitions],
+  );
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
@@ -442,11 +451,26 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       </ScrollView>
       </FadeInUp>
 
-      {/* ①층의 답은 «항목으로 보면 몇 개가 벗어났나»(점수)와 «상태로 보면 무엇에 해당하나»(13개
-          판정) 둘이다. 2026-08-02까지는 카드 두 장이었는데, 같은 질문의 두 답에 카드가 둘이면
-          사용자가 같은 판단을 두 번 하게 된다(§2-1 축 0). 한 장으로 합치고 2뎁스에서 나눈다.
-          덤으로 «혼자만 안 눌리던 카드»도 사라졌다 — 앱의 다른 카드는 전부 눌러서 열린다. */}
+      {/* 카드 1 — 점수 히어로. **점수만** 말한다.
+          여기서 결론 문장·신호 목록까지 떠안으면 «이 탭의 얼굴»이 텍스트 벽이 된다.
+          "그래서 무엇이 나쁜가"는 바로 아래 카드가 맡는다. */}
       <FadeInUp delay={100}>
+      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }}>
+        <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500', marginBottom: 6 }}>참고 점수</Text>
+        {/* 연도를 바꿀 때마다 0에서부터 채워지며 그려져, 변화가 자연스럽게 느껴진다 */}
+        <AnimatedScore score={scorePct} color={scoreColor} />
+        <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 10, marginBottom: 4 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+        </View>
+        {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
+        <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
+      </View>
+      </FadeInUp>
+
+      {/* 카드 2 — 히어로가 «점수»만 말하고 «무엇이» 나쁜지는 말하지 않는다. 그 일을 여기가 맡는다.
+          답은 두 단위로 나온다: 항목으로 보면 어느 검사가 벗어났나, 상태로 보면 무엇에 해당하나.
+          예전에는 뒤쪽 단위만 「집단군 판정」이라는 이름으로 따로 있었고 앞쪽은 아무 데도 없었다. */}
+      <FadeInUp delay={140}>
       <SummaryCard
         title="나는 어떤 상태인가"
         definition={cardContent['나는 어떤 상태인가']?.definition}
@@ -463,28 +487,44 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             <Text style={{ fontSize: 11, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
           </View>
         }
-        preview={
-          // 점수 히어로는 1뎁스에 남긴다 — 참고 점수는 이 탭의 얼굴이라 열어야 보이면 안 된다.
-          // 연도를 바꿀 때마다 0에서부터 채워지며 그려져 변화가 자연스럽게 느껴진다.
-          <View style={{ marginTop: 14 }}>
-            <Text style={{ fontSize: 13, color: T.text3, fontWeight: '500', marginBottom: 4 }}>참고 점수</Text>
-            <AnimatedScore score={scorePct} color={scoreColor} />
-          </View>
-        }
         axes={['standard']}
       >
         {/* ── 항목으로 보면 ─────────────────────────────────
-            검사 항목 하나하나가 정상범위 안인지. 점수가 세는 단위가 이것이다. */}
+            검사 항목 하나하나가 정상범위 안인지. 점수가 세는 단위가 이것이다.
+            ⚠️ 개수만 세지 않고 **어느 항목인지** 이름과 값까지 적는다 — 히어로가 40점만
+            말하고 «무엇이» 나쁜지는 말하지 않아서, 그 답이 앱 어디에도 없었다.
+            정상 항목은 적지 않는다: 벗어난 것만 보여주는 게 이 층의 질문이다. */}
         <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 6 }}>항목으로 보면</Text>
-        <Text style={{ fontSize: 15, color: T.text2, lineHeight: 23, marginBottom: 14 }}>
+        <Text style={{ fontSize: 15, color: T.text2, lineHeight: 23, marginBottom: 12 }}>
           {report.trackCount + report.manageCount === 0
             ? `${report.year}년 검진은 검사 항목이 모두 기준 안이에요.`
             : `${report.year}년 검진에서 ${[
                 report.trackCount ? `위험 ${report.trackCount}개` : null,
                 report.manageCount ? `주의 ${report.manageCount}개` : null,
               ].filter(Boolean).join(' · ')}가 나왔어요.`}
-          {outsideScore.length > 0 && ` 점수에 안 잡히는 신호도 ${outsideScore.length}가지 있어요 — ${outsideScore[0].label}부터 보세요.`}
         </Text>
+        {offRangeMetrics.length > 0 && (
+          <View style={{ marginBottom: 14 }}>
+            {offRangeMetrics.map((m, i) => {
+              const bad = m.status === '위험';
+              return (
+                <View key={m.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 }}>{m.name}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: bad ? T.danger : T.warn }}>
+                    {formatMetricValue(m, report.values[m.key])}
+                    <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{m.unit}</Text>
+                  </Text>
+                  <View style={{ backgroundColor: bad ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: bad ? T.danger : T.warn }}>{m.status}</Text>
+                  </View>
+                </View>
+              );
+            })}
+            <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 8 }}>
+              기준 안에 있는 항목은 적지 않았어요. 전체 목록과 항목별 설명은 검사항목 탭에 있어요.
+            </Text>
+          </View>
+        )}
         {/* 점수가 세지 않는 것 — 점수만 보고 "괜찮다"고 덮어버리지 않도록 함께 둔다.
             점수가 양호할 때가 특히 중요하다. */}
         {outsideScore.length > 0 && (
