@@ -182,6 +182,10 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                 </View>
               ))}
             </View>
+            {/* 정렬 기준을 화면이 말한다(§2-1 축 4) — 네 탭 중 여기만 침묵하고 있었다.
+                순서가 눈에 보이는 홈 TOP3(「가장 먼저 확인하면 좋은 항목」)와 달리, 목록이
+                길어 «왜 이 순서인지»를 스스로 알아내야 했다. */}
+            <Text style={{ fontSize: 12, color: T.text3, marginTop: 8 }}>먼저 확인하면 좋은 순서로 정렬했어요.</Text>
           </View>
           {rows.map((metric, i) => {
             const visual = categoryVisual(metric.category);

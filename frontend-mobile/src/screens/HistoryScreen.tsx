@@ -162,16 +162,18 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
         </FadeInUp>
       )}
 
-      {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만 보여준다(2년 미만 기록이면 비어있음) */}
+      {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만 보여준다(2년 미만 기록이면 비어있음)
+          1뎁스 결론은 «판단»을 담는다(§2-1). 예전에는 「짚어낸 변화 5건 · 우려 3건 · 다음 검진 2026년」처럼
+          개수만 세 개 나열해서, 5건이 많은 건지 적은 건지도 우려가 있다는 건지도 읽히지 않았다.
+          우려 유무가 곧 판단이라 그것을 문장으로 만든다.
+          다음 검진 연도는 판단이 아니라 예정 정보라 뺐다 — 2뎁스 맨 아래에 그대로 있다(§1-1②). */}
       {!!highlights?.length && (
         <FadeInUp delay={360}>
         <SummaryCard
           title="주목할 만한 변화"
-          summary={[
-            `짚어낸 변화 ${highlights.length}건`,
-            insight?.top_concerns?.length ? `우려 ${insight.top_concerns.length}건` : null,
-            insight?.next_exam_year != null ? `다음 검진 ${insight.next_exam_year}년` : null,
-          ].filter(Boolean).join(' · ')}
+          summary={insight?.top_concerns?.length
+            ? `우려할 만한 변화 ${insight.top_concerns.length}건을 포함해 ${highlights.length}건을 짚었어요.`
+            : `변화 ${highlights.length}건을 짚었고, 우려할 만한 건 없어요.`}
           definition={cardContent['주목할 만한 변화'].definition}
           detail={cardContent['주목할 만한 변화'].detail}
           meaning={cardContent['주목할 만한 변화'].meaning}
