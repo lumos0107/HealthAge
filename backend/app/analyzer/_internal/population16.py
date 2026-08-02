@@ -175,12 +175,19 @@ def care_group_rank(dist: dict[str, Any], care_group: str, hits: int) -> Optiona
 _TREND_GROUPS = {
     "g_obesity": "비만",
     "g_pre_diabetes": "당뇨 전단계",
+    "g_pre_hypertension": "고혈압 전단계",
     "g_diabetes": "당뇨",
     "g_fatty_liver_suspect": "지방간 의심",
     "g_hypertension": "고혈압",
     "g_dyslipidemia": "이상지질혈증",
     "g_metabolic_syndrome": "대사증후군",
 }
+# 여기 있는 것은 전부 «수치 기준» 임상군이다. parquet에는 13개가 다 있지만
+# 흡연 3종(현재·과거·비흡연)과 음주 2종은 일부러 넣지 않는다 —
+# 이것들은 문진 기반 **행동**이라, 「또래 100명 중 32명이 흡연해요」가 판단을 돕기보다
+# 「나만 그런 게 아니네」로 읽혀 행동을 막는다. 유병률은 상태를 상대화할 때 쓰는 것이지
+# 행동을 상대화할 때 쓰는 것이 아니다.
+# (`g_pre_hypertension`은 당뇨 전단계가 이미 있는데 혼자 빠져 있던 누락이다 — 2026-08-03 추가.)
 
 
 def peer_prevalence(sex: int, age: int, year: int = 2024) -> dict[str, Any]:

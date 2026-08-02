@@ -106,7 +106,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
         setError('이 행동이 움직이는 값은 대사증후군·LDL 목표 판정식에 들어가지 않아, 다시 셀 판정이 없어요. 위 수치 변화까지가 이 행동으로 말할 수 있는 전부입니다.');
         return;
       }
-      setResult(demoMode ? simulateDemo(latest, changes) : await simulateCheckup(changes));
+      setResult(demoMode ? simulateDemo(latest, changes, gender) : await simulateCheckup(changes));
     } catch (e) {
       setError(e instanceof Error ? `재계산에 실패했어요: ${e.message}` : '재계산에 실패했어요.');
     } finally {

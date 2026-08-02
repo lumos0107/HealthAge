@@ -4,7 +4,7 @@ import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-
 import { Eyebrow, FadeInUp, T } from '../components/UI';
 import { Expandable, NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard } from '../components/v2';
 import { cardContent, cardContentFor, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
-import { metricPeerRank, normalBounds, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa, trendDirection } from '../interpret';
+import { metricPeerRank, normalBounds, normalRangeText, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa, trendDirection } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
 import type { RealTimeseries } from '../health';
 
@@ -602,8 +602,8 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
             {!focusMetric
               ? '그래프를 눌러 그해 수치를 확인하세요.'
               : showAll && presentKeys.length > 1
-                ? `초록 띠 = ${focusMetric.shortName} 정상 ${focusMetric.normalText}${focusMetric.unit}. 진한 선만 이 띠로 판단하세요. 그래프를 누르면 그해 수치를 봐요.`
-                : `${focusMetric.name} 하나만 그린 그래프예요. 초록 띠 = 정상 ${focusMetric.normalText}${focusMetric.unit}. 그래프를 누르면 그해 수치를 봐요.`}
+                ? `초록 띠 = ${focusMetric.shortName} 정상 ${normalRangeText(focusMetric)}. 진한 선만 이 띠로 판단하세요. 그래프를 누르면 그해 수치를 봐요.`
+                : `${focusMetric.name} 하나만 그린 그래프예요. 초록 띠 = 정상 ${normalRangeText(focusMetric)}. 그래프를 누르면 그해 수치를 봐요.`}
           </Text>
 
           {/* 선택한 연도의 수치 = 그래프 범례. 예전에는 "검진 수치" 줄과 "범례" 줄이

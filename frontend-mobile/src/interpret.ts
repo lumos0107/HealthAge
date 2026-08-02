@@ -31,6 +31,16 @@ export function normalBounds(metric: MetricDefinition): { low?: number; high?: n
   return { low: 0, high: metric.normalValue };
 }
 
+/** 「정상 {범위}{단위}」에 쓸 문자열 — 단위는 **숫자가 있을 때만** 붙인다.
+ *
+ *  `normalText`가 늘 숫자 범위인 것은 아니다. 크레아티닌은 기관마다 기준이 달라
+ *  「기관 기준 확인」이라는 말이 들어 있는데, 여기에 단위를 이어 붙이면 화면에
+ *  **「정상 기관 기준 확인mg/dL」**이 된다. 안내문이 단위를 달고 수치처럼 읽힌다. */
+export function normalRangeText(metric: MetricDefinition): string {
+  const t = metric.normalText ?? '';
+  return /\d/.test(t) ? `${t}${metric.unit ?? ''}` : t;
+}
+
 /** 2뎁스 ③「나의 위치」의 비교축 — 위치는 언제나 «무엇에 대한» 위치다.
  *  앱 전체를 통틀어 비교 대상은 이 셋뿐이다:
  *    standard 학회 기준·정상범위(RangeBar·level 배지) / peer 공단 표본(PeerRankBlock)

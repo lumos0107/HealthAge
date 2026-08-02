@@ -23,6 +23,16 @@ KEY_TO_INDICATOR = {
     "aip": "AIP",
     "lap": "LAP",
     "vai": "VAI",
+    # 아래 5종은 표에 있는데 매핑이 없어 조회되지 않고 있었다(2026-08-03).
+    # ⚠️ 이들은 «컷오프가 있는» 지표다. 그래서 또래는 판정을 대신하지 않고 **보조**로만
+    #    쓴다 — 화면 결론은 학회 기준(level·interpretation)이 말하고, 백분위는 그 아래
+    #    작은 줄이다. 「또래 평균 근처면 괜찮다」로 읽히면 ③층 「또래 자체가 나빠졌나」가
+    #    경고하는 바로 그 오독이 된다(기준선이 내려앉은 집단 안의 순위).
+    "non_hdl_c": "Non_HDL",
+    "castelli_1": "Castelli_I",
+    "castelli_2": "Castelli_II",
+    "de_ritis": "De_Ritis",
+    "map": "MAP",
 }
 
 _stats: Optional[pl.DataFrame] = None

@@ -350,7 +350,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 40세 남성 중 하위 47%",
+    "percentile": 46.9,
+    "peer_n": 70805,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -360,7 +364,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "적정",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 40세 남성 중 하위 41%",
+    "percentile": 41,
+    "peer_n": 70806,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -370,7 +378,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "적정",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 40세 남성 중 하위 47%",
+    "percentile": 47.4,
+    "peer_n": 70461,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -458,7 +470,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 40세 남성 중 상위 49%",
+    "percentile": 51.3,
+    "peer_n": 70823,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -501,7 +517,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 40세 남성 중 하위 31%",
+    "percentile": 31.1,
+    "peer_n": 70826,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -627,6 +647,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "combo_oe": {},
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 37.4,
+     "n_eval": 62567
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 15.1,
@@ -1052,7 +1077,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 42세 남성 중 상위 50%",
+    "percentile": 50,
+    "peer_n": 70805,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -1062,7 +1091,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "적정",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 42세 남성 중 하위 47%",
+    "percentile": 46.6,
+    "peer_n": 70806,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -1072,7 +1105,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "적정",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 42세 남성 중 상위 46%",
+    "percentile": 54.1,
+    "peer_n": 70461,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -1160,7 +1197,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 42세 남성 중 상위 49%",
+    "percentile": 51.3,
+    "peer_n": 70823,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -1203,7 +1244,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 42세 남성 중 하위 40%",
+    "percentile": 40.1,
+    "peer_n": 70826,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -1329,6 +1374,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "combo_oe": {},
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 37.4,
+     "n_eval": 62567
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 15.1,
@@ -1759,7 +1809,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 44세 남성 중 상위 46%",
+    "percentile": 54,
+    "peer_n": 70805,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -1769,7 +1823,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "intermediate",
     "interpretation": "경계",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 44세 남성 중 상위 47%",
+    "percentile": 53.1,
+    "peer_n": 70806,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -1779,7 +1837,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "적정",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 44세 남성 중 상위 39%",
+    "percentile": 61.4,
+    "peer_n": 70461,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -1867,7 +1929,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 44세 남성 중 상위 49%",
+    "percentile": 51.3,
+    "peer_n": 70823,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -1910,7 +1976,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 44세 남성 중 하위 48%",
+    "percentile": 47.6,
+    "peer_n": 70826,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -2036,6 +2106,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "combo_oe": {},
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 37.4,
+     "n_eval": 62567
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 15.1,
@@ -2466,7 +2541,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 46세 남성 중 상위 38%",
+    "percentile": 61.5,
+    "peer_n": 64143,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -2476,7 +2555,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "intermediate",
     "interpretation": "경계",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 46세 남성 중 상위 33%",
+    "percentile": 66.8,
+    "peer_n": 64144,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -2486,7 +2569,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "적정",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 46세 남성 중 상위 25%",
+    "percentile": 75,
+    "peer_n": 63820,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -2574,7 +2661,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 46세 남성 중 하위 42%",
+    "percentile": 42.2,
+    "peer_n": 64159,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -2617,7 +2708,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 46세 남성 중 상위 40%",
+    "percentile": 60,
+    "peer_n": 64159,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -2747,6 +2842,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   "combo_oe": {},
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 38.9,
+     "n_eval": 50548
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 16.1,
@@ -3281,7 +3381,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 48세 남성 중 상위 31%",
+    "percentile": 69.2,
+    "peer_n": 64143,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -3291,7 +3395,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 48세 남성 중 상위 20%",
+    "percentile": 79.7,
+    "peer_n": 64144,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -3301,7 +3409,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "intermediate",
     "interpretation": "경계",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 48세 남성 중 상위 15%",
+    "percentile": 85.3,
+    "peer_n": 63820,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -3389,7 +3501,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 48세 남성 중 하위 36%",
+    "percentile": 35.8,
+    "peer_n": 64159,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -3432,7 +3548,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 48세 남성 중 상위 30%",
+    "percentile": 70.1,
+    "peer_n": 64159,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -3611,6 +3731,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   },
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 38.9,
+     "n_eval": 50548
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 16.1,
@@ -4302,7 +4427,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 50세 남성 중 상위 24%",
+    "percentile": 76.2,
+    "peer_n": 65302,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -4312,7 +4441,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 50세 남성 중 상위 15%",
+    "percentile": 85,
+    "peer_n": 65303,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -4322,7 +4455,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 50세 남성 중 상위 10%",
+    "percentile": 90,
+    "peer_n": 65007,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -4410,7 +4547,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 50세 남성 중 하위 26%",
+    "percentile": 26.2,
+    "peer_n": 65319,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -4453,7 +4594,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "intermediate",
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 50세 남성 중 상위 26%",
+    "percentile": 73.6,
+    "peer_n": 65323,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -4786,6 +4931,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   },
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 38.5,
+     "n_eval": 63913
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 17.0,
@@ -5644,7 +5794,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 52세 남성 중 상위 12%",
+    "percentile": 87.6,
+    "peer_n": 65302,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -5654,7 +5808,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 52세 남성 중 상위 2%",
+    "percentile": 97.8,
+    "peer_n": 65303,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -5664,7 +5822,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 52세 남성 중 상위 1%",
+    "percentile": 99.2,
+    "peer_n": 65007,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -5752,7 +5914,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 52세 남성 중 하위 17%",
+    "percentile": 16.8,
+    "peer_n": 65319,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -5793,7 +5959,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "intermediate",
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 52세 남성 중 상위 12%",
+    "percentile": 87.6,
+    "peer_n": 65323,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -6282,6 +6452,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   },
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 38.5,
+     "n_eval": 63913
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 17.0,
@@ -6973,7 +7148,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 54세 남성 중 상위 19%",
+    "percentile": 81,
+    "peer_n": 65302,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -6983,7 +7162,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 54세 남성 중 상위 7%",
+    "percentile": 92.5,
+    "peer_n": 65303,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -6993,7 +7176,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 54세 남성 중 상위 6%",
+    "percentile": 94.5,
+    "peer_n": 65007,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -7081,7 +7268,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 54세 남성 중 하위 24%",
+    "percentile": 24,
+    "peer_n": 65319,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -7122,7 +7313,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "intermediate",
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 54세 남성 중 상위 23%",
+    "percentile": 76.6,
+    "peer_n": 65323,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -7457,6 +7652,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   },
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 38.5,
+     "n_eval": 63913
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 17.0,
@@ -8148,7 +8348,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     },
     "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
     "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
-    "formula": "Non-HDL-C = 총콜레스테롤 − HDL"
+    "formula": "Non-HDL-C = 총콜레스테롤 − HDL",
+    "peer_label": "한국인 56세 남성 중 상위 18%",
+    "percentile": 81.6,
+    "peer_n": 56341,
+    "peer_year": 2017
    },
    {
     "key": "castelli_1",
@@ -8158,7 +8362,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<4.0 적정 / 4.0~5.0 경계 / >5.0 높음 (참고, 성별·문헌별 상이)",
-    "formula": "Castelli-I = 총콜레스테롤 / HDL"
+    "formula": "Castelli-I = 총콜레스테롤 / HDL",
+    "peer_label": "한국인 56세 남성 중 상위 8%",
+    "percentile": 91.5,
+    "peer_n": 56341,
+    "peer_year": 2017
    },
    {
     "key": "castelli_2",
@@ -8168,7 +8376,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "high",
     "interpretation": "높음",
     "cutoffs": "<3.0 적정 / 3.0~3.5 경계 / >3.5 높음 (참고)",
-    "formula": "Castelli-II = LDL / HDL"
+    "formula": "Castelli-II = LDL / HDL",
+    "peer_label": "한국인 56세 남성 중 상위 7%",
+    "percentile": 93.4,
+    "peer_n": 56092,
+    "peer_year": 2017
    },
    {
     "key": "aip",
@@ -8256,7 +8468,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "low",
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
-    "formula": "De Ritis = AST / ALT"
+    "formula": "De Ritis = AST / ALT",
+    "peer_label": "한국인 56세 남성 중 하위 23%",
+    "percentile": 23,
+    "peer_n": 56349,
+    "peer_year": 2017
    },
    {
     "key": "alt_ggt",
@@ -8299,7 +8515,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "level": "intermediate",
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
-    "formula": "MAP = (SBP + 2×DBP) / 3"
+    "formula": "MAP = (SBP + 2×DBP) / 3",
+    "peer_label": "한국인 56세 남성 중 상위 23%",
+    "percentile": 76.6,
+    "peer_n": 56350,
+    "peer_year": 2017
    },
    {
     "key": "prevent",
@@ -8634,6 +8854,11 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
   },
   "disclaimer": "국민건강보험공단 표본 2009~2024년 15,957,665건을 재분석한 모집단 통계입니다. 원자료에 약 복용 정보가 없어 모집단 유병률은 '검진 수치 기준'이며, 서비스 판정('수치 또는 해당 약 복용')보다 좁게 잡힙니다. 개인식별자가 없어 연도별 독립 단면이므로 개인의 경과가 아니라 집단 비교입니다. 지질검사가 들어간 조합은 검사가 전원에게 실시된 2009~2017년만 집계했습니다.",
   "peer_prevalence": {
+    "g_pre_hypertension": {
+     "name": "고혈압 전단계",
+     "pct": 38.5,
+     "n_eval": 50466
+    },
    "g_hypertension": {
     "name": "고혈압",
     "pct": 17.3,
@@ -10083,8 +10308,11 @@ export const dummyInsight: NonNullable<RealTimeseries['insight']> = {
  *  (같은 컷오프가 이미 metabolic_syndrome_detail의 reason 문구에 그대로 적혀 있다).
  *  ⚠️ 계산기 22종은 백엔드 공식이라 여기서 다시 만들지 않는다 — 지어낸 값을 보여주느니
  *     limitations에 "데모라서 못 한다"고 밝히고 비워 둔다.
- *  ⚠️ 컷오프는 데모 페르소나(56세 남)의 남성 기준이다. 데모 전용이라 성별 분기를 두지 않는다. */
-export function simulateDemo(latest: Report, changes: SimulateChanges): RealSimulation {
+ *  ⚠️ 컷오프는 성별로 갈린다(허리 90/85 · HDL 40/50). 예전에는 «데모 페르소나가 남성이라»
+ *     분기를 두지 않았는데, 같은 화면의 `lifestyleActions.MS_CRITERIA`는 이미 성별 분기가
+ *     있고 그 주석이 «simulateDemo와 같은 값이어야 한다»고 요구한다. 여성이면 한 화면
+ *     안에서 «몇 개 충족»과 «얼마나 좁히나»가 서로 다른 기준으로 계산된다. */
+export function simulateDemo(latest: Report, changes: SimulateChanges, gender: 1 | 2 = 1): RealSimulation {
   const v = latest.values;
   const pick = (k: keyof SimulateChanges, base: number | undefined) =>
     changes[k] != null ? changes[k]! : base;
@@ -10092,11 +10320,11 @@ export function simulateDemo(latest: Report, changes: SimulateChanges): RealSimu
   // (라벨, 적용 전 값, 적용 후 값, 충족 판정)
   const factors = (waist?: number, sbp?: number, dbp?: number, fbs?: number, tg?: number, hdl?: number) => {
     const met: string[] = [];
-    if (waist != null && waist >= 90) met.push('복부비만');
+    if (waist != null && waist >= (gender === 2 ? 85 : 90)) met.push('복부비만');
     if ((sbp != null && sbp >= 130) || (dbp != null && dbp >= 85)) met.push('고혈압');
     if (fbs != null && fbs >= 100) met.push('고혈당');
     if (tg != null && tg >= 150) met.push('고중성지방');
-    if (hdl != null && hdl < 40) met.push('낮은 HDL');
+    if (hdl != null && hdl < (gender === 2 ? 50 : 40)) met.push('낮은 HDL');
     return met;
   };
 
