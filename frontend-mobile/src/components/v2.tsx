@@ -111,6 +111,31 @@ export function PeerRankBlock({ subject, rank, color, measured, basis }: {
   );
 }
 
+/** 2뎁스 각 칸의 «원문»을 접는다 — **접힌 것이 곧 2.5뎁스다**(§2-1).
+ *
+ *  ⚠️ 2뎁스는 요약이어야 한다. 예전에는 권장사항 전체·집단군 13개·묶음별 분포가 전부
+ *  펼쳐진 채로 있어서, 카드 하나를 열면 스크롤이 세 화면을 넘었다. 「1뎁스는 결론,
+ *  2뎁스는 전부, 2.5뎁스는 정의 심화」가 되어 층이 둘밖에 없는 것과 같았다.
+ *
+ *  ②의 「자세히 알아보기」와 같은 모양을 쓴다 — 한 화면 안에서 접는 방법이 두 가지면
+ *  사용자가 둘을 다른 기능으로 읽는다. label만 칸에 맞게 바꾼다. */
+export function Expandable({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      {open && <View>{children}</View>}
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        hitSlop={8}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+      >
+        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : label}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+      </Pressable>
+    </>
+  );
+}
+
 /** 1뎁스 요약 카드 + 2뎁스 상세 오버레이 — 탭에는 제목·결론 한 줄만 두고,
  *  누르면 검사항목 상세(MetricDetailScreen)와 같은 전체 화면 오버레이가 열린다.
  *  오버레이 안은 항상 같은 순서로 읽힌다:

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
-import { PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
+import { Expandable, PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
 import { rankFromPercentile } from '../interpret';
 import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
@@ -539,6 +539,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
 
+          {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
+              백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
+              구버전 저장 분석에는 이 값이 없다 → 그때는 요약 없이 상세 목록만 보인다.
+              ⚠️ 2026-08-02에 이 박스를 목록 «위»로 올렸다. 요약이 상세 뒤에 있으면
+              요약이 아니다 — 이미 다 읽은 사람에게만 보인다. */}
+          {rarity && (
+            <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 14, marginTop: 8, marginBottom: 2 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
+                임상 {rarity.clinical_count}개 · 생활습관 {rarity.lifestyle_count}개에 해당
+              </Text>
+              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, marginTop: 4 }}>{rarity.interpretation}</Text>
+            </View>
+          )}
+
+          <Expandable label="판정 근거 전체 보기">
           {/* 대사증후군 5인자 세부 — "해당/비해당"만으로는 왜 그렇게 판정됐는지 알 수 없다.
               각 인자가 수치 때문인지 약 복용 때문인지까지 백엔드가 이미 보내주므로 그대로 보여준다. */}
           {msDetail && (
@@ -567,18 +582,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                   )}
                 </View>
               ))}
-            </View>
-          )}
-
-          {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
-              백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
-              구버전 저장 분석에는 이 값이 없다 → 그때는 요약 없이 상세 목록만 보인다. */}
-          {rarity && (
-            <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 14, marginTop: 8, marginBottom: 2 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
-                임상 {rarity.clinical_count}개 · 생활습관 {rarity.lifestyle_count}개에 해당
-              </Text>
-              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, marginTop: 4 }}>{rarity.interpretation}</Text>
             </View>
           )}
 
@@ -619,6 +622,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               '같은 또래 100명 중 N명'은 공단 표본에서 나와 같은 성별·연령대를 수치 기준으로 센 유병률이에요. 원자료에 약 복용 정보가 없어 앱 판정보다 좁게 잡힙니다.
             </Text>
           )}
+          </Expandable>
         </SummaryCard>
         </FadeInUp>
       )}
@@ -960,6 +964,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 </View>
               }
             >
+              {/* 대표 묶음의 분포는 1뎁스 preview에 이미 그려져 있다. 여기 나머지 묶음까지
+                  전부 펼치면 막대가 다섯 벌이라 카드가 한 화면을 넘는다 — 접는다(§2-1). */}
+              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+                묶음 {withDist.length}개마다 «기준을 벗어난 항목 수»가 또래에서 어떻게 퍼져 있는지 봤어요.
+              </Text>
+              <Expandable label={`묶음 ${withDist.length}개 분포 보기`}>
               {withDist.map((g, i) => {
                 const d = cd[g.name]!;
                 const gp = samePct(g);
@@ -983,6 +993,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>
                 공단 표본 1,596만 건에서 나와 같은 성별·연령대만 골라 센 값이에요. 모집단은 학회 기준 수치로만 세어 앱 판정과 조금 다를 수 있어요.
               </Text>
+              </Expandable>
             </SummaryCard>
           </FadeInUp>
         );
@@ -998,6 +1009,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 동반 경향(통계)이며, 위험도 자체는 아니에요. 위험 정량은 위 계산기(ASCVD 등)를 참고하세요.
           </Text>
 
+          <Expandable label={`조합 ${Math.min(comboGroups.matched.length, 4)}개 보기`}>
           {comboGroups.matched.slice(0, 4).map((c, i) => (
             <View key={c.combo_name} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -1064,6 +1076,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               ))}
             </View>
           )}
+          </Expandable>
         </SummaryCard>
         </FadeInUp>
       )}
@@ -1092,6 +1105,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
             {pop16.age_fixed_trend.sex} {pop16.age_fixed_trend.age_band} · 2009년 vs 2024년. 나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
           </Text>
+          <Expandable label={`항목 ${pop16.age_fixed_trend.items.length}개 변화 보기`}>
           {pop16.age_fixed_trend.items.map((it, i) => {
             const worse = it.diff > 0;
             const max = Math.max(it.y2009, it.y2024, 1);
@@ -1116,6 +1130,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             );
           })}
           <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
+          </Expandable>
           </>}
         />
         </FadeInUp>
@@ -1138,16 +1153,32 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           summary={priorityHead(recommendations.priority_messages) ?? '내 검진 결과 기반 생활습관·검진 참고 안내예요.'}
           axes={[]}
           tipsExtra={<>
-          <Text style={{ fontSize: 13, color: T.text2, marginTop: 14, marginBottom: 14 }}>내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보예요.</Text>
+          {/* ⚠️ 여기 있던 "내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보예요."는 지웠다.
+              ③에서 ⑤로 옮기고 나서야 ②「이 지표는요」가 이미 같은 말을 하고 있는 게 드러났다
+              (에뮬레이터로 눈으로 보고 잡았다 — 코드만 봐서는 두 칸이 떨어져 있어 안 보였다). */}
 
           {!!recommendations.priority_messages?.length && (
-            <View style={{ gap: 6, marginBottom: 14 }}>
+            <View style={{ gap: 6, marginBottom: 10 }}>
               {recommendations.priority_messages!.map((msg, i) => (
                 <Text key={i} style={{ fontSize: 13, color: T.text1, fontWeight: '700', lineHeight: 20 }}>{msg}</Text>
               ))}
             </View>
           )}
 
+          {/* 접기 전에 «무엇이 얼마나 들어 있는지»를 한 줄로 알린다 — 접힌 것을 열지 말지
+              고르려면 안에 뭐가 있는지 알아야 한다. 개수는 백엔드 목록에서 세므로 지어내지 않는다. */}
+          {(() => {
+            const r = recommendations.recommendations;
+            const n = (r?.metabolic_factors?.length ?? 0) + (r?.group_specific?.length ?? 0);
+            if (!n) return null;
+            return (
+              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 2 }}>
+                목표를 벗어난 항목 {n}가지에 대한 생활습관·검진 안내가 담겨 있어요.
+              </Text>
+            );
+          })()}
+
+          <Expandable label="권장사항 전체 보기">
           {recommendations.recommendations?.common?.map((c, i) => (
             <View key={`common-${i}`} style={{ marginBottom: 12 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{c.category}</Text>
@@ -1218,6 +1249,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {recommendations._meta?.disclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, marginTop: 14, lineHeight: 17 }}>{recommendations._meta.disclaimer}</Text>
           )}
+          </Expandable>
           </>}
         />
         </FadeInUp>

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T } from '../components/UI';
-import { NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard } from '../components/v2';
+import { Expandable, NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard } from '../components/v2';
 import { cardContent, cardContentFor, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { metricPeerRank, normalBounds, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa, trendDirection } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
@@ -130,6 +130,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
           <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 12 }}>
             첫 회차와 마지막 회차를 비교한 값이에요. 중간에 좋아진 구간이 있어도 여기엔 담기지 않아요 — 최근 흐름은 위 「참고 점수 추이」를 보세요.
           </Text>
+          <Expandable label={`항목 ${changePace!.length}개 보기`}>
           <View style={{ gap: 8 }}>
             {changePace!.map((p, i) => {
               // 2배 이상이면 빨강, 그 아래는 주황. 배수를 못 낸 항목은 중립 회색으로 둔다.
@@ -158,6 +159,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
             기준: 건강보험공단 검진 표본의 성별·연령대별 평균 변화량. 위험도 예측이 아니라 변화 폭 비교예요.
             배수는 <Text style={{ fontWeight: '700' }}>평균과의 비교</Text>라서 또래 안에서도 개인차가 큰 점은 담기지 않아요.
           </Text>
+          </Expandable>
         </SummaryCard>
         </FadeInUp>
       )}
@@ -209,7 +211,8 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
               })}
             </View>
           )}
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>여러 해의 기록을 비교해 시스템이 짚어낸 변화예요.</Text>
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>여러 해의 기록을 비교해 시스템이 짚어낸 변화 {highlights!.length}건이에요.</Text>
+          <Expandable label={`변화 ${highlights!.length}건 보기`}>
           <View style={{ gap: 8 }}>
             {highlights!.map((h, i) => {
               const sevColor = h.severity === 'high' ? T.danger : T.warn;
@@ -227,6 +230,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
               );
             })}
           </View>
+          </Expandable>
           {insight?.next_exam_year != null && (
             <Text style={{ fontSize: 12, color: T.text3, marginTop: 12 }}>다음 검진 권장: {insight.next_exam_year}년</Text>
           )}
