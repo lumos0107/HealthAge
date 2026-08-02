@@ -70,8 +70,11 @@ function TabIntroNote({ title }: { title: string }) {
         hitSlop={6}
         style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginTop: 6 }}
       >
+        {/* 설명 뒤에 «누를 말»을 붙인다. 설명문만 두면 읽는 글로만 보여서 아무도 안 누른다 —
+            화살표 하나로는 약하다. 진한 글씨가 여기가 누르는 자리라고 말한다. */}
         <Text style={{ flex: 1, fontSize: 13, color: T.text3, lineHeight: 19 }}>
-          검진 수치를 네 단계로 나눠 읽습니다.
+          검진 수치를 네 단계로 나눠 읽습니다.{'  '}
+          <Text style={{ color: T.text2, fontWeight: '700' }}>{open ? '접기' : '분석 탭 보는 법'}</Text>
         </Text>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} style={{ marginTop: 2 }} />
       </Pressable>
