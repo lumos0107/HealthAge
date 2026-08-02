@@ -93,14 +93,26 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
 
       <SectionHeader
         first
+        title="항목별로 보면"
+        sub="검사 항목을 묶어 연도별로 그립니다. 카드를 열면 연도를 골라 그해 수치를 볼 수 있어요."
+      />
+
+      {/* 차트 카드들 — 살짝 떠오르며 순서대로 나타나서 화면이 한 번에 딱딱하게 뜨지 않도록 한다 */}
+      {chartGroups.map((group, i) => (
+        <FadeInUp key={group.title} delay={i * 60}>
+          <ChartCard group={group} reports={reports} metricDefinitions={metricDefinitions} />
+        </FadeInUp>
+      ))}
+
+      <SectionHeader
         title="여러 해를 종합하면"
-        sub="회차 하나만 봐서는 안 보이는 것 — 흐름·또래 비교·구간이 바뀐 순간을 짚습니다."
+        sub="위 그래프들을 시스템이 대신 읽은 결과예요 — 또래와 견주고, 구간이 바뀐 순간을 짚습니다."
       />
 
       {/* 또래 대비 변화 '속도' — 공단 표본의 같은 성별·연령대 평균 변화량과 내 변화 폭을 배수로 비교.
           배수는 또래 변화가 뚜렷할 때만(±0.5 이상) 나온다 — 0에 가까운 값으로 나누면 배수가 발산하므로. */}
       {!!changePace?.length && (
-        <FadeInUp delay={15}>
+        <FadeInUp delay={330}>
         <SummaryCard
           title="또래 대비 변화 속도"
           summary={`${changePace[0]?.span_years ?? ''}년을 통틀어 ${changePace.length}개 항목이 또래보다 크게 변했어요.`}
@@ -152,7 +164,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
 
       {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만 보여준다(2년 미만 기록이면 비어있음) */}
       {!!highlights?.length && (
-        <FadeInUp delay={20}>
+        <FadeInUp delay={360}>
         <SummaryCard
           title="주목할 만한 변화"
           summary={[
@@ -219,18 +231,6 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
         </SummaryCard>
         </FadeInUp>
       )}
-
-      <SectionHeader
-        title="항목별로 보면"
-        sub="검사 항목을 묶어 연도별로 그립니다. 카드를 열면 연도를 골라 그해 수치를 볼 수 있어요."
-      />
-
-      {/* 차트 카드들 — 살짝 떠오르며 순서대로 나타나서 화면이 한 번에 딱딱하게 뜨지 않도록 한다 */}
-      {chartGroups.map((group, i) => (
-        <FadeInUp key={group.title} delay={i * 90}>
-          <ChartCard group={group} reports={reports} metricDefinitions={metricDefinitions} />
-        </FadeInUp>
-      ))}
 
       {/* 면책 — 첫 화면을 막지 않도록 맨 아래에 회색 한 줄로 둔다.
           (항목별 설명은 검사항목 탭 상세와 완전히 겹쳐 삭제했다 — description·note는 거기에 그대로 있다.) */}
