@@ -30,9 +30,9 @@ export function Stepper({ label, value, min, max, onChange, suffix, step = 1 }: 
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
       <Text style={{ fontSize: 14, color: T.text2, fontWeight: '600' }}>{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Pressable onPress={() => onChange(Math.max(min, Math.round((value - step) * 10) / 10))} style={stepBtn}><Ionicons name="remove" size={18} color={T.text2} /></Pressable>
+        <Pressable hitSlop={8} onPress={() => onChange(Math.max(min, Math.round((value - step) * 10) / 10))} style={stepBtn}><Ionicons name="remove" size={18} color={T.text2} /></Pressable>
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, minWidth: 46, textAlign: 'center' }}>{value}{suffix}</Text>
-        <Pressable onPress={() => onChange(Math.min(max, Math.round((value + step) * 10) / 10))} style={stepBtn}><Ionicons name="add" size={18} color={T.text2} /></Pressable>
+        <Pressable hitSlop={8} onPress={() => onChange(Math.min(max, Math.round((value + step) * 10) / 10))} style={stepBtn}><Ionicons name="add" size={18} color={T.text2} /></Pressable>
       </View>
     </View>
   );

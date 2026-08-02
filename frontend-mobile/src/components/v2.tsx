@@ -473,7 +473,7 @@ export function FixedCTA({ label, onPress, disabled, loading }: {
 }) {
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: T.white, paddingHorizontal: 20, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 28 : 16 }}>
-      <Pressable
+      <Pressable hitSlop={8}
         onPress={onPress}
         disabled={disabled || loading}
         style={({ pressed }) => ({
@@ -548,7 +548,7 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
 
   return (
     <View>
-      <Pressable onPress={handlePress} disabled={!onSelectYear}>
+      <Pressable hitSlop={8} onPress={handlePress} disabled={!onSelectYear}>
       <Svg width={CHART_W} height={CHART_H}>
         <G x={PAD.left} y={PAD.top}>
           {/* 정상범위 밴드 — infoOnly는 판정 기준이 없으므로 그리지 않는다 */}

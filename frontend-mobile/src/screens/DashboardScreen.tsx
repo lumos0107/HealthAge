@@ -78,7 +78,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           <Text style={{ fontSize: 14, color: T.text3, lineHeight: 21, marginTop: 10, marginBottom: 20 }}>
             검진 결과지를 올리면 건강 점수와 연도별 변화, 맞춤 안내를 확인할 수 있어요. 로그인하고 시작해보세요.
           </Text>
-          <Pressable onPress={onRequireLogin} style={{ height: 52, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
+          <Pressable hitSlop={8} onPress={onRequireLogin} style={{ height: 52, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <Ionicons name="log-in-outline" size={19} color="#fff" />
             <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>로그인 / 회원가입</Text>
           </Pressable>
@@ -148,7 +148,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           {QUICK_LINKS.map((link) => (
-            <Pressable
+            <Pressable hitSlop={8}
               key={link.label}
               style={{ alignItems: 'center', gap: 8, flex: 1 }}
               onPress={() => {

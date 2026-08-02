@@ -621,7 +621,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
                 // 줄을 눌러도 그 항목이 기준이 된다(칩과 같은 동작).
                 const on = showAll || k === focusMetric?.key;
                 return (
-                  <Pressable
+                  <Pressable hitSlop={8}
                     key={k}
                     onPress={() => setPick(k)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 }}
@@ -781,7 +781,7 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey, color: col
   };
 
   return (
-    <Pressable onPress={handleTouch} onTouchStart={handleTouch} onTouchMove={handleTouch}>
+    <Pressable hitSlop={8} onPress={handleTouch} onTouchStart={handleTouch} onTouchMove={handleTouch}>
     <Svg width={CHART_W} height={CHART_H}>
       <G x={PAD.left} y={PAD.top}>
         {/* 정상범위 밴드 — 축 눈금만으로는 "이 값이 괜찮은지"를 알 수 없어서,

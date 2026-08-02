@@ -183,7 +183,7 @@ export default function ProfileScreen({
               <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 10 }}>성별</Text>
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
                 {(['1', '2'] as const).map((g) => (
-                  <Pressable
+                  <Pressable hitSlop={8}
                     key={g}
                     onPress={() => setForm((s) => ({ ...s, gender: g }))}
                     style={{
@@ -210,7 +210,7 @@ export default function ProfileScreen({
               />
               <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginTop: 8, marginBottom: 14 }}>생활습관</Text>
               <LifestyleForm value={lifestyle} onChange={setLifestyle} gender={Number(form.gender) === 2 ? 2 : 1} />
-              <Pressable
+              <Pressable hitSlop={8}
                 style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 16 }}
                 onPress={handleSave}
               >
@@ -298,7 +298,7 @@ export default function ProfileScreen({
         {/* 로그아웃 */}
         <FadeInUp delay={280}>
         <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
-          <Pressable
+          <Pressable hitSlop={8}
             onPress={onLogout}
             style={{ height: 54, backgroundColor: T.white, borderRadius: T.radiusPill, borderWidth: 1, borderColor: T.danger, alignItems: 'center', justifyContent: 'center' }}
           >
@@ -323,7 +323,7 @@ export default function ProfileScreen({
       <Modal transparent visible={editState === 'verifying'} animationType="slide" onRequestClose={() => setEditState('locked')}>
         {/* height 모드는 키보드가 뜰 때마다 레이아웃을 다시 계산해 버벅이므로 padding 모드로 통일 */}
         <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
-        <Pressable
+        <Pressable hitSlop={8}
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
           onPress={() => { setEditState('locked'); setPwInput(''); setPwError(''); }}
         >
@@ -363,7 +363,7 @@ export default function ProfileScreen({
               onSubmitEditing={verifyPassword}
             />
             {pwError ? <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', marginBottom: 16 }}>{pwError}</Text> : null}
-            <Pressable
+            <Pressable hitSlop={8}
               style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
               onPress={verifyPassword}
             >

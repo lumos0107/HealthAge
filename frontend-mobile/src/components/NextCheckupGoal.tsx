@@ -123,7 +123,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
           {'\n'}
           <Text style={{ color: T.text3 }}>기준은 가장 최근 검진인 {latest.year}년 값이에요.</Text>
         </Text>
-        <Pressable
+        <Pressable hitSlop={8}
           onPress={openModal}
           style={{ height: 50, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary }}
         >
@@ -289,7 +289,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                 </View>
 
                 <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
-                  <Pressable
+                  <Pressable hitSlop={8}
                     onPress={loading ? undefined : run}
                     style={{ height: 54, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary, opacity: loading ? 0.6 : 1 }}
                   >

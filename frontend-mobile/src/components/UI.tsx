@@ -87,7 +87,12 @@ export function statusColor(status: Status) {
 
 // ─── Components ──────────────────────────────────────────
 
-/** Collapsible section — hides secondary content behind a tap, keeping screens uncluttered */
+/** Collapsible section — hides secondary content behind a tap, keeping screens uncluttered
+ *
+ *  ⚠️ **새로 쓰지 말 것. 접는 것은 `v2.Expandable`을 쓴다.** (사용처 0건, 2026-08-03 확인)
+ *  기록 39에서 「한 화면에 접는 방법이 둘이면 사용자가 다른 기능으로 읽는다」는 이유로
+ *  앱 전체의 접기를 Expandable 한 모양으로 통일했다. 이건 그 이전 컴포넌트다.
+ *  지우지 않는 이유는 내가 만든 것이 아니어서일 뿐이다 — 쓰면 통일이 깨진다. */
 export function Collapsible({ title, children, defaultOpen, badge }: { title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string }) {
   const [open, setOpen] = useState(!!defaultOpen);
   const toggle = () => {
@@ -149,7 +154,7 @@ export function SectionTitle({ title, action, onAction }: { title: string; actio
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
       <Text style={{ fontSize: 18, fontWeight: '700', color: T.text1 }}>{title}</Text>
       {action ? (
-        <Pressable onPress={onAction}>
+        <Pressable hitSlop={8} onPress={onAction}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: T.primary }}>{action}</Text>
         </Pressable>
       ) : null}
@@ -206,7 +211,7 @@ export function PrimaryBtn({ label, onPress, disabled, loading }: { label: strin
 
 export function SecondaryBtn({ label, onPress, danger }: { label: string; onPress: () => void; danger?: boolean }) {
   return (
-    <Pressable style={[ui.secondaryBtn, danger && { backgroundColor: T.dangerBg }]} onPress={onPress}>
+    <Pressable hitSlop={8} style={[ui.secondaryBtn, danger && { backgroundColor: T.dangerBg }]} onPress={onPress}>
       <Text style={[ui.secondaryBtnText, danger && { color: T.danger }]}>{label}</Text>
     </Pressable>
   );
@@ -214,7 +219,7 @@ export function SecondaryBtn({ label, onPress, danger }: { label: string; onPres
 
 export function GhostBtn({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable style={ui.ghostBtn} onPress={onPress}>
+    <Pressable hitSlop={8} style={ui.ghostBtn} onPress={onPress}>
       <Text style={ui.ghostBtnText}>{label}</Text>
     </Pressable>
   );
@@ -222,7 +227,7 @@ export function GhostBtn({ label, onPress }: { label: string; onPress: () => voi
 
 export function Chip({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
   return (
-    <Pressable style={[ui.chip, active && ui.chipActive]} onPress={onPress}>
+    <Pressable hitSlop={8} style={[ui.chip, active && ui.chipActive]} onPress={onPress}>
       <Text style={[ui.chipText, active && ui.chipTextActive]}>{label}</Text>
     </Pressable>
   );

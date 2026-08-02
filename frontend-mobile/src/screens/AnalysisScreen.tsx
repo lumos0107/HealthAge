@@ -1694,7 +1694,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             smoking={smoking}
             alcoholWeeklyG={alcoholWeeklyG}
             demoMode={!usingRealData}
-            demoNote="데모 계정은 앱 안에서 대사증후군 기준·LDL 목표만 다시 셉니다. 실제 결과지를 올리면 계산기 22종까지 함께 갱신돼요."
+            demoNote="데모 계정은 앱 안에서 대사증후군 기준·LDL 목표만 다시 셉니다. 실제 결과지를 올리면 나머지 계산기까지 함께 갱신돼요."
           />
         </FadeInUp>
       )}

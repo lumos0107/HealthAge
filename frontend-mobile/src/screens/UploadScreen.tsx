@@ -406,7 +406,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
                 </View>
                 <View style={{ paddingHorizontal: 16 }}>
                   {saved && (
-                    <Pressable
+                    <Pressable hitSlop={8}
                       style={{ height: 54, backgroundColor: T.white, borderRadius: T.radiusPill, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}
                       onPress={() => onTab('records')}
                     >
@@ -536,13 +536,13 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
               검진일, 검진기관, 주요 측정값이 실제 검진표와 같은지 마지막으로 확인해주세요.
             </Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Pressable
+              <Pressable hitSlop={8}
                 style={{ flex: 1, height: 52, backgroundColor: T.bg, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => setConfirmOpen(false)}
               >
                 <Text style={{ fontWeight: '600', color: T.text2, fontSize: 15 }}>다시 확인</Text>
               </Pressable>
-              <Pressable
+              <Pressable hitSlop={8}
                 style={{ flex: 1, height: 52, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={confirmSave}
               >
@@ -574,13 +574,13 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
               style={{ backgroundColor: T.bg, borderRadius: T.radiusSm, paddingHorizontal: 16, height: 52, fontSize: 17, color: T.text1, letterSpacing: 2, marginBottom: 20 }}
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Pressable
+              <Pressable hitSlop={8}
                 style={{ flex: 1, height: 52, backgroundColor: T.bg, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => { setMedBirthdayAsk(null); setStatusMsg(''); setIsError(false); }}
               >
                 <Text style={{ fontWeight: '600', color: T.text2, fontSize: 15 }}>취소</Text>
               </Pressable>
-              <Pressable
+              <Pressable hitSlop={8}
                 disabled={medBirthdayInput.length !== 8 || medUploading}
                 style={{ flex: 1, height: 52, backgroundColor: medBirthdayInput.length === 8 ? T.primary : T.cardAlt, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => { const a = medBirthdayAsk!; setMedBirthdayAsk(null); runMedUpload(a.uri, a.name, medBirthdayInput); }}
