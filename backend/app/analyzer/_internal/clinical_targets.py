@@ -220,15 +220,19 @@ def calculate_fli(
 
     if fli < 30:
         interp, level = "지방간 가능성 낮음", "low"
+        plain = "지방간일 가능성은 낮아요"
     elif fli < 60:
         interp, level = "판단 보류 구간 (중간)", "intermediate"
+        plain = "지방간인지 아닌지 가리기 어려운 중간이에요"
     else:
         interp, level = "지방간 가능성 높음", "high"
+        plain = "지방간일 가능성이 높아요"
 
     return {
         "value": fli,
         "level": level,
         "interpretation": interp,
+        "plain": plain,
         "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
         "formula": "Fatty Liver Index (Bedogni 2006)",
     }
@@ -261,15 +265,21 @@ def calculate_hsi(
 
     if hsi < 30:
         interp, level = "지방간 가능성 낮음", "low"
+        plain = "지방간일 가능성은 낮아요"
     elif hsi <= 36:
         interp, level = "판단 보류 구간 (중간)", "intermediate"
+        plain = "지방간인지 아닌지 가리기 어려운 중간이에요"
     else:
         interp, level = "지방간 시사", "high"
+        # FLI high와 같은 문장으로 맞춘다 — worstInterpretation이 둘을
+        # 「2개 지표 모두 …」로 묶어 1뎁스에 한 줄로 쓴다.
+        plain = "지방간일 가능성이 높아요"
 
     return {
         "value": hsi,
         "level": level,
         "interpretation": interp,
+        "plain": plain,
         "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
         "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)",
     }

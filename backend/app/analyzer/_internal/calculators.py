@@ -167,13 +167,19 @@ def calculate_bard(
     # 0~1점: 진행 섬유화 배제 쪽(음성예측도 높음) / 2~4점: 배제 불가
     if score <= 1:
         interp, level = "진행 간섬유화 가능성 낮음 (배제 근거, NPV~96%)", "low"
+        plain = "간이 굳었을 가능성은 낮아요"
     else:
         interp, level = "진행 간섬유화 배제 불가 (추가 평가 권장)", "high"
+        # BARD는 '배제(rule-out)' 검사다. 점수가 높다고 섬유화가 있다는 뜻이 아니므로
+        # 「굳고 있어요」로 풀면 진단 단정이 된다. 원문의 「추가 평가 권장」이
+        # 이 검사가 줄 수 있는 유일하게 정확한 결론이다.
+        plain = "간이 굳고 있는지 더 확인해 볼 필요가 있어요"
 
     return {
         "value": score,
         "level": level,
         "interpretation": interp,
+        "plain": plain,
         "components": points,
         "inputs": {"bmi": round(bmi, 1), "ast": ast, "alt": alt,
                    "ast_alt_ratio": round(aar, 2), "diabetes": has_diabetes},

@@ -145,6 +145,10 @@ export type RealFattyLiverIndex = {
   value: number;
   level: 'low' | 'intermediate' | 'high';
   interpretation: string;
+  /** 1뎁스 결론용 해요체 한 문장. interpretation은 학회 원문 라벨이라
+   *  2뎁스 배지에는 맞지만 1뎁스 결론 문장으로는 §7(해요체·진단 단정 금지)에
+   *  걸린다 — 지우지 않고 한 벌 더 만든다. 없으면 1뎁스 결론을 그리지 않는다. */
+  plain?: string;
   cutoffs?: string;
   formula?: string;
 } | null;
@@ -197,6 +201,9 @@ export type RealCalcItem = {
   unit?: string;
   level: 'low' | 'intermediate' | 'borderline' | 'high' | 'very_high' | 'info';
   interpretation: string;
+  /** 1뎁스 결론용 해요체 한 문장 — RealFattyLiverIndex.plain과 같은 규칙.
+   *  지금은 BARD에만 있다(1뎁스 결론에 오르는 계산기가 그것뿐이라). */
+  plain?: string;
   cutoffs?: string;
   formula?: string;
   note?: string;

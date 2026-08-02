@@ -130,9 +130,30 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
               <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>또래비교 · {it.peer_label}</Text>
             </View>
           )}
-          {!!it.formula && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{it.formula}</Text>}
           {!!it.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {it.cutoffs}</Text>}
-          {!!it.note && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{it.note}</Text>}
+        </View>
+      ))}
+    </>
+  );
+}
+
+/** 2.5뎁스 — 공식과 논문 인용. CalcRows에서 갈라 나온 짝이다.
+ *
+ *  축 2는 2뎁스에 공식을 금지한다(`De Ritis = AST / ALT`,
+ *  `BARD = BMI≥28(1) + … [Harrison 2008]`). 그래서 예전에는 행을 통째로 접었는데,
+ *  그러면 값과 판정까지 같이 숨어 «내 수치가 얼마인지»를 보려고 접기를 열어야 했다.
+ *  가르는 선은 기록 39가 세운 그대로다 — **공식·학회 인용은 2.5뎁스, 컷오프는 값의
+ *  «눈금»이라 2뎁스에 남긴다.** 눈금이 없으면 숫자를 읽을 수 없다(§7). */
+function CalcFormulas({ items }: { items: RealCalcItem[] }) {
+  const withText = items.filter((it) => it.formula || it.note);
+  if (!withText.length) return null;
+  return (
+    <>
+      {withText.map((it, i) => (
+        <View key={it.key} style={{ marginTop: i === 0 ? 4 : 10 }}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: T.text2 }}>{it.title}</Text>
+          {!!it.formula && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 2 }}>{it.formula}</Text>}
+          {!!it.note && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 2 }}>{it.note}</Text>}
         </View>
       ))}
     </>
@@ -171,8 +192,15 @@ function OffRangeRow({ metric, report, first }: { metric: MetricDefinition; repo
 const calcAxes = (items: RealCalcItem[]): PositionAxis[] =>
   items.some((x) => x.percentile != null) ? ['standard', 'peer'] : ['standard'];
 
+/** 등수로 말할 지표를 고르는 순서. 백분위는 «컷오프가 확립되지 않은» 5종에만 붙는데
+ *  (TyG·METS-IR·AIP·LAP·VAI), 배열 순서대로 집으면 lipid이 먼저라 늘 AIP가 뽑혔다.
+ *  정작 카드가 대표로 내세운 지표(부제 `TyG·Non-HDL`)는 밀려서, 2뎁스에서 「AIP 기준
+ *  77등」을 읽는데 AIP가 무엇인지는 접힌 안에 있었다. 대표를 먼저 본다. */
+const RANK_PREFERRED = ['tyg', 'non_hdl_c', 'map'];
+
 function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
-  const it = items.find((x) => x.percentile != null);
+  const ranked = items.filter((x) => x.percentile != null);
+  const it = RANK_PREFERRED.map((k) => ranked.find((x) => x.key === k)).find(Boolean) ?? ranked[0];
   if (!it) return null;
   return (
     <View style={{ marginBottom: 20, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: T.divider }}>
@@ -268,23 +296,28 @@ function ComboMeanCompare({ combo }: { combo: RealComboGroup }) {
  *
  *  ⚠️ 개수(levelSummary)는 제목의 질문에 답하지 않는다. 「간에 지방이 꼈나」에
  *  「지표 2개 중 2개가 기준 밖」은 계산 도구 이야기지 간 이야기가 아니고,
- *  판단은 배지가 이미 말한다. 백엔드가 지표마다 보내주는 interpretation이
- *  («판단 보류 구간», «진행 간섬유화 배제 불가 — 추가 평가 권장») 실제 답이다.
- *  문구는 백엔드 것을 그대로 쓴다 — 여기서 다시 쓰면 지어내는 것이 된다.
+ *  판단은 배지가 이미 말한다. 백엔드가 지표마다 보내주는 판정이 실제 답이다.
+ *
+ *  ⚠️ 읽는 것은 `interpretation`이 아니라 `plain`이다. `interpretation`은 학회 원문
+ *  라벨(「진행 간섬유화 배제 불가 (추가 평가 권장)」·「NPV~96%」)이라 2뎁스 배지에는
+ *  맞지만 1뎁스 결론 문장으로는 §7(해요체·진단 단정 금지)과 축 2(전문용어 금지)에
+ *  걸린다. 백엔드가 같은 dict에 해요체 한 문장을 함께 내려주고, 여기서는 그것을
+ *  그대로 쓴다 — 프론트에서 다시 쓰면 지어내는 것이 된다.
+ *  `plain`이 없는 계산기는 결론에 오르지 않는다(null → 카드가 결론을 안 그린다).
  *
  *  지표가 많은 카드(대사·지질 7종)에는 쓰지 않는다: 하나만 꺼내면 나머지가 묻히고,
  *  지표 이름이 전부 전문용어라 «무엇이» 그런지 1뎁스에 밝힐 수도 없다. */
 const LEVEL_RANK: Record<string, number> = { very_high: 0, high: 1, moderate: 2, borderline: 2, low: 3, info: 4 };
 
-function worstInterpretation(items: { level: string; interpretation?: string | null }[]): string | null {
-  const withText = items.filter((it) => it.interpretation);
+function worstInterpretation(items: { level: string; plain?: string | null }[]): string | null {
+  const withText = items.filter((it) => it.plain);
   if (!withText.length) return null;
   const worst = [...withText].sort((a, b) => (LEVEL_RANK[a.level] ?? 9) - (LEVEL_RANK[b.level] ?? 9))[0];
   // 같은 판정이 전부면 «모두»로 묶어 하나만 말한다 — 같은 문장을 두 줄 쓰지 않는다.
-  const allSame = withText.every((it) => it.interpretation === worst.interpretation);
+  const allSame = withText.every((it) => it.plain === worst.plain);
   return allSame && withText.length > 1
-    ? `${withText.length}개 지표 모두 ${worst.interpretation}이에요`
-    : worst.interpretation!;
+    ? `${withText.length}개 지표 모두 ${worst.plain}`
+    : worst.plain!;
 }
 
 function levelSummary(levels: string[]): string | null {
@@ -409,6 +442,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const metabolicPrimary = metabolicCalcs.filter((it) => METAB_PRIMARY.includes(it.key));
   const metabolicRedundant = metabolicCalcs.filter((it) => !METAB_PRIMARY.includes(it.key));
   const liverCalcs = calcOf(['liver']);
+  // 1뎁스 결론은 BARD만 맡는다. De Ritis·ALT/GGT는 «간이 굳어가나»가 아니라
+  // «손상 원인이 술이냐»를 말하는 지표라, 카드 제목의 질문에 답하지 않는다.
+  // (게다가 둘은 서로 반대 방향을 가리켜 결론 한 줄로 세우면 어긋난다.)
+  // 사라지지는 않는다 — 2뎁스 행으로 값·판정이 그대로 보인다.
+  const liverBard = liverCalcs.filter((it) => it.key === 'bard');
   const cvCalcs = calcOf(['cardiovascular']);
   const calcDisclaimer = comboAnalysis?.calculators?.disclaimer;
   // 입력값이 없어 만들지 못한 계산기 — FLI/HSI가 '계산 불가'를 밝히듯 계산기도 침묵하지 않는다.
@@ -942,13 +980,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <SummaryCard title="간이 굳어가고 있나" term="BARD·De Ritis" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={worstInterpretation(liverCalcs)}
+        <SummaryCard title="간이 굳어가고 있나" term="BARD·De Ritis" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={worstInterpretation(liverBard)}
           badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
-          {/* CalcRows에는 공식과 논문 인용이 붙는다(`De Ritis = AST / ALT`,
-              `BARD = BMI≥28(1) + … [Harrison 2008]`). 축 2는 2뎁스에 공식을 금지하므로
-              접어서 2.5뎁스로 내린다 — 심혈관 카드가 이미 같은 방식을 쓰고 있다. */}
-          <Expandable label={`지표 ${liverCalcs.length}개 자세히`}>
-            <CalcRows items={liverCalcs} />
+          {/* 지표 3종을 2뎁스에 그대로 편다. 공식·논문 인용만 갈라 2.5뎁스로 내린다.
+              ⚠️ 예전에는 행을 통째로 접었는데, 그러면 «내 수치가 얼마인지»를 보려고도
+              접기를 열어야 했다. 축 2가 막는 것은 공식이지 값·컷오프가 아니다. */}
+          <CalcRows items={liverCalcs} />
+          <Expandable label="공식과 근거">
+            <CalcFormulas items={liverCalcs} />
           </Expandable>
         </SummaryCard>
         </FadeInUp>
@@ -960,20 +999,25 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <FadeInUp delay={216}>
         <SummaryCard title="혈당·지질에 이상이 있나" term="TyG·Non-HDL" definition={cardContent['혈당·지질에 이상이 있나']?.definition} detail={cardContent['혈당·지질에 이상이 있나']?.detail} meaning={cardContent['혈당·지질에 이상이 있나']?.meaning} tips={cardContent['혈당·지질에 이상이 있나']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(metabolicCalcs.map((it) => it.level))} />}>
-          {/* CalcRows에는 공식·학회 인용이 붙어 축 2(2뎁스에 공식 금지)에 걸린다 → 2.5뎁스로 접는다.
+          {/* 대표 3종(TyG·Non-HDL·MAP)만 2뎁스에 편다. 9종을 다 펴면 스크롤이 길어지고,
+              나머지 6종은 대표와 r 0.79~0.94로 강상관이라 같은 말을 여섯 번 하는 셈이다.
               ⚠️ 여기 있던 「관련 지표 N종 더보기」는 Expandable과 **모양이 다른 접기**였다
               (chevron이 왼쪽, 좌측 정렬). 한 카드 안에 접는 방법이 둘이면 사용자가 다른
-              기능으로 읽는다 — 하나로 합치고 대표/관련은 소제목으로만 나눈다. */}
-          <Expandable label={`지표 ${metabolicCalcs.length}개 자세히`}>
-            <CalcRows items={metabolicPrimary} />
+              기능으로 읽는다 — 접기는 하나로 유지하고 대표/관련은 소제목으로만 나눈다. */}
+          <CalcRows items={metabolicPrimary} />
+          <Expandable label={metabolicRedundant.length > 0 ? `관련 지표 ${metabolicRedundant.length}종 · 공식과 근거` : '공식과 근거'}>
             {metabolicRedundant.length > 0 && (
               <>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 4 }}>
                   관련 지표 {metabolicRedundant.length}종 <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>(대표 지표와 강한 상관)</Text>
                 </Text>
                 <CalcRows items={metabolicRedundant} />
               </>
             )}
+            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+              공식과 근거
+            </Text>
+            <CalcFormulas items={metabolicCalcs} />
           </Expandable>
           {/* 계산하지 못한 지표 — 값이 없는 걸 조용히 빼면 '원래 그런 개수'로 읽힌다.
               무엇이 왜 빠졌는지(어떤 검사가 필요한지) 백엔드 문구를 그대로 밝힌다. */}
@@ -1037,12 +1081,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>{ldlTarget.reliability_note}</Text>
             </View>
           )}
-          {/* 위험군을 «어떻게» 정했는지와 그 한계·출처는 2.5뎁스로 — 2뎁스가 답할 것은
-              「내 목표는 얼마고 지금 넘었나」까지다(§2-1). 위험군 이름은 위에 이미 있다. */}
+          {/* 위험인자는 2뎁스에 둔다 — 「왜 내 목표가 이 숫자인가」가 이 카드에서 가장
+              궁금한 것인데, 접어 두면 2뎁스가 「위험군: 중등도위험군」이라는 결과만 말하고
+              근거는 안 보인다. 흡연·고혈압·나이는 쉽고 중요하니 축 1대로 위로 온다.
+              «어떻게» 정했는지의 한계·출처만 2.5뎁스에 남긴다. */}
+          {!!ldlTarget.risk_factors?.length && (
+            <View style={{ marginTop: 8, backgroundColor: T.cardAlt, borderRadius: 10, padding: 12 }}>
+              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>
+                내 목표가 {ldlTarget.target_ldl ?? ldlTarget.target_text}인 이유 — 위험 요인 {ldlTarget.risk_factors.length}개가 있어요.
+              </Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, lineHeight: 18, marginTop: 4 }}>
+                {ldlTarget.risk_factors.join(' · ')}
+              </Text>
+            </View>
+          )}
           <Expandable label="위험군을 어떻게 정했나">
-            {!!ldlTarget.risk_factors?.length && (
-              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginTop: 4 }}>반영된 위험인자: {ldlTarget.risk_factors.join(' · ')}</Text>
-            )}
             {!!ldlTarget.limitations?.length && (
               <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· {ldlTarget.limitations[0]}</Text>
             )}
@@ -1109,6 +1162,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 많이 다르면 절대값보다 구간으로 이해하는 게 맞아요.
               </Text>
               <CalcRows items={cvCalcs} />
+              {/* 이 블록은 통째로 2.5뎁스(접힌 안)라 공식을 함께 둔다 — CalcRows가
+                  공식을 더 이상 그리지 않으므로 여기서 이어 붙인다. */}
+              <CalcFormulas items={cvCalcs} />
             </Expandable>
           )}
           {/* 한계 4줄은 접는다. ④「그래서 이게 의미하는 건」이 이미 "지금 상태가 유지된다고

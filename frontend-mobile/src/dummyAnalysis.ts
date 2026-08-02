@@ -186,6 +186,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 20.3,
     "level": "low",
     "interpretation": "지방간 가능성 낮음",
+
+    "plain": "지방간일 가능성은 낮아요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -193,6 +195,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 30.9,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -474,6 +478,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 2,
     "level": "high",
     "interpretation": "진행 간섬유화 배제 불가 (추가 평가 권장)",
+
+    "plain": "간이 굳고 있는지 더 확인해 볼 필요가 있어요",
     "components": [
      "AST/ALT≥0.8 (+2)"
     ],
@@ -882,6 +888,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 25.5,
     "level": "low",
     "interpretation": "지방간 가능성 낮음",
+
+    "plain": "지방간일 가능성은 낮아요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -889,6 +897,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 31.3,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -1170,6 +1180,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 2,
     "level": "high",
     "interpretation": "진행 간섬유화 배제 불가 (추가 평가 권장)",
+
+    "plain": "간이 굳고 있는지 더 확인해 볼 필요가 있어요",
     "components": [
      "AST/ALT≥0.8 (+2)"
     ],
@@ -1578,6 +1590,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 29.8,
     "level": "low",
     "interpretation": "지방간 가능성 낮음",
+
+    "plain": "지방간일 가능성은 낮아요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -1585,6 +1599,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 31.6,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -1871,6 +1887,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 2,
     "level": "high",
     "interpretation": "진행 간섬유화 배제 불가 (추가 평가 권장)",
+
+    "plain": "간이 굳고 있는지 더 확인해 볼 필요가 있어요",
     "components": [
      "AST/ALT≥0.8 (+2)"
     ],
@@ -2279,6 +2297,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 37.7,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -2286,6 +2306,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 32.6,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -2572,6 +2594,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 2,
     "level": "high",
     "interpretation": "진행 간섬유화 배제 불가 (추가 평가 권장)",
+
+    "plain": "간이 굳고 있는지 더 확인해 볼 필요가 있어요",
     "components": [
      "AST/ALT≥0.8 (+2)"
     ],
@@ -3088,6 +3112,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 53.3,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -3095,6 +3121,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 33.9,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -3381,6 +3409,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 2,
     "level": "high",
     "interpretation": "진행 간섬유화 배제 불가 (추가 평가 권장)",
+
+    "plain": "간이 굳고 있는지 더 확인해 볼 필요가 있어요",
     "components": [
      "AST/ALT≥0.8 (+2)"
     ],
@@ -4103,6 +4133,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 64.5,
     "level": "high",
     "interpretation": "지방간 가능성 높음",
+
+    "plain": "지방간일 가능성이 높아요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -4110,6 +4142,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 35.3,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -4396,6 +4430,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 2,
     "level": "high",
     "interpretation": "진행 간섬유화 배제 불가 (추가 평가 권장)",
+
+    "plain": "간이 굳고 있는지 더 확인해 볼 필요가 있어요",
     "components": [
      "AST/ALT≥0.8 (+2)"
     ],
@@ -5439,6 +5475,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 78.4,
     "level": "high",
     "interpretation": "지방간 가능성 높음",
+
+    "plain": "지방간일 가능성이 높아요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -5446,6 +5484,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 38.1,
     "level": "high",
     "interpretation": "지방간 시사",
+
+    "plain": "지방간일 가능성이 높아요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -5732,6 +5772,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 0,
     "level": "low",
     "interpretation": "진행 간섬유화 가능성 낮음 (배제 근거, NPV~96%)",
+
+    "plain": "간이 굳었을 가능성은 낮아요",
     "components": [],
     "inputs": {
      "bmi": 27.0,
@@ -6762,6 +6804,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 65.1,
     "level": "high",
     "interpretation": "지방간 가능성 높음",
+
+    "plain": "지방간일 가능성이 높아요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -6769,6 +6813,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 36.0,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -7055,6 +7101,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 0,
     "level": "low",
     "interpretation": "진행 간섬유화 가능성 낮음 (배제 근거, NPV~96%)",
+
+    "plain": "간이 굳었을 가능성은 낮아요",
     "components": [],
     "inputs": {
      "bmi": 25.9,
@@ -7931,6 +7979,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 57.3,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~59 중간 / ≥60 높음",
     "formula": "Fatty Liver Index (Bedogni 2006)"
    },
@@ -7938,6 +7988,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 35.0,
     "level": "intermediate",
     "interpretation": "판단 보류 구간 (중간)",
+
+    "plain": "지방간인지 아닌지 가리기 어려운 중간이에요",
     "cutoffs": "<30 낮음 / 30~36 중간 / >36 시사",
     "formula": "Hepatic Steatosis Index (Lee 2010, 한국인 기반)"
    },
@@ -8224,6 +8276,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "value": 2,
     "level": "high",
     "interpretation": "진행 간섬유화 배제 불가 (추가 평가 권장)",
+
+    "plain": "간이 굳고 있는지 더 확인해 볼 필요가 있어요",
     "components": [
      "AST/ALT≥0.8 (+2)"
     ],
