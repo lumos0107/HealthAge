@@ -145,10 +145,12 @@ function makeReport(base: Pick<Report, 'year' | 'date' | 'hospital' | 'summary' 
 }
 
 // 건강검진은 2년에 한 번(만 40세 이상 일반검진 기준) — 2년 단위로 8개년치를 둔다.
-// 홍길동(1968년생, 남)이 42세→56세. 2020년(52세)에 바닥을 찍고 돌아서는 흐름:
-// 참고 점수 100 → 100 → 100 → 88 → 58 → **22** → 40 → 58.
-// 앞의 세 회차가 모두 100인 것은 꾸며내지 않은 결과다 — 그 해 수치가 전부 정상범위
-// 안이면 감점이 없다. 2024년에 위험 항목이 하나도 없는 것도 마찬가지다(BMI 24.1·허리 88).
+// 홍길동(1968년생, 남)이 42세→56세. 2018년(50세)에 바닥을 찍고 돌아서는 흐름:
+// 참고 점수 94 → 88 → 82 → 64 → **22** → 34 → 46 → 58. 바닥 뒤로는 회차마다 +12씩.
+//
+// 앞의 세 회차를 100점으로 두지 않은 것은 일부러다 — 42세에 감점이 하나도 없는
+// 검진표는 드물다. 총콜레스테롤 202처럼 하나씩 걸치는 쪽이 실제에 가깝다.
+// 점수는 주의 −6 · 위험 −12 단위로만 움직이므로 «아주 조금씩»의 최소 단위가 6점이다.
 //
 // ⚠️ 여기 values를 고치면 tools/gen_demo_analysis.py 의 YEARS 도 **같이** 고쳐야 한다.
 //    두 곳이 갈리면 화면 위쪽(수치·점수)과 아래쪽(대사증후군·계산기·ASCVD)이
@@ -157,76 +159,85 @@ function makeReport(base: Pick<Report, 'year' | 'date' | 'hospital' | 'summary' 
 //      uv run python ../tools/gen_dummy_analysis_ts.py  → src/dummyAnalysis.ts
 export const reports: Report[] = [
   makeReport({
+    year: 2008,
+    date: '2008-05-14',
+    hospital: '한국건강관리협회 서울강남지부',
+    summary: '만 40세 첫 일반검진입니다. 총콜레스테롤만 기준을 살짝 넘었습니다.',
+    values: { sbp: 117, dbp: 74, glucose: 90, bmi: 22.2, waist: 80, ldl: 123, hdl: 54, triglyceride: 126, ast: 22, alt: 24, ggt: 30, hemoglobin: 14.6, creatinine: 0.8, height: 165.9, weight: 61.1, totalCholesterol: 201, urineProtein: 1 },
+    // 주의 1 → 94
+    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+  }),
+  makeReport({
     year: 2010,
     date: '2010-04-19',
     hospital: '한국건강관리협회 서울강남지부',
-    summary: '전 항목이 정상 범위로, 특별히 관리가 필요한 항목이 없습니다.',
-    values: { sbp: 110, dbp: 70, glucose: 82, bmi: 21.6, waist: 76, ldl: 101, hdl: 58, triglyceride: 89, ast: 21, alt: 22, ggt: 23, hemoglobin: 14.7, creatinine: 0.82, height: 165.9, weight: 59.5, totalCholesterol: 175, urineProtein: 1 },
-    // 감점 없음 → 100
-    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
+    summary: '수축기 혈압이 정상 위쪽으로 올라왔습니다.',
+    values: { sbp: 120, dbp: 76, glucose: 93, bmi: 22.6, waist: 82, ldl: 127, hdl: 52, triglyceride: 132, ast: 23, alt: 25, ggt: 34, hemoglobin: 14.7, creatinine: 0.82, height: 165.9, weight: 62.2, totalCholesterol: 202, urineProtein: 1 },
+    // 주의 2 → 88
+    statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2012,
     date: '2012-05-08',
     hospital: '한국건강관리협회 서울강남지부',
-    summary: '전 항목이 정상 범위이며, 2년 전과 큰 차이가 없습니다.',
-    values: { sbp: 113, dbp: 72, glucose: 84, bmi: 22.0, waist: 78, ldl: 106, hdl: 56, triglyceride: 96, ast: 22, alt: 23, ggt: 25, hemoglobin: 14.8, creatinine: 0.83, height: 165.9, weight: 60.6, totalCholesterol: 180, urineProtein: 1 },
-    // 감점 없음 → 100
-    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
+    summary: 'LDL이 기준을 넘어 지질 항목을 함께 봐야 합니다.',
+    values: { sbp: 122, dbp: 78, glucose: 96, bmi: 22.9, waist: 83, ldl: 131, hdl: 50, triglyceride: 138, ast: 24, alt: 26, ggt: 38, hemoglobin: 14.8, creatinine: 0.83, height: 165.9, weight: 63.0, totalCholesterol: 204, urineProtein: 1 },
+    // 주의 3 → 82
+    statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2014,
     date: '2014-05-20',
     hospital: '한국건강관리협회 서울강남지부',
-    summary: '전 항목이 정상 범위로, 현재의 생활습관을 유지하면 좋습니다.',
-    values: { sbp: 116, dbp: 74, glucose: 86, bmi: 22.5, waist: 80, ldl: 112, hdl: 54, triglyceride: 104, ast: 23, alt: 25, ggt: 28, hemoglobin: 14.9, creatinine: 0.84, height: 165.9, weight: 61.9, totalCholesterol: 187, urineProtein: 1 },
-    // 감점 없음 → 100
-    statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
+    summary: '혈압·혈당·체중이 함께 올라오기 시작했습니다.',
+    values: { sbp: 126, dbp: 81, glucose: 101, bmi: 23.6, waist: 85, ldl: 134, hdl: 46, triglyceride: 144, ast: 25, alt: 28, ggt: 44, hemoglobin: 14.9, creatinine: 0.85, height: 165.9, weight: 65.0, totalCholesterol: 206, urineProtein: 1 },
+    // 주의 6 → 64
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2016,
     date: '2016-06-11',
     hospital: '한국건강관리협회 서울강남지부',
-    summary: '혈압과 체중이 정상 상단에 걸치기 시작해 흐름을 지켜봅니다.',
-    values: { sbp: 121, dbp: 77, glucose: 91, bmi: 23.3, waist: 82, ldl: 120, hdl: 51, triglyceride: 122, ast: 24, alt: 27, ggt: 33, hemoglobin: 15.0, creatinine: 0.85, height: 165.9, weight: 64.1, totalCholesterol: 195, urineProtein: 1 },
-    // 100 - 6×2 = 88
-    statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '주의', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '정상', urineProtein: '정상' },
+    summary: '중성지방·감마-GTP까지 올라 대사증후군 3개 기준에 해당합니다.',
+    values: { sbp: 130, dbp: 83, glucose: 104, bmi: 24.4, waist: 88, ldl: 140, hdl: 42, triglyceride: 156, ast: 27, alt: 32, ggt: 66, hemoglobin: 15.0, creatinine: 0.88, height: 165.9, weight: 67.2, totalCholesterol: 210, urineProtein: 1 },
+    // 주의 8 → 52
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2018,
     date: '2018-05-30',
     hospital: '한국건강관리협회 서울강남지부',
-    summary: '혈압·혈당·지질이 한꺼번에 기준을 넘어 대사증후군 3개 기준에 해당합니다.',
-    values: { sbp: 133, dbp: 86, glucose: 103, bmi: 24.3, waist: 88, ldl: 136, hdl: 43, triglyceride: 155, ast: 28, alt: 34, ggt: 48, hemoglobin: 15.1, creatinine: 0.88, height: 165.9, weight: 67.0, totalCholesterol: 210, urineProtein: 1 },
-    // 100 - 6×7 = 58
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+    summary: '허리둘레가 복부비만 기준을 넘어 위험 항목이 생겼습니다.',
+    values: { sbp: 133, dbp: 84, glucose: 108, bmi: 25.4, waist: 92, ldl: 144, hdl: 41, triglyceride: 165, ast: 30, alt: 37, ggt: 72, hemoglobin: 15.1, creatinine: 0.93, height: 165.9, weight: 69.9, totalCholesterol: 214, urineProtein: 1 },
+    // 주의 6 · 위험 2 → 40
+    statusByKey: { sbp: '주의', dbp: '정상', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2020,
     date: '2020-07-08',
     hospital: '서울대병원 강남센터',
-    summary: '대사증후군 5개 기준을 모두 충족한 회차입니다. 여기가 가장 나빴던 시점입니다.',
-    values: { sbp: 139, dbp: 89, glucose: 116, bmi: 26.9, waist: 95, ldl: 148, hdl: 38, triglyceride: 185, ast: 36, alt: 48, ggt: 72, hemoglobin: 15.3, creatinine: 1.02, height: 165.9, weight: 74.0, totalCholesterol: 223, urineProtein: 1 },
-    // 100 - 6×9 - 12×2 = 22 — 8회차 중 최저
+    summary: '대사증후군 5개 기준을 모두 충족한 회차입니다. 9회차 중 가장 나빴던 시점입니다.',
+    values: { sbp: 139, dbp: 89, glucose: 120, bmi: 27.0, waist: 96, ldl: 153, hdl: 36, triglyceride: 196, ast: 34, alt: 47, ggt: 82, hemoglobin: 15.2, creatinine: 1.05, height: 165.9, weight: 74.3, totalCholesterol: 228, urineProtein: 1 },
+    // 주의 9 · 위험 2 → 22 (최저)
     statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2022,
     date: '2022-06-15',
     hospital: '서울대병원 강남센터',
-    summary: '체중을 4.2kg 줄여 지난 회차보다 나아졌지만 아직 복부비만·대사증후군이 남아 있습니다.',
-    values: { sbp: 136, dbp: 87, glucose: 112, bmi: 25.4, waist: 91, ldl: 145, hdl: 41, triglyceride: 175, ast: 29, alt: 37, ggt: 45, hemoglobin: 15.2, creatinine: 1.00, height: 165.9, weight: 69.8, totalCholesterol: 218, urineProtein: 1 },
-    // 100 - 6×6 - 12×2 = 40
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+    summary: '체중을 3.0kg 줄여 간 수치가 먼저 내려왔습니다.',
+    values: { sbp: 136, dbp: 84, glucose: 113, bmi: 25.9, waist: 91, ldl: 147, hdl: 38, triglyceride: 174, ast: 30, alt: 38, ggt: 68, hemoglobin: 15.1, creatinine: 1.02, height: 165.9, weight: 71.3, totalCholesterol: 219, urineProtein: 1 },
+    // 주의 7 · 위험 2 → 34
+    statusByKey: { sbp: '주의', dbp: '정상', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
   makeReport({
     year: 2024,
     date: '2024-03-15',
     hospital: '서울대병원 강남센터',
-    summary: '허리둘레·HDL이 기준 안으로 돌아왔고, 혈압·혈당·중성지방 3개가 남았습니다.',
-    values: { sbp: 134, dbp: 86, glucose: 108, bmi: 24.1, waist: 88, ldl: 141, hdl: 45, triglyceride: 165, ast: 25, alt: 29, ggt: 33, hemoglobin: 15.1, creatinine: 0.98, height: 165.9, weight: 66.2, totalCholesterol: 212, urineProtein: 1 },
-    // 100 - 6×7 = 58 — 위험 항목이 하나도 없다(2020년의 BMI·허리 위험이 풀렸다)
-    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
+    summary: '허리둘레가 복부비만 기준 아래로 내려와 위험 항목이 하나 풀렸습니다.',
+    values: { sbp: 134, dbp: 85, glucose: 110, bmi: 25.2, waist: 88, ldl: 145, hdl: 39, triglyceride: 168, ast: 27, alt: 33, ggt: 64, hemoglobin: 15.1, creatinine: 0.99, height: 165.9, weight: 69.4, totalCholesterol: 216, urineProtein: 1 },
+    // 주의 8 · 위험 1 → 40
+    statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '정상', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
   }),
 ];
 

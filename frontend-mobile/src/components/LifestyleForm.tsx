@@ -4,8 +4,16 @@ import { Pressable, Text, View } from 'react-native';
 import { Chip, T } from './UI';
 
 // 술 종류별 1잔 순알코올(g) 근사 — 순알코올 g ≈ 용량(ml) × 도수 × 0.789
+//   소주  50ml × 17%  = 6.7 → 7      맥주 200ml × 4.5% = 7.1 → 7
+//   막걸리 200ml × 6%  = 9.5 → 9      와인 150ml × 12%  = 14.2 → 14
+//   양주   40ml × 40%  = 12.6 → 13
 export const GRAMS_PER_GLASS: Record<string, number> = { 소주: 7, 맥주: 7, 막걸리: 9, 와인: 14, 양주: 13 };
 export const DRINK_TYPES = ['소주', '맥주', '막걸리', '와인', '양주'] as const;
+
+/** 칩에 함께 적는 «한 잔»의 크기. 술 이름만 두면 같은 "3잔"인데 와인을 고를 때
+ *  주당 g이 두 배로 뛰는 이유를 알 수 없다 — 소주잔(50ml)이 와인잔(150ml)의 1/3이라서다.
+ *  도수는 소주가 높지만 잔이 작아 순알코올은 와인이 두 배다. 그 사실이 화면에 있어야 한다. */
+export const GLASS_SIZE: Record<string, string> = { 소주: '50ml', 맥주: '200ml', 막걸리: '200ml', 와인: '150ml', 양주: '40ml' };
 
 export type Lifestyle = {
   smoking: 'never' | 'former' | 'current' | null;
@@ -63,8 +71,13 @@ export function LifestyleForm({ value, onChange, gender }: { value: Lifestyle; o
           <Stepper label="1회 몇 잔" value={glasses} min={1} max={20} suffix="잔" onChange={(v) => { setGlasses(v); recalc(freq, v, type); }} />
           <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2, marginTop: 4, marginBottom: 10 }}>주로 마시는 술</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            {DRINK_TYPES.map((t) => <Chip key={t} active={type === t} label={t} onPress={() => { setType(t); recalc(freq, glasses, t); }} />)}
+            {DRINK_TYPES.map((t) => <Chip key={t} active={type === t} label={`${t} ${GLASS_SIZE[t]}`} onPress={() => { setType(t); recalc(freq, glasses, t); }} />)}
           </View>
+          {/* 고른 술의 한 잔이 몇 g인지 밝힌다 — 아래 «주당 순알코올»이 어떻게 나온 숫자인지
+              보이지 않으면, 술 종류만 바꿨는데 g이 두 배가 되는 것이 오류처럼 읽힌다. */}
+          <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: -8, marginBottom: 14 }}>
+            {type} 한 잔({GLASS_SIZE[type]})은 순알코올 약 {GRAMS_PER_GLASS[type]}g이에요. 잔이 클수록 도수가 낮아도 알코올은 많아요.
+          </Text>
           <View style={{ backgroundColor: T.bg, borderRadius: T.radiusSm, padding: 14 }}>
             <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
               주당 순알코올 약 <Text style={{ fontWeight: '700', color: grams > limit ? T.danger : T.text1 }}>{grams}g</Text>

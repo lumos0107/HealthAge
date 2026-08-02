@@ -31,8 +31,8 @@ describe('headline', () => {
 
 describe('yearDelta / deltaText', () => {
   it('직전 검진 연도와의 차이를 계산한다', () => {
-    // glucose 2024=108, 2022=112 → diff −4 (2020년 바닥 이후 내려가는 중이라 음수다)
-    expect(yearDelta(reports, 'glucose', 2024)).toEqual({ diff: -4, prevYear: 2022 });
+    // glucose 2024=110, 2022=113 → diff −3 (2020년 바닥 이후 내려가는 중이라 음수다)
+    expect(yearDelta(reports, 'glucose', 2024)).toEqual({ diff: -3, prevYear: 2022 });
   });
   it('첫 검진(이전 기록 없음)이면 null', () => {
     // reports의 첫 회차. 앞에 비교할 기록이 없으므로 변화량을 만들지 않는다.
