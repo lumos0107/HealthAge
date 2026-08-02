@@ -49,6 +49,23 @@ const chartGroups: { title: string; keys: MetricKey[] }[] = [
   { title: '혈액·신장', keys: ['hemoglobin', 'creatinine'] },
 ];
 
+/** 구획 머리말 — 이 탭의 카드는 성격이 둘로 갈린다.
+ *  «여러 해를 종합한 해석»(백엔드 시계열 산출)과 «항목 묶음별 추이»(연도별 값 그래프)다.
+ *  그동안 여덟 장이 평평하게 나열돼 어디서 성격이 바뀌는지 화면에 없었다.
+ *  아래 다섯 장에만 주의/위험 배지가 붙는 것도 «판정 대상이 아니라서»인데,
+ *  구획이 없으면 "배지 없는 카드는 정상인가?"로 읽힌다.
+ *  분석 탭 LayerHeader와 같은 문법을 쓴다 — 앱 안에서 새로 배울 것이 없어야 한다. */
+function SectionHeader({ title, sub, first }: { title: string; sub: string; first?: boolean }) {
+  return (
+    <View style={first
+      ? { marginHorizontal: 16, marginTop: 18, marginBottom: 6 }
+      : { marginHorizontal: 16, marginTop: 26, marginBottom: 6, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
+      <Text style={{ fontSize: 17, fontWeight: '800', color: T.text1, letterSpacing: -0.3 }}>{title}</Text>
+      <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 3 }}>{sub}</Text>
+    </View>
+  );
+}
+
 export default function HistoryScreen({ reports, metricDefinitions, usingRealData, highlights, insight, changePace }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
@@ -74,46 +91,11 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
       {/* 점수 추이 히어로 — "추이" 탭의 첫 화면에 그림이 하나도 없던 문제를 여기서 해결한다. */}
       <ScoreTrendHero reports={reports} />
 
-      {/* 종합 인사이트 — 1뎁스는 생성한 한 줄, 백엔드 자연어 전문과 우려 Top3는 2뎁스로.
-          (다른 카드들과 같은 방식으로 요약을 만든다 — 자연어를 잘라 "…"를 붙이지 않는다.) */}
-      {!!insight?.summary && (
-        <FadeInUp delay={10}>
-        <SummaryCard
-          title="한눈에 요약"
-          summary={[
-            insight.top_concerns?.length ? `우려 ${insight.top_concerns.length}건` : null,
-            insight.next_exam_year != null ? `다음 검진 ${insight.next_exam_year}년` : null,
-          ].filter(Boolean).join(' · ') || '여러 해 기록을 종합했어요.'}
-          definition="여러 해의 검진 기록을 한꺼번에 읽어 가장 먼저 볼 것을 골라낸 요약이에요."
-          positionTitle="종합 요약"
-        >
-          <Text style={{ fontSize: 14, color: T.text2, lineHeight: 22 }}>{insight.summary}</Text>
-          {!!insight.top_concerns?.length && (
-            <View style={{ marginTop: 12 }}>
-              {insight.top_concerns.map((c, i) => {
-                const col = c.level === 'high' ? T.danger : T.warn;
-                const bg = c.level === 'high' ? T.dangerBg : T.warnBg;
-                return (
-                  <View key={i} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                      <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: col }}>주의 {i + 1}</Text>
-                      </View>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, flex: 1 }}>{c.title}</Text>
-                      {!!c.current_value && <Text style={{ fontSize: 12, color: T.text3 }}>{c.current_value}</Text>}
-                    </View>
-                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{c.details}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-          {insight.next_exam_year != null && (
-            <Text style={{ fontSize: 12, color: T.text3, marginTop: 10 }}>다음 검진 권장: {insight.next_exam_year}년</Text>
-          )}
-        </SummaryCard>
-        </FadeInUp>
-      )}
+      <SectionHeader
+        first
+        title="여러 해를 종합하면"
+        sub="회차 하나만 봐서는 안 보이는 것 — 흐름·또래 비교·구간이 바뀐 순간을 짚습니다."
+      />
 
       {/* 또래 대비 변화 '속도' — 공단 표본의 같은 성별·연령대 평균 변화량과 내 변화 폭을 배수로 비교.
           배수는 또래 변화가 뚜렷할 때만(±0.5 이상) 나온다 — 0에 가까운 값으로 나누면 배수가 발산하므로. */}
@@ -121,7 +103,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
         <FadeInUp delay={15}>
         <SummaryCard
           title="또래 대비 변화 속도"
-          summary={`${changePace.length}개 항목이 또래 평균보다 빠르게 나빠지고 있어요.`}
+          summary={`${changePace[0]?.span_years ?? ''}년을 통틀어 ${changePace.length}개 항목이 또래보다 크게 변했어요.`}
           definition={cardContent['또래 대비 변화 속도'].definition}
           detail={cardContent['또래 대비 변화 속도'].detail}
           meaning={cardContent['또래 대비 변화 속도'].meaning}
@@ -129,6 +111,13 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
           positionTitle="나의 위치 — 또래 평균과 비교"
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요. 악화 방향만 모았어요.</Text>
+          {/* ⚠️ 이 값은 «첫 회차와 마지막 회차»만 빼서 만든다. 중간에 바닥을 찍고 돌아섰어도
+              그 반등은 담기지 않는다. 아래 문구에 "악화 중"이 그대로 남아 있는데, 그건
+              백엔드가 만든 문장이라 여기서 고쳐 쓰지 않는다 — 대신 무엇을 비교한 값인지
+              밝혀 위쪽 점수 추이("2020년 이후로는 올랐어요")와 어긋나 보이지 않게 한다. */}
+          <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 12 }}>
+            첫 회차와 마지막 회차를 비교한 값이에요. 중간에 좋아진 구간이 있어도 여기엔 담기지 않아요 — 최근 흐름은 위 「참고 점수 추이」를 보세요.
+          </Text>
           <View style={{ gap: 8 }}>
             {changePace!.map((p, i) => {
               // 2배 이상이면 빨강, 그 아래는 주황. 배수를 못 낸 항목은 중립 회색으로 둔다.
@@ -166,12 +155,46 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
         <FadeInUp delay={20}>
         <SummaryCard
           title="주목할 만한 변화"
-          summary={`여러 해 기록에서 짚어낸 변화가 ${highlights.length}건 있어요.`}
+          summary={[
+            `짚어낸 변화 ${highlights.length}건`,
+            insight?.top_concerns?.length ? `우려 ${insight.top_concerns.length}건` : null,
+            insight?.next_exam_year != null ? `다음 검진 ${insight.next_exam_year}년` : null,
+          ].filter(Boolean).join(' · ')}
           definition={cardContent['주목할 만한 변화'].definition}
           detail={cardContent['주목할 만한 변화'].detail}
           meaning={cardContent['주목할 만한 변화'].meaning}
           positionTitle="짚어낸 변화"
         >
+          {/* 「한눈에 요약」 카드를 여기로 합쳤다(2026-08-02).
+              뺀 이유: 1뎁스 요약이 "우려 3건 · 다음 검진 2026년"뿐인데 우려는 이 카드가
+              자세히 말하고, 자연어 전문은 분석 탭 ④층 「맞춤 권장사항」과 성격이 겹쳤다.
+              같은 모양의 카드 셋이 연달아 있어 무엇이 다른지도 알 수 없었다.
+              **버린 것은 없다** — summary·top_concerns·next_exam_year 전부 아래에 있다.
+              (스펙 §1-1② — 무엇을 왜 뺐고 어디서 볼 수 있는지 기록한다) */}
+          {!!insight?.summary && (
+            <Text style={{ fontSize: 14, color: T.text2, lineHeight: 22, marginBottom: 14 }}>{insight.summary}</Text>
+          )}
+          {!!insight?.top_concerns?.length && (
+            <View style={{ marginBottom: 16, paddingBottom: 4 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 6 }}>가장 먼저 볼 것</Text>
+              {insight.top_concerns.map((c, i) => {
+                const col = c.level === 'high' ? T.danger : T.warn;
+                const bg = c.level === 'high' ? T.dangerBg : T.warnBg;
+                return (
+                  <View key={i} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                      <View style={{ backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: col }}>주의 {i + 1}</Text>
+                      </View>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, flex: 1 }}>{c.title}</Text>
+                      {!!c.current_value && <Text style={{ fontSize: 12, color: T.text3 }}>{c.current_value}</Text>}
+                    </View>
+                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{c.details}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>여러 해의 기록을 비교해 시스템이 짚어낸 변화예요.</Text>
           <View style={{ gap: 8 }}>
             {highlights!.map((h, i) => {
@@ -190,9 +213,17 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
               );
             })}
           </View>
+          {insight?.next_exam_year != null && (
+            <Text style={{ fontSize: 12, color: T.text3, marginTop: 12 }}>다음 검진 권장: {insight.next_exam_year}년</Text>
+          )}
         </SummaryCard>
         </FadeInUp>
       )}
+
+      <SectionHeader
+        title="항목별로 보면"
+        sub="검사 항목을 묶어 연도별로 그립니다. 카드를 열면 연도를 골라 그해 수치를 볼 수 있어요."
+      />
 
       {/* 차트 카드들 — 살짝 떠오르며 순서대로 나타나서 화면이 한 번에 딱딱하게 뜨지 않도록 한다 */}
       {chartGroups.map((group, i) => (
