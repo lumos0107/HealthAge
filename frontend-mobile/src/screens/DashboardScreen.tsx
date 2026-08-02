@@ -138,13 +138,40 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       </FadeInUp>
       )}
 
-      {/* 지금 주의할 항목 TOP 3 — 1뎁스에는 수치를 두지 않는다. 탭하면 바로 항목 상세(2뎁스).
-          ⚠️ 「빠른 이동」보다 위에 둔다. 홈의 정렬 기준은 «심각도»인데(§2-1 축 4),
-          예전에는 검진기관·병원·약국 찾기가 주의 항목을 한 화면 아래로 밀어냈다.
-          로그인 전(isPreview)에는 TOP 3가 그려지지 않아 빠른 이동이 자연히 위로 온다 —
-          그때는 보여줄 판단 자체가 없으므로 그 순서가 맞다. */}
+      {/* 빠른 이동 — 다른 섹션과 같은 흰 카드로.
+          ⚠️ 점수와 TOP 3 «사이»에 둔다. 한 번 위로 올려봤다가 되돌린 자리다(2026-08-02).
+          축 4의 «홈은 심각도 순»은 판단 요소끼리(점수 → TOP 3)의 순서를 말하는 것이지,
+          도구 카드까지 뒤로 밀라는 뜻이 아니다. 아이콘 한 줄짜리라 스크롤을 거의 안 먹고,
+          요약(점수)과 목록(TOP 3) 사이의 구분선 노릇도 한다. */}
+      <FadeInUp delay={90}>
+      <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: 16, marginBottom: 12 }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          {QUICK_LINKS.map((link) => (
+            <Pressable
+              key={link.label}
+              style={{ alignItems: 'center', gap: 8, flex: 1 }}
+              onPress={() => {
+                if (link.url) openExternalUrl(link.url);
+                else if (isPreview) onRequireLogin?.();
+                else onTab('upload');
+              }}
+            >
+              <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+                {link.svgPill
+                  ? <PillIcon size={26} />
+                  : <Ionicons name={link.icon} size={26} color={link.color} />}
+              </View>
+              <Text style={{ fontSize: 11, color: T.text2, fontWeight: '500', textAlign: 'center', lineHeight: 15 }}>{link.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      </FadeInUp>
+
+      {/* 지금 주의할 항목 TOP 3 — 1뎁스에는 수치를 두지 않는다. 탭하면 바로 항목 상세(2뎁스). */}
       {!isPreview && (
-        <FadeInUp delay={90}>
+        <FadeInUp delay={180}>
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8, marginBottom: 12 }}>
           <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 4 }}>지금 주의할 항목 TOP 3</Text>
           <Text style={{ fontSize: 13, color: T.text3, marginBottom: 8 }}>가장 먼저 확인하면 좋은 항목이에요.</Text>
@@ -181,33 +208,6 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         </View>
         </FadeInUp>
       )}
-
-      {/* 빠른 이동 — 다른 섹션과 같은 흰 카드로 */}
-      <FadeInUp delay={isPreview ? 90 : 180}>
-      <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: 16, marginBottom: 12 }}>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          {QUICK_LINKS.map((link) => (
-            <Pressable
-              key={link.label}
-              style={{ alignItems: 'center', gap: 8, flex: 1 }}
-              onPress={() => {
-                if (link.url) openExternalUrl(link.url);
-                else if (isPreview) onRequireLogin?.();
-                else onTab('upload');
-              }}
-            >
-              <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
-                {link.svgPill
-                  ? <PillIcon size={26} />
-                  : <Ionicons name={link.icon} size={26} color={link.color} />}
-              </View>
-              <Text style={{ fontSize: 11, color: T.text2, fontWeight: '500', textAlign: 'center', lineHeight: 15 }}>{link.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-      </FadeInUp>
 
     </ScrollView>
   );
