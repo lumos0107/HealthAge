@@ -8,7 +8,9 @@ import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
 import { calcGloss, cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricLabel, metricsForReport } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup, RealSingleGroup } from '../health';
+import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup, RealSingleGroup, RealAscvdSimulation } from '../health';
+import { ACTIONS, rankActions } from '../lifestyleActions';
+import type { Ctx } from '../lifestyleActions';
 
 /** 장기 구획 — ②층 카드 6장을 신장/간/대사·지질/심혈관으로 나누는 «덩어리 표시».
  *
@@ -248,6 +250,131 @@ function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
         ].filter(Boolean).join(' · ')}
       />
     </View>
+  );
+}
+
+/** ④-0 무엇부터 하면 되나 — 흩어진 행동을 한 줄로 세운다.
+ *
+ *  ⚠️ 같은 행동이 네 군데서 따로 나오고 있었다. 「금연」 하나가 분석 탭에서 다섯 번:
+ *    ④ 맞춤 권장사항 「흡연은 모든 대사증후군 인자를 악화시킵니다」
+ *    ② 심혈관 ⑤     「금연이 단일 항목 중 가장 크게 위험을 낮춰요」
+ *    ③ 조합 ⑤       「대사 쪽과 혈관 쪽이 겹쳐 위험이 곱해져요…」
+ *    ② 심혈관 ③     「금연했다면 8.9% (−6.8%p)」
+ *    ④ 목표 세우기   quit_smoking 행동
+ *  다섯 번 말하는데 **«그래서 금연부터 하라»고는 아무도 말하지 않았다.**
+ *  ④층 이름이 「그래서 뭘 하면 되나」인데 정작 «뭘 먼저»가 없었다.
+ *
+ *  여기서 하는 일은 **행동을 새로 만드는 것이 아니라 모아서 순서를 매기는 것**이다.
+ *  문구는 전부 기존 것을 그대로 쓴다(§2-1). 순서는 `rankActions` — 「기준 이탈도가
+ *  얼마나 줄어드나」로 이미 계산하고 있었고, 지금까지 「목표 세우기」 모달 안에서만 쓰였다. */
+const ACTION_KEYWORD: { re: RegExp; id: string }[] = [
+  { re: /금연|담배|흡연/, id: 'quit_smoking' },
+  { re: /절주|음주|술/, id: 'alcohol' },
+  { re: /체중|허리|감량|비만/, id: 'weight' },
+  { re: /운동/, id: 'aerobic' },
+  { re: /나트륨|저염|소금/, id: 'sodium' },
+  { re: /식단|탄수화물/, id: 'diet_liver' },
+];
+const actionIdFor = (text: string) => ACTION_KEYWORD.find((k) => k.re.test(text))?.id ?? null;
+
+/** driver가 지목한 수치 이름 → 그 수치를 실제로 움직이는 행동을 찾기 위한 MetricKey.
+ *  ⚠️ 백엔드 `_driver`가 쓰는 라벨과 짝이다. 한쪽을 바꾸면 다른 쪽도 바꿔야 한다. */
+const DRIVER_TO_KEY: Record<string, string> = {
+  '중성지방': 'triglyceride', '공복혈당': 'glucose', '총콜레스테롤': 'totalCholesterol',
+  '낮은 HDL': 'hdl', '수축기혈압': 'sbp', '이완기혈압': 'dbp',
+};
+
+function ActionRoundup({ ranks, ctx, combos, ascvd, calcs }: {
+  ranks: { id: string; reductionRatio: number; movedFactors: string[] }[];
+  ctx: Ctx;
+  combos: RealComboGroup[];
+  ascvd: RealAscvdSimulation | null;
+  calcs: RealCalcItem[];
+}) {
+  const why = new Map<string, { text: string; from: string }[]>();
+  const add = (id: string | null, text: string, from: string) => {
+    if (!id || !text) return;
+    const arr = why.get(id) ?? [];
+    if (!arr.some((x) => x.text === text)) arr.push({ text, from });
+    why.set(id, arr);
+  };
+
+  // ① 조합 — 「둘을 같이 볼 때만 할 수 있는 말」
+  for (const c of combos) {
+    if (!c.action || (c.population?.observed_to_expected ?? 0) < COMBO_SYNERGY_MIN) continue;
+    add(actionIdFor(c.action), c.action, `조합 · ${c.combo_name}`);
+  }
+  // ② 심혈관 what-if — 행동을 가정한 시나리오만. 「수축기혈압이 120이라면」은 수치 가정이라 뺀다.
+  for (const s of ascvd?.scenarios ?? []) {
+    const id = actionIdFor(s.name);
+    if (!id || !/금연|절주|운동|체중/.test(s.name)) continue;
+    add(id, `심혈관 10년 위험이 ${ascvd!.risk_percent}% → ${s.risk_percent}%로 내려가요`, '심혈관 시뮬레이션');
+  }
+  // ③ 계산기 driver — **1순위로 끌어올린 수치**를 움직이는 행동에만 붙인다.
+  //
+  // ⚠️ 처음엔 driver_metrics 전부를 대상으로 했더니 근거가 헐겁게 붙었다. 「담배 끊기」
+  // 아래에 Non-HDL이 붙는 식인데, 금연이 그 수치를 조금 움직이는 것과 「총콜레스테롤이
+  // 이 값을 끌어올렸다」는 별개다. 관련이 약한 것까지 딸려오면 목록이 길어지고
+  // «왜 이게 여기 있지»가 된다. 1순위 하나로 좁힌다.
+  for (const c of calcs) {
+    if (!c.driver || !c.driver_metrics?.length) continue;
+    const key = DRIVER_TO_KEY[c.driver_metrics[0]];
+    if (!key) continue;
+    for (const a of ACTIONS) {
+      if (!ranks.some((r) => r.id === a.id)) continue;
+      if (a.effects(ctx).some((e) => (e.from as string) === key)) {
+        add(a.id, `${c.title} — ${c.driver}`, '계산 지표');
+      }
+    }
+  }
+
+  const rows = ranks.map((r) => ({ r, a: ACTIONS.find((x) => x.id === r.id)!, ev: why.get(r.id) ?? [] }))
+    .filter((x) => x.a && x.ev.length > 0);
+  if (!rows.length) return null;
+
+  return (
+    <FadeInUp delay={224}>
+      <SummaryCard
+        title="무엇부터 하면 되나"
+        summary={`${rows[0].a.title(ctx)}부터가 가장 크게 움직여요`}
+        definition="화면 곳곳에서 나온 행동을 한 줄로 모았어요. 순서는 «기준에서 벗어난 정도가 얼마나 줄어드는가»로 매깁니다."
+        detail="같은 행동이 심혈관 시뮬레이션·조합·계산 지표에서 각각 따로 나오고 있었어요. 여기서는 그 근거를 행동 아래에 모으고, 기준 이탈도 감소폭이 큰 순서로 세웁니다. 감소폭은 대사증후군 5기준까지의 거리를 합쳐 계산한 값이라, 그 기준에 들어가지 않는 항목(간 수치 등)은 순서에 반영되지 않습니다."
+        meaning="여기 순서는 «수치를 얼마나 움직이나»로 매긴 것이지 의학적 우선순위가 아니에요. 복용 중인 약이나 진료 계획이 있으면 그쪽이 먼저입니다."
+        axes={[]}
+        tipsExtra={
+          <>
+            {rows.map(({ r, a, ev }, i) => (
+              <View key={a.id} style={[{ paddingTop: 12 }, i > 0 && { marginTop: 12, borderTopWidth: 1, borderTopColor: T.divider }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: T.primary }}>{i + 1}</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, flex: 1 }}>{a.title(ctx)}</Text>
+                  {r.reductionRatio > 0 && (
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.success }}>−{Math.round(r.reductionRatio * 100)}%</Text>
+                  )}
+                </View>
+                {r.movedFactors.length > 0 && (
+                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 2 }}>움직이는 기준: {r.movedFactors.join(' · ')}</Text>
+                )}
+                {/* 근거는 3개까지 — 넘으면 «왜 이걸 하나»가 아니라 목록 읽기가 된다.
+                    조합·심혈관이 앞에 오도록 담는 순서를 지킨다. */}
+                {ev.slice(0, 3).map((e, j) => (
+                  <View key={j} style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
+                    <Text style={{ fontSize: 12, color: T.text3 }}>·</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{e.text}</Text>
+                      <Text style={{ fontSize: 11, color: T.text3, marginTop: 1 }}>{e.from}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ))}
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 12 }}>
+              −%는 대사증후군 5기준에서 벗어난 정도가 얼마나 줄어드는지예요. 효과 크기는 문헌값의 보수적인 끝을 씁니다.
+            </Text>
+          </>
+        }
+      />
+    </FadeInUp>
   );
 }
 
@@ -645,6 +772,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 계산기 items를 도메인 카테고리로 나눠 각 섹션에 배치한다.
   const calcItems = comboAnalysis?.calculators?.items ?? [];
   const calcOf = (cats: string[]) => calcItems.filter((it) => cats.includes(it.category));
+  // ④-0 「무엇부터 하면 되나」가 쓰는 순서. 「목표 세우기」 모달과 같은 계산을 쓴다 —
+  // 한 화면에서 두 곳이 다른 순서를 말하면 안 된다.
+  const actionCtx: Ctx = useMemo(() => ({
+    values: report.values,
+    gender,
+    weightKg: typeof report.values.weight === 'number' ? report.values.weight : null,
+    smoking,
+    alcoholWeeklyG: alcoholWeeklyG ?? 0,
+    hypertensive: (report.values.sbp ?? 0) >= 140 || (report.values.dbp ?? 0) >= 90,
+  }), [report, gender, smoking, alcoholWeeklyG]);
+  const actionRanks = useMemo(() => rankActions(ACTIONS, actionCtx), [actionCtx]);
   const metabolicCalcs = calcOf(['lipid', 'insulin', 'adiposity', 'bp']);
   // D(상관구조): 대사·지질 지표는 사실상 3개 축으로 압축된다.
   //  ① 인슐린저항성·내장지방(TyG·METS-IR·AIP·LAP·VAI, 서로 r 0.64~0.96) → 대표 TyG
@@ -1529,10 +1667,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
        *  (relation·action)는 임상 지식이다. 화면이 그 차이를 밝혀야 한다(§1-1 조항 3). */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
-        <SummaryCard title="같이 잡아야 할 게 있나"
-          definition={cardContent['같이 잡아야 할 게 있나']?.definition}
-          detail={cardContent['같이 잡아야 할 게 있나']?.detail}
-          meaning={cardContent['같이 잡아야 할 게 있나']?.meaning}
+        <SummaryCard title="함께 움직이는 게 있나"
+          definition={cardContent['함께 움직이는 게 있나']?.definition}
+          detail={cardContent['함께 움직이는 게 있나']?.detail}
+          meaning={cardContent['함께 움직이는 게 있나']?.meaning}
           summary={comboSummary(comboGroups.matched)}
           axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}
           tipsExtra={<ComboActions combos={comboGroups.matched} />}>
@@ -1680,6 +1818,16 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
+
+      {/* ④-0 흩어진 행동을 한 줄로. 맞춤 권장사항보다 «앞»에 둔다 —
+          「무엇부터」를 읽고 나서 「그래서 각각 어떻게」를 읽는 순서다. */}
+      <ActionRoundup
+        ranks={actionRanks}
+        ctx={actionCtx}
+        combos={comboGroups?.matched ?? []}
+        ascvd={ascvd}
+        calcs={calcItems}
+      />
 
       {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다.
           ⚠️ axes=[] — 이 묶음 전체가 «뭘 하면 되는지»라서 ⑤ 자리다. 예전에는 이것들이

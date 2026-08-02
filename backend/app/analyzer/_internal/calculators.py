@@ -39,6 +39,15 @@ def _josa(word: str, with_final: str, without_final: str) -> str:
     return with_final if (ord(last) - 0xAC00) % 28 else without_final
 
 
+def _driver_metrics(parts: list[tuple[str, float]]) -> list[str]:
+    """값을 끌어올린 입력의 이름만 — 큰 순서로.
+
+    `_driver`가 만드는 문장과 짝이다. 화면이 「중성지방 쪽이 끌어올렸어요」를 «그러면
+    무슨 행동을 하면 되나»로 잇는 데 쓴다 — 문장을 다시 파싱하지 않게 이름을 따로 준다.
+    """
+    return [p[0] for p in sorted([q for q in parts if q[1] > 0], key=lambda q: -q[1])]
+
+
 def _driver(parts: list[tuple[str, float]]) -> Optional[str]:
     """어느 입력이 이 값을 끌어올렸나 — 한 문장.
 
@@ -120,16 +129,18 @@ def calculate_tyg(
 
     # TyG = ln(TG) + ln(공복혈당) − ln2 이므로 로그 기여도가 정확히 더해진다.
     m_tg, m_fbs = _med("트리글리세라이드", gender, age), _med("식전혈당(공복혈당)", gender, age)
-    driver = _driver([
+    _parts = [
         ("중성지방", math.log(tg / m_tg) if m_tg else 0.0),
         ("공복혈당", math.log(fbs / m_fbs) if m_fbs else 0.0),
-    ]) if (m_tg and m_fbs) else None
+    ] if (m_tg and m_fbs) else []
+    driver, driver_metrics = _driver(_parts), _driver_metrics(_parts)
 
     return {
         "value": tyg,
         "level": level,
         "interpretation": interp,
         "driver": driver,
+        "driver_metrics": driver_metrics,
         "inputs": {"tg": tg, "fbs": fbs},
         "cutoffs": "<8.5 낮음 / 8.5~8.9 경계 / ≥9.0 높음 (연구별 상이, 참고용)",
         "note": "국제 단일 진단 컷오프는 미확립이나, 한국 성인 대사증후군 스크리닝용으로 "
@@ -180,16 +191,18 @@ def calculate_non_hdl_c(
     # Non-HDL = 총콜레스테롤 − HDL. 뺄셈형이라 mg/dL 차이가 그대로 같은 자다.
     # HDL은 «낮을수록» 값을 올리므로 부호를 뒤집는다.
     m_tc, m_hdl = _med("총콜레스테롤", gender, age), _med("HDL콜레스테롤", gender, age)
-    driver = _driver([
+    _parts = [
         ("총콜레스테롤", total_cholesterol - m_tc if m_tc else 0.0),
         ("낮은 HDL", m_hdl - hdl if m_hdl else 0.0),
-    ]) if (m_tc and m_hdl) else None
+    ] if (m_tc and m_hdl) else []
+    driver, driver_metrics = _driver(_parts), _driver_metrics(_parts)
 
     return {
         "value": non_hdl,
         "level": level,
         "interpretation": interp,
         "driver": driver,
+        "driver_metrics": driver_metrics,
         "inputs": {"total_cholesterol": total_cholesterol, "hdl": hdl},
         "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
         "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
@@ -399,13 +412,15 @@ def calculate_map(
     # MAP = (SBP + 2·DBP)/3. 덧셈형이라 가중치를 그대로 곱해 mmHg로 견준다 —
     # 이완기는 2/3, 수축기는 1/3의 무게를 갖는다.
     m_s, m_d = _med("수축기혈압", gender, age), _med("이완기혈압", gender, age)
-    driver = _driver([
+    _parts = [
         ("수축기혈압", (sbp - m_s) / 3 if m_s else 0.0),
         ("이완기혈압", 2 * (dbp - m_d) / 3 if m_d else 0.0),
-    ]) if (m_s and m_d) else None
+    ] if (m_s and m_d) else []
+    driver, driver_metrics = _driver(_parts), _driver_metrics(_parts)
     return {
         "value": mapv, "level": level, "interpretation": interp,
         "driver": driver,
+        "driver_metrics": driver_metrics,
         "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
         "formula": "MAP = (SBP + 2×DBP) / 3",
     }
@@ -436,13 +451,15 @@ def calculate_aip(
         interp, level = "고위험", "high"
     # AIP = log10(TG/HDL). 비율의 로그라 각 항의 로그 차가 그대로 기여도다.
     m_tg, m_hdl = _med("트리글리세라이드", gender, age), _med("HDL콜레스테롤", gender, age)
-    driver = _driver([
+    _parts = [
         ("중성지방", math.log10(tg / m_tg) if m_tg else 0.0),
         ("낮은 HDL", math.log10(m_hdl / hdl) if m_hdl else 0.0),
-    ]) if (m_tg and m_hdl) else None
+    ] if (m_tg and m_hdl) else []
+    driver, driver_metrics = _driver(_parts), _driver_metrics(_parts)
     return {
         "value": aip, "level": level, "interpretation": interp,
         "driver": driver,
+        "driver_metrics": driver_metrics,
         "cutoffs": "<0.11 저위험 / 0.11~0.21 중간 / >0.21 고위험 (Dobiásová)",
         "formula": "AIP = log10(TG/HDL), mmol/L 변환 적용",
     }

@@ -218,6 +218,9 @@ export type RealCalcItem = {
    *  기여도를 재고, 끌어올린 것이 없으면 내려오지 않는다(지어내지 않는다).
    *  지금은 2뎁스에 펼치는 대표 4종(TyG·Non-HDL·AIP·MAP)에만 있다. */
   driver?: string | null;
+  /** driver가 지목한 입력의 이름(끌어올린 순). 문장을 다시 파싱하지 않게 따로 받는다.
+   *  ④층 「무엇부터 하면 되나」가 이걸로 «그 수치를 움직이는 행동»에 근거를 붙인다. */
+  driver_metrics?: string[];
   cutoffs?: string;
   formula?: string;
   note?: string;

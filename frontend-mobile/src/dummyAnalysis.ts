@@ -1826,7 +1826,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 70805,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["총콜레스테롤", "낮은 HDL"]
    },
    {
     "key": "castelli_1",
@@ -1872,7 +1873,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 70759,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["낮은 HDL"]
    },
    {
     "key": "tyg",
@@ -2567,7 +2569,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 64143,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 총콜레스테롤과 낮은 HDL가 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 총콜레스테롤과 낮은 HDL가 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["총콜레스테롤", "낮은 HDL"]
    },
    {
     "key": "castelli_1",
@@ -2613,7 +2616,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 64098,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["낮은 HDL", "중성지방"]
    },
    {
     "key": "tyg",
@@ -2634,7 +2638,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 64108,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방과 공복혈당이 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방과 공복혈당이 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "공복혈당"]
    },
    {
     "key": "mets_ir",
@@ -2744,7 +2749,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 62357,
     "peer_year": 2014
 ,
-    "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["수축기혈압", "이완기혈압"]
    },
    {
     "key": "prevent",
@@ -3423,7 +3429,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 64143,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 총콜레스테롤과 낮은 HDL가 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 총콜레스테롤과 낮은 HDL가 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["총콜레스테롤", "낮은 HDL"]
    },
    {
     "key": "castelli_1",
@@ -3469,7 +3476,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 64098,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["낮은 HDL", "중성지방"]
    },
    {
     "key": "tyg",
@@ -3490,7 +3498,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 64108,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "공복혈당"]
    },
    {
     "key": "mets_ir",
@@ -3600,7 +3609,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 63908,
     "peer_year": 2016
 ,
-    "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["수축기혈압", "이완기혈압"]
    },
    {
     "key": "prevent",
@@ -4494,7 +4504,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65302,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["총콜레스테롤", "낮은 HDL"]
    },
    {
     "key": "castelli_1",
@@ -4540,7 +4551,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65260,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "낮은 HDL"]
    },
    {
     "key": "tyg",
@@ -4561,7 +4573,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65272,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "공복혈당"]
    },
    {
     "key": "mets_ir",
@@ -4671,7 +4684,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 66276,
     "peer_year": 2018
 ,
-    "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["수축기혈압", "이완기혈압"]
    },
    {
     "key": "prevent",
@@ -5895,7 +5909,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65302,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["총콜레스테롤", "낮은 HDL"]
    },
    {
     "key": "castelli_1",
@@ -5941,7 +5956,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65260,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "낮은 HDL"]
    },
    {
     "key": "tyg",
@@ -5962,7 +5978,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65272,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "공복혈당"]
    },
    {
     "key": "mets_ir",
@@ -6070,7 +6087,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 64381,
     "peer_year": 2020
 ,
-    "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["이완기혈압", "수축기혈압"]
    },
    {
     "key": "prevent",
@@ -7274,7 +7292,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65302,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["총콜레스테롤", "낮은 HDL"]
    },
    {
     "key": "castelli_1",
@@ -7320,7 +7339,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65260,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 낮은 HDL와 중성지방이 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 낮은 HDL와 중성지방이 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["낮은 HDL", "중성지방"]
    },
    {
     "key": "tyg",
@@ -7341,7 +7361,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65272,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "공복혈당"]
    },
    {
     "key": "mets_ir",
@@ -7449,7 +7470,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 65209,
     "peer_year": 2022
 ,
-    "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["수축기혈압", "이완기혈압"]
    },
    {
     "key": "prevent",
@@ -8499,7 +8521,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 56341,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["총콜레스테롤", "낮은 HDL"]
    },
    {
     "key": "castelli_1",
@@ -8545,7 +8568,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 56316,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "낮은 HDL"]
    },
    {
     "key": "tyg",
@@ -8566,7 +8590,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 56321,
     "peer_year": 2017
 ,
-    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요.",
+    "driver_metrics": ["중성지방", "공복혈당"]
    },
    {
     "key": "mets_ir",
@@ -8676,7 +8701,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_n": 50466,
     "peer_year": 2024
 ,
-    "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요."
+    "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요.",
+    "driver_metrics": ["이완기혈압", "수축기혈압"]
    },
    {
     "key": "prevent",
