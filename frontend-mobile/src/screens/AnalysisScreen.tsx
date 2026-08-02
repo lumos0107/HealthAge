@@ -133,6 +133,28 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
  *  값이 클수록 나쁜 계산기 지표에서는 그대로 등수가 된다(1등 = 가장 좋음).
  *  percentile이 있는 항목이 하나도 없으면 아무것도 그리지 않는다 — 등수를 지어내지 않는다.
  *  문장·근거 배지는 PeerRankBlock에 모아 두어 네 화면이 같은 모양으로 말한다. */
+/** 기준을 벗어난 항목 중 «펼쳐 두는» 개수. 나머지는 「나머지 N개 보기」로 접는다.
+ *  4로 잡은 이유: 홈 TOP 3보다 하나 많게 두어 «분석 탭이 더 자세하다»가 드러나되,
+ *  아래 「상태로 보면」이 한 화면 안에 함께 보이는 선이다. */
+const OFF_RANGE_HEAD = 4;
+
+/** 기준을 벗어난 항목 한 줄 — 이름 · 값+단위 · 상태 배지. 접힌 쪽과 펼친 쪽이 같은 줄을 쓴다. */
+function OffRangeRow({ metric, report, first }: { metric: MetricDefinition; report: Report; first?: boolean }) {
+  const bad = metric.status === '위험';
+  return (
+    <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9 }, !first && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 }}>{metric.name}</Text>
+      <Text style={{ fontSize: 14, fontWeight: '700', color: bad ? T.danger : T.warn }}>
+        {formatMetricValue(metric, report.values[metric.key])}
+        <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text>
+      </Text>
+      <View style={{ backgroundColor: bad ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+        <Text style={{ fontSize: 11, fontWeight: '700', color: bad ? T.danger : T.warn }}>{metric.status}</Text>
+      </View>
+    </View>
+  );
+}
+
 /** 계산기 카드의 ③ 비교축 — 기준(구간 배지)은 항상 있고, 또래 등수는 표본이 있는 항목에만 붙는다.
  *  ⚠️ 정적으로 ['standard','peer']를 적으면 CalcRankBlock이 null인 해에도 «또래»를 선언한 셈이 된다.
  *  실제로 그려진 것만 담는다 — 안 그러면 제목이 화면에 없는 비교를 말하게 된다. */
@@ -405,6 +427,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
     () => sortByAttention(metricsForReport(report, metricDefinitions).filter((m) => !m.infoOnly && m.status !== '정상')),
     [report, metricDefinitions],
   );
+
+  /** 실제로 «해당»한 상태만. 임상이 먼저 오도록 원래 순서를 지킨다(백엔드 GROUP_INFO 순).
+   *  applies가 null인 것(판정 불가)은 해당이 아니므로 뺀다 — 지어내지 않는다. */
+  const appliedGroups = useMemo(() => (singleGroups ?? []).filter((g) => g.applies === true), [singleGroups]);
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
@@ -462,6 +488,35 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 10, marginBottom: 4 }}>
           <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
         </View>
+        {/* 점수가 세지 않는 것 — 「이 점수에」로 시작하는 말이라 점수 옆에 있어야 한다.
+            아래 카드로 내려봤다가 되돌렸다(2026-08-02): 점수만 보고 "괜찮다"고 덮지 않게
+            막는 것이 목적인데, 카드를 열어야 보이면 그 목적을 잃는다.
+            점수가 양호할 때가 특히 중요하다. */}
+        {outsideScore.length > 0 && (
+          <View style={{ borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 14, marginTop: 10 }}>
+            {/* 접되, «펼치게 유도하는» 한 줄을 밖에 둔다(§2-1 규칙 3 — 안에 무엇이 얼마나 있는지 알린다).
+                이 블록의 목적은 점수만 보고 "괜찮다"고 덮지 않게 막는 것이라, 접어놓고 아무 말도
+                안 하면 목적을 잃는다. 유도 문장이 그 일을 대신한다.
+                ⚠️ «위험»이라는 낱말은 쓰지 않는다 — 앱에서 위험은 상태 등급 이름(정상/주의/위험)인데
+                여기 항목들의 등급은 제각각이다(G2 경도 감소 · 중간 구간 …). */}
+            <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+              점수만 보고 넘기면 놓치는 신호가 {outsideScore.length}가지 있어요.
+            </Text>
+            <Expandable label={`신호 ${outsideScore.length}가지 보기`}>
+              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 4, marginBottom: 10 }}>
+                점수는 검사 항목별 주의·위험 개수만 셉니다. 아래는 여러 수치를 조합해 따로 판정한 것이라 점수에 반영되지 않지만, 그렇다고 가벼운 건 아니에요.
+              </Text>
+              {outsideScore.map((o) => (
+                <View key={o.label} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                  <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: T.warn, marginTop: 7 }} />
+                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, flex: 1 }}>
+                    <Text style={{ fontWeight: '700', color: T.text1 }}>{o.label}</Text> — {o.detail}
+                  </Text>
+                </View>
+              ))}
+            </Expandable>
+          </View>
+        )}
         {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
         <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
       </View>
@@ -505,48 +560,26 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </Text>
         {offRangeMetrics.length > 0 && (
           <View style={{ marginBottom: 14 }}>
-            {offRangeMetrics.map((m, i) => {
-              const bad = m.status === '위험';
-              return (
-                <View key={m.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 }}>{m.name}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: bad ? T.danger : T.warn }}>
-                    {formatMetricValue(m, report.values[m.key])}
-                    <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{m.unit}</Text>
-                  </Text>
-                  <View style={{ backgroundColor: bad ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: bad ? T.danger : T.warn }}>{m.status}</Text>
-                  </View>
-                </View>
-              );
-            })}
-            <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 8 }}>
-              기준 안에 있는 항목은 적지 않았어요. 전체 목록과 항목별 설명은 검사항목 탭에 있어요.
-            </Text>
-          </View>
-        )}
-        {/* 점수가 세지 않는 것 — 점수만 보고 "괜찮다"고 덮어버리지 않도록 함께 둔다.
-            점수가 양호할 때가 특히 중요하다. */}
-        {outsideScore.length > 0 && (
-          <View style={{ borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 14, marginBottom: 4 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
-              이 점수에 들어가지 않은 신호 {outsideScore.length}가지
-            </Text>
-            <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 10 }}>
-              점수는 검사 항목별 주의·위험 개수만 셉니다. 아래 항목은 여러 수치를 조합해 따로 판정한 것이라 점수에 반영되지 않아요.
-            </Text>
-            {outsideScore.map((o) => (
-              <View key={o.label} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-                <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: T.warn, marginTop: 7 }} />
-                <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, flex: 1 }}>
-                  <Text style={{ fontWeight: '700', color: T.text1 }}>{o.label}</Text> — {o.detail}
-                </Text>
-              </View>
+            {/* 위험 → 주의 순으로 앞 4개만 편다. 9줄이 통째로 펼쳐지면 2뎁스가 다시 목록이 되고,
+                정작 아래 「상태로 보면」이 화면 밖으로 밀린다(§2-1 「2뎁스는 요약이다」).
+                가장 급한 것이 위에 오므로 4개만 봐도 우선순위는 다 읽힌다. */}
+            {offRangeMetrics.slice(0, OFF_RANGE_HEAD).map((m, i) => (
+              <OffRangeRow key={m.key} metric={m} report={report} first={i === 0} />
             ))}
+            {offRangeMetrics.length > OFF_RANGE_HEAD && (
+              <Expandable label={`나머지 ${offRangeMetrics.length - OFF_RANGE_HEAD}개 보기`}>
+                {offRangeMetrics.slice(OFF_RANGE_HEAD).map((m) => (
+                  <OffRangeRow key={m.key} metric={m} report={report} />
+                ))}
+                {/* 이 안내는 «목록을 다 본 사람»에게만 필요하다. 접힌 채로 밖에 두면
+                    4개만 보고 있는 사람에게 "적지 않았어요"부터 읽히는 셈이라 순서가 거꾸로다. */}
+                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 10 }}>
+                  기준 안에 있는 항목은 적지 않았어요. 전체 목록과 항목별 설명은 검사항목 탭에 있어요.
+                </Text>
+              </Expandable>
+            )}
           </View>
         )}
-        {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
-        <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
 
       {/* 관리 참고군 카드 5장은 A3에서 제거했다(§1-1② — 무엇을 왜 뺐는지 기록).
           하던 일과 간 곳: 묶음 판정("N개 중 M개") → 집단군 판정 카드(A2'가 또래 유병률까지 병합),
@@ -597,7 +630,31 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           )}
 
-          <Expandable label="판정 근거 전체 보기">
+          {/* «해당»한 것만 먼저 편다 — 「임상 5개」라는 개수만으로는 무엇에 해당하는지 알 수 없다.
+              13줄을 통째로 펼치면 비해당 8줄이 해당 5줄을 묻어버린다. 앞 4개까지만 두고
+              나머지와 판정 근거는 접는다(§2-1 「2뎁스는 요약이다」). */}
+          {appliedGroups.length > 0 && (
+            <View style={{ marginTop: 10 }}>
+              {appliedGroups.slice(0, OFF_RANGE_HEAD).map((g, i) => (
+                <View key={g.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
+                    {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
+                  </View>
+                  <View style={{ backgroundColor: T.dangerBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: T.danger }}>해당</Text>
+                  </View>
+                </View>
+              ))}
+              {appliedGroups.length > OFF_RANGE_HEAD && (
+                <Text style={{ fontSize: 12, color: T.text3, marginTop: 8 }}>
+                  외 {appliedGroups.length - OFF_RANGE_HEAD}개에 더 해당해요 — 아래에서 전부 볼 수 있어요.
+                </Text>
+              )}
+            </View>
+          )}
+
+          <Expandable label="비해당까지 전부 보기 · 판정 근거">
           {/* 대사증후군 5인자 세부 — "해당/비해당"만으로는 왜 그렇게 판정됐는지 알 수 없다.
               각 인자가 수치 때문인지 약 복용 때문인지까지 백엔드가 이미 보내주므로 그대로 보여준다. */}
           {msDetail && (
