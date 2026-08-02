@@ -767,7 +767,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
       {egfr && (
         <FadeInUp delay={180}>
-        <SummaryCard title="신장 기능 (eGFR)" definition={cardContent['신장 기능 (eGFR)']?.definition} detail={cardContent['신장 기능 (eGFR)']?.detail} meaning={cardContent['신장 기능 (eGFR)']?.meaning} tips={cardContent['신장 기능 (eGFR)']?.tips} summary={`${egfr.egfr} ${egfr.unit} · ${egfr.label}`}
+        <SummaryCard title="콩팥이 잘 거르고 있나" definition={cardContent['콩팥이 잘 거르고 있나']?.definition} detail={cardContent['콩팥이 잘 거르고 있나']?.detail} meaning={cardContent['콩팥이 잘 거르고 있나']?.meaning} tips={cardContent['콩팥이 잘 거르고 있나']?.tips} summary={`1분에 ${egfr.egfr}mL를 걸러요`}
           axes={['standard']}
           badge={<VerdictBadge v={egfr.severity === 'normal' ? 'good' : egfr.severity === 'high' ? 'bad' : 'watch'} />}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
@@ -907,7 +907,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <SummaryCard title="간 계산기" definition={cardContent['간 계산기']?.definition} detail={cardContent['간 계산기']?.detail} meaning={cardContent['간 계산기']?.meaning} tips={cardContent['간 계산기']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={levelSummary(liverCalcs.map((it) => it.level))}
+        <SummaryCard title="간이 굳어가고 있나" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={levelSummary(liverCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
           {/* CalcRows에는 공식과 논문 인용이 붙는다(`De Ritis = AST / ALT`,
               `BARD = BMI≥28(1) + … [Harrison 2008]`). 축 2는 2뎁스에 공식을 금지하므로
@@ -923,7 +923,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
-        <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
+        <SummaryCard title="대사에 이상 신호가 있나" definition={cardContent['대사에 이상 신호가 있나']?.definition} detail={cardContent['대사에 이상 신호가 있나']?.detail} meaning={cardContent['대사에 이상 신호가 있나']?.meaning} tips={cardContent['대사에 이상 신호가 있나']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(metabolicCalcs.map((it) => it.level))} />}>
           {/* CalcRows에는 공식·학회 인용이 붙어 축 2(2뎁스에 공식 금지)에 걸린다 → 2.5뎁스로 접는다.
               ⚠️ 여기 있던 「관련 지표 N종 더보기」는 Expandable과 **모양이 다른 접기**였다
@@ -1087,7 +1087,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </FadeInUp>
       )}
 
-      {/* ③층 이름은 "같은 또래는 어떤가" — "나만 그런가"였을 때 '같은 나이대의 16년 변화'(집단 추세)가
+      {/* ③층 이름은 "같은 또래는 어떤가" — "나만 그런가"였을 때 '또래 자체가 나빠졌나'(집단 추세)가
           층 이름(내 위치)과 안 맞았다. 또래 분포·16년 변화·내 위치를 모두 덮는 이름으로. */}
       <LayerHeader step={LAYERS[2].step} title={LAYERS[2].title} sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
 
@@ -1108,10 +1108,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         return (
           <FadeInUp delay={205}>
             <SummaryCard
-              title="같은 또래 분포"
-              summary={lead.matches > 0
-                ? `${lead.name} ${lead.matches}개 걸린 나 같은 사람은 또래 100명 중 ${fmtN(p)}명이에요.`
-                : `${lead.name}에 안 걸린 나 같은 사람은 또래 100명 중 ${fmtN(p)}명이에요.`}
+              title="나 같은 사람이 얼마나 되나"
+              summary={`또래 100명 중 ${fmtN(p)}명이에요`}
               definition="검사 항목 묶음(관리 참고군)마다 '기준을 벗어난 항목 수'가 같은 성별·연령대에서 어떻게 분포하는지 본 거예요. 빨간 막대가 지금 나의 자리예요."
               meaning="막대가 낮을수록 같은 또래에서 드문 상태라는 뜻이에요. 드물다고 곧 더 위험한 것은 아니고, 위험이 얼마나 되는지는 위 ②층 계산기(심혈관 위험 등)가 따로 맡아요."
               axes={['peer']}
@@ -1160,7 +1158,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
-        <SummaryCard title="함께 나타나는 조합 (동반 경향)" definition={cardContent['함께 나타나는 조합 (동반 경향)']?.definition} detail={cardContent['함께 나타나는 조합 (동반 경향)']?.detail} meaning={cardContent['함께 나타나는 조합 (동반 경향)']?.meaning} tips={cardContent['함께 나타나는 조합 (동반 경향)']?.tips} summary={`해당 조합 ${comboGroups.matched_count}개`} axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
+        <SummaryCard title="이 조합이 흔한가" definition={cardContent['이 조합이 흔한가']?.definition} detail={cardContent['이 조합이 흔한가']?.detail} meaning={cardContent['이 조합이 흔한가']?.meaning} tips={cardContent['이 조합이 흔한가']?.tips} summary={leadCombo?.population
+            ? `조합 ${comboGroups.matched_count}개 · 같은 조합인 사람은 100명 중 ${leadCombo.population.pct_of_total < 1 ? '1명 미만' : `${Math.round(leadCombo.population.pct_of_total)}명`}이에요`
+            : `조합 ${comboGroups.matched_count}개에 해당해요`} axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
           {/* 앞머리의 "여러 요인이 함께 나타나는 조합이에요"와 "위험도 자체는 아니에요"는 지웠다 —
               각각 ②와 ④가 이미 말한다. 표본 크기만 남긴다(§1-1③ 근거). */}
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
@@ -1249,14 +1249,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {!!pop16?.age_fixed_trend?.items?.length && (
         <FadeInUp delay={219}>
         <SummaryCard
-          title="같은 나이대의 16년 변화"
-          definition={cardContent['같은 나이대의 16년 변화']?.definition}
-          detail={cardContent['같은 나이대의 16년 변화']?.detail}
-          meaning={cardContent['같은 나이대의 16년 변화']?.meaning}
-          tips={cardContent['같은 나이대의 16년 변화']?.tips}
+          title="또래 자체가 나빠졌나"
+          definition={cardContent['또래 자체가 나빠졌나']?.definition}
+          detail={cardContent['또래 자체가 나빠졌나']?.detail}
+          meaning={cardContent['또래 자체가 나빠졌나']?.meaning}
+          tips={cardContent['또래 자체가 나빠졌나']?.tips}
           summary={(() => {
             const top = pop16.age_fixed_trend!.items[0];
-            return top ? `${pop16.age_fixed_trend!.age_band} ${top.name} ${top.y2009}% → ${top.y2024}% (16년)` : null;
+            if (!top) return null;
+            const band = pop16.age_fixed_trend!.age_band;
+            return top.diff > 0
+              ? `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 늘었어요`
+              : `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 줄었어요`;
           })()}
           axes={[]}
           meaningExtra={<>
