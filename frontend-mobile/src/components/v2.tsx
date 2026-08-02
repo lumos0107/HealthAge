@@ -274,12 +274,11 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
                 {tipsExtra}
               </View>
             )}
-            {/* 카드 전체에 걸리는 한계 — 고지문 바로 위가 제자리다. */}
-            {!!footer && (
-              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-                {footer}
-              </View>
-            )}
+            {/* 카드 전체에 걸리는 한계 — 고지문과 «같은 층위»다.
+                흰 카드로 감싸면 ①~⑤와 같은 무게로 읽혀 내용 칸처럼 보이는데, 이건 읽고
+                행동할 것이 아니라 «이 숫자를 어디까지 믿을지»를 밝히는 회피 문구다.
+                카드를 벗기고 고지문 바로 위에 회색으로 둔다. */}
+            {!!footer && <View style={{ marginBottom: 10 }}>{footer}</View>}
             <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
           </ScrollView>
         </View>
