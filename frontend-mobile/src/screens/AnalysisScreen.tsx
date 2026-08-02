@@ -419,35 +419,64 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         sub={`${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`}
       />
 
-      {/* ① 참고 점수 */}
+      {/* 연도 선택 — 기록이 늘어나도 가로 스크롤로 자유롭게 비교.
+          최신이 왼쪽에 온다(검사항목 탭 선택기와 같은 순서). 기본 선택이 최신 회차라
+          오름차순이면 선택된 칩을 보려고 끝까지 스크롤해야 했다.
+          reports 자체는 오래된 순이므로, 표시만 뒤집고 인덱스(i)는 원래 것을 그대로 넘긴다.
+          ⚠️ 카드 «밖»에 둔다(2026-08-02). 아래 카드는 전체가 눌리는 SummaryCard라,
+          안에 두면 연도 칩을 눌러도 상세 모달이 함께 열린다. */}
+      <FadeInUp delay={80}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginBottom: 10 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
+        {reports.map((r, i) => ({ r, i })).reverse().map(({ r, i }) => (
+          <Pressable
+            key={r.year}
+            onPress={() => setYearIdx(i)}
+            style={{
+              paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill,
+              backgroundColor: i === yearIdx ? T.primary : T.white,
+            }}
+          >
+            <Text style={{ fontSize: 13, fontWeight: '700', color: i === yearIdx ? '#fff' : T.text3 }}>{r.year}년</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+      </FadeInUp>
+
+      {/* ①층의 답은 «항목으로 보면 몇 개가 벗어났나»(점수)와 «상태로 보면 무엇에 해당하나»(13개
+          판정) 둘이다. 2026-08-02까지는 카드 두 장이었는데, 같은 질문의 두 답에 카드가 둘이면
+          사용자가 같은 판단을 두 번 하게 된다(§2-1 축 0). 한 장으로 합치고 2뎁스에서 나눈다.
+          덤으로 «혼자만 안 눌리던 카드»도 사라졌다 — 앱의 다른 카드는 전부 눌러서 열린다. */}
       <FadeInUp delay={100}>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20, marginBottom: 8 }}>
-        <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500', marginBottom: 8 }}>참고 점수</Text>
-        {/* 연도 선택 — 기록이 늘어나도 가로 스크롤로 자유롭게 비교.
-            최신이 왼쪽에 온다(검사항목 탭 선택기와 같은 순서). 기본 선택이 최신 회차라
-            오름차순이면 선택된 칩을 보려고 끝까지 스크롤해야 했다.
-            reports 자체는 오래된 순이므로, 표시만 뒤집고 인덱스(i)는 원래 것을 그대로 넘긴다. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }} contentContainerStyle={{ gap: 8 }}>
-          {reports.map((r, i) => ({ r, i })).reverse().map(({ r, i }) => (
-            <Pressable
-              key={r.year}
-              onPress={() => setYearIdx(i)}
-              style={{
-                paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill,
-                backgroundColor: i === yearIdx ? T.primary : T.bg,
-              }}
-            >
-              <Text style={{ fontSize: 13, fontWeight: '700', color: i === yearIdx ? '#fff' : T.text3 }}>{r.year}년</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-        {/* 결론 한 줄 — 카드 13장을 다 읽기 전에 "그래서 뭐였나"를 먼저 준다.
-            새 판단을 만들지 않는다: 그 해 기록의 주의·위험 개수와 아래에서 이미 계산된
-            '점수 밖 신호'를 문장으로 옮길 뿐이다.
-            ⚠️ 예전에는 화면 맨 위 헤더에 있었다. 그런데 점수와 결론은 같은 사실의 두 표현인데
-            그 사이에 부제·펼치기·면책·층 머리말이 끼어 있어, 첫 화면에서 둘이 만나지 못했다.
-            숫자를 말하는 자리(점수 카드)로 내려 붙인다. */}
-        <Text style={{ fontSize: 16, color: T.text1, fontWeight: '700', lineHeight: 25, marginBottom: 16 }}>
+      <SummaryCard
+        title="나는 어떤 상태인가"
+        definition={cardContent['나는 어떤 상태인가']?.definition}
+        detail={cardContent['나는 어떤 상태인가']?.detail}
+        meaning={cardContent['나는 어떤 상태인가']?.meaning}
+        tips={cardContent['나는 어떤 상태인가']?.tips}
+        summary={[
+          report.trackCount ? `위험 ${report.trackCount}` : null,
+          report.manageCount ? `주의 ${report.manageCount}` : null,
+          rarity ? `상태 기준 ${rarity.clinical_count + rarity.lifestyle_count}개 해당` : null,
+        ].filter(Boolean).join(' · ') || `${report.year}년 검진은 모두 기준 안이에요.`}
+        badge={
+          <View style={{ backgroundColor: scoreBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+          </View>
+        }
+        preview={
+          // 점수 히어로는 1뎁스에 남긴다 — 참고 점수는 이 탭의 얼굴이라 열어야 보이면 안 된다.
+          // 연도를 바꿀 때마다 0에서부터 채워지며 그려져 변화가 자연스럽게 느껴진다.
+          <View style={{ marginTop: 14 }}>
+            <Text style={{ fontSize: 13, color: T.text3, fontWeight: '500', marginBottom: 4 }}>참고 점수</Text>
+            <AnimatedScore score={scorePct} color={scoreColor} />
+          </View>
+        }
+        axes={['standard']}
+      >
+        {/* ── 항목으로 보면 ─────────────────────────────────
+            검사 항목 하나하나가 정상범위 안인지. 점수가 세는 단위가 이것이다. */}
+        <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 6 }}>항목으로 보면</Text>
+        <Text style={{ fontSize: 15, color: T.text2, lineHeight: 23, marginBottom: 14 }}>
           {report.trackCount + report.manageCount === 0
             ? `${report.year}년 검진은 검사 항목이 모두 기준 안이에요.`
             : `${report.year}년 검진에서 ${[
@@ -456,16 +485,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               ].filter(Boolean).join(' · ')}가 나왔어요.`}
           {outsideScore.length > 0 && ` 점수에 안 잡히는 신호도 ${outsideScore.length}가지 있어요 — ${outsideScore[0].label}부터 보세요.`}
         </Text>
-        {/* 연도를 바꿀 때마다 점수가 0에서부터 채워지며 그려져, 변화가 자연스럽게 느껴진다 */}
-        <View style={{ marginBottom: 16 }}>
-          <AnimatedScore score={scorePct} color={scoreColor} />
-          {/* 판단 배지 — 홈과 같은 숫자에 홈에만 판단이 붙어 있었다. scoreTone 한 곳에서 색·라벨을 받는다. */}
-          <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 10 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
-          </View>
-        </View>
-        {/* 점수가 세지 않는 것 — 점수만 보고 "괜찮다"고 덮어버리지 않도록, 아래 상세 분석에서
-            나온 신호를 점수 바로 밑에 모은다. 점수가 양호할 때가 특히 중요하다. */}
+        {/* 점수가 세지 않는 것 — 점수만 보고 "괜찮다"고 덮어버리지 않도록 함께 둔다.
+            점수가 양호할 때가 특히 중요하다. */}
         {outsideScore.length > 0 && (
           <View style={{ borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 14, marginBottom: 4 }}>
             <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
@@ -486,8 +507,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         )}
         {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
         <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
-      </View>
-      </FadeInUp>
 
       {/* 관리 참고군 카드 5장은 A3에서 제거했다(§1-1② — 무엇을 왜 뺐는지 기록).
           하던 일과 간 곳: 묶음 판정("N개 중 M개") → 집단군 판정 카드(A2'가 또래 유병률까지 병합),
@@ -499,13 +518,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           예전엔 최신 연도 것만 내려받아, 위에서 연도를 바꿔도 아래는 그대로였다.
           이제 연도를 따라가므로 어느 해 기준인지 한 줄로 못 박아 둔다. */}
       <FadeIn key={`detail-${report.year}`}>
-      {/* 층 머리말이 구조를 맡았으므로 여기는 제목 없이 연도 기준만 못 박는 한 줄로 둔다. */}
-      <View style={{ paddingHorizontal: 20, marginTop: 14, marginBottom: 2 }}>
-        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
-          여기부터 아래 모든 카드는 {report.year}년 수치로 계산한 결과예요. 위에서 연도를 바꾸면 함께 바뀝니다.
-        </Text>
-      </View>
-
       {/* 그 해 분석이 통째로 없는 경우 — 카드를 조용히 지우면 "원래 그런 해"로 읽힌다.
           왜 없는지(예전 방식으로 저장된 회차) 밝히고, 최신 회차를 보라고 안내한다. */}
       {!comboAnalysis && !egfr && !recommendations && (
@@ -522,26 +534,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
       </FadeIn>
 
-      {/* ③-4 집단군 판정(13개) — 백엔드가 검진 수치·약물로 판정한 단일 집단군 목록.
-          판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다.
-          ⚠️ 1뎁스 결론은 «판단»을 담는다(§2-1). 예전에는 「해당 7개 — 임상 5 · 생활습관 2」로
-          개수만 세어서 7개가 많은 건지 적은 건지 읽히지 않았다. 배지를 못 다는 카드라
-          (해당/비해당은 학회 기준의 좋다/나쁘다가 아니다) 문장이 판단을 맡아야 한다.
-          interpretation은 백엔드가 이미 보내주던 판단 문구다 — 새로 지어내지 않았고,
-          ③ 안에서만 보이던 것을 1뎁스로 올렸을 뿐이다. */}
-      {!!singleGroups?.length && (
-        <FadeInUp delay={218}>
-        <SummaryCard
-          title="집단군 판정"
-          definition={cardContent['집단군 판정']?.definition}
-          detail={cardContent['집단군 판정']?.detail}
-          meaning={cardContent['집단군 판정']?.meaning}
-          tips={cardContent['집단군 판정']?.tips}
-          summary={rarity
-            ? `${rarity.interpretation} — 임상 ${rarity.clinical_count} · 생활습관 ${rarity.lifestyle_count}`
-            : null}
-          axes={['standard']}
-        >
+        {/* ── 상태로 보면 ─────────────────────────────────
+            같은 수치를 «항목»이 아니라 «상태»(고혈압·당뇨·대사증후군·비만·흡연 등 13개) 단위로
+            가른 결과. 검진 수치에 복용 약물까지 반영하므로, 수치가 정상이어도 약을 먹고 있으면
+            해당으로 본다 — 점수만으로는 알 수 없는 것이다.
+            판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
+        {!!singleGroups?.length && (
+          <View style={{ marginTop: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 6 }}>상태로 보면</Text>
 
           {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
               백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
@@ -627,9 +627,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </Text>
           )}
           </Expandable>
-        </SummaryCard>
-        </FadeInUp>
-      )}
+          </View>
+        )}
+      </SummaryCard>
+      </FadeInUp>
+
+      {/* 연도 기준 안내 — ①층이 «끝난 뒤»에 둔다(2026-08-02).
+          예전에는 층 머리말과 집단군 판정 카드 «사이»에 끼어 있어서, 한 층의 답인
+          점수 카드와 집단군 판정을 갈라놓았다. 두 카드는 「기준을 벗어났나」라는 같은 질문의
+          두 답이라 붙어 있어야 한다. 문구도 "여기부터 아래"에서 화면 전체로 바꿨다 —
+          아래로 내려온 이상 위 두 카드도 같은 연도 기준이기 때문이다. */}
+      <View style={{ paddingHorizontal: 20, marginTop: 10, marginBottom: 2 }}>
+        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+          이 화면의 카드는 모두 {report.year}년 수치로 계산했어요. 위에서 연도를 바꾸면 함께 바뀝니다.
+        </Text>
+      </View>
 
       <LayerHeader step={LAYERS[1].step} title={LAYERS[1].title} sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
 
