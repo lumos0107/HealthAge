@@ -307,7 +307,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   comboAnalysisByYear?: Record<number, RealComboAnalysis>;
 }) {
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
-  const [showRedundant, setShowRedundant] = useState(false);
   // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
   // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
   const [showEngines, setShowEngines] = useState(false);
@@ -754,7 +753,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <FadeInUp delay={217}>
         <SummaryCard title="간 계산기" definition={cardContent['간 계산기']?.definition} detail={cardContent['간 계산기']?.detail} meaning={cardContent['간 계산기']?.meaning} tips={cardContent['간 계산기']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={levelSummary(liverCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
-          <CalcRows items={liverCalcs} />
+          {/* CalcRows에는 공식과 논문 인용이 붙는다(`De Ritis = AST / ALT`,
+              `BARD = BMI≥28(1) + … [Harrison 2008]`). 축 2는 2뎁스에 공식을 금지하므로
+              접어서 2.5뎁스로 내린다 — 심혈관 카드가 이미 같은 방식을 쓰고 있다. */}
+          <Expandable label={`지표 ${liverCalcs.length}개 자세히`}>
+            <CalcRows items={liverCalcs} />
+          </Expandable>
         </SummaryCard>
         </FadeInUp>
       )}
@@ -765,22 +769,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <FadeInUp delay={216}>
         <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(metabolicCalcs.map((it) => it.level))} />}>
-          <CalcRows items={metabolicPrimary} />
-          {metabolicRedundant.length > 0 && (
-            <>
-              <Pressable
-                onPress={() => setShowRedundant((v) => !v)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 11, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 2 }}
-              >
-                <Ionicons name={showRedundant ? 'chevron-up' : 'chevron-down'} size={16} color={T.text2} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>
-                  {showRedundant ? '관련 지표 접기' : `관련 지표 ${metabolicRedundant.length}종 더보기`}
+          {/* CalcRows에는 공식·학회 인용이 붙어 축 2(2뎁스에 공식 금지)에 걸린다 → 2.5뎁스로 접는다.
+              ⚠️ 여기 있던 「관련 지표 N종 더보기」는 Expandable과 **모양이 다른 접기**였다
+              (chevron이 왼쪽, 좌측 정렬). 한 카드 안에 접는 방법이 둘이면 사용자가 다른
+              기능으로 읽는다 — 하나로 합치고 대표/관련은 소제목으로만 나눈다. */}
+          <Expandable label={`지표 ${metabolicCalcs.length}개 자세히`}>
+            <CalcRows items={metabolicPrimary} />
+            {metabolicRedundant.length > 0 && (
+              <>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+                  관련 지표 {metabolicRedundant.length}종 <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>(대표 지표와 강한 상관)</Text>
                 </Text>
-                <Text style={{ fontSize: 12, color: T.text3 }}>(대표 지표와 강한 상관)</Text>
-              </Pressable>
-              {showRedundant && <CalcRows items={metabolicRedundant} />}
-            </>
-          )}
+                <CalcRows items={metabolicRedundant} />
+              </>
+            )}
+          </Expandable>
           {/* 계산하지 못한 지표 — 값이 없는 걸 조용히 빼면 '원래 그런 개수'로 읽힌다.
               무엇이 왜 빠졌는지(어떤 검사가 필요한지) 백엔드 문구를 그대로 밝힌다. */}
           {calcUnavailable.length > 0 && (
