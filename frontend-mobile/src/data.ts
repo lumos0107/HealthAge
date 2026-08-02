@@ -243,7 +243,13 @@ export const reports: Report[] = [
 
 export const latest = reports[reports.length - 1];
 
-export const metricDefinitions: MetricDefinition[] = [
+/** 항목 정의 — 이름·단위·정상범위·설명. status는 **최신 회차에서 파생**한다(바로 아래).
+ *
+ *  ⚠️ status를 여기 손으로 적어두면 안 된다. 홈 탭만 이 값을 그대로 쓰고(다른 탭은
+ *  metricsForReport로 그 해 statusByKey를 덮어쓴다), 데모 수치를 바꿨을 때 홈에서만
+ *  옛 판정이 남는다. 실제로 허리둘레가 96→88로 내려온 뒤에도 홈 TOP3는 «허리둘레 위험»을
+ *  가리키고 있었다. 그래서 아래 METRIC_DEFS에는 자리만 두고 값은 latest에서 채운다. */
+const METRIC_DEFS: MetricDefinition[] = [
   { key: 'sbp', category: '혈압', name: '수축기 혈압', shortName: '수축기', unit: 'mmHg', normalText: '90-119', normalValue: 120, peerMean: 126, status: '주의', description: '심장이 피를 밀어낼 때 혈관에 걸리는 압력입니다.', note: '한 번 높게 나왔다고 바로 판단하지 않고 반복 측정 흐름을 함께 봅니다.' },
   { key: 'dbp', category: '혈압', name: '이완기 혈압', shortName: '이완기', unit: 'mmHg', normalText: '60-79', normalValue: 80, peerMean: 79, status: '주의', description: '심장이 쉬는 순간 혈관에 남아 있는 압력입니다.', note: '수축기 혈압과 같이 확인해야 혈압 흐름을 이해하기 쉽습니다.' },
   { key: 'glucose', category: '혈당', name: '공복혈당', shortName: '혈당', unit: 'mg/dL', normalText: '70-99', normalValue: 99, peerMean: 101, status: '주의', description: '식사하지 않은 상태에서 혈액 속 포도당이 어느 정도인지 보는 항목입니다.', note: '식사, 수면, 스트레스 영향을 받을 수 있어 여러 해의 흐름이 중요합니다.' },
@@ -262,6 +268,12 @@ export const metricDefinitions: MetricDefinition[] = [
   { key: 'creatinine', category: '신장 기능', name: '혈청 크레아티닌', shortName: '크레아티닌', unit: 'mg/dL', normalText: '기관 기준 확인', normalValue: 1.2, status: '정상', description: '신장 기능을 추정할 때 참고하는 혈액검사 수치입니다.', note: '요청사항에 따라 시계열에는 표시하고 연령대 평균 비교에서는 제외합니다.' },
   { key: 'urineProtein', category: '신장 기능', name: '요단백', shortName: '요단백', unit: '', normalText: '음성', normalValue: 1, status: '정상', valueLabels: { 1: '음성', 2: '약양성(±)', 3: '1+', 4: '2+', 5: '3+', 6: '4+' }, description: '소변에 단백질이 섞여 나오는지 보는 검사입니다.', note: '일시적으로 나타날 수 있어 반복해서 나오면 신장 기능과 함께 확인합니다.' },
 ];
+
+// status만 최신 회차 판정으로 갈아 끼운다 — 나머지 필드는 그대로다.
+export const metricDefinitions: MetricDefinition[] = METRIC_DEFS.map((m) => ({
+  ...m,
+  status: latest.statusByKey[m.key] ?? m.status,
+}));
 
 /** 성별 기준이 다른 항목을 그 사용자 기준으로 바꿔 놓는다.
  *  정상범위 밴드·판정 문구·차트가 모두 normalText/normalValue만 읽으므로,

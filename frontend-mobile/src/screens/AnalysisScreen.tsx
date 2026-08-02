@@ -23,9 +23,13 @@ function DomainHeader({ title }: { title: string }) {
  *  그동안 머리말이 장기별(신장/간/대사지질/심혈관)뿐이라 네 층과 직교했고, 그래서
  *  "이 카드는 지금 무슨 일을 하고 있나"가 화면에 드러나지 않았다. 장기 머리말은
  *  ②층 안의 소제목으로 남기고, 층은 그 위에 얹는다. */
-function LayerHeader({ step, title, sub }: { step: string; title: string; sub: string }) {
+function LayerHeader({ step, title, sub, first }: { step: string; title: string; sub: string; first?: boolean }) {
   return (
-    <View style={{ marginHorizontal: 16, marginTop: 26, marginBottom: 4, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
+    // 첫 층은 위 구분선과 큰 여백을 두지 않는다 — 바로 위가 페이지 헤더라 «층과 층 사이»가
+    // 아니고, 그대로 두면 제목과 ①층이 60px 넘게 벌어져 화면 위쪽이 비어 보인다.
+    <View style={first
+      ? { marginHorizontal: 16, marginTop: 18, marginBottom: 4 }
+      : { marginHorizontal: 16, marginTop: 26, marginBottom: 4, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
         <Text style={{ fontSize: 15, fontWeight: '800', color: T.primary }}>{step}</Text>
         <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1, letterSpacing: -0.3 }}>{title}</Text>
@@ -52,23 +56,27 @@ const LAYERS = [
  *  구분선이 «결론과 부가설명»을 가르는 역할을 했는데, 결론을 점수 카드로 내리고 나니
  *  구분선이 제목과 버튼을 가르는 모양이 되고 가운데 정렬된 글자만 여백에 떠 있었다.
  *  버튼은 왼쪽 정렬이 기본이다 — 제목·층 머리말과 같은 세로선에 선다. */
-function TabIntroNote() {
+function TabIntroNote({ title }: { title: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <View style={{ marginTop: 10 }}>
+    <View>
+      <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>{title}</Text>
+      {/* 설명 줄 «자체»가 버튼이다. 알약 버튼을 따로 두면 한 줄을 통째로 차지해 세로 여백이
+          늘고, 오른쪽 끝에 붙은 「보는 법」은 제목과 무관한 조각처럼 읽힌다.
+          히스토리 탭도 제목 아래 같은 회색 한 줄을 두므로 두 탭의 머리 모양이 같아진다.
+          차이는 여기만 누를 수 있다는 것이고, 그건 끝의 화살표가 말한다. */}
       <Pressable
         onPress={() => setOpen((v) => !v)}
-        hitSlop={8}
-        style={{
-          alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4,
-          backgroundColor: T.cardAlt, paddingHorizontal: 12, paddingVertical: 7, borderRadius: T.radiusPill,
-        }}
+        hitSlop={6}
+        style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginTop: 6 }}
       >
-        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text2 }}>분석 탭 보는 법</Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+        <Text style={{ flex: 1, fontSize: 13, color: T.text3, lineHeight: 19 }}>
+          검진 수치를 네 단계로 나눠 읽습니다.
+        </Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} style={{ marginTop: 2 }} />
       </Pressable>
       {open && (
-        <View style={{ marginTop: 12 }}>
+        <View style={{ marginTop: 14 }}>
           {LAYERS.map((l) => (
             <View key={l.step} style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
               <Text style={{ fontSize: 13, fontWeight: '800', color: T.primary }}>{l.step}</Text>
@@ -389,15 +397,15 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           갖고 있어, 헤더까지 여백을 두면 제목과 ①층 사이가 60px 넘게 벌어진다. */}
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 2 }}>
         <Eyebrow>ANALYSIS</Eyebrow>
-        <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>건강분석</Text>
         {/* 네 층을 나열하던 부제는 지웠다 — 바로 아래 「이 화면은 무엇을 하나요?」가 같은 LAYERS를
             펼쳐 보여주고, 스크롤하면 층 머리말로 세 번째 나왔다. 같은 말을 첫 화면에서 두 번 하는
             자리라, 정작 내 수치가 첫 화면 밖으로 밀려나 있었다. */}
-        <TabIntroNote />
+        <TabIntroNote title="건강분석" />
       </View>
       </FadeInUp>
 
       <LayerHeader
+        first
         step={LAYERS[0].step}
         title={LAYERS[0].title}
         sub={`${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`}

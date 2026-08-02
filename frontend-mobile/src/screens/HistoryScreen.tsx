@@ -60,10 +60,15 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
-      {/* 페이지 헤더 — 제목이 이미 말하는 설명문은 두지 않는다(첫 화면을 텍스트로 막지 않기 위해). */}
+      {/* 페이지 헤더 — 「히스토리」만으로는 «무엇의» 히스토리인지, 다른 탭과 무엇이 다른지
+          알 수 없어 한 줄을 붙인다. 검사항목 탭이 «그 해 한 장»을 보는 곳이라면
+          여기는 «여러 해를 이어 붙여» 보는 곳이라는 것이 이 탭의 존재 이유다. */}
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12 }}>
         <Eyebrow>HISTORY</Eyebrow>
         <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>히스토리</Text>
+        <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>
+          여러 해 기록을 이어 붙여 어떻게 달라졌는지 봅니다.
+        </Text>
       </View>
 
       {/* 점수 추이 히어로 — "추이" 탭의 첫 화면에 그림이 하나도 없던 문제를 여기서 해결한다. */}

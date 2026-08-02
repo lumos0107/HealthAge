@@ -45,12 +45,25 @@ describe('yearDelta / deltaText', () => {
   });
 });
 
+describe('metricDefinitions의 status는 최신 회차에서 파생된다', () => {
+  // 홈 탭만 metricDefinitions의 status를 «그대로» 쓴다(다른 탭은 metricsForReport로
+  // 그 해 statusByKey를 덮어쓴다). 그래서 이 둘이 갈리면 홈에서만 옛 판정이 남아,
+  // 데모 수치를 바꿨을 때 홈 TOP3가 조용히 틀린 항목을 가리킨다.
+  it('모든 항목이 최신 회차의 statusByKey와 같다', () => {
+    const latest = reports[reports.length - 1];
+    for (const m of metricDefinitions) {
+      expect([m.key, m.status]).toEqual([m.key, latest.statusByKey[m.key]]);
+    }
+  });
+});
+
 describe('top3Alerts / sortByAttention / statusCounts', () => {
   it('위험이 주의보다 먼저, 최대 3개', () => {
+    // 2024년 회차의 위험은 BMI 하나뿐이다(허리 88은 기준 안). 나머지 둘은 주의에서 채운다.
     const top = top3Alerts(metricDefinitions);
     expect(top).toHaveLength(3);
-    expect(top[0].status).toBe('위험'); // bmi
-    expect(top[1].status).toBe('위험'); // waist
+    expect(top[0].status).toBe('위험'); // bmi 25.2
+    expect(top[1].status).toBe('주의');
     expect(top[2].status).toBe('주의');
   });
   it('정상만 있으면 빈 배열', () => {
@@ -65,7 +78,7 @@ describe('top3Alerts / sortByAttention / statusCounts', () => {
     const c = statusCounts(metricDefinitions);
     // infoOnly(키·체중)는 카운트에서 빠지므로 전체 개수가 아니라 판정 대상 개수와 맞아야 한다.
     expect(c.정상 + c.주의 + c.위험).toBe(metricDefinitions.filter((m) => !m.infoOnly).length);
-    expect(c.위험).toBe(2);
+    expect(c.위험).toBe(1);   // 2024년 위험은 BMI 하나 — 허리둘레는 2020년 바닥 이후 기준 안으로 돌아왔다
   });
 });
 
