@@ -143,7 +143,7 @@ export function Expandable({ label, children }: { label: string; children: React
  *    ④ 그래서 이게 의미하는 건  ⑤ 그럼 뭘 하면 좋을까
  *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다).
  *  ③만은 «없음»을 문자열이 아니라 axes=[]로 선언한다 — 아래 axes 주석 참조. */
-export function SummaryCard({ title, term, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, children }: {
+export function SummaryCard({ title, term, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, children, footer }: {
   title: string;
   /** 제목 옆의 작은 회색 용어(eGFR·FLI·HSI 등). 제목은 쉬운 질문이라 «어떤 검사인지»가
    *  드러나지 않는다 — 결과지나 진료에서 들은 이름과 맞춰 보려면 이름표가 필요하다.
@@ -182,6 +182,11 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
   positionExtra?: React.ReactNode;
   /** ③ 본문. axes가 비면 넘기지 않는다. */
   children?: React.ReactNode;
+  /** ⑤ 다음, 고지문 바로 위. **어느 칸에도 속하지 않는 «이 카드 전체의 한계»** 자리다.
+   *  ③ 안에 두면 그 한계가 «내 위치»에 대한 것으로 읽히는데, 실제로는 카드가 내놓은
+   *  모든 숫자에 걸린다(ASCVD의 «미국 코호트라 한국인에게 과대추정» 같은 것).
+   *  ⚠️ 오해 차단은 ④가 맡는다. 여기는 ④가 말한 뒤에도 남는 «출처와 적용 한계»만 온다. */
+  footer?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
@@ -267,6 +272,12 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
                   </View>
                 ))}
                 {tipsExtra}
+              </View>
+            )}
+            {/* 카드 전체에 걸리는 한계 — 고지문 바로 위가 제자리다. */}
+            {!!footer && (
+              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+                {footer}
               </View>
             )}
             <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>

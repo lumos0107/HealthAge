@@ -6,7 +6,7 @@ import { Expandable, PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from
 import { formatMetricValue, rankFromPercentile, sortByAttention } from '../interpret';
 import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
-import { cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricLabel, metricsForReport } from '../data';
+import { calcGloss, cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricLabel, metricsForReport } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
@@ -122,6 +122,13 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
               <Text style={{ fontSize: 11, fontWeight: '700', color: calcLevelColor(it.level) }}>{it.interpretation}</Text>
             </View>
           </View>
+          {/* 뜻풀이 — 제목이 「AIP 죽상형성지수」·「METS-IR」처럼 전부 전문용어라 이게 없으면
+              숫자가 무엇을 뜻하는지 알 수 없다. 신장·간은 카드가 지표 하나를 다뤄 ②가
+              설명을 맡지만, 대사·지질 9종과 심혈관 4종은 한 카드에 여러 지표가 들어와
+              ② 한 문장으로 덮이지 않는다. 값보다 «위»에 둔다 — 무엇인지 알고 숫자를 본다. */}
+          {!!calcGloss[it.key] && (
+            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginBottom: 4 }}>{calcGloss[it.key]}</Text>
+          )}
           <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>
             {it.value}{it.unit ?? ''}{it.value_30yr != null ? `  ·  30년 ${it.value_30yr}%` : ''}
           </Text>
@@ -318,6 +325,25 @@ function worstInterpretation(items: { level: string; plain?: string | null }[]):
   return allSame && withText.length > 1
     ? `${withText.length}개 지표 모두 ${worst.plain}`
     : worst.plain!;
+}
+
+/** 「내 LDL 목표를 넘었나」의 1뎁스 결론.
+ *
+ *  이 카드가 답할 것은 «LDL이 높나»가 아니라 «**나에게** 높나»다. 검진지에도 LDL
+ *  정상범위가 찍혀 나오므로, 목표 숫자만 말하면 그것과 구분이 안 되어 카드가 존재하는
+ *  이유가 사라진다. 그래서 **목표를 말하기 전에 그 목표가 나온 이유**를 세운다.
+ *
+ *  위험 요인이 없으면(저위험군) 「위험 요인이 없어서」로 말한다 — 그때도 «내 목표가
+ *  따로 계산됐다»는 사실은 같고, 오히려 «그래서 기준이 느슨하다»가 정보다. */
+function ldlSummary(t: { target_text: string; achieved: boolean | null; gap: number | null; current_ldl: number | null; risk_factors: string[] }): string {
+  const n = t.risk_factors?.length ?? 0;
+  const why = n > 0 ? `위험 요인 ${n}개라` : '위험 요인이 없어';
+  const goal = `내 목표는 ${t.target_text}`;
+  if (t.achieved == null) return `${why} ${goal}이에요`;   // TG≥400 — 판정 보류
+  const now = t.current_ldl != null ? `지금 ${t.current_ldl}로 ` : '';
+  return t.achieved
+    ? `${why} ${goal} · ${now}지키고 있어요`
+    : `${why} ${goal} · ${now}${t.gap != null ? `${t.gap} ` : ''}넘었어요`;
 }
 
 function levelSummary(levels: string[]): string | null {
@@ -1072,7 +1098,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {/* LDL 개인 목표 — 같은 LDL이라도 위험군에 따라 목표가 다르다(초고위험<55 … 저위험<160).
           배지: achieved가 null이면 판정 보류다(TG≥400이면 Friedewald LDL의 신뢰도가 떨어진다).
-          그때는 배지를 달지 않는다 — 모르는 것을 양호나 주의로 말하지 않는다. */}
+          그때는 배지를 달지 않는다 — 모르는 것을 양호나 주의로 말하지 않는다.
+          1뎁스 결론은 ldlSummary()가 만든다 — 목표 «숫자»가 아니라 그 숫자가 나온
+          «이유»를 앞에 세운다. 숫자만 말하면 검진지의 LDL 판정과 구분이 안 되어
+          이 카드가 존재하는 이유(«정상 범위는 모두에게 같지 않다»)가 사라진다. */}
       {ldlTarget && (
         <FadeInUp delay={205}>
         <SummaryCard
@@ -1081,7 +1110,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           detail={cardContent['내 LDL 목표를 넘었나']?.detail}
           meaning={cardContent['내 LDL 목표를 넘었나']?.meaning}
           tips={cardContent['내 LDL 목표를 넘었나']?.tips}
-          summary={`목표 ${ldlTarget.target_text}${ldlTarget.achieved == null ? '' : ldlTarget.achieved ? ' · 달성했어요' : ` · 초과했어요${ldlTarget.gap != null ? ` (+${ldlTarget.gap})` : ''}`}`}
+          summary={ldlSummary(ldlTarget)}
           badge={<VerdictBadge v={ldlTarget.achieved == null ? null : ldlTarget.achieved ? 'good' : 'watch'} />}
           axes={['standard']}
         >
@@ -1152,6 +1181,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           tips={cardContent['심혈관 위험이 얼마나 되나']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />} axes={calcAxes(cvCalcs)}
           summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
           badge={<VerdictBadge v={ascvd.risk_level === 'low' ? 'good' : ascvd.risk_level === 'high' ? 'bad' : 'watch'} />}
+          /* 한계는 ③이 아니라 카드 맨 밑이다 — 「미국 코호트라 한국인에게 과대추정」은
+             ③「나의 위치」에 대한 한계가 아니라 이 카드가 내놓은 **모든 숫자**에 걸린다.
+             ③ 안에 있으면 시나리오 표와 다른 계산법 사이에 끼어 그 범위가 흐려진다.
+             ⚠️ 접은 채로 둔다 — ④가 이미 "지금 상태가 유지된다고 가정한 수치"라고 오해를
+             막고 있어 4줄을 다시 펼 필요는 없다. 지우지도 않는다(§7). */
+          footer={!!ascvd.limitations?.length && (
+            <Expandable label="이 계산의 한계 보기">
+              {ascvd.limitations.map((l, i) => (
+                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: i === 0 ? 4 : 3 }}>· {l}</Text>
+              ))}
+            </Expandable>
+          )}
         >
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{ascvd.risk_percent}%</Text>
@@ -1194,16 +1235,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               {/* 이 블록은 통째로 2.5뎁스(접힌 안)라 공식을 함께 둔다 — CalcRows가
                   공식을 더 이상 그리지 않으므로 여기서 이어 붙인다. */}
               <CalcFormulas items={cvCalcs} />
-            </Expandable>
-          )}
-          {/* 한계 4줄은 접는다. ④「그래서 이게 의미하는 건」이 이미 "지금 상태가 유지된다고
-              가정한 수치"라고 오해를 막고 있어, 2뎁스에서 한 번 더 4줄을 펼 필요가 없다.
-              ⚠️ 지우지는 않는다 — 한국인 과대추정은 이 카드가 반드시 밝혀야 하는 한계다(§7). */}
-          {!!ascvd.limitations?.length && (
-            <Expandable label="이 계산의 한계 보기">
-              {ascvd.limitations.map((l, i) => (
-                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: i === 0 ? 4 : 3 }}>· {l}</Text>
-              ))}
             </Expandable>
           )}
         </SummaryCard>
