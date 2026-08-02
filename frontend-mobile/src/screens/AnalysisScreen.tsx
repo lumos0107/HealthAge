@@ -46,15 +46,29 @@ const LAYERS = [
   { step: '④', title: '그래서 뭘 하면 되나', intro: '①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다.' },
 ];
 
-/** 탭 자기소개 — "이 화면은 무엇을 하나요?".
- *  1뎁스는 헤더 한 줄이 맡고(네 층 이름을 그대로 써서 목차 역할을 한다), 여기는 그 확장이다.
- *  펼침 문법은 점수 카드의 ScoreCalcNote와 같게 두어 새로 배울 몸짓이 없다. */
+/** 탭 자기소개 — 네 층이 각각 무슨 일을 하는지. 제목 바로 아래 왼쪽 버튼으로 둔다.
+ *
+ *  ⚠️ 예전에는 «가운데 정렬 + 위쪽 구분선»이었다. 그때는 바로 위에 결론 문장이 있어서
+ *  구분선이 «결론과 부가설명»을 가르는 역할을 했는데, 결론을 점수 카드로 내리고 나니
+ *  구분선이 제목과 버튼을 가르는 모양이 되고 가운데 정렬된 글자만 여백에 떠 있었다.
+ *  버튼은 왼쪽 정렬이 기본이다 — 제목·층 머리말과 같은 세로선에 선다. */
 function TabIntroNote() {
   const [open, setOpen] = useState(false);
   return (
-    <View style={{ marginTop: 16 }}>
+    <View style={{ marginTop: 10 }}>
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        hitSlop={8}
+        style={{
+          alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4,
+          backgroundColor: T.cardAlt, paddingHorizontal: 12, paddingVertical: 7, borderRadius: T.radiusPill,
+        }}
+      >
+        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text2 }}>분석 탭 보는 법</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+      </Pressable>
       {open && (
-        <View style={{ marginBottom: 4 }}>
+        <View style={{ marginTop: 12 }}>
           {LAYERS.map((l) => (
             <View key={l.step} style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
               <Text style={{ fontSize: 13, fontWeight: '800', color: T.primary }}>{l.step}</Text>
@@ -65,14 +79,6 @@ function TabIntroNote() {
           ))}
         </View>
       )}
-      <Pressable
-        onPress={() => setOpen((v) => !v)}
-        hitSlop={8}
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
-      >
-        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : '이 화면은 무엇을 하나요?'}</Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
-      </Pressable>
     </View>
   );
 }
@@ -379,7 +385,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {/* 페이지 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
       <FadeInUp delay={0}>
-      <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
+      {/* paddingBottom을 줄인다 — 아래 LayerHeader가 이미 marginTop 26 + paddingTop 18을
+          갖고 있어, 헤더까지 여백을 두면 제목과 ①층 사이가 60px 넘게 벌어진다. */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 2 }}>
         <Eyebrow>ANALYSIS</Eyebrow>
         <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>건강분석</Text>
         {/* 네 층을 나열하던 부제는 지웠다 — 바로 아래 「이 화면은 무엇을 하나요?」가 같은 LAYERS를
