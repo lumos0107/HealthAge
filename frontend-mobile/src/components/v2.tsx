@@ -143,8 +143,13 @@ export function Expandable({ label, children }: { label: string; children: React
  *    ④ 그래서 이게 의미하는 건  ⑤ 그럼 뭘 하면 좋을까
  *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다).
  *  ③만은 «없음»을 문자열이 아니라 axes=[]로 선언한다 — 아래 axes 주석 참조. */
-export function SummaryCard({ title, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, children }: {
+export function SummaryCard({ title, term, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, children }: {
   title: string;
+  /** 제목 옆의 작은 회색 용어(eGFR·FLI·HSI 등). 제목은 쉬운 질문이라 «어떤 검사인지»가
+   *  드러나지 않는다 — 결과지나 진료에서 들은 이름과 맞춰 보려면 이름표가 필요하다.
+   *  검사항목 탭의 «항목명 + 작은 뜻풀이»와 같은 모양이고 방향만 반대다(쉬운 이름 + 용어).
+   *  ⚠️ 여기 말고 제목에 용어를 넣으면 1뎁스 전문용어 금지(§2-1 축 2)에 걸린다. */
+  term?: string;
   summary?: string | null;
   /** 2뎁스 ① 결론 자리에 쓸 문장. 없으면 summary를 그대로 쓴다.
    *  나누는 이유: 2뎁스에서 사용자가 보는 항목을 바꿀 수 있는 카드(히스토리)는 모달 안에서
@@ -184,7 +189,13 @@ export function SummaryCard({ title, summary, detailSummary, badge, preview, def
     <>
       <Pressable onPress={() => setOpen(true)} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, flex: 1 }}>{title}</Text>
+          {/* 용어는 제목과 «같은 줄, 다음 자리»에 둔다. 아래 줄로 내리면 결론과 헷갈리고,
+              괄호로 제목에 넣으면 제목이 길어져 배지를 밀어낸다. baseline을 맞춰
+              두 글자가 한 줄로 읽히게 한다. */}
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, flexShrink: 1 }}>{title}</Text>
+            {!!term && <Text style={{ fontSize: 12, fontWeight: '600', color: T.text3 }}>{term}</Text>}
+          </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             {badge}
             <Ionicons name="chevron-forward" size={16} color={T.text3} />

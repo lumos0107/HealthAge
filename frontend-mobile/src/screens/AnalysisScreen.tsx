@@ -10,16 +10,6 @@ import { cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricL
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
-/** 도메인 섹션 헤더 — 분석 카드를 신장/간/대사·지질/심혈관/통계참고로 묶어 읽히게 한다.
- *  카드를 부수지 않고 헤더만 얹는 가벼운 그룹핑. 해당 카드가 없으면 헤더도 그리지 않는다. */
-function DomainHeader({ title }: { title: string }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginTop: 16, marginBottom: 6 }}>
-      <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>{title}</Text>
-    </View>
-  );
-}
-
 /** 층 머리말 — 이 화면은 네 층으로 읽힌다: ① 판정 → ② 파생 → ③ 위치 → ④ 행동.
  *  그동안 머리말이 장기별(신장/간/대사지질/심혈관)뿐이라 네 층과 직교했고, 그래서
  *  "이 카드는 지금 무슨 일을 하고 있나"가 화면에 드러나지 않았다. 장기 머리말은
@@ -763,11 +753,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 신장 — eGFR·CrCl */}
       {/* 소제목은 장기 이름으로 통일한다(간·대사·지질·심혈관과 같은 층위).
           「신장 기능」이면 바로 아래 카드 「신장 기능 (eGFR)」과 같은 말을 두 번 한다. */}
-      {egfr && <DomainHeader title="신장" />}
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
       {egfr && (
         <FadeInUp delay={180}>
-        <SummaryCard title="콩팥이 잘 거르고 있나" definition={cardContent['콩팥이 잘 거르고 있나']?.definition} detail={cardContent['콩팥이 잘 거르고 있나']?.detail} meaning={cardContent['콩팥이 잘 거르고 있나']?.meaning} tips={cardContent['콩팥이 잘 거르고 있나']?.tips} summary={`1분에 ${egfr.egfr}mL를 걸러요`}
+        <SummaryCard title="콩팥이 잘 거르고 있나" term="eGFR" definition={cardContent['콩팥이 잘 거르고 있나']?.definition} detail={cardContent['콩팥이 잘 거르고 있나']?.detail} meaning={cardContent['콩팥이 잘 거르고 있나']?.meaning} tips={cardContent['콩팥이 잘 거르고 있나']?.tips} summary={`1분에 ${egfr.egfr}mL를 걸러요`}
           axes={['standard']}
           badge={<VerdictBadge v={egfr.severity === 'normal' ? 'good' : egfr.severity === 'high' ? 'bad' : 'watch'} />}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
@@ -805,7 +794,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 — FLI/HSI 보조지표 + 지방간 유형 + 간 계산기(BARD·De Ritis) */}
       {/* fattyLiverType은 이제 「지방간」 카드 «안»의 한 칸이라 구획 조건에서 뺐다 —
           유형만 있고 FLI·HSI가 없는 경우는 없다(둘 다 같은 검진 수치에서 나온다). */}
-      {((flIndices && (flIndices.fli || flIndices.hsi)) || liverCalcs.length > 0) && <DomainHeader title="간" />}
       {/* 지방간 — 「보조지표(FLI·HSI)」와 「유형(MASLD/MetALD/ALD)」을 한 카드로 합쳤다(2026-08-02).
           둘은 같은 질문의 앞뒤다: «지방간일 가능성이 있나» → «그렇다면 왜 그런가».
           갈라 두니 유형 카드가 조건(ALT>40 또는 GGT>75)을 못 맞추는 해에 아무 말 없이 사라져,
@@ -813,7 +801,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           값·구간·해석 문구는 전부 백엔드가 만들어 보내준 것을 그대로 쓴다. */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
-        <SummaryCard title="지방간" definition={cardContent['지방간']?.definition} detail={cardContent['지방간']?.detail} meaning={cardContent['지방간']?.meaning} tips={cardContent['지방간']?.tips}
+        <SummaryCard title="간에 지방이 꼈나" term="FLI·HSI" definition={cardContent['간에 지방이 꼈나']?.definition} detail={cardContent['간에 지방이 꼈나']?.detail} meaning={cardContent['간에 지방이 꼈나']?.meaning} tips={cardContent['간에 지방이 꼈나']?.tips}
           summary={[
             fattyLiverType ? `${fattyLiverType.type}${fattyLiverType.provisional ? ' (잠정)' : ''}` : null,
             levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level)),
@@ -907,7 +895,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <SummaryCard title="간이 굳어가고 있나" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={levelSummary(liverCalcs.map((it) => it.level))}
+        <SummaryCard title="간이 굳어가고 있나" term="BARD·De Ritis" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={levelSummary(liverCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
           {/* CalcRows에는 공식과 논문 인용이 붙는다(`De Ritis = AST / ALT`,
               `BARD = BMI≥28(1) + … [Harrison 2008]`). 축 2는 2뎁스에 공식을 금지하므로
@@ -920,10 +908,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       {/* 대사·지질 — 검증된 수치 계산기(지질비·인슐린저항성·내장지방·혈압) */}
-      {metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
-        <SummaryCard title="대사에 이상 신호가 있나" definition={cardContent['대사에 이상 신호가 있나']?.definition} detail={cardContent['대사에 이상 신호가 있나']?.detail} meaning={cardContent['대사에 이상 신호가 있나']?.meaning} tips={cardContent['대사에 이상 신호가 있나']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
+        <SummaryCard title="혈당·지질에 이상이 있나" term="TyG·Non-HDL" definition={cardContent['혈당·지질에 이상이 있나']?.definition} detail={cardContent['혈당·지질에 이상이 있나']?.detail} meaning={cardContent['혈당·지질에 이상이 있나']?.meaning} tips={cardContent['혈당·지질에 이상이 있나']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(metabolicCalcs.map((it) => it.level))} />}>
           {/* CalcRows에는 공식·학회 인용이 붙어 축 2(2뎁스에 공식 금지)에 걸린다 → 2.5뎁스로 접는다.
               ⚠️ 여기 있던 「관련 지표 N종 더보기」는 Expandable과 **모양이 다른 접기**였다
@@ -968,11 +955,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {ldlTarget && (
         <FadeInUp delay={205}>
         <SummaryCard
-          title="LDL 콜레스테롤 개인 목표"
-          definition={cardContent['LDL 콜레스테롤 개인 목표']?.definition}
-          detail={cardContent['LDL 콜레스테롤 개인 목표']?.detail}
-          meaning={cardContent['LDL 콜레스테롤 개인 목표']?.meaning}
-          tips={cardContent['LDL 콜레스테롤 개인 목표']?.tips}
+          title="내 LDL 목표를 넘었나"
+          definition={cardContent['내 LDL 목표를 넘었나']?.definition}
+          detail={cardContent['내 LDL 목표를 넘었나']?.detail}
+          meaning={cardContent['내 LDL 목표를 넘었나']?.meaning}
+          tips={cardContent['내 LDL 목표를 넘었나']?.tips}
           summary={`목표 ${ldlTarget.target_text}${ldlTarget.achieved == null ? '' : ldlTarget.achieved ? ' · 달성했어요' : ` · 초과했어요${ldlTarget.gap != null ? ` (+${ldlTarget.gap})` : ''}`}`}
           badge={<VerdictBadge v={ldlTarget.achieved == null ? null : ldlTarget.achieved ? 'good' : 'watch'} />}
           axes={['standard']}
@@ -1018,18 +1005,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       {/* 심혈관 — ASCVD 위험 계산기 */}
-      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
       {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다.
           배지는 2뎁스 안 배지(아래)와 같은 갈래를 쓴다 — 한 카드가 겉과 속에서 다른 색을 말하면 안 된다. */}
       {ascvd?.available && ascvd.risk_percent != null && (
         <FadeInUp delay={221}>
         <SummaryCard
-          title="심혈관 위험 참고 시뮬레이션"
-          definition={cardContent['심혈관 위험 참고 시뮬레이션']?.definition}
-          detail={cardContent['심혈관 위험 참고 시뮬레이션']?.detail}
-          meaning={cardContent['심혈관 위험 참고 시뮬레이션']?.meaning}
-          tips={cardContent['심혈관 위험 참고 시뮬레이션']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />} axes={calcAxes(cvCalcs)}
+          title="심혈관 위험이 얼마나 되나" term="ASCVD"
+          definition={cardContent['심혈관 위험이 얼마나 되나']?.definition}
+          detail={cardContent['심혈관 위험이 얼마나 되나']?.detail}
+          meaning={cardContent['심혈관 위험이 얼마나 되나']?.meaning}
+          tips={cardContent['심혈관 위험이 얼마나 되나']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />} axes={calcAxes(cvCalcs)}
           summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
           badge={<VerdictBadge v={ascvd.risk_level === 'low' ? 'good' : ascvd.risk_level === 'high' ? 'bad' : 'watch'} />}
         >
