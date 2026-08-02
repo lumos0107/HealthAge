@@ -173,7 +173,6 @@ export const reports: Report[] = [
     values: { sbp: 117, dbp: 74, glucose: 90, bmi: 22.2, waist: 80, ldl: 123, hdl: 54, triglyceride: 126, ast: 22, alt: 24, ggt: 30, hemoglobin: 14.6, creatinine: 0.8, height: 165.9, weight: 61.1, totalCholesterol: 201, urineProtein: 1 },
     // 주의 1 → 94
     statusByKey: { sbp: '정상', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 31.2, dbp: 34.4, glucose: 25, bmi: 22.5, waist: 25, ldl: 55.4, hdl: 58.3, triglyceride: 42.8, ast: 37.5, alt: 40.6, ggt: 38.5, hemoglobin: 20, creatinine: 10, totalCholesterol: 48.9 },
   }),
   makeReport({
     year: 2010,
@@ -183,7 +182,7 @@ export const reports: Report[] = [
     values: { sbp: 120, dbp: 76, glucose: 93, bmi: 22.6, waist: 82, ldl: 127, hdl: 52, triglyceride: 132, ast: 23, alt: 25, ggt: 34, hemoglobin: 14.7, creatinine: 0.82, height: 165.9, weight: 62.2, totalCholesterol: 202, urineProtein: 1 },
     // 주의 2 → 88
     statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '정상', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 40.6, dbp: 40.6, glucose: 35.7, bmi: 26.4, waist: 35, ldl: 59.8, hdl: 52.8, triglyceride: 46.1, ast: 43.8, alt: 43.8, ggt: 46.2, hemoglobin: 22.5, creatinine: 13, totalCholesterol: 50 },
+    percentileByKey: { sbp: 50, dbp: 40, glucose: 46.4, bmi: 26.6, waist: 43.8, ldl: 63.6, hdl: 55.6, triglyceride: 48.8, ast: 43.8, alt: 50, ggt: 47.9, hemoglobin: 35.7, creatinine: 13, totalCholesterol: 55.2 },
   }),
   makeReport({
     year: 2012,
@@ -193,7 +192,7 @@ export const reports: Report[] = [
     values: { sbp: 122, dbp: 78, glucose: 96, bmi: 22.9, waist: 83, ldl: 131, hdl: 50, triglyceride: 138, ast: 24, alt: 26, ggt: 38, hemoglobin: 14.8, creatinine: 0.83, height: 165.9, weight: 63.0, totalCholesterol: 204, urineProtein: 1 },
     // 주의 3 → 82
     statusByKey: { sbp: '주의', dbp: '정상', glucose: '정상', bmi: '정상', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 46.9, dbp: 46.9, glucose: 46.4, bmi: 30.1, waist: 40, ldl: 64.1, hdl: 46.9, triglyceride: 49.4, ast: 50, alt: 46.9, ggt: 51.9, hemoglobin: 25, creatinine: 14.5, totalCholesterol: 52 },
+    percentileByKey: { sbp: 52.8, dbp: 45, glucose: 53.1, bmi: 30.9, waist: 50, ldl: 67, hdl: 50, triglyceride: 51.1, ast: 50, alt: 52.1, ggt: 53, hemoglobin: 32.1, creatinine: 14.5, totalCholesterol: 56.2 },
   }),
   makeReport({
     year: 2014,
@@ -203,7 +202,7 @@ export const reports: Report[] = [
     values: { sbp: 126, dbp: 81, glucose: 101, bmi: 23.6, waist: 85, ldl: 134, hdl: 46, triglyceride: 144, ast: 25, alt: 28, ggt: 44, hemoglobin: 14.9, creatinine: 0.85, height: 165.9, weight: 65.0, totalCholesterol: 206, urineProtein: 1 },
     // 주의 6 → 64
     statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '정상', ast: '정상', alt: '정상', ggt: '정상', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 58.3, dbp: 55, glucose: 57.5, bmi: 38.9, waist: 50, ldl: 68.5, hdl: 34.4, triglyceride: 51.8, ast: 50, alt: 54.5, ggt: 57.7, hemoglobin: 32.1, creatinine: 31.2, totalCholesterol: 55 },
+    percentileByKey: { sbp: 62.5, dbp: 55, glucose: 60, bmi: 36.3, waist: 55, ldl: 70.5, hdl: 35.7, triglyceride: 53.8, ast: 54.2, alt: 57.5, ggt: 59, hemoglobin: 37.5, creatinine: 17.5, totalCholesterol: 58.3 },
   }),
   makeReport({
     year: 2016,
@@ -213,7 +212,7 @@ export const reports: Report[] = [
     values: { sbp: 130, dbp: 83, glucose: 104, bmi: 24.4, waist: 88, ldl: 140, hdl: 42, triglyceride: 156, ast: 27, alt: 32, ggt: 66, hemoglobin: 15.0, creatinine: 0.88, height: 165.9, weight: 67.2, totalCholesterol: 210, urineProtein: 1 },
     // 주의 8 → 52
     statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '주의', waist: '정상', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 69.4, dbp: 65, glucose: 65, bmi: 48.9, waist: 65, ldl: 75, hdl: 22, triglyceride: 56.2, ast: 58.3, alt: 63.6, ggt: 76.3, hemoglobin: 35.7, creatinine: 35, totalCholesterol: 59 },
+    percentileByKey: { sbp: 69.4, dbp: 65, glucose: 65, bmi: 52.2, waist: 66.7, ldl: 73.9, hdl: 22.5, triglyceride: 57.5, ast: 62.5, alt: 65.9, ggt: 76.7, hemoglobin: 35.7, creatinine: 22, totalCholesterol: 59.6 },
   }),
   makeReport({
     year: 2018,
@@ -223,7 +222,7 @@ export const reports: Report[] = [
     values: { sbp: 133, dbp: 84, glucose: 108, bmi: 25.4, waist: 92, ldl: 144, hdl: 41, triglyceride: 165, ast: 30, alt: 37, ggt: 72, hemoglobin: 15.1, creatinine: 0.93, height: 165.9, weight: 69.9, totalCholesterol: 214, urineProtein: 1 },
     // 주의 6 · 위험 2 → 40
     statusByKey: { sbp: '주의', dbp: '정상', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '정상', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 75, dbp: 70, glucose: 68.2, bmi: 65.5, waist: 81, ldl: 78.4, hdl: 19, triglyceride: 62.1, ast: 70.8, alt: 76.9, ggt: 78.6, hemoglobin: 42.9, creatinine: 53.8, totalCholesterol: 65.4 },
+    percentileByKey: { sbp: 75, dbp: 70, glucose: 65.9, bmi: 63.1, waist: 81, ldl: 78.4, hdl: 19, triglyceride: 62.5, ast: 67.9, alt: 75.9, ggt: 78.7, hemoglobin: 42.9, creatinine: 53.8, totalCholesterol: 65.7 },
   }),
   makeReport({
     year: 2020,
@@ -233,7 +232,7 @@ export const reports: Report[] = [
     values: { sbp: 139, dbp: 89, glucose: 120, bmi: 27.0, waist: 96, ldl: 153, hdl: 36, triglyceride: 196, ast: 34, alt: 47, ggt: 82, hemoglobin: 15.2, creatinine: 1.05, height: 165.9, weight: 74.3, totalCholesterol: 228, urineProtein: 1 },
     // 주의 9 · 위험 2 → 22 (최저)
     statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '주의', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 87.9, dbp: 87, glucose: 81.1, bmi: 83, waist: 91.7, ldl: 84.5, hdl: 6, triglyceride: 74.2, ast: 79.5, alt: 86.2, ggt: 81.8, hemoglobin: 46.4, creatinine: 68.8, totalCholesterol: 77.5 },
+    percentileByKey: { sbp: 85.7, dbp: 84, glucose: 81, bmi: 72, waist: 90, ldl: 81.5, hdl: 6, triglyceride: 75.2, ast: 77.7, alt: 83.8, ggt: 83.6, hemoglobin: 46.4, creatinine: 78.8, totalCholesterol: 75.6 },
   }),
   makeReport({
     year: 2022,
@@ -243,7 +242,7 @@ export const reports: Report[] = [
     values: { sbp: 136, dbp: 84, glucose: 113, bmi: 25.9, waist: 91, ldl: 147, hdl: 38, triglyceride: 174, ast: 30, alt: 38, ggt: 68, hemoglobin: 15.1, creatinine: 1.02, height: 165.9, weight: 71.3, totalCholesterol: 219, urineProtein: 1 },
     // 주의 7 · 위험 2 → 34
     statusByKey: { sbp: '주의', dbp: '정상', glucose: '주의', bmi: '위험', waist: '위험', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 81.4, dbp: 70, glucose: 76.4, bmi: 72.1, waist: 78, ldl: 80.5, hdl: 10, triglyceride: 65.6, ast: 70.8, alt: 77.8, ggt: 77.3, hemoglobin: 42.9, creatinine: 65, totalCholesterol: 70.2 },
+    percentileByKey: { sbp: 78.8, dbp: 66.7, glucose: 75.8, bmi: 61.5, waist: 75, ldl: 76.9, hdl: 10, triglyceride: 66.4, ast: 67.9, alt: 75.9, ggt: 78.9, hemoglobin: 42.9, creatinine: 78, totalCholesterol: 66.1 },
   }),
   makeReport({
     year: 2024,
@@ -253,7 +252,7 @@ export const reports: Report[] = [
     values: { sbp: 134, dbp: 85, glucose: 110, bmi: 25.2, waist: 88, ldl: 145, hdl: 39, triglyceride: 168, ast: 27, alt: 33, ggt: 64, hemoglobin: 15.1, creatinine: 0.99, height: 165.9, weight: 69.4, totalCholesterol: 216, urineProtein: 1 },
     // 주의 8 · 위험 1 → 40
     statusByKey: { sbp: '주의', dbp: '주의', glucose: '주의', bmi: '위험', waist: '정상', ldl: '주의', hdl: '주의', triglyceride: '주의', ast: '정상', alt: '정상', ggt: '주의', hemoglobin: '정상', creatinine: '정상', height: '정상', weight: '정상', totalCholesterol: '주의', urineProtein: '정상' },
-    percentileByKey: { sbp: 72.2, dbp: 75, glucose: 67.3, bmi: 64.2, waist: 65, ldl: 81.5, hdl: 15, triglyceride: 67.4, ast: 58.3, alt: 72.5, ggt: 77.4, hemoglobin: 50, creatinine: 61.2, totalCholesterol: 72.1 },
+    percentileByKey: { sbp: 75, dbp: 75, glucose: 66.7, bmi: 56.2, waist: 60, ldl: 78.1, hdl: 13, triglyceride: 68.2, ast: 57.1, alt: 70, ggt: 80, hemoglobin: 50, creatinine: 72.5, totalCholesterol: 68.1 },
   }),
 ];
 
@@ -448,10 +447,13 @@ export const cardContent: Record<string, CardContent> = {
     meaning: '"정상 범위"가 모두에게 같지 않다는 뜻입니다. 같은 130이라도 어떤 사람에게는 목표 달성이고 다른 사람에게는 초과예요.',
     tips: ['위험인자가 겹친다면 진료에서 목표치를 확인해요', '식이 조절로 부족하면 약물 치료를 상담할 수 있어요'],
   },
-  '이 조합이 흔한가': {
-    definition: '내 검진 결과와 같은 조합을 가진 사람들이 공단 표본에서 얼마나 되는지 비교한 통계예요.',
-    detail: 'O/E비는 각 요인이 서로 무관하다면 기대되는 동반 빈도 대비, 실제로 함께 나타난 빈도의 비율입니다. 1보다 크면 우연보다 자주 같이 나타난다는 뜻이지만, 인과관계나 개인의 위험도를 뜻하지는 않습니다.',
-    meaning: '내 상태가 흔한 패턴인지 드문 조합인지 위치를 알려주는 통계 참고값이에요. 위험의 크기는 계산기(ASCVD 등)가 담당합니다.',
+  /** 예전 이름은 「이 조합이 흔한가」였고 ③층에 있었다(2026-08-03 개명·이동).
+   *  「흔한가」는 답을 알아도 할 일이 안 바뀌었고, 바로 위 「나 같은 사람이 얼마나 되나」와
+   *  같은 질문으로 읽혔다. 조합만이 줄 수 있는 것은 «둘을 같이 볼 때의 순서»라 ④층으로 옮겼다. */
+  '같이 잡아야 할 게 있나': {
+    definition: '여러 판정에 동시에 걸렸을 때, 둘을 같이 봐야만 알 수 있는 게 있어요. 어떤 둘은 원인이 같아 하나만 잡아도 함께 움직이고, 어떤 둘은 경로가 달라 따로 잡아야 해요.',
+    detail: '같이 나타나는 정도는 O/E비로 잽니다 — 각 요인이 서로 무관하다면 기대되는 동반 빈도 대비, 실제로 함께 나타난 빈도의 비율이에요. 1보다 크면 우연보다 자주 같이 나타난다는 뜻입니다. 공단 표본 16년치에서 이 값들의 변동폭은 좁았지만(트라이어드 2.93~3.09), 1.5배에 못 미치는 조합은 효과가 작아 행동으로 내세우지 않습니다. ⚠️ 동반 빈도는 표본에서 센 값이고, 왜 같이 나타나는지에 대한 설명은 임상 지식에 따른 것입니다 — 두 근거의 출처가 다릅니다.',
+    meaning: '조합에 해당한다는 것이 곧 위험이 크다는 뜻은 아니에요. 함께 나타나는 경향을 센 것이고, 위험의 크기는 계산기(심혈관 위험 등)가 따로 말합니다.',
   },
   '또래 자체가 나빠졌나': {
     definition: '지금의 내 또래가 16년 전 같은 나이대보다 나빠졌는지 비교한 결과예요.',

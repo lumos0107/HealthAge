@@ -259,17 +259,60 @@ function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
  *  그동안 이 칸이 비어 있어서, ③층이 「조합 4개」를 알려주고도 «그래서 뭘»이 없었다.
  *
  *  문구는 백엔드 것을 그대로 쓴다(§2-1) — 프론트에서 다시 쓰면 지어내는 것이 된다. */
+/** 동반경향을 «뚜렷하다»고 말할 최소 O/E.
+ *
+ *  1.5 = 우연히 겹칠 때보다 1.5배. 이보다 낮은 것은 재현성은 있어도(16년 변동폭이
+ *  ±0.1 안쪽) 효과가 작아 «같이 다닌다»고 내세우기 민망하다 — 음주+지방간 1.15는
+ *  우연보다 15% 더 붙을 뿐이다. 12개 중 8개가 이 선을 넘는다.
+ *  ⚠️ 지우는 게 아니라 «행동으로 내세우지 않는» 것이다. 약한 조합도 ③의 근거 목록에는
+ *  O/E와 함께 그대로 남아 사용자가 직접 볼 수 있다(§1-1 조항 2). */
+const COMBO_SYNERGY_MIN = 1.5;
+
+const strongCombos = (combos: RealComboGroup[]) =>
+  combos.filter((c) => c.action && (c.population?.observed_to_expected ?? 0) >= COMBO_SYNERGY_MIN);
+
+/** 1뎁스 결론 — 조합이 «더해주는 것»을 말한다.
+ *
+ *  예전 결론은 「조합 4개 · 같은 조합인 사람은 100명 중 10명이에요」였다. 그건 모집단
+ *  이야기지 «내가 뭘 해야 하나»가 아니고, 바로 위 「나 같은 사람이 얼마나 되나」와
+ *  같은 질문으로 읽혔다. 조합만이 줄 수 있는 것은 «둘을 같이 볼 때의 순서»다. */
+function comboSummary(combos: RealComboGroup[]): string {
+  const strong = strongCombos(combos);
+  if (!strong.length) return `조합 ${combos.length}개에 해당하지만, 동반경향이 뚜렷한 것은 없어요`;
+  const together = strong.filter((c) => c.relation === 'same_cause' || c.relation === 'shared_criterion').length;
+  return together > 0
+    ? `${strong.length}개 조합 중 ${together}개는 하나를 잡으면 함께 움직여요`
+    : `함께 봐야 할 조합이 ${strong.length}개 있어요`;
+}
+
 function ComboActions({ combos }: { combos: RealComboGroup[] }) {
-  const withAction = combos.filter((c) => c.action);
-  if (!withAction.length) return null;
+  const strong = strongCombos(combos);
+  const weak = combos.filter((c) => c.action && !strong.includes(c));
+  if (!strong.length && !weak.length) return null;
   return (
     <>
-      {withAction.slice(0, 4).map((c, i) => (
+      {strong.map((c, i) => (
         <View key={c.combo_name} style={[{ paddingTop: 10 }, i > 0 && { marginTop: 10, borderTopWidth: 1, borderTopColor: T.divider }]}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 3 }}>{c.combo_name}</Text>
-          <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21 }}>{c.action}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>{c.combo_name}</Text>
+            {!!c.population?.observed_to_expected && (
+              <Text style={{ fontSize: 11, color: T.text3 }}>{c.population.observed_to_expected}배 동반</Text>
+            )}
+          </View>
+          <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21, marginTop: 3 }}>{c.action}</Text>
         </View>
       ))}
+      {/* 출처가 둘이라는 것을 밝힌다 — 배수는 실측이고 «왜»는 임상 지식이다(§1-1 조항 3). */}
+      {!!strong.length && (
+        <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 12 }}>
+          «몇 배 동반»은 공단 표본에서 센 값이고, «왜 같이 나타나는지»는 임상 지식에 따른 설명이에요.
+        </Text>
+      )}
+      {weak.length > 0 && (
+        <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>
+          나머지 {weak.length}개({weak.map((c) => c.combo_name).join(' · ')})는 동반경향이 {COMBO_SYNERGY_MIN}배에 못 미쳐 행동으로 내세우지 않았어요. 위 목록에서 값은 볼 수 있어요.
+        </Text>
+      )}
     </>
   );
 }
@@ -1357,16 +1400,88 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         );
       })()}
 
-      {/* ③-2 함께 나타나는 조합(조합 그룹) — 공단 표본 기준 '동반 경향(기술통계)'이며 위험도가 아니다.
-          O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
+      {/* 같은 나이대의 16년 변화 — 유병률 상승이 고령화 때문인지 아닌지를 가르는 분석.
+          나이를 고정했으므로 "또래 집단 자체가 나빠졌다"는 뜻이고, 그래서 위쪽 '100명 중 N등'이
+          기준선이 내려앉은 집단 안에서의 순위임을 알려준다. 근거: 28번 문서 §4.
+          ⚠️ axes=[] — 이 카드에는 «나»가 없다. 2009년과 2024년 집단을 견준 것이라
+          기준·또래·과거의 나 어느 축과도 «내 위치»를 만들지 않는다. 그래서 ③칸을 없애고
+          막대를 ④「그래서 이게 의미하는 건」의 근거(meaningExtra)로 내렸다 —
+          이 카드가 하는 말은 위치가 아니라 "평균이라는 자리가 안심할 근거가 아니다"이다. */}
+      {!!pop16?.age_fixed_trend?.items?.length && (
+        <FadeInUp delay={219}>
+        <SummaryCard
+          title="또래 자체가 나빠졌나"
+          definition={cardContent['또래 자체가 나빠졌나']?.definition}
+          detail={cardContent['또래 자체가 나빠졌나']?.detail}
+          meaning={cardContent['또래 자체가 나빠졌나']?.meaning}
+          tips={cardContent['또래 자체가 나빠졌나']?.tips}
+          summary={(() => {
+            const top = pop16.age_fixed_trend!.items[0];
+            if (!top) return null;
+            const band = pop16.age_fixed_trend!.age_band;
+            return top.diff > 0
+              ? `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 늘었어요`
+              : `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 줄었어요`;
+          })()}
+          axes={[]}
+          meaningExtra={<>
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
+            {pop16.age_fixed_trend.sex} {pop16.age_fixed_trend.age_band} · 2009년 vs 2024년. 나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
+          </Text>
+          <Expandable label={`항목 ${pop16.age_fixed_trend.items.length}개 변화 보기`}>
+          {pop16.age_fixed_trend.items.map((it, i) => {
+            const worse = it.diff > 0;
+            const max = Math.max(it.y2009, it.y2024, 1);
+            return (
+              <View key={it.group} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{it.name}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: worse ? T.danger : T.success }}>
+                    {worse ? '+' : ''}{it.diff}%p{it.ratio >= 1.5 ? ` · ${it.ratio}배` : ''}
+                  </Text>
+                </View>
+                {([{ y: '2009년', v: it.y2009, c: T.text3 }, { y: '2024년', v: it.y2024, c: worse ? T.danger : T.success }] as const).map((r) => (
+                  <View key={r.y} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                    <Text style={{ fontSize: 11, color: T.text3, width: 44 }}>{r.y}</Text>
+                    <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
+                      <View style={{ width: `${(r.v / max) * 100}%`, height: '100%', backgroundColor: r.c, borderRadius: 4 }} />
+                    </View>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 46, textAlign: 'right' }}>{r.v}%</Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
+          </Expandable>
+          </>}
+        />
+        </FadeInUp>
+      )}
+
+      <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
+      {/* ④-0 함께 봐야 할 조합 — 예전에는 ③층 「이 조합이 흔한가」였다. 두 가지가 어긋나 옮겼다.
+       *
+       *  1) 카드가 답하던 질문이 행동을 바꾸지 않았다. 「내 조합은 100명 중 10명」을 지워도
+       *     축 0의 «열지 말지»가 흔들리지 않고, 바로 위 「나 같은 사람이 얼마나 되나」가
+       *     이미 «나의 드묾»을 말해 사용자에게 같은 질문으로 읽혔다.
+       *  2) 정작 쓸모 있는 것(관계 → 순서)은 또래 이야기가 아니라 «행동» 이야기다.
+       *     ③층 이름이 「같은 또래는 어떤가」인데 「허리둘레 하나가 둘을 같이 움직입니다」가
+       *     거기 있었다. 층이 틀렸다.
+       *
+       *  ⚠️ O/E는 사라지지 않는다 — 결론에서 «근거»로 자리를 옮겼다(§1-1 자산은 죽이지 않는다).
+       *  「왜 이 둘을 같이 보라는 건가」의 답이 되어 오히려 제 역할을 한다.
+       *  ⚠️ 근거의 출처가 둘이다. 동반빈도(O/E)는 공단 표본 실측이고, «왜 같이 나타나는가»
+       *  (relation·action)는 임상 지식이다. 화면이 그 차이를 밝혀야 한다(§1-1 조항 3). */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
-        <SummaryCard title="이 조합이 흔한가" definition={cardContent['이 조합이 흔한가']?.definition} detail={cardContent['이 조합이 흔한가']?.detail} meaning={cardContent['이 조합이 흔한가']?.meaning} tips={cardContent['이 조합이 흔한가']?.tips} summary={leadCombo?.population
-            ? `조합 ${comboGroups.matched_count}개 · 같은 조합인 사람은 100명 중 ${leadCombo.population.pct_of_total < 1 ? '1명 미만' : `${Math.round(leadCombo.population.pct_of_total)}명`}이에요`
-            : `조합 ${comboGroups.matched_count}개에 해당해요`} axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}
+        <SummaryCard title="같이 잡아야 할 게 있나"
+          definition={cardContent['같이 잡아야 할 게 있나']?.definition}
+          detail={cardContent['같이 잡아야 할 게 있나']?.detail}
+          meaning={cardContent['같이 잡아야 할 게 있나']?.meaning}
+          summary={comboSummary(comboGroups.matched)}
+          axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}
           tipsExtra={<ComboActions combos={comboGroups.matched} />}>
-          {/* 앞머리의 "여러 요인이 함께 나타나는 조합이에요"와 "위험도 자체는 아니에요"는 지웠다 —
-              각각 ②와 ④가 이미 말한다. 표본 크기만 남긴다(§1-1③ 근거). */}
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
             국민건강보험공단 표본{comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''}과 견줬어요.
           </Text>
@@ -1450,67 +1565,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </SummaryCard>
         </FadeInUp>
       )}
-
-      {/* 같은 나이대의 16년 변화 — 유병률 상승이 고령화 때문인지 아닌지를 가르는 분석.
-          나이를 고정했으므로 "또래 집단 자체가 나빠졌다"는 뜻이고, 그래서 위쪽 '100명 중 N등'이
-          기준선이 내려앉은 집단 안에서의 순위임을 알려준다. 근거: 28번 문서 §4.
-          ⚠️ axes=[] — 이 카드에는 «나»가 없다. 2009년과 2024년 집단을 견준 것이라
-          기준·또래·과거의 나 어느 축과도 «내 위치»를 만들지 않는다. 그래서 ③칸을 없애고
-          막대를 ④「그래서 이게 의미하는 건」의 근거(meaningExtra)로 내렸다 —
-          이 카드가 하는 말은 위치가 아니라 "평균이라는 자리가 안심할 근거가 아니다"이다. */}
-      {!!pop16?.age_fixed_trend?.items?.length && (
-        <FadeInUp delay={219}>
-        <SummaryCard
-          title="또래 자체가 나빠졌나"
-          definition={cardContent['또래 자체가 나빠졌나']?.definition}
-          detail={cardContent['또래 자체가 나빠졌나']?.detail}
-          meaning={cardContent['또래 자체가 나빠졌나']?.meaning}
-          tips={cardContent['또래 자체가 나빠졌나']?.tips}
-          summary={(() => {
-            const top = pop16.age_fixed_trend!.items[0];
-            if (!top) return null;
-            const band = pop16.age_fixed_trend!.age_band;
-            return top.diff > 0
-              ? `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 늘었어요`
-              : `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 줄었어요`;
-          })()}
-          axes={[]}
-          meaningExtra={<>
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
-            {pop16.age_fixed_trend.sex} {pop16.age_fixed_trend.age_band} · 2009년 vs 2024년. 나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
-          </Text>
-          <Expandable label={`항목 ${pop16.age_fixed_trend.items.length}개 변화 보기`}>
-          {pop16.age_fixed_trend.items.map((it, i) => {
-            const worse = it.diff > 0;
-            const max = Math.max(it.y2009, it.y2024, 1);
-            return (
-              <View key={it.group} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{it.name}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: worse ? T.danger : T.success }}>
-                    {worse ? '+' : ''}{it.diff}%p{it.ratio >= 1.5 ? ` · ${it.ratio}배` : ''}
-                  </Text>
-                </View>
-                {([{ y: '2009년', v: it.y2009, c: T.text3 }, { y: '2024년', v: it.y2024, c: worse ? T.danger : T.success }] as const).map((r) => (
-                  <View key={r.y} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <Text style={{ fontSize: 11, color: T.text3, width: 44 }}>{r.y}</Text>
-                    <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
-                      <View style={{ width: `${(r.v / max) * 100}%`, height: '100%', backgroundColor: r.c, borderRadius: 4 }} />
-                    </View>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 46, textAlign: 'right' }}>{r.v}%</Text>
-                  </View>
-                ))}
-              </View>
-            );
-          })}
-          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
-          </Expandable>
-          </>}
-        />
-        </FadeInUp>
-      )}
-
-      <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
 
       {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다.
           ⚠️ axes=[] — 이 묶음 전체가 «뭘 하면 되는지»라서 ⑤ 자리다. 예전에는 이것들이
