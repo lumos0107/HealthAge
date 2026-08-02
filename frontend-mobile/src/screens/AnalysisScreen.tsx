@@ -334,13 +334,19 @@ function ActionRoundup({ ranks, ctx, combos, ascvd, calcs }: {
 
   return (
     <FadeInUp delay={224}>
+      {/* ②·④ 칸을 두지 않는다 — 제목이 곧 설명이고, 이 카드에서 읽을 것은 «순서와 근거»뿐이다.
+          ⚠️ ④에 있던 오해 차단은 버리지 않고 맨 밑 회색 줄(footer)로 옮겼다. 1번에
+          「유산소 운동」이 뜨는데 그걸 «의학적으로 가장 급한 것»으로 읽으면 위험하다.
+          심혈관 카드의 한계를 footer로 내린 것과 같은 처리다(§2-1). */}
       <SummaryCard
         title="무엇부터 하면 되나"
         summary={`${rows[0].a.title(ctx)}부터가 가장 크게 움직여요`}
-        definition="화면 곳곳에서 나온 행동을 한 줄로 모았어요. 순서는 «기준에서 벗어난 정도가 얼마나 줄어드는가»로 매깁니다."
-        detail="같은 행동이 심혈관 시뮬레이션·조합·계산 지표에서 각각 따로 나오고 있었어요. 여기서는 그 근거를 행동 아래에 모으고, 기준 이탈도 감소폭이 큰 순서로 세웁니다. 감소폭은 대사증후군 5기준까지의 거리를 합쳐 계산한 값이라, 그 기준에 들어가지 않는 항목(간 수치 등)은 순서에 반영되지 않습니다."
-        meaning="여기 순서는 «수치를 얼마나 움직이나»로 매긴 것이지 의학적 우선순위가 아니에요. 복용 중인 약이나 진료 계획이 있으면 그쪽이 먼저입니다."
         axes={[]}
+        footer={
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17 }}>
+            여기 순서는 «수치를 얼마나 움직이나»로 매긴 것이지 의학적 우선순위가 아니에요. 복용 중인 약이나 진료 계획이 있으면 그쪽이 먼저입니다.
+          </Text>
+        }
         tipsExtra={
           <>
             {rows.map(({ r, a, ev }, i) => (
@@ -1835,12 +1841,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           그래서 「나의 위치」라는 제목 밑에서 복약 안내·고령 안내를 읽게 됐다. */}
       {recommendations && (recommendations.priority_messages?.length || recommendations.recommendations) && (
         <FadeInUp delay={220}>
+        {/* ②·④ 칸을 두지 않는다. ②「내 검진 결과를 바탕으로 만든 안내예요」는 제목이 곧
+            같은 말이고, ④「일반 수칙이 아니라 내 수치에 맞춘 것」은 바로 아래
+            「목표까지 얼마나 남았나」가 수치로 이미 보여준다 — 말로 다시 할 필요가 없다. */}
         <SummaryCard
           title="맞춤 권장사항"
-          definition={cardContent['맞춤 권장사항']?.definition}
-          detail={cardContent['맞춤 권장사항']?.detail}
-          meaning={cardContent['맞춤 권장사항']?.meaning}
-          tips={cardContent['맞춤 권장사항']?.tips}
           summary={priorityHead(recommendations.priority_messages) ?? '내 검진 결과 기반 생활습관·검진 참고 안내예요.'}
           axes={[]}
           tipsExtra={<>
@@ -1856,20 +1861,51 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           )}
 
-          {/* 접기 전에 «무엇이 얼마나 들어 있는지»를 한 줄로 알린다 — 접힌 것을 열지 말지
-              고르려면 안에 뭐가 있는지 알아야 한다. 개수는 백엔드 목록에서 세므로 지어내지 않는다. */}
+          {/* ── 2뎁스 = «목표까지 얼마나 남았나» ─────────────────────────────
+              예전에는 이 칸이 통짜 글이었다. 「권장사항 전체 보기」를 열면 공통 5묶음 +
+              항목별 조언이 12pt 불릿으로 30줄 가까이 쏟아졌고, 정작 **내 값과 목표의 거리**는
+              그 사이에 묻혀 있었다. 「글밖에 없어 보기 힘들다」는 지적이 정확했다.
+
+              가르는 기준은 §2-1 그대로다 — 2뎁스는 «나는 어떤데»(수치와 거리), 2.5뎁스는
+              «원문»(생활습관 조언 문장 전부). 거리는 읽으면 바로 행동을 정할 수 있고,
+              조언 문장은 그 뒤에 읽어도 된다. */}
           {(() => {
             const r = recommendations.recommendations;
-            const n = (r?.metabolic_factors?.length ?? 0) + (r?.group_specific?.length ?? 0);
-            if (!n) return null;
+            const gaps = [
+              ...(r?.metabolic_factors ?? []).map((f) => ({ title: f.title, target: f.target, gap: f.gap_note, by_med: f.by_medication, reason: f.reason })),
+              ...(r?.group_specific ?? []).map((g) => ({ title: g.title, target: undefined, gap: g.gap_note, by_med: false, reason: undefined })),
+            ].filter((x) => x.gap);
+            if (!gaps.length) return null;
             return (
-              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 2 }}>
-                목표를 벗어난 항목 {n}가지에 대한 생활습관·검진 안내가 담겨 있어요.
-              </Text>
+              <View style={{ marginTop: 4 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 4 }}>목표까지 얼마나 남았나 {gaps.length}가지</Text>
+                {gaps.map((x, i) => (
+                  <View key={i} style={[{ paddingVertical: 9 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                    {/* ⚠️ 목표를 제목과 «같은 줄»에 두었더니 「HDL 콜레스테롤 관 / 리」로
+                        제목이 잘렸다(목표 문구가 「남 ≥40mg/dL, 여 ≥50mg/dL (이상적: ≥60)」로 길다).
+                        제목이 먼저 온전히 읽혀야 하므로 목표는 아래 줄로 내린다. */}
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{x.title}</Text>
+                    {!!x.target && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 1 }}>목표 {x.target}</Text>}
+                    {/* 거리는 굵기를 낮춘다 — 제목보다 세게 읽히면 위계가 뒤집힌다. */}
+                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 4 }}>{x.gap}</Text>
+                    {x.by_med && !!x.reason && (
+                      <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 3 }}>※ {x.reason}</Text>
+                    )}
+                  </View>
+                ))}
+              </View>
             );
           })()}
 
-          <Expandable label="권장사항 전체 보기">
+          {/* ── 2.5뎁스 = 원문(조언 문장 전부) ───────────────────────────────
+              접기 전에 «무엇이 얼마나 들어 있는지» 한 줄로 알린다. 개수는 목록에서 센다. */}
+          <Expandable label={(() => {
+            const r = recommendations.recommendations;
+            const n = (r?.common ?? []).reduce((s, c) => s + c.items.length, 0)
+              + (r?.metabolic_factors ?? []).reduce((s, f) => s + f.details.length, 0)
+              + (r?.group_specific ?? []).reduce((s, g) => s + g.details.length, 0);
+            return n ? `무엇을 하면 되는지 ${n}가지` : '권장사항 전체 보기';
+          })()}>
           {recommendations.recommendations?.common?.map((c, i) => (
             <View key={`common-${i}`} style={{ marginBottom: 12 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{c.category}</Text>
@@ -1881,26 +1917,16 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
           {recommendations.recommendations?.metabolic_factors?.map((f, i) => (
             <View key={`mf-${i}`} style={{ marginBottom: 12, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{f.title}{f.target ? ` · 목표 ${f.target}` : ''}</Text>
-              {/* 목표선만 말하면 누구에게나 같은 문장이다. 내 값과의 거리를 목표 바로 아래에 둔다. */}
-              {!!f.gap_note && (
-                <Text style={{ fontSize: 12, color: T.primary, fontWeight: '600', lineHeight: 19, marginBottom: 4 }}>{f.gap_note}</Text>
-              )}
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{f.title}</Text>
               {f.details.map((d, j) => (
                 <Text key={j} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {d}</Text>
               ))}
-              {f.by_medication && f.reason && (
-                <Text style={{ fontSize: 11, color: T.text3, marginTop: 4 }}>※ {f.reason}</Text>
-              )}
             </View>
           ))}
 
           {recommendations.recommendations?.group_specific?.map((g, i) => (
             <View key={`gs-${i}`} style={{ marginBottom: 12, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{g.title}</Text>
-              {!!g.gap_note && (
-                <Text style={{ fontSize: 12, color: T.primary, fontWeight: '600', lineHeight: 19, marginBottom: 4 }}>{g.gap_note}</Text>
-              )}
+              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{g.title}</Text>
               {g.details.map((d, j) => (
                 <Text key={j} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {d}</Text>
               ))}
