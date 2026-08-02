@@ -431,6 +431,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   /** 실제로 «해당»한 상태만. 임상이 먼저 오도록 원래 순서를 지킨다(백엔드 GROUP_INFO 순).
    *  applies가 null인 것(판정 불가)은 해당이 아니므로 뺀다 — 지어내지 않는다. */
   const appliedGroups = useMemo(() => (singleGroups ?? []).filter((g) => g.applies === true), [singleGroups]);
+
+  /** 펼치기 «밖»에 이미 보여준 그룹 키 — 펼침 안 목록에서 빼서 같은 줄이 두 번 나오지 않게 한다. */
+  const shownGroupKeys = useMemo(
+    () => new Set(appliedGroups.slice(0, OFF_RANGE_HEAD).map((g) => g.key)),
+    [appliedGroups],
+  );
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
@@ -514,11 +520,20 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                   </Text>
                 </View>
               ))}
+              {/* 계산 방법은 이 안에 둔다 — 접기 버튼 두 개가 나란히 서 있으면
+                  무엇이 다른지 알 수 없고, 히어로가 «버튼 두 줄»로 끝난다.
+                  둘 다 «점수를 더 알고 싶은 사람»이 찾는 것이라 한 번만 펼치게 한다.
+                  bare — 이 노트의 자기 토글은 끈다. 안 그러면 「접기」가 두 줄 연달아 선다. */}
+              <View style={{ marginTop: 10, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+                <ScoreCalcNote bare score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
+              </View>
             </Expandable>
           </View>
         )}
-        {/* 계산 방법은 2.5뎁스 — 점수가 곧 요약이라, 산식·감점 기준은 펼쳐야 보인다 */}
-        <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
+        {/* 신호가 하나도 없으면 위 펼침 자체가 없다 — 그때는 계산 방법이 사라지지 않도록 여기 둔다. */}
+        {outsideScore.length === 0 && (
+          <ScoreCalcNote score={scorePct} manageCount={report.manageCount} trackCount={report.trackCount} />
+        )}
       </View>
       </FadeInUp>
 
@@ -654,7 +669,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           )}
 
-          <Expandable label="비해당까지 전부 보기 · 판정 근거">
+          <Expandable label={`나머지 ${singleGroups.length - shownGroupKeys.size}개와 판정 근거 보기`}>
           {/* 대사증후군 5인자 세부 — "해당/비해당"만으로는 왜 그렇게 판정됐는지 알 수 없다.
               각 인자가 수치 때문인지 약 복용 때문인지까지 백엔드가 이미 보내주므로 그대로 보여준다. */}
           {msDetail && (
@@ -686,8 +701,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           )}
 
+          {/* ⚠️ 밖에 이미 편 «해당» 항목은 여기서 뺀다 — 안 그러면 고혈압 전단계·당뇨 전단계·
+              대사증후군·비만이 한 카드 안에 두 번씩 나온다. 대사증후군 5인자 세부(위 박스)는
+              성격이 다른 «판정 근거»라 그대로 둔다. */}
           {(['임상', '생활습관'] as const).map((cat) => {
-            const rows = singleGroups.filter((g) => g.category === cat);
+            const rows = singleGroups.filter((g) => g.category === cat && !shownGroupKeys.has(g.key));
             if (!rows.length) return null;
             return (
               <View key={cat} style={{ marginTop: 10 }}>

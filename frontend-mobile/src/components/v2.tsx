@@ -395,13 +395,17 @@ export function scoreTone(score: number) {
 
 /** "어떻게 계산했나요?" 접이식 설명 — 점수를 보여주는 화면은 모두 이걸 단다.
  *  분석 탭에만 있어서, 점수를 처음 만나는 홈에는 정작 무슨 점수인지 설명이 없었다. */
-export function ScoreCalcNote({ score, manageCount, trackCount }: {
+export function ScoreCalcNote({ score, manageCount, trackCount, bare }: {
   score: number; manageCount: number; trackCount: number;
+  /** 이미 다른 펼침 «안»에 놓일 때 true — 자기 토글을 그리지 않고 본문만 편다.
+   *  분석 탭은 이 노트가 「신호 N가지 보기」 안에 들어가 있어, 토글을 그대로 두면
+   *  「접기」 버튼이 두 줄 연달아 선다. 홈에서는 단독이라 토글이 필요하다. */
+  bare?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      {open && (
+      {(open || bare) && (
         <>
           <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 16 }}>
             100점에서 시작해 주의 항목은 {SCORE_PENALTY.manage}점, 위험 항목은 {SCORE_PENALTY.track}점씩 빼서 계산해요.{'\n'}
@@ -428,14 +432,16 @@ export function ScoreCalcNote({ score, manageCount, trackCount }: {
           </View>
         </>
       )}
-      <Pressable
-        onPress={() => setOpen((v) => !v)}
-        hitSlop={8}
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
-      >
-        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : '어떻게 계산했나요?'}</Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
-      </Pressable>
+      {!bare && (
+        <Pressable
+          onPress={() => setOpen((v) => !v)}
+          hitSlop={8}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : '어떻게 계산했나요?'}</Text>
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+        </Pressable>
+      )}
     </>
   );
 }
