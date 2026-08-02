@@ -949,8 +949,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             <SummaryCard
               title="같은 또래 분포"
               summary={lead.matches > 0
-                ? `${lead.name} 항목 ${lead.matches}개가 함께 걸린 나 같은 사람은, 같은 또래 100명 중 ${fmtN(p)}명이에요.`
-                : `${lead.name} 기준을 하나도 안 벗어난 사람은 같은 또래 100명 중 ${fmtN(p)}명이에요.`}
+                ? `${lead.name} ${lead.matches}개 걸린 나 같은 사람은 또래 100명 중 ${fmtN(p)}명이에요.`
+                : `${lead.name}에 안 걸린 나 같은 사람은 또래 100명 중 ${fmtN(p)}명이에요.`}
               definition="검사 항목 묶음(관리 참고군)마다 '기준을 벗어난 항목 수'가 같은 성별·연령대에서 어떻게 분포하는지 본 거예요. 빨간 막대가 지금 나의 자리예요."
               meaning="막대가 낮을수록 같은 또래에서 드문 상태라는 뜻이에요. 드물다고 곧 더 위험한 것은 아니고, 위험이 얼마나 되는지는 위 ②층 계산기(심혈관 위험 등)가 따로 맡아요."
               axes={['peer']}
