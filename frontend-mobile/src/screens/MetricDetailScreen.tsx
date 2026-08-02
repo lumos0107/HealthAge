@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
 import { metricContent, yearsWithMetric } from '../data';
-import { deltaText, formatMetricValue, headline, metricPeerRank, yearDelta } from '../interpret';
+import { deltaText, formatMetricValue, headline, metricPeerRank, positionTitle, yearDelta } from '../interpret';
 import { StatusBadge, T } from '../components/UI';
 import { categoryVisual, MetricTrendChart, PeerRankBlock, RangeBar, SquircleIcon } from '../components/v2';
 
@@ -121,8 +121,12 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
           </View>
           )}
 
-          {/* 원본 수치·정상범위 표 + 추이 차트 — 접지 않고 바로 보여준다(내용이 한 카드 분량) */}
+          {/* 원본 수치·정상범위 표 + 추이 차트 — 접지 않고 바로 보여준다(내용이 한 카드 분량)
+              이 카드도 ③「나의 위치」다(time 축). 제목이 없어 위 카드의 꼬리처럼 보였는데,
+              위는 기준·또래로 «지금»을 말하고 여기는 «흐름»을 말하는 다른 비교다.
+              제목은 규격대로 축에서 뽑는다(§2-1) — 두 화면이 같은 함수를 쓴다. */}
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 14 }}>{positionTitle(['time'])}</Text>
             <View style={{ flexDirection: 'row', gap: 24, marginBottom: 16 }}>
               <DetailCell label="내 수치" value={`${formatMetricValue(metric, value)}${metric.unit}`} color={metric.infoOnly ? T.text1 : statusColor} />
               <DetailCell label="정상 기준" value={metric.normalText} />
