@@ -8,7 +8,7 @@ import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
 import { calcGloss, cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricLabel, metricsForReport } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
+import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup, RealSingleGroup } from '../health';
 
 /** 장기 구획 — ②층 카드 6장을 신장/간/대사·지질/심혈관으로 나누는 «덩어리 표시».
  *
@@ -248,6 +248,101 @@ function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
         ].filter(Boolean).join(' · ')}
       />
     </View>
+  );
+}
+
+/** ③-0 또래 순위 모아 보기 — 「내가 또래 중 어디쯤인가」를 한 화면에서.
+ *
+ *  항목·그룹·계산기의 또래 비교가 각각 ①·①·②에 흩어져 있어, 「같은 또래는 어떤가」라는
+ *  ③층에 정작 또래 비교가 없었다. 여기 모아 «가장 뒤처진 것»부터 세운다.
+ *
+ *  ⚠️ 원래 자리의 한 줄은 지우지 않는다 — 판정 옆의 것은 그 판정을 읽는 «맥락»이고,
+ *  여기는 「어디쯤인가」라는 다른 질문이다. 읽는 목적이 달라 겹쳐도 중복이 아니다.
+ *  ⚠️ 실측이 없으면(어림) 그 사실을 줄에 밝힌다 — 지어낸 등수로 보이면 안 된다. */
+function PeerRankRoundup({ metrics, report, groups, prevalence, calcs }: {
+  metrics: MetricDefinition[];
+  report: Report;
+  groups: RealSingleGroup[] | null;
+  prevalence?: Record<string, { name: string; pct: number; n_eval: number }>;
+  calcs: RealCalcItem[];
+}) {
+  // 항목 — 등수가 낮을수록(=100등에 가까울수록) 또래 중 나쁜 쪽이다.
+  const metricRows = metrics
+    .filter((m) => !m.infoOnly && typeof report.values[m.key] === 'number')
+    .map((m) => ({ m, peer: metricPeerRank(m, report.values[m.key] as number) }))
+    .filter((r) => r.peer)
+    .sort((a, b) => b.peer!.rank - a.peer!.rank);
+  const calcRows = calcs.filter((c) => c.percentile != null && c.peer_label)
+    .sort((a, b) => (b.percentile ?? 0) - (a.percentile ?? 0));
+  const groupRows = (groups ?? []).filter((g) => g.applies === true && prevalence?.[g.key])
+    .map((g) => ({ g, p: prevalence![g.key] }))
+    .sort((a, b) => a.p.pct - b.p.pct);   // 드문 것부터 = 또래 중 튀는 것부터
+
+  if (!metricRows.length && !calcRows.length && !groupRows.length) return null;
+  const worst = metricRows[0];
+
+  return (
+    <FadeInUp delay={202}>
+      <SummaryCard
+        title="또래 중 어디쯤인가"
+        summary={worst
+          ? `${worst.m.shortName ?? worst.m.name}이 또래 100명 중 ${worst.peer!.rank}등으로 가장 뒤예요`
+          : '또래와 견줄 수 있는 항목을 모았어요'}
+        definition="같은 성별·연령대 사람들 사이에서 내가 어디쯤인지를 검진 항목·상태 기준·계산 지표별로 모았어요. 등수가 클수록 또래 중 나쁜 쪽이에요."
+        meaning="또래 중 앞쪽이라고 안심할 근거는 아니에요. 기준선이 되는 또래 집단 자체가 나빠졌을 수 있어서, 판정은 아래 「또래 자체가 나빠졌나」와 함께 봐야 합니다."
+        axes={['peer']}
+      >
+        {metricRows.length > 0 && (
+          <>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 6 }}>검진 항목 {metricRows.length}개</Text>
+            {metricRows.slice(0, 5).map(({ m, peer }, i) => (
+              <View key={m.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{m.shortName ?? m.name}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: peer!.rank >= 75 ? T.warn : T.text2 }}>{peer!.rank}등</Text>
+                {!peer!.measured && <Text style={{ fontSize: 11, color: T.text3 }}>어림</Text>}
+              </View>
+            ))}
+            {metricRows.length > 5 && (
+              <Expandable label={`나머지 항목 ${metricRows.length - 5}개`}>
+                {metricRows.slice(5).map(({ m, peer }) => (
+                  <View key={m.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7, borderTopWidth: 1, borderTopColor: T.divider }}>
+                    <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{m.shortName ?? m.name}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>{peer!.rank}등</Text>
+                    {!peer!.measured && <Text style={{ fontSize: 11, color: T.text3 }}>어림</Text>}
+                  </View>
+                ))}
+              </Expandable>
+            )}
+          </>
+        )}
+        {groupRows.length > 0 && (
+          <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 6 }}>해당하는 상태 {groupRows.length}개</Text>
+            {groupRows.map(({ g, p }, i) => (
+              <View key={g.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{g.name}</Text>
+                <Text style={{ fontSize: 13, color: T.text2 }}>또래 100명 중 {Math.round(p.pct)}명</Text>
+              </View>
+            ))}
+          </View>
+        )}
+        {calcRows.length > 0 && (
+          <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 6 }}>계산 지표 {calcRows.length}개</Text>
+            {calcRows.map((c, i) => (
+              <View key={c.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{c.title}</Text>
+                <Text style={{ fontSize: 13, color: T.text2 }}>{c.peer_label?.replace(/^한국인 \d+세 (남성|여성) 중 /, '')}</Text>
+              </View>
+            ))}
+            {/* 기준연도가 지표마다 다르다 — 지질은 2017 고정이고 전수 측정은 검진 연도다. */}
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>
+              기준 연도 {[...new Set(calcRows.map((c) => c.peer_year).filter(Boolean))].sort().join('·')}년 국가검진. 지질 지표는 전수 측정된 2017년으로 견줍니다.
+            </Text>
+          </View>
+        )}
+      </SummaryCard>
+    </FadeInUp>
   );
 }
 
@@ -1337,6 +1432,25 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           층 이름(내 위치)과 안 맞았다. 또래 분포·16년 변화·내 위치를 모두 덮는 이름으로. */}
       <LayerHeader step={LAYERS[2].step} title={LAYERS[2].title} sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
 
+      {/* ③-0 또래 순위 모아 보기.
+       *
+       *  ⚠️ 층 이름이 「같은 또래는 어떤가」인데 정작 또래 비교는 ①(항목·그룹)과
+       *  ②(계산기)에 흩어져 있었다. 층을 «기능»으로 나눠 놓고 그 기능을 다른 층에서
+       *  하면 층이 장식이 된다 — 사용자가 「또래와 견준 걸 보고 싶다」고 ③에 오면
+       *  집단 통계 두 장밖에 없었다.
+       *
+       *  ⚠️ 판정 옆의 한 줄은 **지우지 않는다.** 「고혈압 해당」 바로 밑의
+       *  「또래 100명 중 32명」은 그 판정을 읽는 «맥락»이고, 여기 모아 보기는
+       *  「내가 또래 중 어디쯤인가」라는 **다른 질문**이다. 읽는 목적이 달라
+       *  겹쳐도 «같은 말 두 번»이 되지 않는다(기록 39의 장기 구획과 같은 판단). */}
+      <PeerRankRoundup
+        metrics={metricsForReport(report, metricDefinitions)}
+        report={report}
+        groups={singleGroups}
+        prevalence={pop16?.peer_prevalence}
+        calcs={calcItems}
+      />
+
       {/* ③-1 같은 또래 분포 (A1') — "나 같은 사람은 100명 중 N명"은 쉬운 문장이라 1뎁스에 둔다.
           A3에서 참고군 카드 5장이 제거되어 지금은 이 카드가 care_distribution의 유일한 표시이고,
           묶음 근거(basis, A7)도 여기 2뎁스에서 밝힌다. */}
@@ -1400,66 +1514,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         );
       })()}
 
-      {/* 같은 나이대의 16년 변화 — 유병률 상승이 고령화 때문인지 아닌지를 가르는 분석.
-          나이를 고정했으므로 "또래 집단 자체가 나빠졌다"는 뜻이고, 그래서 위쪽 '100명 중 N등'이
-          기준선이 내려앉은 집단 안에서의 순위임을 알려준다. 근거: 28번 문서 §4.
-          ⚠️ axes=[] — 이 카드에는 «나»가 없다. 2009년과 2024년 집단을 견준 것이라
-          기준·또래·과거의 나 어느 축과도 «내 위치»를 만들지 않는다. 그래서 ③칸을 없애고
-          막대를 ④「그래서 이게 의미하는 건」의 근거(meaningExtra)로 내렸다 —
-          이 카드가 하는 말은 위치가 아니라 "평균이라는 자리가 안심할 근거가 아니다"이다. */}
-      {!!pop16?.age_fixed_trend?.items?.length && (
-        <FadeInUp delay={219}>
-        <SummaryCard
-          title="또래 자체가 나빠졌나"
-          definition={cardContent['또래 자체가 나빠졌나']?.definition}
-          detail={cardContent['또래 자체가 나빠졌나']?.detail}
-          meaning={cardContent['또래 자체가 나빠졌나']?.meaning}
-          tips={cardContent['또래 자체가 나빠졌나']?.tips}
-          summary={(() => {
-            const top = pop16.age_fixed_trend!.items[0];
-            if (!top) return null;
-            const band = pop16.age_fixed_trend!.age_band;
-            return top.diff > 0
-              ? `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 늘었어요`
-              : `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 줄었어요`;
-          })()}
-          axes={[]}
-          meaningExtra={<>
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
-            {pop16.age_fixed_trend.sex} {pop16.age_fixed_trend.age_band} · 2009년 vs 2024년. 나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
-          </Text>
-          <Expandable label={`항목 ${pop16.age_fixed_trend.items.length}개 변화 보기`}>
-          {pop16.age_fixed_trend.items.map((it, i) => {
-            const worse = it.diff > 0;
-            const max = Math.max(it.y2009, it.y2024, 1);
-            return (
-              <View key={it.group} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{it.name}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: worse ? T.danger : T.success }}>
-                    {worse ? '+' : ''}{it.diff}%p{it.ratio >= 1.5 ? ` · ${it.ratio}배` : ''}
-                  </Text>
-                </View>
-                {([{ y: '2009년', v: it.y2009, c: T.text3 }, { y: '2024년', v: it.y2024, c: worse ? T.danger : T.success }] as const).map((r) => (
-                  <View key={r.y} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <Text style={{ fontSize: 11, color: T.text3, width: 44 }}>{r.y}</Text>
-                    <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
-                      <View style={{ width: `${(r.v / max) * 100}%`, height: '100%', backgroundColor: r.c, borderRadius: 4 }} />
-                    </View>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 46, textAlign: 'right' }}>{r.v}%</Text>
-                  </View>
-                ))}
-              </View>
-            );
-          })}
-          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
-          </Expandable>
-          </>}
-        />
-        </FadeInUp>
-      )}
-
-      <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
       {/* ④-0 함께 봐야 할 조합 — 예전에는 ③층 「이 조합이 흔한가」였다. 두 가지가 어긋나 옮겼다.
        *
        *  1) 카드가 답하던 질문이 행동을 바꾸지 않았다. 「내 조합은 100명 중 10명」을 지워도
@@ -1565,6 +1619,67 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </SummaryCard>
         </FadeInUp>
       )}
+
+      {/* 같은 나이대의 16년 변화 — 유병률 상승이 고령화 때문인지 아닌지를 가르는 분석.
+          나이를 고정했으므로 "또래 집단 자체가 나빠졌다"는 뜻이고, 그래서 위쪽 '100명 중 N등'이
+          기준선이 내려앉은 집단 안에서의 순위임을 알려준다. 근거: 28번 문서 §4.
+          ⚠️ axes=[] — 이 카드에는 «나»가 없다. 2009년과 2024년 집단을 견준 것이라
+          기준·또래·과거의 나 어느 축과도 «내 위치»를 만들지 않는다. 그래서 ③칸을 없애고
+          막대를 ④「그래서 이게 의미하는 건」의 근거(meaningExtra)로 내렸다 —
+          이 카드가 하는 말은 위치가 아니라 "평균이라는 자리가 안심할 근거가 아니다"이다. */}
+      {!!pop16?.age_fixed_trend?.items?.length && (
+        <FadeInUp delay={219}>
+        <SummaryCard
+          title="또래 자체가 나빠졌나"
+          definition={cardContent['또래 자체가 나빠졌나']?.definition}
+          detail={cardContent['또래 자체가 나빠졌나']?.detail}
+          meaning={cardContent['또래 자체가 나빠졌나']?.meaning}
+          tips={cardContent['또래 자체가 나빠졌나']?.tips}
+          summary={(() => {
+            const top = pop16.age_fixed_trend!.items[0];
+            if (!top) return null;
+            const band = pop16.age_fixed_trend!.age_band;
+            return top.diff > 0
+              ? `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 늘었어요`
+              : `16년 새 ${band} ${top.name}이 ${top.y2009}%에서 ${top.y2024}%로 줄었어요`;
+          })()}
+          axes={[]}
+          meaningExtra={<>
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
+            {pop16.age_fixed_trend.sex} {pop16.age_fixed_trend.age_band} · 2009년 vs 2024년. 나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
+          </Text>
+          <Expandable label={`항목 ${pop16.age_fixed_trend.items.length}개 변화 보기`}>
+          {pop16.age_fixed_trend.items.map((it, i) => {
+            const worse = it.diff > 0;
+            const max = Math.max(it.y2009, it.y2024, 1);
+            return (
+              <View key={it.group} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{it.name}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: worse ? T.danger : T.success }}>
+                    {worse ? '+' : ''}{it.diff}%p{it.ratio >= 1.5 ? ` · ${it.ratio}배` : ''}
+                  </Text>
+                </View>
+                {([{ y: '2009년', v: it.y2009, c: T.text3 }, { y: '2024년', v: it.y2024, c: worse ? T.danger : T.success }] as const).map((r) => (
+                  <View key={r.y} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                    <Text style={{ fontSize: 11, color: T.text3, width: 44 }}>{r.y}</Text>
+                    <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
+                      <View style={{ width: `${(r.v / max) * 100}%`, height: '100%', backgroundColor: r.c, borderRadius: 4 }} />
+                    </View>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 46, textAlign: 'right' }}>{r.v}%</Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
+          </Expandable>
+          </>}
+        />
+        </FadeInUp>
+      )}
+
+      <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
 
       {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다.
           ⚠️ axes=[] — 이 묶음 전체가 «뭘 하면 되는지»라서 ⑤ 자리다. 예전에는 이것들이
