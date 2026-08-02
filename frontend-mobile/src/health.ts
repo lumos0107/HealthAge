@@ -212,6 +212,12 @@ export type RealCalcItem = {
   /** 1뎁스 결론용 해요체 한 문장 — RealFattyLiverIndex.plain과 같은 규칙.
    *  지금은 BARD에만 있다(1뎁스 결론에 오르는 계산기가 그것뿐이라). */
   plain?: string;
+  /** «어느 입력이 이 값을 끌어올렸나» 한 문장. 여러 수치를 묶어 만든 값은 결과만 봐서는
+   *  무엇 때문에 높은지 알 수 없다 — TyG 9.13이 같아도 중성지방이 끌어올린 사람과
+   *  공복혈당이 끌어올린 사람은 할 일이 다르다. 각 입력을 또래 중앙값으로 바꿔 보아
+   *  기여도를 재고, 끌어올린 것이 없으면 내려오지 않는다(지어내지 않는다).
+   *  지금은 2뎁스에 펼치는 대표 4종(TyG·Non-HDL·AIP·MAP)에만 있다. */
+  driver?: string | null;
   cutoffs?: string;
   formula?: string;
   note?: string;

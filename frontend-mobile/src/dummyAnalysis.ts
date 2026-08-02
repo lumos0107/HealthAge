@@ -1813,7 +1813,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 44세 남성 중 상위 46%",
     "percentile": 54,
     "peer_n": 70805,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "castelli_1",
@@ -1855,7 +1856,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 50.2,
     "peer_label": "한국인 44세 남성 중 상위 50%",
     "peer_n": 70759,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "tyg",
@@ -2545,7 +2547,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 46세 남성 중 상위 38%",
     "percentile": 61.5,
     "peer_n": 64143,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 총콜레스테롤과 낮은 HDL가 비슷하게 끌어올렸어요."
    },
    {
     "key": "castelli_1",
@@ -2587,7 +2590,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 57.0,
     "peer_label": "한국인 46세 남성 중 상위 43%",
     "peer_n": 64098,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "tyg",
@@ -2606,7 +2610,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 52.4,
     "peer_label": "한국인 46세 남성 중 상위 48%",
     "peer_n": 64108,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방과 공복혈당이 비슷하게 끌어올렸어요."
    },
    {
     "key": "mets_ir",
@@ -2712,7 +2717,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 46세 남성 중 상위 40%",
     "percentile": 60,
     "peer_n": 64159,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "prevent",
@@ -3388,7 +3394,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 48세 남성 중 상위 31%",
     "percentile": 69.2,
     "peer_n": 64143,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 총콜레스테롤과 낮은 HDL가 비슷하게 끌어올렸어요."
    },
    {
     "key": "castelli_1",
@@ -3430,7 +3437,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 65.6,
     "peer_label": "한국인 48세 남성 중 상위 34%",
     "peer_n": 64098,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 낮은 HDL 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "tyg",
@@ -3449,7 +3457,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 58.6,
     "peer_label": "한국인 48세 남성 중 상위 41%",
     "peer_n": 64108,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "mets_ir",
@@ -3555,7 +3564,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 48세 남성 중 상위 30%",
     "percentile": 70.1,
     "peer_n": 64159,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요."
    },
    {
     "key": "prevent",
@@ -4446,7 +4456,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 50세 남성 중 상위 24%",
     "percentile": 76.2,
     "peer_n": 65302,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "castelli_1",
@@ -4488,7 +4499,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 71.8,
     "peer_label": "한국인 50세 남성 중 상위 28%",
     "peer_n": 65260,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요."
    },
    {
     "key": "tyg",
@@ -4507,7 +4519,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 64.4,
     "peer_label": "한국인 50세 남성 중 상위 36%",
     "peer_n": 65272,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "mets_ir",
@@ -4613,7 +4626,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 50세 남성 중 상위 26%",
     "percentile": 73.6,
     "peer_n": 65323,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요."
    },
    {
     "key": "prevent",
@@ -5834,7 +5848,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 52세 남성 중 상위 12%",
     "percentile": 87.6,
     "peer_n": 65302,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "castelli_1",
@@ -5876,7 +5891,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 83.0,
     "peer_label": "한국인 52세 남성 중 상위 17%",
     "peer_n": 65260,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요."
    },
    {
     "key": "tyg",
@@ -5895,7 +5911,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 78.2,
     "peer_label": "한국인 52세 남성 중 상위 22%",
     "peer_n": 65272,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "mets_ir",
@@ -5999,7 +6016,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 52세 남성 중 상위 12%",
     "percentile": 87.6,
     "peer_n": 65323,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요."
    },
    {
     "key": "prevent",
@@ -7200,7 +7218,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 54세 남성 중 상위 19%",
     "percentile": 81,
     "peer_n": 65302,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "castelli_1",
@@ -7242,7 +7261,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 77.2,
     "peer_label": "한국인 54세 남성 중 상위 23%",
     "peer_n": 65260,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 낮은 HDL와 중성지방이 비슷하게 끌어올렸어요."
    },
    {
     "key": "tyg",
@@ -7261,7 +7281,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 70.1,
     "peer_label": "한국인 54세 남성 중 상위 30%",
     "peer_n": 65272,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "mets_ir",
@@ -7365,7 +7386,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 54세 남성 중 상위 23%",
     "percentile": 76.6,
     "peer_n": 65323,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "prevent",
@@ -8412,7 +8434,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 56세 남성 중 상위 18%",
     "percentile": 81.6,
     "peer_n": 56341,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 총콜레스테롤 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "castelli_1",
@@ -8454,7 +8477,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 77.3,
     "peer_label": "한국인 56세 남성 중 상위 23%",
     "peer_n": 56316,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방과 낮은 HDL가 비슷하게 끌어올렸어요."
    },
    {
     "key": "tyg",
@@ -8473,7 +8497,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "percentile": 69.6,
     "peer_label": "한국인 56세 남성 중 상위 30%",
     "peer_n": 56321,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 중성지방 쪽이 이 값을 더 끌어올렸어요."
    },
    {
     "key": "mets_ir",
@@ -8579,7 +8604,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "peer_label": "한국인 56세 남성 중 상위 23%",
     "percentile": 76.6,
     "peer_n": 56350,
-    "peer_year": 2017
+    "peer_year": 2017,
+    "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요."
    },
    {
     "key": "prevent",

@@ -138,6 +138,12 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
             </View>
           )}
           {!!it.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {it.cutoffs}</Text>}
+          {/* 어느 입력이 끌어올렸나 — 계산기가 «내 값»으로 말해주는 유일한 자리다.
+              값·기준 바로 아래에 둔다: 숫자를 보고 «왜 이렇게 나왔지»가 이어지는 순서다.
+              끌어올린 것이 없으면 백엔드가 안 내려보내므로 여기서 빈칸이 생기지 않는다. */}
+          {!!it.driver && (
+            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginTop: 6 }}>{it.driver}</Text>
+          )}
         </View>
       ))}
     </>

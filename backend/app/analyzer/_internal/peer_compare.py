@@ -155,3 +155,30 @@ def compare_to_peers(
         "diff_from_mean": round(value - r["mean"], 2),
         "n_in_group": r["n"],
     }
+
+def peer_median(metric: str, gender: int, age: Optional[int], year: int = 2017) -> Optional[float]:
+    """같은 성별·연령대의 그 항목 중앙값(p50). 없으면 None(추정 금지).
+
+    쓰임 — 계산기가 «어느 입력이 이 값을 끌어올렸나»를 가릴 때 기준점이 된다.
+    TyG처럼 두 수치를 곱해 만든 값은 결과만 봐서는 무엇 때문에 높은지 알 수 없는데,
+    각 입력을 또래 중앙값으로 바꿔 보면 어느 쪽이 더 크게 기여했는지 정확히 나온다.
+    """
+    if age is None:
+        return None
+    try:
+        stats = load_stats()
+    except Exception:
+        return None
+    code = age_to_code(age, year)
+    row = stats.filter(
+        (pl.col("항목") == metric)
+        & (pl.col("기준년도") == year)
+        & (pl.col("성별코드") == gender)
+        & (pl.col("연령대코드(5세단위)") == code)
+    )
+    if len(row) == 0:
+        return None
+    r = row.row(0, named=True)
+    if r["n"] < 100 or not r["p50"]:
+        return None
+    return float(r["p50"])

@@ -24,6 +24,57 @@ def _valid(*vals) -> bool:
     return all(isinstance(v, (int, float)) and v > 0 for v in vals)
 
 
+def _josa(word: str, with_final: str, without_final: str) -> str:
+    """받침 유무로 조사를 고른다 — 「중성지방이 / 공복혈당가」 같은 비문을 막는다.
+
+    프론트에는 `interpret.subjectJosa`가 이미 있는데 백엔드에는 없어서, 시계열 메시지가
+    「{항목}이(가)」로 회피하고 있었다(기록 36 §7-6). 여기서 만드는 문장은 사용자에게
+    그대로 나가므로 회피 표기를 쓰지 않는다.
+    """
+    if not word:
+        return without_final
+    last = word[-1]
+    if not ("가" <= last <= "힣"):
+        return without_final
+    return with_final if (ord(last) - 0xAC00) % 28 else without_final
+
+
+def _driver(parts: list[tuple[str, float]]) -> Optional[str]:
+    """어느 입력이 이 값을 끌어올렸나 — 한 문장.
+
+    계산기는 여러 수치를 묶어 하나의 값을 만든다. 그래서 결과만 보면 «무엇 때문에»
+    높은지 알 수 없다. TyG 9.13이 같아도 중성지방이 끌어올린 사람과 공복혈당이
+    끌어올린 사람은 할 일이 다르다. 그동안 카드의 ⑤는 「TyG가 높으면 체중·탄수화물
+    관리가 우선이에요」처럼 **TyG가 낮아도 똑같이 나오는 고정 문구**였다.
+
+    parts: (라벨, 기여도). 기여도는 «그 입력이 또래 중앙값이었다면» 대비 차이이고,
+    공식의 형태에 맞춰 같은 자로 잰다(곱셈형은 로그, 덧셈형은 그대로).
+    양수 = 값을 올린 쪽.
+
+    ⚠️ 끌어올린 것이 하나도 없으면 None이다 — 빈칸을 채우려고 문장을 지어내지 않는다.
+    1위가 2위의 1.5배 미만이면 «둘 다»로 말한다. 근소한 차이를 단정하지 않는다.
+    """
+    up = sorted([p for p in parts if p[1] > 0], key=lambda p: -p[1])
+    if not up:
+        return None
+    if len(up) >= 2 and up[0][1] < up[1][1] * 1.5:
+        a, b = up[0][0], up[1][0]
+        return (f"또래 중앙값과 견주면 {a}{_josa(a, '과', '와')} "
+                f"{b}{_josa(b, '이', '가')} 비슷하게 끌어올렸어요.")
+    return f"또래 중앙값과 견주면 {up[0][0]} 쪽이 이 값을 더 끌어올렸어요."
+
+
+def _med(metric: str, gender: Optional[int], age: Optional[int]) -> Optional[float]:
+    """또래 중앙값 — 조회 실패하면 None(그때는 driver를 만들지 않는다)."""
+    if gender is None or age is None:
+        return None
+    try:
+        from .peer_compare import peer_median
+        return peer_median(metric, gender, age)
+    except Exception:
+        return None
+
+
 def _bmi_of(checkup: dict[str, Any]) -> Optional[float]:
     """검진 dict에서 BMI를 얻고, 없으면 신장·체중으로 역산."""
     bmi = checkup.get("BMI")
@@ -42,6 +93,8 @@ def _bmi_of(checkup: dict[str, Any]) -> Optional[float]:
 def calculate_tyg(
     tg: Optional[float],
     fbs: Optional[float],
+    gender: Optional[int] = None,
+    age: Optional[int] = None,
 ) -> Optional[dict[str, Any]]:
     """TyG index — 인슐린저항성 대리지표 (Simental-Mendía 2008).
 
@@ -65,10 +118,18 @@ def calculate_tyg(
     else:
         interp, level = "인슐린저항성 가능성 높음", "high"
 
+    # TyG = ln(TG) + ln(공복혈당) − ln2 이므로 로그 기여도가 정확히 더해진다.
+    m_tg, m_fbs = _med("트리글리세라이드", gender, age), _med("식전혈당(공복혈당)", gender, age)
+    driver = _driver([
+        ("중성지방", math.log(tg / m_tg) if m_tg else 0.0),
+        ("공복혈당", math.log(fbs / m_fbs) if m_fbs else 0.0),
+    ]) if (m_tg and m_fbs) else None
+
     return {
         "value": tyg,
         "level": level,
         "interpretation": interp,
+        "driver": driver,
         "inputs": {"tg": tg, "fbs": fbs},
         "cutoffs": "<8.5 낮음 / 8.5~8.9 경계 / ≥9.0 높음 (연구별 상이, 참고용)",
         "note": "국제 단일 진단 컷오프는 미확립이나, 한국 성인 대사증후군 스크리닝용으로 "
@@ -88,6 +149,8 @@ def calculate_tyg(
 def calculate_non_hdl_c(
     total_cholesterol: Optional[float],
     hdl: Optional[float],
+    gender: Optional[int] = None,
+    age: Optional[int] = None,
 ) -> Optional[dict[str, Any]]:
     """Non-HDL-C = 총콜레스테롤 − HDL. 죽상형성 지단백 총량(mg/dL).
 
@@ -114,10 +177,19 @@ def calculate_non_hdl_c(
     else:
         interp, level = "매우 높음", "very_high"
 
+    # Non-HDL = 총콜레스테롤 − HDL. 뺄셈형이라 mg/dL 차이가 그대로 같은 자다.
+    # HDL은 «낮을수록» 값을 올리므로 부호를 뒤집는다.
+    m_tc, m_hdl = _med("총콜레스테롤", gender, age), _med("HDL콜레스테롤", gender, age)
+    driver = _driver([
+        ("총콜레스테롤", total_cholesterol - m_tc if m_tc else 0.0),
+        ("낮은 HDL", m_hdl - hdl if m_hdl else 0.0),
+    ]) if (m_tc and m_hdl) else None
+
     return {
         "value": non_hdl,
         "level": level,
         "interpretation": interp,
+        "driver": driver,
         "inputs": {"total_cholesterol": total_cholesterol, "hdl": hdl},
         "cutoffs": "<130 적정 / 130~159 적정상회 / 160~189 경계 / 190~219 높음 / ≥220 매우높음 (NCEP ATP III)",
         "note": "개인 목표치는 위험군에 따라 다릅니다(비-HDL 목표 = LDL 목표 + 30).",
@@ -307,6 +379,8 @@ def calculate_alt_ggt_ratio(
 def calculate_map(
     sbp: Optional[float],
     dbp: Optional[float],
+    gender: Optional[int] = None,
+    age: Optional[int] = None,
 ) -> Optional[dict[str, Any]]:
     """평균동맥압 MAP = (SBP + 2×DBP) / 3 (mmHg). 조직 관류압 지표."""
     if not all(isinstance(v, (int, float)) and v > 0 for v in (sbp, dbp)):
@@ -322,8 +396,16 @@ def calculate_map(
         interp, level = "다소 높음", "intermediate"
     else:
         interp, level = "높음", "high"
+    # MAP = (SBP + 2·DBP)/3. 덧셈형이라 가중치를 그대로 곱해 mmHg로 견준다 —
+    # 이완기는 2/3, 수축기는 1/3의 무게를 갖는다.
+    m_s, m_d = _med("수축기혈압", gender, age), _med("이완기혈압", gender, age)
+    driver = _driver([
+        ("수축기혈압", (sbp - m_s) / 3 if m_s else 0.0),
+        ("이완기혈압", 2 * (dbp - m_d) / 3 if m_d else 0.0),
+    ]) if (m_s and m_d) else None
     return {
         "value": mapv, "level": level, "interpretation": interp,
+        "driver": driver,
         "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
         "formula": "MAP = (SBP + 2×DBP) / 3",
     }
@@ -339,6 +421,8 @@ def calculate_map(
 def calculate_aip(
     tg: Optional[float],
     hdl: Optional[float],
+    gender: Optional[int] = None,
+    age: Optional[int] = None,
 ) -> Optional[dict[str, Any]]:
     """Atherogenic Index of Plasma = log10(TG_mmol/HDL_mmol). Dobiásová 2001."""
     if not _valid(tg, hdl):
@@ -350,8 +434,15 @@ def calculate_aip(
         interp, level = "중간 위험", "intermediate"
     else:
         interp, level = "고위험", "high"
+    # AIP = log10(TG/HDL). 비율의 로그라 각 항의 로그 차가 그대로 기여도다.
+    m_tg, m_hdl = _med("트리글리세라이드", gender, age), _med("HDL콜레스테롤", gender, age)
+    driver = _driver([
+        ("중성지방", math.log10(tg / m_tg) if m_tg else 0.0),
+        ("낮은 HDL", math.log10(m_hdl / hdl) if m_hdl else 0.0),
+    ]) if (m_tg and m_hdl) else None
     return {
         "value": aip, "level": level, "interpretation": interp,
+        "driver": driver,
         "cutoffs": "<0.11 저위험 / 0.11~0.21 중간 / >0.21 고위험 (Dobiásová)",
         "formula": "AIP = log10(TG/HDL), mmol/L 변환 적용",
     }
@@ -529,16 +620,16 @@ def additional_calculators(
     specs: list[tuple[str, str, str, Optional[dict[str, Any]], str]] = [
         # 지질
         ("non_hdl_c", "Non-HDL 콜레스테롤", "lipid",
-         calculate_non_hdl_c(tc, hdl), "Non-HDL-C (총콜레스테롤·HDL 필요)"),
+         calculate_non_hdl_c(tc, hdl, gender, age), "Non-HDL-C (총콜레스테롤·HDL 필요)"),
         ("castelli_1", "Castelli 지수 I", "lipid",
          calculate_castelli_1(tc, hdl), "Castelli-I (총콜레스테롤·HDL 필요)"),
         ("castelli_2", "Castelli 지수 II", "lipid",
          calculate_castelli_2(ldl, hdl), "Castelli-II (LDL·HDL 필요)"),
         ("aip", "AIP 죽상형성지수", "lipid",
-         calculate_aip(tg, hdl), "AIP (중성지방·HDL 필요)"),
+         calculate_aip(tg, hdl, gender, age), "AIP (중성지방·HDL 필요)"),
         # 인슐린저항성
         ("tyg", "TyG 지수", "insulin",
-         calculate_tyg(tg, fbs), "TyG (중성지방·공복혈당 필요)"),
+         calculate_tyg(tg, fbs, gender, age), "TyG (중성지방·공복혈당 필요)"),
         ("mets_ir", "METS-IR", "insulin",
          calculate_mets_ir(fbs, tg, bmi, hdl), "METS-IR (공복혈당·중성지방·BMI·HDL 필요)"),
         # 내장지방
@@ -555,7 +646,7 @@ def additional_calculators(
          calculate_bard(bmi, ast, alt, has_diabetes), "BARD (BMI·AST·ALT 필요)"),
         # 혈압
         ("map", "평균동맥압 (MAP)", "bp",
-         calculate_map(sbp, dbp), "MAP (수축기·이완기혈압 필요)"),
+         calculate_map(sbp, dbp, gender, age), "MAP (수축기·이완기혈압 필요)"),
         # 심혈관 위험엔진
         ("prevent", "AHA PREVENT (10·30년)", "cardiovascular",
          calculate_prevent_cvd(age, gender, tc, hdl, sbp, has_diabetes, smoking,
