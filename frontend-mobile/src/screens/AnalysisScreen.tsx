@@ -10,6 +10,23 @@ import { cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricL
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
+/** 장기 구획 — ②층 카드 6장을 신장/간/대사·지질/심혈관으로 나누는 «덩어리 표시».
+ *
+ *  ⚠️ 한 번 지웠다가 되살렸다(2026-08-02). 카드 이름을 질문형으로 바꾸고 나니
+ *  「신장 / 콩팥이 잘 거르고 있나」가 같은 말을 두 번 하는 것처럼 보여 지웠는데,
+ *  머리말이 하던 일은 이름표만이 아니라 **덩어리 나누기**였다. 지우니 6장이 균일한
+ *  목록이 되어 어디까지가 간이고 어디부터 대사인지 눈으로 잡을 게 없어졌다.
+ *
+ *  대신 무게를 낮춘다: 18pt 볼드 → 11pt 회색. 층 머리말(①②③④)과 확실히 갈려
+ *  「층 안의 작은 구획」으로 읽히고, 카드 이름이 이미 뜻을 말하므로 중복도 거슬리지 않는다. */
+function DomainHeader({ title }: { title: string }) {
+  return (
+    <Text style={{ fontSize: 11, fontWeight: '700', color: T.text3, marginHorizontal: 20, marginTop: 14, marginBottom: 4, letterSpacing: 0.3 }}>
+      {title}
+    </Text>
+  );
+}
+
 /** 층 머리말 — 이 화면은 네 층으로 읽힌다: ① 판정 → ② 파생 → ③ 위치 → ④ 행동.
  *  그동안 머리말이 장기별(신장/간/대사지질/심혈관)뿐이라 네 층과 직교했고, 그래서
  *  "이 카드는 지금 무슨 일을 하고 있나"가 화면에 드러나지 않았다. 장기 머리말은
@@ -248,9 +265,11 @@ function levelSummary(levels: string[]): string | null {
   const judged = levels.filter((l) => l !== 'info');
   if (!judged.length) return null;
   const bad = judged.filter((l) => l !== 'low').length;
+  // 해요체로 끝낸다(§7). 「기준 밖」처럼 명사로 끊으면 문장이 아니라 «라벨»로 읽혀
+  // 카드 셋이 나란히 놓였을 때 표의 한 칸처럼 보인다.
   return bad === 0
-    ? `지표 ${judged.length}개 모두 기준 안`
-    : `지표 ${judged.length}개 중 ${bad}개가 기준 밖`;
+    ? `지표 ${judged.length}개 모두 기준 안이에요`
+    : `지표 ${judged.length}개 중 ${bad}개가 기준 밖이에요`;
 }
 
 /** 1뎁스 판정 배지 — 카드를 열지 않고도 «이 카드가 나쁜가»를 알 수 있게 한다.
@@ -754,6 +773,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 소제목은 장기 이름으로 통일한다(간·대사·지질·심혈관과 같은 층위).
           「신장 기능」이면 바로 아래 카드 「신장 기능 (eGFR)」과 같은 말을 두 번 한다. */}
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
+      {egfr && <DomainHeader title="신장" />}
       {egfr && (
         <FadeInUp delay={180}>
         <SummaryCard title="콩팥이 잘 거르고 있나" term="eGFR" definition={cardContent['콩팥이 잘 거르고 있나']?.definition} detail={cardContent['콩팥이 잘 거르고 있나']?.detail} meaning={cardContent['콩팥이 잘 거르고 있나']?.meaning} tips={cardContent['콩팥이 잘 거르고 있나']?.tips} summary={`1분에 ${egfr.egfr}mL를 걸러요`}
@@ -799,6 +819,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           갈라 두니 유형 카드가 조건(ALT>40 또는 GGT>75)을 못 맞추는 해에 아무 말 없이 사라져,
           «원래 없는 기능»으로 읽혔다. 합치면 그 자리에서 왜 지금은 대상이 아닌지 말할 수 있다.
           값·구간·해석 문구는 전부 백엔드가 만들어 보내준 것을 그대로 쓴다. */}
+      {flIndices && (flIndices.fli || flIndices.hsi) && <DomainHeader title="간" />}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
         <SummaryCard title="간에 지방이 꼈나" term="FLI·HSI" definition={cardContent['간에 지방이 꼈나']?.definition} detail={cardContent['간에 지방이 꼈나']?.detail} meaning={cardContent['간에 지방이 꼈나']?.meaning} tips={cardContent['간에 지방이 꼈나']?.tips}
@@ -908,6 +929,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       {/* 대사·지질 — 검증된 수치 계산기(지질비·인슐린저항성·내장지방·혈압) */}
+      {metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
         <SummaryCard title="혈당·지질에 이상이 있나" term="TyG·Non-HDL" definition={cardContent['혈당·지질에 이상이 있나']?.definition} detail={cardContent['혈당·지질에 이상이 있나']?.detail} meaning={cardContent['혈당·지질에 이상이 있나']?.meaning} tips={cardContent['혈당·지질에 이상이 있나']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
@@ -1008,6 +1030,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다.
           배지는 2뎁스 안 배지(아래)와 같은 갈래를 쓴다 — 한 카드가 겉과 속에서 다른 색을 말하면 안 된다. */}
+      {(ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0 && <DomainHeader title="심혈관" />}
       {ascvd?.available && ascvd.risk_percent != null && (
         <FadeInUp delay={221}>
         <SummaryCard
