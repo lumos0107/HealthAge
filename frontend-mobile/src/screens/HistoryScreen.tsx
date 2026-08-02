@@ -120,7 +120,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
           detail={cardContent['또래보다 빠르게 변한 항목'].detail}
           meaning={cardContent['또래보다 빠르게 변한 항목'].meaning}
           tips={cardContent['또래보다 빠르게 변한 항목'].tips}
-          positionTitle="나의 위치 — 또래 평균과 비교"
+          axes={['peer']}
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요. 악화 방향만 모았어요.</Text>
           {/* ⚠️ 이 값은 «첫 회차와 마지막 회차»만 빼서 만든다. 중간에 바닥을 찍고 돌아섰어도
@@ -175,7 +175,7 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
           definition={cardContent['주목할 만한 변화'].definition}
           detail={cardContent['주목할 만한 변화'].detail}
           meaning={cardContent['주목할 만한 변화'].meaning}
-          positionTitle="짚어낸 변화"
+          axes={['time']}
         >
           {/* 「한눈에 요약」 카드를 여기로 합쳤다(2026-08-02).
               뺀 이유: 1뎁스 요약이 "우려 3건 · 다음 검진 2026년"뿐인데 우려는 이 카드가
@@ -482,6 +482,8 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
     [focusMetric, reports, metricDefinitions],
   );
 
+  // ③ 비교축 — 또래 등수 블록(positionExtra)은 focusRank가 있을 때만 그려지므로 축도 그때만
+  // 선언한다. 없는 해에는 축이 time 하나라 「나의 위치 — 연도별 흐름」이 제목이 된다.
   return (
     <SummaryCard
       title={group.title}
@@ -491,7 +493,7 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
       detail={c?.detail}
       meaning={c?.meaning}
       tips={c?.tips}
-      positionTitle="나의 위치 — 연도별 흐름"
+      axes={focusMetric && focusRank ? ['peer', 'time'] : ['time']}
       preview={sparkValues && latestLead.lead ? (
         <Sparkline
           values={sparkValues}

@@ -6,7 +6,8 @@ import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View }
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
-import { formatMetricValue, normalBounds, scoreGrade } from '../interpret';
+import { formatMetricValue, normalBounds, positionTitle, scoreGrade } from '../interpret';
+import type { PositionAxis } from '../interpret';
 import { T, W } from './UI';
 
 export const CATEGORY_VISUAL: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
@@ -115,8 +116,9 @@ export function PeerRankBlock({ subject, rank, color, measured, basis }: {
  *  오버레이 안은 항상 같은 순서로 읽힌다:
  *    ① 결론  ② 이 지표는요(정의 + 2.5뎁스 '자세히 알아보기')  ③ 나의 위치(근거·차트)
  *    ④ 그래서 이게 의미하는 건  ⑤ 그럼 뭘 하면 좋을까
- *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다). */
-export function SummaryCard({ title, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, positionTitle, positionExtra, children }: {
+ *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다).
+ *  ③만은 «없음»을 문자열이 아니라 axes=[]로 선언한다 — 아래 axes 주석 참조. */
+export function SummaryCard({ title, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, children }: {
   title: string;
   summary?: string | null;
   /** 2뎁스 ① 결론 자리에 쓸 문장. 없으면 summary를 그대로 쓴다.
@@ -138,11 +140,18 @@ export function SummaryCard({ title, summary, detailSummary, badge, preview, def
   meaningExtra?: React.ReactNode;
   /** ⑤ 그럼 뭘 하면 좋은지 */
   tips?: string[];
-  /** ③ 근거 카드의 제목 — 기본 "나의 위치" */
-  positionTitle?: string;
+  /** ⑤에 덧붙이는 것 — 문장 목록으로 안 되는 행동 안내(권장사항 묶음 등) */
+  tipsExtra?: React.ReactNode;
+  /** ③「나의 위치」의 비교축. **선언이 필수다.**
+   *  빈 배열이면 ③칸을 아예 그리지 않는다 — 비교 대상이 없는 것은 위치가 아니다.
+   *  ⚠️ 예전에는 positionTitle에 아무 문자열이나 넣을 수 있었다. 그래서 「이렇게 판정했어요」
+   *  (판정 근거=2.5뎁스)·「짚어낸 변화」·「남성 50대 · 2009 vs 2024」(집단 이야기라 «나»가 없다)가
+   *  전부 같은 칸에 들어왔고, 「맞춤 권장사항」은 이 칸에 ⑤의 내용을 통째로 담고 있었다. */
+  axes: PositionAxis[];
   /** ③ 근거 카드 맨 위에 얹는 요소 — 등수 슬라이더 등 */
   positionExtra?: React.ReactNode;
-  children: React.ReactNode;
+  /** ③ 본문. axes가 비면 넘기지 않는다. */
+  children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
@@ -195,12 +204,14 @@ export function SummaryCard({ title, summary, detailSummary, badge, preview, def
                 )}
               </View>
             )}
-            {/* ③ 나의 위치 — 근거(차트·지표 행) */}
-            <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 12 }}>{positionTitle ?? '나의 위치'}</Text>
-              {positionExtra}
-              {children}
-            </View>
+            {/* ③ 나의 위치 — 근거(차트·지표 행). 비교축이 없으면 칸 자체가 없다. */}
+            {axes.length > 0 && (
+              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 12 }}>{positionTitle(axes)}</Text>
+                {positionExtra}
+                {children}
+              </View>
+            )}
             {/* ④ 그래서 이게 의미하는 건 */}
             {(!!meaning || !!meaningExtra) && (
               <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
@@ -210,15 +221,16 @@ export function SummaryCard({ title, summary, detailSummary, badge, preview, def
               </View>
             )}
             {/* ⑤ 그럼 뭘 하면 좋을까 */}
-            {!!tips?.length && (
+            {(!!tips?.length || !!tipsExtra) && (
               <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 10 }}>그럼 뭘 하면 좋을까요</Text>
-                {tips.map((tip, i) => (
+                {tips?.map((tip, i) => (
                   <View key={i} style={{ flexDirection: 'row', gap: 8, marginTop: i === 0 ? 0 : 8 }}>
                     <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: T.text3, marginTop: 8 }} />
                     <Text style={{ flex: 1, fontSize: 14, color: T.text2, lineHeight: 21 }}>{tip}</Text>
                   </View>
                 ))}
+                {tipsExtra}
               </View>
             )}
             <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>

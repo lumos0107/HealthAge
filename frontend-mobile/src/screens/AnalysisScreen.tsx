@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
 import { rankFromPercentile } from '../interpret';
+import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
 import { cardContent, computeGroupsForReport, metricLabel } from '../data';
 import type { MetricDefinition, Report } from '../data';
@@ -132,6 +133,12 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
  *  값이 클수록 나쁜 계산기 지표에서는 그대로 등수가 된다(1등 = 가장 좋음).
  *  percentile이 있는 항목이 하나도 없으면 아무것도 그리지 않는다 — 등수를 지어내지 않는다.
  *  문장·근거 배지는 PeerRankBlock에 모아 두어 네 화면이 같은 모양으로 말한다. */
+/** 계산기 카드의 ③ 비교축 — 기준(구간 배지)은 항상 있고, 또래 등수는 표본이 있는 항목에만 붙는다.
+ *  ⚠️ 정적으로 ['standard','peer']를 적으면 CalcRankBlock이 null인 해에도 «또래»를 선언한 셈이 된다.
+ *  실제로 그려진 것만 담는다 — 안 그러면 제목이 화면에 없는 비교를 말하게 된다. */
+const calcAxes = (items: RealCalcItem[]): PositionAxis[] =>
+  items.some((x) => x.percentile != null) ? ['standard', 'peer'] : ['standard'];
+
 function CalcRankBlock({ items }: { items: RealCalcItem[] }) {
   const it = items.find((x) => x.percentile != null);
   if (!it) return null;
@@ -528,6 +535,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           meaning={cardContent['집단군 판정']?.meaning}
           tips={cardContent['집단군 판정']?.tips}
           summary={rarity ? `해당 ${rarity.clinical_count + rarity.lifestyle_count}개 — 임상 ${rarity.clinical_count} · 생활습관 ${rarity.lifestyle_count}` : null}
+          axes={['standard']}
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
 
@@ -625,6 +633,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {egfr && (
         <FadeInUp delay={180}>
         <SummaryCard title="신장 기능 (eGFR)" definition={cardContent['신장 기능 (eGFR)']?.definition} detail={cardContent['신장 기능 (eGFR)']?.detail} meaning={cardContent['신장 기능 (eGFR)']?.meaning} tips={cardContent['신장 기능 (eGFR)']?.tips} summary={`${egfr.egfr} ${egfr.unit} · ${egfr.label}`}
+          axes={['standard']}
           badge={<VerdictBadge v={egfr.severity === 'normal' ? 'good' : egfr.severity === 'high' ? 'bad' : 'watch'} />}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>혈청 크레아티닌 수치를 바탕으로 추정한 신장 여과 기능이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
@@ -662,6 +671,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
         <SummaryCard title="지방간 보조지표" definition={cardContent['지방간 보조지표']?.definition} detail={cardContent['지방간 보조지표']?.detail} meaning={cardContent['지방간 보조지표']?.meaning} tips={cardContent['지방간 보조지표']?.tips} summary={levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))}
+          axes={['standard']}
           badge={<VerdictBadge v={worstVerdict([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))} />}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표예요.</Text>
           {([
@@ -704,7 +714,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           meaning={cardContent['지방간 유형']?.meaning}
           tips={cardContent['지방간 유형']?.tips}
           summary={`${fattyLiverType.type}${fattyLiverType.provisional ? ' (잠정)' : ''}`}
-          positionTitle="이렇게 판정했어요"
+          axes={['standard']}
         >
           <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 6 }}>
             {fattyLiverType.type}{fattyLiverType.provisional ? ' (잠정)' : ''}
@@ -734,7 +744,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <SummaryCard title="간 계산기" definition={cardContent['간 계산기']?.definition} detail={cardContent['간 계산기']?.detail} meaning={cardContent['간 계산기']?.meaning} tips={cardContent['간 계산기']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} summary={levelSummary(liverCalcs.map((it) => it.level))}
+        <SummaryCard title="간 계산기" definition={cardContent['간 계산기']?.definition} detail={cardContent['간 계산기']?.detail} meaning={cardContent['간 계산기']?.meaning} tips={cardContent['간 계산기']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={levelSummary(liverCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
           <CalcRows items={liverCalcs} />
         </SummaryCard>
@@ -745,7 +755,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
-        <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
+        <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(metabolicCalcs.map((it) => it.level))} />}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
           <CalcRows items={metabolicPrimary} />
@@ -799,6 +809,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           tips={cardContent['LDL 콜레스테롤 개인 목표']?.tips}
           summary={`목표 ${ldlTarget.target_text}${ldlTarget.achieved == null ? '' : ldlTarget.achieved ? ' · 달성했어요' : ` · 초과했어요${ldlTarget.gap != null ? ` (+${ldlTarget.gap})` : ''}`}`}
           badge={<VerdictBadge v={ldlTarget.achieved == null ? null : ldlTarget.achieved ? 'good' : 'watch'} />}
+          axes={['standard']}
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>같은 LDL 수치라도 위험군에 따라 목표가 달라져요. 내 위험군 기준 목표예요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -849,7 +860,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           definition={cardContent['심혈관 위험 참고 시뮬레이션']?.definition}
           detail={cardContent['심혈관 위험 참고 시뮬레이션']?.detail}
           meaning={cardContent['심혈관 위험 참고 시뮬레이션']?.meaning}
-          tips={cardContent['심혈관 위험 참고 시뮬레이션']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />}
+          tips={cardContent['심혈관 위험 참고 시뮬레이션']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />} axes={calcAxes(cvCalcs)}
           summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
           badge={<VerdictBadge v={ascvd.risk_level === 'low' ? 'good' : ascvd.risk_level === 'high' ? 'bad' : 'watch'} />}
         >
@@ -942,7 +953,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 : `${lead.name} 기준을 하나도 안 벗어난 사람은 같은 또래 100명 중 ${fmtN(p)}명이에요.`}
               definition="검사 항목 묶음(관리 참고군)마다 '기준을 벗어난 항목 수'가 같은 성별·연령대에서 어떻게 분포하는지 본 거예요. 빨간 막대가 지금 나의 자리예요."
               meaning="막대가 낮을수록 같은 또래에서 드문 상태라는 뜻이에요. 드물다고 곧 더 위험한 것은 아니고, 위험이 얼마나 되는지는 위 ②층 계산기(심혈관 위험 등)가 따로 맡아요."
-              positionTitle={`묶음별 또래 분포 — ${report.year}년 기준`}
+              axes={['peer']}
               preview={
                 <View style={{ marginTop: 12 }}>
                   <CareDistBars dist={dLead.dist} mine={lead.matches} height={36} />
@@ -981,7 +992,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           O/E비는 "각각이 따로 논다면 기대되는 동반 빈도" 대비 실제 관찰 빈도. 위험 정량은 계산기가 담당. */}
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
-        <SummaryCard title="함께 나타나는 조합 (동반 경향)" definition={cardContent['함께 나타나는 조합 (동반 경향)']?.definition} detail={cardContent['함께 나타나는 조합 (동반 경향)']?.detail} meaning={cardContent['함께 나타나는 조합 (동반 경향)']?.meaning} tips={cardContent['함께 나타나는 조합 (동반 경향)']?.tips} summary={`해당 조합 ${comboGroups.matched_count}개`} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
+        <SummaryCard title="함께 나타나는 조합 (동반 경향)" definition={cardContent['함께 나타나는 조합 (동반 경향)']?.definition} detail={cardContent['함께 나타나는 조합 (동반 경향)']?.detail} meaning={cardContent['함께 나타나는 조합 (동반 경향)']?.meaning} tips={cardContent['함께 나타나는 조합 (동반 경향)']?.tips} summary={`해당 조합 ${comboGroups.matched_count}개`} axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
             여러 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
             {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 동반 경향(통계)이며, 위험도 자체는 아니에요. 위험 정량은 위 계산기(ASCVD 등)를 참고하세요.
@@ -1059,7 +1070,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {/* 같은 나이대의 16년 변화 — 유병률 상승이 고령화 때문인지 아닌지를 가르는 분석.
           나이를 고정했으므로 "또래 집단 자체가 나빠졌다"는 뜻이고, 그래서 위쪽 '100명 중 N등'이
-          기준선이 내려앉은 집단 안에서의 순위임을 알려준다. 근거: 28번 문서 §4. */}
+          기준선이 내려앉은 집단 안에서의 순위임을 알려준다. 근거: 28번 문서 §4.
+          ⚠️ axes=[] — 이 카드에는 «나»가 없다. 2009년과 2024년 집단을 견준 것이라
+          기준·또래·과거의 나 어느 축과도 «내 위치»를 만들지 않는다. 그래서 ③칸을 없애고
+          막대를 ④「그래서 이게 의미하는 건」의 근거(meaningExtra)로 내렸다 —
+          이 카드가 하는 말은 위치가 아니라 "평균이라는 자리가 안심할 근거가 아니다"이다. */}
       {!!pop16?.age_fixed_trend?.items?.length && (
         <FadeInUp delay={219}>
         <SummaryCard
@@ -1068,14 +1083,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           detail={cardContent['같은 나이대의 16년 변화']?.detail}
           meaning={cardContent['같은 나이대의 16년 변화']?.meaning}
           tips={cardContent['같은 나이대의 16년 변화']?.tips}
-          positionTitle={`${pop16.age_fixed_trend.sex} ${pop16.age_fixed_trend.age_band} · 2009년 vs 2024년`}
           summary={(() => {
             const top = pop16.age_fixed_trend!.items[0];
             return top ? `${pop16.age_fixed_trend!.age_band} ${top.name} ${top.y2009}% → ${top.y2024}% (16년)` : null;
           })()}
-        >
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
-            나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
+          axes={[]}
+          meaningExtra={<>
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
+            {pop16.age_fixed_trend.sex} {pop16.age_fixed_trend.age_band} · 2009년 vs 2024년. 나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
           </Text>
           {pop16.age_fixed_trend.items.map((it, i) => {
             const worse = it.diff > 0;
@@ -1101,13 +1116,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             );
           })}
           <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
-        </SummaryCard>
+          </>}
+        />
         </FadeInUp>
       )}
 
       <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
 
-      {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다 */}
+      {/* ④ 개인화 권장사항 — 백엔드가 그 해 분석 결과를 바탕으로 실제로 생성해 보내준 문구만 그대로 보여준다.
+          ⚠️ axes=[] — 이 묶음 전체가 «뭘 하면 되는지»라서 ⑤ 자리다. 예전에는 이것들이
+          ③「나의 위치」 아래에 통째로 들어 있었다. 한 칸이 다른 칸의 내용을 삼킨 상태였고,
+          그래서 「나의 위치」라는 제목 밑에서 복약 안내·고령 안내를 읽게 됐다. */}
       {recommendations && (recommendations.priority_messages?.length || recommendations.recommendations) && (
         <FadeInUp delay={220}>
         <SummaryCard
@@ -1117,8 +1136,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           meaning={cardContent['맞춤 권장사항']?.meaning}
           tips={cardContent['맞춤 권장사항']?.tips}
           summary={priorityHead(recommendations.priority_messages) ?? '내 검진 결과 기반 생활습관·검진 참고 안내예요.'}
-        >
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보예요.</Text>
+          axes={[]}
+          tipsExtra={<>
+          <Text style={{ fontSize: 13, color: T.text2, marginTop: 14, marginBottom: 14 }}>내 검진 결과를 바탕으로 분석 시스템이 안내하는 참고 정보예요.</Text>
 
           {!!recommendations.priority_messages?.length && (
             <View style={{ gap: 6, marginBottom: 14 }}>
@@ -1198,7 +1218,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {recommendations._meta?.disclaimer && (
             <Text style={{ fontSize: 11, color: T.text3, marginTop: 14, lineHeight: 17 }}>{recommendations._meta.disclaimer}</Text>
           )}
-        </SummaryCard>
+          </>}
+        />
         </FadeInUp>
       )}
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyGender, metricDefinitions, reports } from './data';
 import type { MetricDefinition } from './data';
-import { deltaText, estimateRank, formatMetricValue, headline, metricPeerRank, normalBounds, rankFromPercentile, scoreGapNote, scoreGrade, scoreSeries, scoreTrendText, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
+import { deltaText, estimateRank, formatMetricValue, headline, metricPeerRank, normalBounds, positionTitle, rankFromPercentile, scoreGapNote, scoreGrade, scoreSeries, scoreTrendText, sortByAttention, statusCounts, top3Alerts, yearDelta } from './interpret';
 
 const by = (key: string) => metricDefinitions.find((m) => m.key === key)!;
 const withStatus = (m: MetricDefinition, status: MetricDefinition['status']): MetricDefinition => ({ ...m, status });
@@ -42,6 +42,31 @@ describe('yearDelta / deltaText', () => {
     expect(deltaText({ diff: 5, prevYear: 2022 }, 'mg/dL')).toBe('2022년보다 5mg/dL 올랐어요');
     expect(deltaText({ diff: -3.5, prevYear: 2022 }, 'kg/m²')).toBe('2022년보다 3.5kg/m² 내렸어요');
     expect(deltaText({ diff: 0, prevYear: 2022 }, 'mg/dL')).toBe('2022년과 같아요');
+  });
+});
+
+describe('positionTitle — 2뎁스 ③칸 제목은 비교축에서 파생된다', () => {
+  // 규격: 위치는 언제나 «무엇에 대한» 위치다. 제목을 자유 문자열로 두었더니
+  // 「이렇게 판정했어요」·「짚어낸 변화」·「남성 50대 · 2009 vs 2024」처럼
+  // 서로 다른 종류의 것이 같은 칸에 들어왔다. 축에서 제목을 뽑아 그 갈래를 막는다.
+  it('기준 축 하나면 «기준과 비교»', () => {
+    expect(positionTitle(['standard'])).toBe('나의 위치 — 기준과 비교');
+  });
+  it('또래 축 하나면 «또래와 비교»', () => {
+    expect(positionTitle(['peer'])).toBe('나의 위치 — 또래와 비교');
+  });
+  it('연도 축 하나면 «연도별 흐름»', () => {
+    expect(positionTitle(['time'])).toBe('나의 위치 — 연도별 흐름');
+  });
+  it('축이 둘 이상이면 부제 없이 «나의 위치»만', () => {
+    // 축을 다 나열하면 제목이 아니라 문장이 된다. 무엇과 비교했는지는 칸 안의
+    // 그림이 이미 말하고 있으므로, 제목은 여러 축임을 감추지 않고 침묵한다.
+    expect(positionTitle(['standard', 'peer'])).toBe('나의 위치');
+    expect(positionTitle(['standard', 'peer', 'time'])).toBe('나의 위치');
+  });
+  it('축이 없으면 «나의 위치» — 다만 이때 화면은 ③칸 자체를 그리지 않는다', () => {
+    // 축이 하나도 없다 = 비교 대상이 없다 = ③이 아니다. 그 내용은 ②나 ④·⑤로 간다.
+    expect(positionTitle([])).toBe('나의 위치');
   });
 });
 

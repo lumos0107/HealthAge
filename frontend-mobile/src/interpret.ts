@@ -31,6 +31,26 @@ export function normalBounds(metric: MetricDefinition): { low?: number; high?: n
   return { low: 0, high: metric.normalValue };
 }
 
+/** 2뎁스 ③「나의 위치」의 비교축 — 위치는 언제나 «무엇에 대한» 위치다.
+ *  앱 전체를 통틀어 비교 대상은 이 셋뿐이다:
+ *    standard 학회 기준·정상범위(RangeBar·level 배지) / peer 공단 표본(PeerRankBlock)
+ *    time 과거의 나(MetricTrendChart·Sparkline)
+ *  ⚠️ 셋 중 하나도 없으면 그건 ③이 아니다 — ②(정의)나 ④(의미)·⑤(행동)로 보낸다. */
+export type PositionAxis = 'standard' | 'peer' | 'time';
+
+const AXIS_LABEL: Record<PositionAxis, string> = {
+  standard: '기준과 비교',
+  peer: '또래와 비교',
+  time: '연도별 흐름',
+};
+
+/** ③칸 제목 — 축에서 뽑는다. 자유 문자열을 허용했더니 「이렇게 판정했어요」·「짚어낸 변화」
+ *  처럼 위치가 아닌 것이 같은 칸에 들어왔다.
+ *  축이 둘 이상이면 부제 없이 「나의 위치」만 — 다 나열하면 제목이 아니라 문장이 된다. */
+export function positionTitle(axes: PositionAxis[]): string {
+  return axes.length === 1 ? `나의 위치 — ${AXIS_LABEL[axes[0]]}` : '나의 위치';
+}
+
 /** L2 상단 헤드라인 — 상태+방향으로 쉬운 문장을 만든다.
  *  ⚠️ 주어(항목명)를 넣지 않는다. 호출처 두 곳(홈 TOP3·검사항목 상세)이 모두 바로 위에
  *  항목명을 제목으로 띄우고 있어서, 주어를 넣으면 같은 이름이 두 줄 연속으로 나온다. */
