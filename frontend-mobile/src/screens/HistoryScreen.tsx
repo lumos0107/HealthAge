@@ -122,7 +122,9 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
           tips={cardContent['또래보다 빠르게 변한 항목'].tips}
           axes={['peer']}
         >
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요. 악화 방향만 모았어요.</Text>
+          {/* 앞 절("같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요")은 ②가 그대로 말한다.
+              «악화 방향만 모았다»는 것만 ②에 없는 정보라 남긴다. */}
+          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>악화 방향만 모았어요.</Text>
           {/* ⚠️ 이 값은 «첫 회차와 마지막 회차»만 빼서 만든다. 중간에 바닥을 찍고 돌아섰어도
               그 반등은 담기지 않는다. 아래 문구에 "악화 중"이 그대로 남아 있는데, 그건
               백엔드가 만든 문장이라 여기서 고쳐 쓰지 않는다 — 대신 무엇을 비교한 값인지

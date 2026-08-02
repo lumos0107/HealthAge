@@ -525,7 +525,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       </FadeIn>
 
       {/* ③-4 집단군 판정(13개) — 백엔드가 검진 수치·약물로 판정한 단일 집단군 목록.
-          판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
+          판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다.
+          ⚠️ 1뎁스 결론은 «판단»을 담는다(§2-1). 예전에는 「해당 7개 — 임상 5 · 생활습관 2」로
+          개수만 세어서 7개가 많은 건지 적은 건지 읽히지 않았다. 배지를 못 다는 카드라
+          (해당/비해당은 학회 기준의 좋다/나쁘다가 아니다) 문장이 판단을 맡아야 한다.
+          interpretation은 백엔드가 이미 보내주던 판단 문구다 — 새로 지어내지 않았고,
+          ③ 안에서만 보이던 것을 1뎁스로 올렸을 뿐이다. */}
       {!!singleGroups?.length && (
         <FadeInUp delay={218}>
         <SummaryCard
@@ -534,10 +539,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           detail={cardContent['집단군 판정']?.detail}
           meaning={cardContent['집단군 판정']?.meaning}
           tips={cardContent['집단군 판정']?.tips}
-          summary={rarity ? `해당 ${rarity.clinical_count + rarity.lifestyle_count}개 — 임상 ${rarity.clinical_count} · 생활습관 ${rarity.lifestyle_count}` : null}
+          summary={rarity
+            ? `${rarity.interpretation} — 임상 ${rarity.clinical_count} · 생활습관 ${rarity.lifestyle_count}`
+            : null}
           axes={['standard']}
         >
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 6 }}>검진 수치와 복용 약물을 함께 반영해 판정한 결과예요.</Text>
 
           {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
               백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
@@ -639,7 +645,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <SummaryCard title="신장 기능 (eGFR)" definition={cardContent['신장 기능 (eGFR)']?.definition} detail={cardContent['신장 기능 (eGFR)']?.detail} meaning={cardContent['신장 기능 (eGFR)']?.meaning} tips={cardContent['신장 기능 (eGFR)']?.tips} summary={`${egfr.egfr} ${egfr.unit} · ${egfr.label}`}
           axes={['standard']}
           badge={<VerdictBadge v={egfr.severity === 'normal' ? 'good' : egfr.severity === 'high' ? 'bad' : 'watch'} />}>
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>혈청 크레아티닌 수치를 바탕으로 추정한 신장 여과 기능이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{egfr.egfr}</Text>
             <Text style={{ fontSize: 13, color: T.text3 }}>{egfr.unit}</Text>
@@ -677,7 +682,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <SummaryCard title="지방간 보조지표" definition={cardContent['지방간 보조지표']?.definition} detail={cardContent['지방간 보조지표']?.detail} meaning={cardContent['지방간 보조지표']?.meaning} tips={cardContent['지방간 보조지표']?.tips} summary={levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))}
           axes={['standard']}
           badge={<VerdictBadge v={worstVerdict([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))} />}>
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 수치만으로 지방간 가능성을 가늠해 보는 선별용 지표예요.</Text>
           {([
             { title: 'FLI', idx: flIndices.fli },
             { title: 'HSI', idx: flIndices.hsi },
@@ -761,7 +765,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <FadeInUp delay={216}>
         <SummaryCard title="대사·지질 계산기" definition={cardContent['대사·지질 계산기']?.definition} detail={cardContent['대사·지질 계산기']?.detail} meaning={cardContent['대사·지질 계산기']?.meaning} tips={cardContent['대사·지질 계산기']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
           badge={<VerdictBadge v={worstVerdict(metabolicCalcs.map((it) => it.level))} />}>
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>검진 기본검사 수치만으로 산출하는 검증된 참고 지표예요.</Text>
           <CalcRows items={metabolicPrimary} />
           {metabolicRedundant.length > 0 && (
             <>
@@ -815,7 +818,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           badge={<VerdictBadge v={ldlTarget.achieved == null ? null : ldlTarget.achieved ? 'good' : 'watch'} />}
           axes={['standard']}
         >
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>같은 LDL 수치라도 위험군에 따라 목표가 달라져요. 내 위험군 기준 목표예요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{ldlTarget.target_text}</Text>
             {ldlTarget.achieved != null && (
@@ -868,7 +870,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
           badge={<VerdictBadge v={ascvd.risk_level === 'low' ? 'good' : ascvd.risk_level === 'high' ? 'bad' : 'watch'} />}
         >
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>10년 내 죽상경화성 심혈관질환(ASCVD) 위험을 가늠해 보는 참고용 계산이에요.</Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{ascvd.risk_percent}%</Text>
             {!!ascvd.risk_label && (
@@ -1004,9 +1005,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {comboGroups && comboGroups.matched_count > 0 && (
         <FadeInUp delay={210}>
         <SummaryCard title="함께 나타나는 조합 (동반 경향)" definition={cardContent['함께 나타나는 조합 (동반 경향)']?.definition} detail={cardContent['함께 나타나는 조합 (동반 경향)']?.detail} meaning={cardContent['함께 나타나는 조합 (동반 경향)']?.meaning} tips={cardContent['함께 나타나는 조합 (동반 경향)']?.tips} summary={`해당 조합 ${comboGroups.matched_count}개`} axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}>
+          {/* 앞머리의 "여러 요인이 함께 나타나는 조합이에요"와 "위험도 자체는 아니에요"는 지웠다 —
+              각각 ②와 ④가 이미 말한다. 표본 크기만 남긴다(§1-1③ 근거). */}
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
-            여러 요인이 함께 나타나는 조합이에요. 같은 조합인 분들이 국민건강보험공단 표본
-            {comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''} 중 얼마나 되는지 비교한 동반 경향(통계)이며, 위험도 자체는 아니에요. 위험 정량은 위 계산기(ASCVD 등)를 참고하세요.
+            국민건강보험공단 표본{comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''}과 견줬어요.
           </Text>
 
           <Expandable label={`조합 ${Math.min(comboGroups.matched.length, 4)}개 보기`}>
