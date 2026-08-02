@@ -6,7 +6,7 @@ import { Expandable, PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from
 import { formatMetricValue, rankFromPercentile, sortByAttention } from '../interpret';
 import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
-import { cardContent, computeGroupsForReport, metricLabel, metricsForReport } from '../data';
+import { cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricLabel, metricsForReport } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup } from '../health';
 
@@ -803,14 +803,25 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       {/* 간 — FLI/HSI 보조지표 + 지방간 유형 + 간 계산기(BARD·De Ritis) */}
-      {((flIndices && (flIndices.fli || flIndices.hsi)) || fattyLiverType || liverCalcs.length > 0) && <DomainHeader title="간" />}
-      {/* ③-3 지방간 보조지표(FLI·HSI) — 검진 수치로 계산되는 선별용 지표.
-          값·구간·해석 문구 전부 백엔드가 만들어 보내준 것을 그대로 보여준다. */}
+      {/* fattyLiverType은 이제 「지방간」 카드 «안»의 한 칸이라 구획 조건에서 뺐다 —
+          유형만 있고 FLI·HSI가 없는 경우는 없다(둘 다 같은 검진 수치에서 나온다). */}
+      {((flIndices && (flIndices.fli || flIndices.hsi)) || liverCalcs.length > 0) && <DomainHeader title="간" />}
+      {/* 지방간 — 「보조지표(FLI·HSI)」와 「유형(MASLD/MetALD/ALD)」을 한 카드로 합쳤다(2026-08-02).
+          둘은 같은 질문의 앞뒤다: «지방간일 가능성이 있나» → «그렇다면 왜 그런가».
+          갈라 두니 유형 카드가 조건(ALT>40 또는 GGT>75)을 못 맞추는 해에 아무 말 없이 사라져,
+          «원래 없는 기능»으로 읽혔다. 합치면 그 자리에서 왜 지금은 대상이 아닌지 말할 수 있다.
+          값·구간·해석 문구는 전부 백엔드가 만들어 보내준 것을 그대로 쓴다. */}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
-        <SummaryCard title="지방간 보조지표" definition={cardContent['지방간 보조지표']?.definition} detail={cardContent['지방간 보조지표']?.detail} meaning={cardContent['지방간 보조지표']?.meaning} tips={cardContent['지방간 보조지표']?.tips} summary={levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))}
+        <SummaryCard title="지방간" definition={cardContent['지방간']?.definition} detail={cardContent['지방간']?.detail} meaning={cardContent['지방간']?.meaning} tips={cardContent['지방간']?.tips}
+          summary={[
+            fattyLiverType ? `${fattyLiverType.type}${fattyLiverType.provisional ? ' (잠정)' : ''}` : null,
+            levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level)),
+          ].filter(Boolean).join(' · ')}
           axes={['standard']}
           badge={<VerdictBadge v={worstVerdict([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))} />}>
+          {/* ── 가능성은 어느 정도인가 ─────────────────── */}
+          <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 4 }}>가능성은 어느 정도인가</Text>
           {([
             { title: 'FLI', idx: flIndices.fli },
             { title: 'HSI', idx: flIndices.hsi },
@@ -843,45 +854,52 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>{flIndices.disclaimer}</Text>
             )}
           </Expandable>
-        </SummaryCard>
-        </FadeInUp>
-      )}
 
-      {/* 지방간 유형 (MASLD/MetALD/ALD) — 지방간이 의심될 때 원인이 대사인지 음주인지 가른다.
-          조합 그룹 매칭 여부와 무관한 독립 판정이라 별도 카드로 둔다.
-          음주량 문진이 없으면 잠정 분류임을 제목과 근거 양쪽에서 밝힌다. */}
-      {fattyLiverType && (
-        <FadeInUp delay={216}>
-        <SummaryCard
-          title="지방간 유형"
-          definition={cardContent['지방간 유형']?.definition}
-          detail={cardContent['지방간 유형']?.detail}
-          meaning={cardContent['지방간 유형']?.meaning}
-          tips={cardContent['지방간 유형']?.tips}
-          summary={`${fattyLiverType.type}${fattyLiverType.provisional ? ' (잠정)' : ''}`}
-          axes={['standard']}
-        >
-          <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 6 }}>
-            {fattyLiverType.type}{fattyLiverType.provisional ? ' (잠정)' : ''}
-          </Text>
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{fattyLiverType.basis}</Text>
-          {/* 판정 근거인 심장대사 위험인자 — 결론(유형)만 있고 근거가 없으면 왜 그렇게 나뉘었는지 알 수 없다.
-              2025 MASLD 지침의 5종 중 실제로 해당한 것만 백엔드가 담아 보낸다. */}
-          {!!fattyLiverType.cardiometabolic_factors?.length && (
-            <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
-              <Text style={{ fontSize: 12, color: T.text3, marginBottom: 6 }}>해당하는 심장대사 위험인자</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {fattyLiverType.cardiometabolic_factors.map((f) => (
-                  <View key={f} style={{ backgroundColor: T.warnBg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: T.warn }}>{f}</Text>
+          {/* ── 원인은 무엇인가 ─────────────────────────
+              MASLD/MetALD/ALD — 지방간이 의심될 때 원인이 대사인지 음주인지 가른다.
+              ⚠️ 대상이 아닌 해에도 «칸을 지우지 않는다». 예전에는 카드가 통째로 사라져
+              「원래 없는 기능」으로 읽혔다. 왜 지금은 판정하지 않는지 밝히는 것이
+              §1-1②(무엇을 왜 뺐고 어디서 볼 수 있는지)를 지키는 방법이다. */}
+          <View style={{ marginTop: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 6 }}>원인은 무엇인가</Text>
+            {fattyLiverType ? (
+              <>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 6 }}>
+                  {fattyLiverType.type}{fattyLiverType.provisional ? ' (잠정)' : ''}
+                </Text>
+                <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{fattyLiverType.basis}</Text>
+                {/* 판정 근거인 심장대사 위험인자 — 결론(유형)만 있고 근거가 없으면 왜 그렇게 나뉘었는지 알 수 없다.
+                    2025 MASLD 지침의 5종 중 실제로 해당한 것만 백엔드가 담아 보낸다. */}
+                {!!fattyLiverType.cardiometabolic_factors?.length && (
+                  <View style={{ marginTop: 14 }}>
+                    <Text style={{ fontSize: 12, color: T.text3, marginBottom: 6 }}>해당하는 심장대사 위험인자</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {fattyLiverType.cardiometabolic_factors.map((f) => (
+                        <View key={f} style={{ backgroundColor: T.warnBg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: T.radiusPill }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: T.warn }}>{f}</Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                ))}
-              </View>
-            </View>
-          )}
-          {!!fattyLiverType.note && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{fattyLiverType.note}</Text>
-          )}
+                )}
+                {!!fattyLiverType.note && (
+                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{fattyLiverType.note}</Text>
+                )}
+              </>
+            ) : (
+              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+                간 수치(ALT·감마-GTP)가 모두 기준 안이라 {report.year}년은 유형을 가릴 대상이 아니에요.
+                기준을 넘은 해를 위에서 고르면 그 해의 유형이 나옵니다.
+              </Text>
+            )}
+            {/* 유형 카드에 있던 2.5뎁스(2025 MASLD 지침)를 여기로 옮겼다.
+                ②의 detail은 FLI·HSI 설명이 이미 쓰고 있어, 둘을 합치면 6줄 상한을 넘는다. */}
+            <Expandable label="유형을 어떻게 나누나">
+              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginTop: 4 }}>
+                {FATTY_LIVER_TYPE_CRITERIA}
+              </Text>
+            </Expandable>
+          </View>
         </SummaryCard>
         </FadeInUp>
       )}
