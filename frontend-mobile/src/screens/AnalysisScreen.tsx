@@ -309,7 +309,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
   // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
   // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
-  const [showEngines, setShowEngines] = useState(false);
   const report = reports[yearIdx];
 
   // 아래 모든 상세 분석은 **선택한 연도의 것**이다. 그 해에 저장된 분석이 없으면 null이고,
@@ -901,27 +900,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {/* 다른 위험엔진 3종(PREVENT·Framingham·SCORE2) — 계산은 되고 있었으나 그리지 않던 값.
               엔진마다 코호트·공식이 달라 값이 조금씩 다르다. 그 차이를 보여주는 것 자체가
               "절대값을 그대로 믿지 말라"는 메시지라, 숨기지 않고 2.5뎁스로 펼쳐 볼 수 있게 둔다. */}
+          {/* ⚠️ 자체 Pressable로 만든 접기였다 — chevron이 왼쪽, 좌측 정렬이라 바로 위
+              「자세히 알아보기」(가운데, chevron 오른쪽)와 모양이 달랐다. 한 화면에 접는
+              방법이 둘이면 사용자가 다른 기능으로 읽는다. Expandable로 통일한다. */}
           {cvCalcs.length > 0 && (
-            <>
-              <Pressable
-                onPress={() => setShowEngines((v) => !v)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 11, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 10 }}
-              >
-                <Ionicons name={showEngines ? 'chevron-up' : 'chevron-down'} size={16} color={T.text2} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>
-                  {showEngines ? '다른 계산법 접기' : `다른 계산법 ${cvCalcs.length}종으로도 계산해보기`}
-                </Text>
-              </Pressable>
-              {showEngines && (
-                <>
-                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 4 }}>
-                    같은 위험을 다른 공식으로 계산한 값이에요. 서로 비슷하면 그만큼 믿을 만하고,
-                    많이 다르면 절대값보다 구간으로 이해하는 게 맞아요.
-                  </Text>
-                  <CalcRows items={cvCalcs} />
-                </>
-              )}
-            </>
+            <Expandable label={`다른 계산법 ${cvCalcs.length}종으로도 계산해보기`}>
+              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 4 }}>
+                같은 위험을 다른 공식으로 계산한 값이에요. 서로 비슷하면 그만큼 믿을 만하고,
+                많이 다르면 절대값보다 구간으로 이해하는 게 맞아요.
+              </Text>
+              <CalcRows items={cvCalcs} />
+            </Expandable>
           )}
           {!!ascvd.limitations?.length && (
             <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
