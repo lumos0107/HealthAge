@@ -1164,6 +1164,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       {/* 심혈관 — ASCVD 위험 계산기 */}
+      {/* 한계는 ③이 아니라 카드 맨 밑(footer)이다 — 「미국 코호트라 한국인에게 과대추정」은
+          ③「나의 위치」에 대한 한계가 아니라 이 카드가 내놓은 «모든 숫자»에 걸린다.
+          ③ 안에 있으면 시나리오 표와 다른 계산법 사이에 끼어 그 범위가 흐려졌다.
+          ⚠️ 접지 않는다. 접기는 «길어서 감추는» 장치인데 이건 11pt 회색 4줄이라 감출
+          부피가 아니고, 무엇보다 열어야 보이면 «이 %를 그대로 믿지 말라»는 말이
+          안 읽힌 채로 화면을 떠날 수 있다. 고지문과 같은 층위로 그냥 펴 둔다. */}
       {/* ③-5 ASCVD 10년 위험도 — 참고용 시뮬레이션(한국인 미검증, 진단 아님).
           계산 불가(available=false)면 카드를 그리지 않는다 — 값을 지어내 보여주지 않는다.
           배지는 2뎁스 안 배지(아래)와 같은 갈래를 쓴다 — 한 카드가 겉과 속에서 다른 색을 말하면 안 된다. */}
@@ -1181,17 +1187,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           tips={cardContent['심혈관 위험이 얼마나 되나']?.tips} positionExtra={<CalcRankBlock items={cvCalcs} />} axes={calcAxes(cvCalcs)}
           summary={`10년 위험 ${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}`}
           badge={<VerdictBadge v={ascvd.risk_level === 'low' ? 'good' : ascvd.risk_level === 'high' ? 'bad' : 'watch'} />}
-          /* 한계는 ③이 아니라 카드 맨 밑이다 — 「미국 코호트라 한국인에게 과대추정」은
-             ③「나의 위치」에 대한 한계가 아니라 이 카드가 내놓은 **모든 숫자**에 걸린다.
-             ③ 안에 있으면 시나리오 표와 다른 계산법 사이에 끼어 그 범위가 흐려진다.
-             ⚠️ 접은 채로 둔다 — ④가 이미 "지금 상태가 유지된다고 가정한 수치"라고 오해를
-             막고 있어 4줄을 다시 펼 필요는 없다. 지우지도 않는다(§7). */
           footer={!!ascvd.limitations?.length && (
-            <Expandable label="이 계산의 한계 보기">
+            <>
               {ascvd.limitations.map((l, i) => (
-                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: i === 0 ? 4 : 3 }}>· {l}</Text>
+                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: i === 0 ? 0 : 3 }}>· {l}</Text>
               ))}
-            </Expandable>
+            </>
           )}
         >
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
