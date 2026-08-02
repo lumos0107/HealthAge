@@ -438,7 +438,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   //  ① 인슐린저항성·내장지방(TyG·METS-IR·AIP·LAP·VAI, 서로 r 0.64~0.96) → 대표 TyG
   //  ② 콜레스테롤(Non-HDL·Castelli-I·II, r 0.79~0.94) → 대표 Non-HDL / ③ 혈압(MAP) 고유
   // 대표(TyG·Non-HDL·MAP)만 펼치고 강상관 중복은 접어 인지부하를 줄인다.
-  const METAB_PRIMARY = ['tyg', 'non_hdl_c', 'map'];
+  // 지질에서 둘을 편다 — 서로 다른 것을 재기 때문이다.
+  //   Non-HDL-C = 총콜레스테롤 − HDL  → 죽상형성 지단백의 «총량» (NCEP ATP III 컷오프)
+  //   AIP       = log(TG / HDL)       → 중성지방과 HDL의 «균형»
+  // Castelli I(TC/HDL)·II(LDL/HDL)는 Non-HDL을 비율로 다시 쓴 것에 가까워 접는다.
+  const METAB_PRIMARY = ['tyg', 'non_hdl_c', 'aip', 'map'];
   const metabolicPrimary = metabolicCalcs.filter((it) => METAB_PRIMARY.includes(it.key));
   const metabolicRedundant = metabolicCalcs.filter((it) => !METAB_PRIMARY.includes(it.key));
   const liverCalcs = calcOf(['liver']);
@@ -447,6 +451,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // (게다가 둘은 서로 반대 방향을 가리켜 결론 한 줄로 세우면 어긋난다.)
   // 사라지지는 않는다 — 2뎁스 행으로 값·판정이 그대로 보인다.
   const liverBard = liverCalcs.filter((it) => it.key === 'bard');
+  const liverOthers = liverCalcs.filter((it) => it.key !== 'bard');
   const cvCalcs = calcOf(['cardiovascular']);
   const calcDisclaimer = comboAnalysis?.calculators?.disclaimer;
   // 입력값이 없어 만들지 못한 계산기 — FLI/HSI가 '계산 불가'를 밝히듯 계산기도 침묵하지 않는다.
@@ -850,6 +855,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <Text style={{ fontSize: 11, fontWeight: '700', color: egfr.severity === 'normal' ? T.success : egfr.severity === 'high' ? T.danger : T.warn }}>{egfr.stage} · {egfr.label}</Text>
             </View>
           </View>
+          {/* ③은 카드를 열자마자 보이는 칸이라 «89.4 mL/min/1.73㎡»만 있으면 그 숫자가
+              무엇인지 알 수 없다. ②를 읽고 내려온 사람만 이해하는 화면이 되면 안 된다.
+              단위를 풀어 쓴 한 줄과 눈금을 붙인다 — 계산기 행이 «값 + 기준:»을 쓰는 것과
+              같은 모양이고, §7 「수치엔 항상 해석 한 줄」이 요구하는 것이다.
+              컷오프 숫자는 값의 눈금이라 2뎁스에 남긴다(§2-1). */}
+          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+            1분에 {egfr.egfr}mL의 피를 걸러내고 있어요.
+          </Text>
+          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 3, marginBottom: 5 }}>
+            기준: 90 이상 정상 / 60~89 경도 감소 / 60 미만이 3개월 이상이면 만성 신장질환 범위
+          </Text>
           <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{egfr.description}</Text>
           {/* CrCl — 그 해 검진에 체중이 기록된 경우에만 백엔드가 함께 계산해 준다(약물 용량 참고용).
               ⚠️ 접는다: 이건 «약을 처방받을 때 쓰는 값»이라 검진 결과를 보러 온 사람에게는 부차적이다.
@@ -982,11 +998,24 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <FadeInUp delay={217}>
         <SummaryCard title="간이 굳어가고 있나" term="BARD·De Ritis" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={worstInterpretation(liverBard)}
           badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
-          {/* 지표 3종을 2뎁스에 그대로 편다. 공식·논문 인용만 갈라 2.5뎁스로 내린다.
-              ⚠️ 예전에는 행을 통째로 접었는데, 그러면 «내 수치가 얼마인지»를 보려고도
+          {/* 카드 제목의 질문에 답하는 BARD만 2뎁스에 편다. De Ritis·ALT/GGT는
+              «굳어가나»가 아니라 «손상 원인이 술이냐»를 보므로 접힌 채로 둔다 —
+              결론을 BARD가 맡는 것과 같은 이유다.
+              ⚠️ 예전에는 셋을 통째로 접었는데, 그러면 «내 수치가 얼마인지»를 보려고도
               접기를 열어야 했다. 축 2가 막는 것은 공식이지 값·컷오프가 아니다. */}
-          <CalcRows items={liverCalcs} />
-          <Expandable label="공식과 근거">
+          <CalcRows items={liverBard} />
+          <Expandable label={liverOthers.length > 0 ? `손상 원인 지표 ${liverOthers.length}종 · 공식과 근거` : '공식과 근거'}>
+            {liverOthers.length > 0 && (
+              <>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 4 }}>
+                  손상 원인 지표 {liverOthers.length}종 <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>(굳기가 아니라 «왜»를 본다)</Text>
+                </Text>
+                <CalcRows items={liverOthers} />
+              </>
+            )}
+            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+              공식과 근거
+            </Text>
             <CalcFormulas items={liverCalcs} />
           </Expandable>
         </SummaryCard>
