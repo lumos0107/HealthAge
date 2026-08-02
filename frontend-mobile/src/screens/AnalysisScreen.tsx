@@ -17,13 +17,16 @@ import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, Re
  *  머리말이 하던 일은 이름표만이 아니라 **덩어리 나누기**였다. 지우니 6장이 균일한
  *  목록이 되어 어디까지가 간이고 어디부터 대사인지 눈으로 잡을 게 없어졌다.
  *
- *  대신 무게를 낮춘다: 18pt 볼드 → 11pt 회색. 층 머리말(①②③④)과 확실히 갈려
- *  「층 안의 작은 구획」으로 읽히고, 카드 이름이 이미 뜻을 말하므로 중복도 거슬리지 않는다. */
+ *  무게를 낮춰(11pt 회색) 보기도, 가운데로 옮겨 보기도 했는데 둘 다 원래만 못했다.
+ *  작은 회색은 카드에 눌려 구획이 안 잡히고, 가운데 정렬은 카드 제목과 세로선이
+ *  어긋나 화면이 흔들린다. 왼쪽·크게·진하게가 «덩어리의 시작»을 가장 잘 말한다.
+ *  중복 걱정(「신장 / 콩팥이 잘 거르고 있나」)은 실제로는 거슬리지 않았다 —
+ *  머리말은 구획을 말하고 카드는 질문을 말해서 읽는 층위가 다르다. */
 function DomainHeader({ title }: { title: string }) {
   return (
-    <Text style={{ fontSize: 11, fontWeight: '700', color: T.text3, textAlign: 'center', marginHorizontal: 20, marginTop: 16, marginBottom: 6, letterSpacing: 0.3 }}>
-      {title}
-    </Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginTop: 16, marginBottom: 6 }}>
+      <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>{title}</Text>
+    </View>
   );
 }
 
