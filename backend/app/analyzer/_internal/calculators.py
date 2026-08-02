@@ -587,6 +587,7 @@ def additional_calculators(
     age: Optional[int],
     user_groups: dict[str, bool],
     medications: Optional[dict[str, bool]] = None,
+    year: Optional[int] = None,
 ) -> dict[str, Any]:
     """추가 계산기들을 계산해 items 리스트로 반환. 계산 불가한 지표는 목록에서 빠진다.
 
@@ -668,8 +669,9 @@ def additional_calculators(
             missing.append(miss_label)
             continue
         item = {"key": key, "title": title, "category": category, **result}
-        # 컷오프 미확립 5종(TyG·METS-IR·AIP·LAP·VAI)에 한국인 또래 백분위 부착
-        peer = peer_percentile(key, result.get("value"), gender, age)
+        # 또래 백분위 부착. year는 «전수 측정되는» 지표(De Ritis·MAP)에만 쓰이고,
+        # 지질 기반은 2017 고정이다 — 이유는 calculator_percentile.YEAR_SAFE 주석에.
+        peer = peer_percentile(key, result.get("value"), gender, age, year)
         if peer:
             item.update(peer)
         items.append(item)

@@ -15,6 +15,22 @@ from .peer_compare import estimate_percentile
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 STATS_PATH = PROJECT_ROOT / "data" / "stats" / "calculator_percentiles_2017.parquet"
+# 연도별 분포(2009~2024). 아래 YEAR_SAFE 지표에만 쓴다 — 이유는 그 주석에.
+STATS_16YR_PATH = PROJECT_ROOT / "data" / "stats" / "calculator_percentiles_16yr.parquet"
+
+# 검진 연도의 또래와 견줘도 되는 지표 = **전수 측정되는** 것.
+#
+# 나머지(지질 기반 8종)는 2017 고정이 맞다. 2018년 지질검사 4년주기 전환 이후
+# 지질을 잰 사람만 분모에 들어가는데, 그 부분집합은 이미 관리 중인 쪽으로 쏠려 있다.
+# 2026-07-29 재분석 §3-B가 조합 O/E에서 관찰한 것과 같은 편향이고, 표본 수로도 보인다:
+#
+#   2024년 · 남 55~59세    TyG 16,295 · Non-HDL 16,307   ← 지질: 1/3만 측정
+#                          De Ritis 50,466 · MAP 50,466  ← 전수
+#
+# 그래서 2017(지질 전수측정 마지막 해)을 기준분포로 고정한 것은 실수가 아니라 의도다.
+# ⚠️ 어느 해 기준인지는 `peer_year`로 함께 내려보내 화면이 밝힌다.
+YEAR_SAFE = {"De_Ritis", "MAP"}
+_FALLBACK_YEAR = 2017
 
 # 계산기 item key → parquet indicator 컬럼값 (컷오프 미확립 5종만)
 KEY_TO_INDICATOR = {
@@ -36,6 +52,7 @@ KEY_TO_INDICATOR = {
 }
 
 _stats: Optional[pl.DataFrame] = None
+_stats16: Optional[pl.DataFrame] = None
 
 
 def _load() -> pl.DataFrame:
@@ -43,6 +60,48 @@ def _load() -> pl.DataFrame:
     if _stats is None:
         _stats = pl.read_parquet(STATS_PATH)
     return _stats
+
+
+def _load16() -> pl.DataFrame:
+    global _stats16
+    if _stats16 is None:
+        _stats16 = pl.read_parquet(STATS_16YR_PATH)
+    return _stats16
+
+
+def _row_for(ind: str, gender: int, code: int, year: Optional[int]):
+    """분포 한 줄과 그 기준연도. 전수 측정 지표는 검진 연도로, 나머지는 2017 고정."""
+    if ind in YEAR_SAFE and year is not None:
+        try:
+            df = _load16()
+        except Exception:
+            df = None
+        if df is not None:
+            sub = df.filter(
+                (pl.col("indicator") == ind)
+                & (pl.col("성별코드") == gender)
+                & (pl.col("연령대코드(5세단위)") == code)
+            )
+            if len(sub):
+                years = sub["기준년도"].to_list()
+                # 그 해가 없으면 가장 가까운 해로 — 없는 값을 지어내지 않되, 표본을 버리지도 않는다.
+                pick = min(years, key=lambda y: (abs(y - year), y))
+                r = sub.filter(pl.col("기준년도") == pick).row(0, named=True)
+                if r["n"] >= 100:
+                    return r, pick
+    try:
+        df = _load()
+    except Exception:
+        return None, None
+    sub = df.filter(
+        (pl.col("indicator") == ind)
+        & (pl.col("성별코드") == gender)
+        & (pl.col("연령대코드(5세단위)") == code)
+    )
+    if not len(sub):
+        return None, None
+    r = sub.row(0, named=True)
+    return (r, _FALLBACK_YEAR) if r["n"] >= 100 else (None, None)
 
 
 def _age_to_code(age: int) -> int:
@@ -56,6 +115,7 @@ def peer_percentile(
     value: float,
     gender: int,
     age: Optional[int],
+    year: Optional[int] = None,
 ) -> Optional[dict[str, Any]]:
     """컷오프 미확립 5종의 한국인 또래 백분위. 조회 불가 시 None(추정 금지).
 
@@ -68,21 +128,10 @@ def peer_percentile(
         return None
     if not isinstance(value, (int, float)):
         return None
-    try:
-        df = _load()
-    except Exception:
-        return None
 
     code = _age_to_code(int(age))
-    row = df.filter(
-        (pl.col("indicator") == ind)
-        & (pl.col("성별코드") == gender)
-        & (pl.col("연령대코드(5세단위)") == code)
-    )
-    if len(row) == 0:
-        return None
-    r = row.row(0, named=True)
-    if r["n"] < 100:
+    r, ref_year = _row_for(ind, gender, code, year)
+    if r is None:
         return None
 
     pct = estimate_percentile(
@@ -101,5 +150,5 @@ def peer_percentile(
         "percentile": round(pct, 1),
         "peer_label": label,
         "peer_n": int(r["n"]),
-        "peer_year": 2017,
+        "peer_year": ref_year,
     }

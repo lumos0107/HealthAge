@@ -471,10 +471,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 40세 남성 중 상위 49%",
-    "percentile": 51.3,
-    "peer_n": 70823,
-    "peer_year": 2017
+    "peer_label": "한국인 40세 남성 중 하위 31%",
+    "percentile": 30.9,
+    "peer_n": 39007,
+    "peer_year": 2009
    },
    {
     "key": "alt_ggt",
@@ -518,10 +518,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 40세 남성 중 하위 31%",
-    "percentile": 31.1,
-    "peer_n": 70826,
-    "peer_year": 2017
+    "peer_label": "한국인 40세 남성 중 하위 26%",
+    "percentile": 26,
+    "peer_n": 39007,
+    "peer_year": 2009
    },
    {
     "key": "prevent",
@@ -1120,7 +1120,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "저위험",
     "cutoffs": "<0.11 저위험 / 0.11~0.21 중간 / >0.21 고위험 (Dobiásová)",
     "formula": "AIP = log10(TG/HDL), mmol/L 변환 적용",
-    "percentile": 46.0,
+    "percentile": 46,
     "peer_label": "한국인 42세 남성 중 하위 46%",
     "peer_n": 70759,
     "peer_year": 2017
@@ -1198,10 +1198,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 42세 남성 중 상위 49%",
-    "percentile": 51.3,
-    "peer_n": 70823,
-    "peer_year": 2017
+    "peer_label": "한국인 42세 남성 중 하위 31%",
+    "percentile": 30.6,
+    "peer_n": 39160,
+    "peer_year": 2010
    },
    {
     "key": "alt_ggt",
@@ -1245,10 +1245,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 42세 남성 중 하위 40%",
-    "percentile": 40.1,
-    "peer_n": 70826,
-    "peer_year": 2017
+    "peer_label": "한국인 42세 남성 중 하위 34%",
+    "percentile": 33.9,
+    "peer_n": 39160,
+    "peer_year": 2010
    },
    {
     "key": "prevent",
@@ -1918,7 +1918,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "cutoffs": "정상체중 건강군 ≈1.0 기준 (연령별 컷오프 필요)",
     "formula": "VAI = 성별식(WC·BMI·TG·HDL), mmol/L 변환 적용",
     "note": "내장지방 기능이상 대리지표. 연령의존 컷오프 — 참고용.",
-    "percentile": 51.0,
+    "percentile": 51,
     "peer_label": "한국인 44세 남성 중 상위 49%",
     "peer_n": 70757,
     "peer_year": 2017
@@ -1932,10 +1932,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 44세 남성 중 상위 49%",
-    "percentile": 51.3,
-    "peer_n": 70823,
-    "peer_year": 2017
+    "peer_label": "한국인 44세 남성 중 하위 29%",
+    "percentile": 29.2,
+    "peer_n": 42225,
+    "peer_year": 2012
    },
    {
     "key": "alt_ggt",
@@ -1979,10 +1979,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 44세 남성 중 하위 48%",
-    "percentile": 47.6,
-    "peer_n": 70826,
-    "peer_year": 2017
+    "peer_label": "한국인 44세 남성 중 하위 43%",
+    "percentile": 43.3,
+    "peer_n": 42225,
+    "peer_year": 2012
    },
    {
     "key": "prevent",
@@ -2587,7 +2587,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "중간 위험",
     "cutoffs": "<0.11 저위험 / 0.11~0.21 중간 / >0.21 고위험 (Dobiásová)",
     "formula": "AIP = log10(TG/HDL), mmol/L 변환 적용",
-    "percentile": 57.0,
+    "percentile": 57,
     "peer_label": "한국인 46세 남성 중 상위 43%",
     "peer_n": 64098,
     "peer_year": 2017,
@@ -2667,10 +2667,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 46세 남성 중 하위 42%",
-    "percentile": 42.2,
-    "peer_n": 64159,
-    "peer_year": 2017
+    "peer_label": "한국인 46세 남성 중 하위 40%",
+    "percentile": 40.1,
+    "peer_n": 62357,
+    "peer_year": 2014
    },
    {
     "key": "alt_ggt",
@@ -2714,10 +2714,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "정상 범위",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 46세 남성 중 상위 40%",
-    "percentile": 60,
-    "peer_n": 64159,
-    "peer_year": 2017,
+    "peer_label": "한국인 46세 남성 중 상위 39%",
+    "percentile": 60.5,
+    "peer_n": 62357,
+    "peer_year": 2014,
     "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요."
    },
    {
@@ -3470,7 +3470,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "cutoffs": "참고선 ~50 (검증된 단일 컷오프 없음, 연구별 상이)",
     "formula": "METS-IR = ln(2·FPG+TG)·BMI / ln(HDL)",
     "note": "인슐린저항성 대리지표. 진단 컷오프 미확립 — 추이·참고용.",
-    "percentile": 58.0,
+    "percentile": 58,
     "peer_label": "한국인 48세 남성 중 상위 42%",
     "peer_n": 64098,
     "peer_year": 2017
@@ -3500,7 +3500,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "cutoffs": "정상체중 건강군 ≈1.0 기준 (연령별 컷오프 필요)",
     "formula": "VAI = 성별식(WC·BMI·TG·HDL), mmol/L 변환 적용",
     "note": "내장지방 기능이상 대리지표. 연령의존 컷오프 — 참고용.",
-    "percentile": 66.0,
+    "percentile": 66,
     "peer_label": "한국인 48세 남성 중 상위 34%",
     "peer_n": 64095,
     "peer_year": 2017
@@ -3515,9 +3515,9 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
     "peer_label": "한국인 48세 남성 중 하위 36%",
-    "percentile": 35.8,
-    "peer_n": 64159,
-    "peer_year": 2017
+    "percentile": 36.3,
+    "peer_n": 63908,
+    "peer_year": 2016
    },
    {
     "key": "alt_ggt",
@@ -3563,8 +3563,8 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "formula": "MAP = (SBP + 2×DBP) / 3",
     "peer_label": "한국인 48세 남성 중 상위 30%",
     "percentile": 70.1,
-    "peer_n": 64159,
-    "peer_year": 2017,
+    "peer_n": 63908,
+    "peer_year": 2016,
     "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요."
    },
    {
@@ -4576,10 +4576,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 50세 남성 중 하위 26%",
-    "percentile": 26.2,
-    "peer_n": 65319,
-    "peer_year": 2017
+    "peer_label": "한국인 50세 남성 중 하위 28%",
+    "percentile": 27.7,
+    "peer_n": 66275,
+    "peer_year": 2018
    },
    {
     "key": "alt_ggt",
@@ -4623,10 +4623,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 50세 남성 중 상위 26%",
-    "percentile": 73.6,
-    "peer_n": 65323,
-    "peer_year": 2017,
+    "peer_label": "한국인 50세 남성 중 상위 28%",
+    "percentile": 72.5,
+    "peer_n": 66276,
+    "peer_year": 2018,
     "driver": "또래 중앙값과 견주면 수축기혈압과 이완기혈압이 비슷하게 끌어올렸어요."
    },
    {
@@ -5888,7 +5888,7 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "고위험",
     "cutoffs": "<0.11 저위험 / 0.11~0.21 중간 / >0.21 고위험 (Dobiásová)",
     "formula": "AIP = log10(TG/HDL), mmol/L 변환 적용",
-    "percentile": 83.0,
+    "percentile": 83,
     "peer_label": "한국인 52세 남성 중 상위 17%",
     "peer_n": 65260,
     "peer_year": 2017,
@@ -5968,10 +5968,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 52세 남성 중 하위 17%",
-    "percentile": 16.8,
-    "peer_n": 65319,
-    "peer_year": 2017
+    "peer_label": "한국인 52세 남성 중 하위 19%",
+    "percentile": 19,
+    "peer_n": 64379,
+    "peer_year": 2020
    },
    {
     "key": "alt_ggt",
@@ -6013,10 +6013,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 52세 남성 중 상위 12%",
-    "percentile": 87.6,
-    "peer_n": 65323,
-    "peer_year": 2017,
+    "peer_label": "한국인 52세 남성 중 상위 14%",
+    "percentile": 86.1,
+    "peer_n": 64381,
+    "peer_year": 2020,
     "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요."
    },
    {
@@ -7338,10 +7338,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 54세 남성 중 하위 24%",
-    "percentile": 24,
-    "peer_n": 65319,
-    "peer_year": 2017
+    "peer_label": "한국인 54세 남성 중 하위 27%",
+    "percentile": 26.6,
+    "peer_n": 65208,
+    "peer_year": 2022
    },
    {
     "key": "alt_ggt",
@@ -7383,10 +7383,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 54세 남성 중 상위 23%",
-    "percentile": 76.6,
-    "peer_n": 65323,
-    "peer_year": 2017,
+    "peer_label": "한국인 54세 남성 중 상위 25%",
+    "percentile": 74.9,
+    "peer_n": 65209,
+    "peer_year": 2022,
     "driver": "또래 중앙값과 견주면 수축기혈압 쪽이 이 값을 더 끌어올렸어요."
    },
    {
@@ -8554,10 +8554,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "비알코올성/급성 간질환 시사 (<1)",
     "cutoffs": "<1 비알코올/급성 / 1~2 중간 / >2 알코올성·진행 시사",
     "formula": "De Ritis = AST / ALT",
-    "peer_label": "한국인 56세 남성 중 하위 23%",
-    "percentile": 23,
-    "peer_n": 56349,
-    "peer_year": 2017
+    "peer_label": "한국인 56세 남성 중 하위 26%",
+    "percentile": 26,
+    "peer_n": 50466,
+    "peer_year": 2024
    },
    {
     "key": "alt_ggt",
@@ -8601,10 +8601,10 @@ export const dummyComboAnalysisByYear: Record<number, RealComboAnalysis> = {
     "interpretation": "다소 높음",
     "cutoffs": "70~100 정상 / <70 낮음 / >110 높음 (mmHg)",
     "formula": "MAP = (SBP + 2×DBP) / 3",
-    "peer_label": "한국인 56세 남성 중 상위 23%",
-    "percentile": 76.6,
-    "peer_n": 56350,
-    "peer_year": 2017,
+    "peer_label": "한국인 56세 남성 중 상위 24%",
+    "percentile": 76.5,
+    "peer_n": 50466,
+    "peer_year": 2024,
     "driver": "또래 중앙값과 견주면 이완기혈압과 수축기혈압이 비슷하게 끌어올렸어요."
    },
    {
