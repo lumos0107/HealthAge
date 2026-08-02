@@ -778,9 +778,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             </View>
           </View>
           <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{egfr.description}</Text>
-          {/* CrCl — 그 해 검진에 체중이 기록된 경우에만 백엔드가 함께 계산해 준다(약물 용량 참고용) */}
+          {/* CrCl — 그 해 검진에 체중이 기록된 경우에만 백엔드가 함께 계산해 준다(약물 용량 참고용).
+              ⚠️ 접는다: 이건 «약을 처방받을 때 쓰는 값»이라 검진 결과를 보러 온 사람에게는 부차적이다.
+              내 신장이 어떤지는 위 89.4와 구간 배지가 이미 말했다(§2-1 「2뎁스는 요약이다」). */}
           {egfr.crcl != null && (
-            <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Expandable label="약 먹을 때 쓰는 값도 보기">
+            <View style={{ marginTop: 4 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>약물 용량 참고 (CrCl)</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: T.text1 }}>{egfr.crcl}</Text>
@@ -793,6 +796,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>{egfr.crcl_note}</Text>
               )}
             </View>
+            </Expandable>
           )}
         </SummaryCard>
         </FadeInUp>
@@ -813,10 +817,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           ] as const).filter((r) => r.idx).map((r, i) => (
             <View key={r.title} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{r.title}</Text>
-                  {!!r.idx!.formula && <Text style={{ fontSize: 11, color: T.text3, flexShrink: 1 }}>{r.idx!.formula}</Text>}
-                </View>
+                {/* 영문 원명(formula)은 아래 펼침으로 내렸다 — 「Fatty Liver Index (Bedogni 2006)」이
+                    값 옆에 붙어 있으면 정작 57.3과 구간 배지가 안 읽힌다(§2-1 축 2). */}
+                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{r.title}</Text>
                 <View style={{ backgroundColor: levelBg(r.idx!.level), paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
                   <Text style={{ fontSize: 11, fontWeight: '700', color: levelColor(r.idx!.level) }}>{r.idx!.interpretation}</Text>
                 </View>
@@ -825,12 +828,21 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               {!!r.idx!.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {r.idx!.cutoffs}</Text>}
             </View>
           ))}
-          {!!flIndices.unavailable?.length && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>· 계산 불가: {flIndices.unavailable.join(' / ')}</Text>
-          )}
-          {!!flIndices.disclaimer && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{flIndices.disclaimer}</Text>
-          )}
+          <Expandable label="계산식과 한계 보기">
+            {([{ title: 'FLI', idx: flIndices.fli }, { title: 'HSI', idx: flIndices.hsi }] as const)
+              .filter((r) => r.idx?.formula)
+              .map((r) => (
+                <Text key={r.title} style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginTop: 4 }}>
+                  <Text style={{ fontWeight: '700' }}>{r.title}</Text> — {r.idx!.formula}
+                </Text>
+              ))}
+            {!!flIndices.unavailable?.length && (
+              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· 계산 불가: {flIndices.unavailable.join(' / ')}</Text>
+            )}
+            {!!flIndices.disclaimer && (
+              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>{flIndices.disclaimer}</Text>
+            )}
+          </Expandable>
         </SummaryCard>
         </FadeInUp>
       )}
@@ -972,13 +984,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>{ldlTarget.reliability_note}</Text>
             </View>
           )}
-          {!!ldlTarget.risk_factors?.length && (
-            <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>반영된 위험인자: {ldlTarget.risk_factors.join(' · ')}</Text>
-          )}
-          {!!ldlTarget.limitations?.length && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· {ldlTarget.limitations[0]}</Text>
-          )}
-          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>기준: {ldlTarget.reference}</Text>
+          {/* 위험군을 «어떻게» 정했는지와 그 한계·출처는 2.5뎁스로 — 2뎁스가 답할 것은
+              「내 목표는 얼마고 지금 넘었나」까지다(§2-1). 위험군 이름은 위에 이미 있다. */}
+          <Expandable label="위험군을 어떻게 정했나">
+            {!!ldlTarget.risk_factors?.length && (
+              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginTop: 4 }}>반영된 위험인자: {ldlTarget.risk_factors.join(' · ')}</Text>
+            )}
+            {!!ldlTarget.limitations?.length && (
+              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· {ldlTarget.limitations[0]}</Text>
+            )}
+            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>기준: {ldlTarget.reference}</Text>
+          </Expandable>
         </SummaryCard>
         </FadeInUp>
       )}
@@ -1039,12 +1055,15 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <CalcRows items={cvCalcs} />
             </Expandable>
           )}
+          {/* 한계 4줄은 접는다. ④「그래서 이게 의미하는 건」이 이미 "지금 상태가 유지된다고
+              가정한 수치"라고 오해를 막고 있어, 2뎁스에서 한 번 더 4줄을 펼 필요가 없다.
+              ⚠️ 지우지는 않는다 — 한국인 과대추정은 이 카드가 반드시 밝혀야 하는 한계다(§7). */}
           {!!ascvd.limitations?.length && (
-            <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Expandable label="이 계산의 한계 보기">
               {ascvd.limitations.map((l, i) => (
-                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· {l}</Text>
+                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: i === 0 ? 4 : 3 }}>· {l}</Text>
               ))}
-            </View>
+            </Expandable>
           )}
         </SummaryCard>
         </FadeInUp>

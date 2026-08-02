@@ -189,9 +189,9 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
               같은 모양의 카드 셋이 연달아 있어 무엇이 다른지도 알 수 없었다.
               **버린 것은 없다** — summary·top_concerns·next_exam_year 전부 아래에 있다.
               (스펙 §1-1② — 무엇을 왜 뺐고 어디서 볼 수 있는지 기록한다) */}
-          {!!insight?.summary && (
-            <Text style={{ fontSize: 14, color: T.text2, lineHeight: 22, marginBottom: 14 }}>{insight.summary}</Text>
-          )}
+          {/* ⚠️ insight.summary(16년 서사 한 문단)는 아래 펼침으로 내렸다(2026-08-02).
+              2뎁스 첫 화면은 «가장 먼저 볼 것»이어야 하는데, 긴 서사가 그 위에 앉아
+              우려 3건을 화면 밖으로 밀고 있었다. 버리지 않고 접기 안에 있다(§1-1②). */}
           {!!insight?.top_concerns?.length && (
             <View style={{ marginBottom: 16, paddingBottom: 4 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 6 }}>가장 먼저 볼 것</Text>
@@ -213,8 +213,11 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
               })}
             </View>
           )}
+          <Expandable label={`16년 요약과 변화 ${highlights!.length}건 보기`}>
+          {!!insight?.summary && (
+            <Text style={{ fontSize: 14, color: T.text2, lineHeight: 22, marginTop: 4, marginBottom: 14 }}>{insight.summary}</Text>
+          )}
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>여러 해의 기록을 비교해 시스템이 짚어낸 변화 {highlights!.length}건이에요.</Text>
-          <Expandable label={`변화 ${highlights!.length}건 보기`}>
           <View style={{ gap: 8 }}>
             {highlights!.map((h, i) => {
               const sevColor = h.severity === 'high' ? T.danger : T.warn;
