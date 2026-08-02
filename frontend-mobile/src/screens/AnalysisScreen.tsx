@@ -261,6 +261,29 @@ function ComboMeanCompare({ combo }: { combo: RealComboGroup }) {
  *  「Castelli 지수 I」·「AIP 죽상형성지수」·「METS-IR」처럼 전문용어라
  *  1뎁스에 늘어놓으면 스펙 §2(1뎁스에 전문 용어 금지)를 어기고 읽히지도 않는다.
  *  이름은 카드를 열면 CalcRows가 값·기준과 함께 보여준다. */
+/** 지표가 몇 개 안 되는 카드의 결론 — «가장 나쁜 지표의 판정»을 그대로 쓴다.
+ *
+ *  ⚠️ 개수(levelSummary)는 제목의 질문에 답하지 않는다. 「간에 지방이 꼈나」에
+ *  「지표 2개 중 2개가 기준 밖」은 계산 도구 이야기지 간 이야기가 아니고,
+ *  판단은 배지가 이미 말한다. 백엔드가 지표마다 보내주는 interpretation이
+ *  («판단 보류 구간», «진행 간섬유화 배제 불가 — 추가 평가 권장») 실제 답이다.
+ *  문구는 백엔드 것을 그대로 쓴다 — 여기서 다시 쓰면 지어내는 것이 된다.
+ *
+ *  지표가 많은 카드(대사·지질 7종)에는 쓰지 않는다: 하나만 꺼내면 나머지가 묻히고,
+ *  지표 이름이 전부 전문용어라 «무엇이» 그런지 1뎁스에 밝힐 수도 없다. */
+const LEVEL_RANK: Record<string, number> = { very_high: 0, high: 1, moderate: 2, borderline: 2, low: 3, info: 4 };
+
+function worstInterpretation(items: { level: string; interpretation?: string | null }[]): string | null {
+  const withText = items.filter((it) => it.interpretation);
+  if (!withText.length) return null;
+  const worst = [...withText].sort((a, b) => (LEVEL_RANK[a.level] ?? 9) - (LEVEL_RANK[b.level] ?? 9))[0];
+  // 같은 판정이 전부면 «모두»로 묶어 하나만 말한다 — 같은 문장을 두 줄 쓰지 않는다.
+  const allSame = withText.every((it) => it.interpretation === worst.interpretation);
+  return allSame && withText.length > 1
+    ? `${withText.length}개 지표 모두 ${worst.interpretation}이에요`
+    : worst.interpretation!;
+}
+
 function levelSummary(levels: string[]): string | null {
   const judged = levels.filter((l) => l !== 'info');
   if (!judged.length) return null;
@@ -825,7 +848,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <SummaryCard title="간에 지방이 꼈나" term="FLI·HSI" definition={cardContent['간에 지방이 꼈나']?.definition} detail={cardContent['간에 지방이 꼈나']?.detail} meaning={cardContent['간에 지방이 꼈나']?.meaning} tips={cardContent['간에 지방이 꼈나']?.tips}
           summary={[
             fattyLiverType ? `${fattyLiverType.type}${fattyLiverType.provisional ? ' (잠정)' : ''}` : null,
-            levelSummary([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level)),
+            worstInterpretation([flIndices.fli, flIndices.hsi].filter(Boolean) as { level: string; interpretation?: string | null }[]),
           ].filter(Boolean).join(' · ')}
           axes={['standard']}
           badge={<VerdictBadge v={worstVerdict([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))} />}>
@@ -916,7 +939,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 간 계산기 (BARD·De Ritis) — FLI/HSI(지방증)에 이어 섬유화·유형 지표 */}
       {liverCalcs.length > 0 && (
         <FadeInUp delay={217}>
-        <SummaryCard title="간이 굳어가고 있나" term="BARD·De Ritis" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={levelSummary(liverCalcs.map((it) => it.level))}
+        <SummaryCard title="간이 굳어가고 있나" term="BARD·De Ritis" definition={cardContent['간이 굳어가고 있나']?.definition} detail={cardContent['간이 굳어가고 있나']?.detail} meaning={cardContent['간이 굳어가고 있나']?.meaning} tips={cardContent['간이 굳어가고 있나']?.tips} positionExtra={<CalcRankBlock items={liverCalcs} />} axes={calcAxes(liverCalcs)} summary={worstInterpretation(liverCalcs)}
           badge={<VerdictBadge v={worstVerdict(liverCalcs.map((it) => it.level))} />}>
           {/* CalcRows에는 공식과 논문 인용이 붙는다(`De Ritis = AST / ALT`,
               `BARD = BMI≥28(1) + … [Harrison 2008]`). 축 2는 2뎁스에 공식을 금지하므로
