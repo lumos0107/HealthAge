@@ -114,12 +114,12 @@ export default function HistoryScreen({ reports, metricDefinitions, usingRealDat
       {!!changePace?.length && (
         <FadeInUp delay={330}>
         <SummaryCard
-          title="또래 대비 변화 속도"
+          title="또래보다 빠르게 변한 항목"
           summary={`${changePace[0]?.span_years ?? ''}년을 통틀어 ${changePace.length}개 항목이 또래보다 크게 변했어요.`}
-          definition={cardContent['또래 대비 변화 속도'].definition}
-          detail={cardContent['또래 대비 변화 속도'].detail}
-          meaning={cardContent['또래 대비 변화 속도'].meaning}
-          tips={cardContent['또래 대비 변화 속도'].tips}
+          definition={cardContent['또래보다 빠르게 변한 항목'].definition}
+          detail={cardContent['또래보다 빠르게 변한 항목'].detail}
+          meaning={cardContent['또래보다 빠르게 변한 항목'].meaning}
+          tips={cardContent['또래보다 빠르게 변한 항목'].tips}
           positionTitle="나의 위치 — 또래 평균과 비교"
         >
           <Text style={{ fontSize: 13, color: T.text2, marginBottom: 12 }}>같은 성별·연령대의 평균 변화와 내 변화 폭을 비교했어요. 악화 방향만 모았어요.</Text>
@@ -513,33 +513,25 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
         </View>
       ) : undefined}
     >
-      {/* 연도 — 그래프를 눌러도 바뀌지만, 눌러도 된다는 걸 알 방법이 없어 칩을 함께 둔다.
-          검사항목·분석 탭은 연도 칩으로 해를 고르는데 이 카드만 그래프 터치가 유일한 수단이었다.
-          ⚠️ 아래 분기 **바깥**에 둔다 — 그 해에 이 묶음을 하나도 측정하지 않았으면 아래가
-             통째로 안내문으로 바뀌는데, 칩까지 같이 사라지면 다른 해로 돌아올 방법이 없어진다. */}
-      {reports.length > 1 && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-          <Text style={{ fontSize: 11, color: T.text3, alignSelf: 'center', marginRight: 2 }}>연도</Text>
-          {reports.map((rep, i) => ({ rep, i })).reverse().map(({ rep, i }) => {
-            const on = i === selIdx;
-            return (
-              <Pressable
-                key={rep.year}
-                onPress={() => setSelIdx(i)}
-                style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: on ? T.primary : T.cardAlt }}
-              >
-                <Text style={{ fontSize: 11, fontWeight: '700', color: on ? '#fff' : T.text3 }}>{rep.year}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+      {/* ⚠️ 연도 칩을 뒀다가 뺐다(2026-08-02). 회차가 9개가 되면서 칩이 두 줄을 차지해
+             정작 보러 온 그래프를 아래로 밀어냈다. 연도는 그래프를 눌러 고르고, 고른 해는
+             점선 세로선·값 라벨·「N년 검진 수치」 제목 셋이 이미 말한다.
+             누를 수 있다는 것은 그래프 아래 안내 한 줄이 맡는다. */}
       {presentKeys.length === 0 ? (
         // 이 그룹에 속한 항목 중 그 해에 측정된 것이 하나도 없을 때 — 빈 그래프나 가짜 수치 대신
         // 측정하지 않았다는 사실을 그대로 안내한다.
-        <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center', paddingVertical: 28 }}>
-          {r.year}년 검진에서는 이 항목들을 측정하지 않았어요.
-        </Text>
+        // 이때는 그래프가 사라져 «연도를 바꿀 손잡이»도 함께 없어지므로, 돌아갈 버튼을 둔다.
+        <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+          <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center' }}>
+            {r.year}년 검진에서는 이 항목들을 측정하지 않았어요.
+          </Text>
+          <Pressable
+            onPress={() => setSelIdx(reports.length - 1)}
+            style={{ marginTop: 12, backgroundColor: T.cardAlt, paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: T.text2 }}>{reports[reports.length - 1].year}년으로 돌아가기</Text>
+          </Pressable>
+        </View>
       ) : (
         <View>
           {/* 컨트롤 두 줄. 한 칩이 '기준 바꾸기'와 '단독으로 보기'를 겸하면 전체보기를 유지한 채
@@ -595,10 +587,10 @@ function ChartCard({ group, reports, metricDefinitions }: { group: { title: stri
           />
           <Text style={{ fontSize: 11, color: T.text3, marginTop: 6, marginBottom: 4, lineHeight: 16 }}>
             {!focusMetric
-              ? '그래프를 눌러 해당 연도의 수치를 확인하세요.'
+              ? '그래프를 눌러 그해 수치를 확인하세요.'
               : showAll && presentKeys.length > 1
-                ? `초록 띠 = ${focusMetric.shortName} 정상 ${focusMetric.normalText}${focusMetric.unit}. 진한 선만 이 띠로 판단하세요.`
-                : `${focusMetric.name} 하나만 그린 그래프예요. 초록 띠 = 정상 ${focusMetric.normalText}${focusMetric.unit}.`}
+                ? `초록 띠 = ${focusMetric.shortName} 정상 ${focusMetric.normalText}${focusMetric.unit}. 진한 선만 이 띠로 판단하세요. 그래프를 누르면 그해 수치를 봐요.`
+                : `${focusMetric.name} 하나만 그린 그래프예요. 초록 띠 = 정상 ${focusMetric.normalText}${focusMetric.unit}. 그래프를 누르면 그해 수치를 봐요.`}
           </Text>
 
           {/* 선택한 연도의 수치 = 그래프 범례. 예전에는 "검진 수치" 줄과 "범례" 줄이
