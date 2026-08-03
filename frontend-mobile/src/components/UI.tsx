@@ -79,7 +79,10 @@ export const T = {
 // 이 앱은 폰 화면 전용으로 만들어졌다 — 노트북 브라우저든 태블릿 실기기든,
 // 화면이 폰보다 넓으면(430 초과) 카드·차트가 그 폭 그대로 늘어나 비율이 깨진다.
 // 그래서 플랫폼이 아니라 "화면이 넓은지"로 판단해 항상 430으로 고정한다.
-export const PHONE_WIDTH = 430;
+// 430(폰 폭)이 정석이지만, 큰 태블릿(예: 갤럭시탭 S10+ 세로 폭 약 970)에서
+// 여백이 너무 크다는 요청으로 700까지 늘렸다. 카드·차트는 여전히 이 값을
+// 고정폭으로 쓰므로, 700을 넘는 화면에서는 그만큼 좌우 여백이 남는다.
+export const PHONE_WIDTH = 700;
 export const W = Math.min(Dimensions.get('window').width, PHONE_WIDTH);
 
 // RN의 Modal은 웹에서는 document.body로 별도 포탈되어 화면(App.tsx)에 씌운 폰 폭
