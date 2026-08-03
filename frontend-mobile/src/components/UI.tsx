@@ -76,7 +76,10 @@ export const T = {
   eyebrow: { fontSize: 11, fontWeight: '700' as const, color: '#8B95A1', letterSpacing: 1.6, textTransform: 'uppercase' as const },
 } as const;
 
-export const W = Dimensions.get('window').width;
+// 웹(노트북 브라우저)에서 실행할 때는 창 폭이 아니라 폰 폭 기준으로 고정한다.
+// 이 앱은 모바일 화면 전용으로 만들어져서, 창 폭을 그대로 쓰면 카드·차트가
+// 노트북 화면 가득 늘어나 비율이 깨진다(실기기 빌드는 영향 없음).
+export const W = Platform.OS === 'web' ? Math.min(Dimensions.get('window').width, 430) : Dimensions.get('window').width;
 
 // ─── Status helpers ──────────────────────────────────────
 export function statusColor(status: Status) {

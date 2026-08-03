@@ -315,6 +315,7 @@ export default function App() {
   }
 
   return (
+    <View style={s.webShell}>
     <SafeAreaProvider>
     <SafeAreaView style={s.safe}>
       <StatusBar style="dark" />
@@ -447,6 +448,7 @@ export default function App() {
       </Modal>
     </SafeAreaView>
     </SafeAreaProvider>
+    </View>
   );
 }
 
@@ -612,7 +614,15 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.bg },
+  // 노트북 브라우저에서 열면 폰 폭(430)짜리 화면을 가운데 띄운다 — 이 앱은
+  // 반응형 웹이 아니라 모바일 화면을 그대로 보여주는 용도라, 창 폭에 맞춰
+  // 늘리면 비율이 깨진다. 실기기 빌드는 이 값이 적용되지 않는다.
+  webShell: Platform.OS === 'web'
+    ? { flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: '100vh' as any }
+    : { flex: 1 },
+  safe: Platform.OS === 'web'
+    ? { flex: 1, backgroundColor: T.bg, width: 430, maxWidth: '100%' as any }
+    : { flex: 1, backgroundColor: T.bg },
   header: {
     height: 60,
     justifyContent: 'center',
