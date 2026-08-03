@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Dimensions, Easing, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
-import { Eyebrow, FadeInUp, T } from '../components/UI';
+import { Eyebrow, FadeInUp, T, W } from '../components/UI';
 import { Expandable, NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard } from '../components/v2';
 import { cardContent, cardContentFor, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { metricPeerRank, normalBounds, normalRangeText, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa, trendDirection } from '../interpret';
@@ -16,8 +16,7 @@ type ChangePace = NonNullable<RealTimeseries['change_pace']>[number];
 // 묶음의 '대표 항목'을 고르는 순서 — 가장 나쁜 상태를 대표로 삼는다.
 const ATTENTION: Record<string, number> = { 위험: 0, 주의: 1, 정상: 2 };
 
-const SCREEN_W = Dimensions.get('window').width;
-const CHART_W = SCREEN_W - 32 - 40; // 16px card margin + 20px card padding, each side
+const CHART_W = W - 32 - 40; // 16px card margin + 20px card padding, each side
 const CHART_H = 180;
 const PAD = { top: 12, right: 16, bottom: 30, left: 44 };
 const PLOT_W = CHART_W - PAD.left - PAD.right;
