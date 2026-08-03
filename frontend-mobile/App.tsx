@@ -355,7 +355,7 @@ export default function App() {
         {tab === 'analysis' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
           : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendationsByYear={analysisByYear.rec} egfrByYear={analysisByYear.egfr} comboAnalysisByYear={analysisByYear.combo} gender={profile.gender} smoking={profile.smoking} alcoholWeeklyG={profile.drinking === 'yes' ? profile.alcohol_weekly_g : 0} />)}
-        {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} />}
+        {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} demoMode={isDemoAccount} />}
         {tab === 'profile' && loggedIn && (
           <ProfileScreen
             profile={profile}
