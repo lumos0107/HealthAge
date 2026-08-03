@@ -7,11 +7,11 @@
   * { box-sizing: border-box; }
   body {
     font-family: "Malgun Gothic", "맑은 고딕", sans-serif;
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 20px;
     color: #111;
-    font-size: 14px;
+    font-size: 13px;
   }
   .demo-banner {
     background: #fff3cd;
@@ -20,42 +20,45 @@
     text-align: center;
     font-weight: 700;
     font-size: 15px;
-    padding: 10px;
-    margin-bottom: 16px;
+    padding: 8px;
+    margin-bottom: 14px;
     border-radius: 6px;
   }
   h1 {
     text-align: center;
-    font-size: 20px;
+    font-size: 19px;
     border: 2px solid #000;
-    padding: 10px;
-    margin: 0 0 12px;
+    padding: 8px;
+    margin: 0 0 10px;
   }
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 12px;
-    font-size: 13px;
+    margin-bottom: 10px;
+    font-size: 12.5px;
   }
   th, td {
     border: 1px solid #333;
-    padding: 6px 10px;
+    padding: 5px 8px;
     text-align: left;
+    vertical-align: middle;
   }
   th {
     background: #f2f2f2;
     font-weight: 700;
     white-space: nowrap;
   }
-  .section-head {
-    background: #e8e8e8;
+  .group-head {
+    background: #e5e5e5;
     font-weight: 700;
     text-align: center;
   }
-  .num {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
+  .num { text-align: center; font-variant-numeric: tabular-nums; }
+  .ref { color: #444; font-size: 11.5px; white-space: nowrap; }
+  .chk { font-size: 12px; line-height: 1.7; white-space: nowrap; }
+  .chk b { font-weight: 700; }
+  .rot { writing-mode: vertical-rl; text-orientation: upright; text-align: center; font-weight: 700; background: #eee; }
+  .note { font-size: 11px; color: #555; margin-top: 6px; }
   @media print {
     .demo-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { padding: 0; }
@@ -67,37 +70,134 @@
   <h1>일반건강검진 결과통보서</h1>
 
   <table>
-    <tr><th style="width:20%">수검자</th><td style="width:30%">홍길동</td><th style="width:20%">검진일</th><td>2024-03-15</td></tr>
-    <tr><th>검진기관</th><td colspan="3">서울대병원 강남센터</td></tr>
+    <tr>
+      <th style="width:14%">수검자</th><td style="width:20%">홍길동</td>
+      <th style="width:16%">주민등록번호</th><td style="width:20%">680101-1</td>
+      <th style="width:14%">검진일</th><td>2024.03.15</td>
+    </tr>
+    <tr>
+      <th>검진기관</th><td colspan="5">서울대병원 강남센터</td>
+    </tr>
   </table>
 
   <table>
-    <tr><th colspan="2" class="section-head">계측검사</th></tr>
-    <tr><th style="width:40%">키(cm) / 몸무게(kg)</th><td class="num">165.9 / 69.4</td></tr>
-    <tr><th>체질량지수 BMI(kg/㎡)</th><td class="num">25.2</td></tr>
-    <tr><th>허리둘레(cm)</th><td class="num">88.0</td></tr>
-    <tr><th>혈압(수축기/이완기, mmHg)</th><td class="num">134 / 85</td></tr>
+    <tr><th colspan="4" class="group-head">건강검진 종합소견</th></tr>
+    <tr>
+      <td colspan="4">
+        판정 &nbsp;–&nbsp; □ 정상A &nbsp;&nbsp; ■ 정상B(경계) &nbsp;&nbsp;&nbsp; ■ 일반 질환의심 &nbsp;&nbsp; □ 고혈압·당뇨병·이상지질혈증 질환의심 &nbsp;&nbsp; □ 유질환자
+      </td>
+    </tr>
   </table>
 
   <table>
-    <tr><th colspan="2" class="section-head">혈액검사</th></tr>
-    <tr><th style="width:40%">혈색소(g/dL)</th><td class="num">15.1</td></tr>
-    <tr><th>공복혈당(mg/dL)</th><td class="num">110</td></tr>
-    <tr><th>총콜레스테롤(mg/dL)</th><td class="num">216</td></tr>
-    <tr><th>고밀도 콜레스테롤 HDL(mg/dL)</th><td class="num">39</td></tr>
-    <tr><th>중성지방(mg/dL)</th><td class="num">168</td></tr>
-    <tr><th>저밀도 콜레스테롤 LDL(mg/dL)</th><td class="num">145</td></tr>
-    <tr><th>혈청크레아티닌(mg/dL)</th><td class="num">0.99</td></tr>
-    <tr><th>AST(SGOT)(IU/L)</th><td class="num">27</td></tr>
-    <tr><th>ALT(SGPT)(IU/L)</th><td class="num">33</td></tr>
-    <tr><th>감마지티피(γ-GTP)(IU/L)</th><td class="num">64</td></tr>
+    <tr>
+      <th style="width:4%">구분</th>
+      <th style="width:12%">목표질환</th>
+      <th style="width:22%">검사항목</th>
+      <th style="width:10%">결과</th>
+      <th style="width:16%">참고치</th>
+      <th>판정</th>
+    </tr>
+    <tr>
+      <td rowspan="4" class="rot">계측검사</td>
+      <td rowspan="1">비만/복부비만</td>
+      <td>키(cm) / 몸무게(kg)</td>
+      <td class="num">165.9 / 69.4</td>
+      <td class="ref">-</td>
+      <td class="chk">-</td>
+    </tr>
+    <tr>
+      <td>비만/복부비만</td>
+      <td>체질량지수(kg/㎡)</td>
+      <td class="num">25.2</td>
+      <td class="ref">18.5~24.9 정상</td>
+      <td class="chk">□ 저체중 &nbsp; □ 정상 &nbsp; <b>■ 과체중(25~29.9)</b> &nbsp; □ 비만</td>
+    </tr>
+    <tr>
+      <td>비만/복부비만</td>
+      <td>허리둘레(cm)</td>
+      <td class="num">88.0</td>
+      <td class="ref">남 90미만</td>
+      <td class="chk"><b>■ 정상</b> &nbsp; □ 복부비만(남 90이상,여 85이상)</td>
+    </tr>
+    <tr>
+      <td>고혈압<br>(수축기/이완기)</td>
+      <td>혈압(mmHg)</td>
+      <td class="num">134 / 85</td>
+      <td class="ref">전단계 120-139/80-89</td>
+      <td class="chk">□ 정상 &nbsp; <b>■ 고혈압 전단계</b><br>□ 고혈압의심(140이상 또는 90이상)</td>
+    </tr>
+
+    <tr>
+      <td rowspan="10" class="rot">혈액검사</td>
+      <td>빈혈 등</td>
+      <td>혈색소(g/dL)</td>
+      <td class="num">15.1</td>
+      <td class="ref">남 13.0~17.5</td>
+      <td class="chk"><b>■ 정상</b> &nbsp; □ 빈혈 의심</td>
+    </tr>
+    <tr>
+      <td>당뇨병</td>
+      <td>공복혈당(mg/dL)</td>
+      <td class="num">110</td>
+      <td class="ref">100.0미만</td>
+      <td class="chk">□ 정상 &nbsp; <b>■ 공복혈당장애 의심</b> &nbsp; □ 당뇨병 의심</td>
+    </tr>
+    <tr>
+      <td rowspan="4">이상지질혈증</td>
+      <td>총콜레스테롤(mg/dL)</td>
+      <td class="num">216</td>
+      <td class="ref">200.0미만</td>
+      <td rowspan="4" class="chk">□ 정상 &nbsp; <b>■ 고콜레스테롤혈증 의심</b><br>□ 고중성지방혈증 의심<br>□ 낮은 HDL 콜레스테롤 의심<br>□ 유질환자</td>
+    </tr>
+    <tr>
+      <td>고밀도 콜레스테롤(mg/dL)</td>
+      <td class="num">39</td>
+      <td class="ref">40.0이상</td>
+    </tr>
+    <tr>
+      <td>중성지방(mg/dL)</td>
+      <td class="num">168</td>
+      <td class="ref">150.0미만</td>
+    </tr>
+    <tr>
+      <td>저밀도 콜레스테롤(mg/dL)</td>
+      <td class="num">145</td>
+      <td class="ref">130.0미만</td>
+    </tr>
+    <tr>
+      <td>신장질환</td>
+      <td>혈청크레아티닌(mg/dL)</td>
+      <td class="num">0.99</td>
+      <td class="ref">1.10이하</td>
+      <td class="chk"><b>■ 정상</b> &nbsp; □ 신장기능 이상 의심</td>
+    </tr>
+    <tr>
+      <td rowspan="3">간장질환</td>
+      <td>AST(SGOT)(IU/L)</td>
+      <td class="num">27</td>
+      <td class="ref">40.0이하</td>
+      <td rowspan="3" class="chk">□ 정상 &nbsp; <b>■ 간기능 이상 의심</b></td>
+    </tr>
+    <tr>
+      <td>ALT(SGPT)(IU/L)</td>
+      <td class="num">33</td>
+      <td class="ref">35.0이하</td>
+    </tr>
+    <tr>
+      <td>감마지티피(γ-GTP)(IU/L)</td>
+      <td class="num">64</td>
+      <td class="ref">남 63.0이하</td>
+    </tr>
   </table>
 
   <table>
-    <tr><th colspan="2" class="section-head">요검사</th></tr>
-    <tr><th style="width:40%">요단백</th><td>정상</td></tr>
+    <tr><th style="width:8%">요검사</th><th style="width:12%">요단백</th><td colspan="4"><b>■ 정상</b> &nbsp; □ 경계 &nbsp; □ 단백뇨 의심</td></tr>
+    <tr><th>영상검사</th><th>흉부촬영</th><td colspan="4"><b>■ 정상</b> &nbsp; □ 비활동성 폐결핵 &nbsp; □ 질환의심 &nbsp; □ 기타</td></tr>
+    <tr><th rowspan="2">진찰<br>(문진)</th><th>과거병력</th><td>무</td><th>약물치료</th><td colspan="2">무</td></tr>
+    <tr><th>생활습관</th><td colspan="4">□ 금연필요 &nbsp; □ 절주필요 &nbsp; <b>■ 신체활동 필요</b> &nbsp; □ 근력운동 필요</td></tr>
   </table>
 
-  <p style="font-size:12px; color:#555;">* 이 결과통보서는 시연을 위해 만든 예시 문서이며, 실제 검진기관에서 발급한 문서가 아닙니다.</p>
+  <p class="note">* 이 결과통보서는 시연을 위해 만든 예시 문서이며, 실제 검진기관에서 발급한 문서가 아닙니다.</p>
 </body>
 </html>
