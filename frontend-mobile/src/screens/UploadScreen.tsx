@@ -8,6 +8,7 @@ import { FixedCTA } from '../components/v2';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, ocrTemplate } from '../data';
 import type { MedicationItem, OcrField, TabKey, UserProfile } from '../data';
+import { demoAnalyze, demoUploadCheckup } from '../demoUpload';
 import { analyzeCheckup, fieldsToOcrResult, ocrFlagText, ocrResultToFields, OCR_LOW_CONFIDENCE, uploadCheckupImage, uploadMedicationFile } from '../health';
 import type { RealOcrResult } from '../health';
 
@@ -22,7 +23,7 @@ async function openExternalUrl(url: string) {
   }
 }
 
-export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle }: { profile: UserProfile; onTab: (tab: TabKey) => void; onSaved?: () => void; onSaveLifestyle?: (ls: Lifestyle) => void }) {
+export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle, demoMode }: { profile: UserProfile; onTab: (tab: TabKey) => void; onSaved?: () => void; onSaveLifestyle?: (ls: Lifestyle) => void; demoMode?: boolean }) {
   const [mode, setMode] = useState<'checkup' | 'medication'>('checkup');
   const [fields, setFields] = useState<OcrField[]>([]);
   const [source, setSource] = useState('');
@@ -163,7 +164,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
     try {
       const fileName = asset.fileName ?? asset.uri.split('/').pop() ?? 'checkup.jpg';
       const mimeType = asset.mimeType ?? 'image/jpeg';
-      const result = await uploadCheckupImage(asset.uri, fileName, mimeType);
+      const result = demoMode ? await demoUploadCheckup() : await uploadCheckupImage(asset.uri, fileName, mimeType);
       setOcrRaw(result.ocr);
       setFields(ocrResultToFields(result.ocr));
       setSource(fileName);
@@ -221,7 +222,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle 
       if (lifestyle.drinking) ls.drinking = lifestyle.drinking;
       if (lifestyle.drinking === 'yes') ls.alcohol_weekly_g = lifestyle.alcohol_weekly_g;
       const ocrToSend = { ...base, lifestyle: ls };
-      const result = await analyzeCheckup(ocrToSend, true);
+      const result = demoMode ? await demoAnalyze() : await analyzeCheckup(ocrToSend, true);
       onSaveLifestyle?.(lifestyle); // 업로드에서 바꾼 생활습관을 프로필에도 반영
       setSaved(true);
       // 백엔드가 이 분석에 복약 정보를 반영했는지 — false면 아래에서 복약자료 업로드를 안내한다.
