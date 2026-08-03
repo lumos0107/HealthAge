@@ -319,7 +319,6 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
               </Pressable>
             </View>
 
-            {ocrLoading && <View style={{ marginHorizontal: 16 }}><AnalyzingCard /></View>}
 
             {fields.length > 0 && (
               <>
@@ -525,6 +524,16 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
         ) : null}
       </ScrollView>
   
+      {/* 인식 중 팝업 */}
+      <Modal transparent visible={ocrLoading} animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: T.white, borderRadius: T.radiusMd, paddingVertical: 32, paddingHorizontal: 36, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={T.primary} style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>처리중입니다</Text>
+          </View>
+        </View>
+      </Modal>
+
       {/* 저장 확인 모달 */}
       <Modal transparent visible={confirmOpen} animationType="fade">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
@@ -600,18 +609,6 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
         <FixedCTA label="복약자료 파일 업로드하기" onPress={pickMedicationFile} disabled={medUploading} loading={medUploading} />
       )}
     </KeyboardAvoidingView>
-    </View>
-  );
-}
-
-function AnalyzingCard() {
-  return (
-    <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 24, alignItems: 'center', marginBottom: 12 }}>
-      <ActivityIndicator size="large" color={T.primary} style={{ marginBottom: 16 }} />
-      <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6 }}>결과지를 읽고 있어요</Text>
-      <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21 }}>
-        사진에서 검사 수치를 찾아 정리하는 중이에요.{'\n'}보통 10~30초 정도 걸려요.
-      </Text>
     </View>
   );
 }

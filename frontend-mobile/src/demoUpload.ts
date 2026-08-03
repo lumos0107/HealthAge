@@ -42,7 +42,7 @@ export function demoOcrResult(): RealOcrResult {
   };
 }
 
-export async function demoUploadCheckup(delayMs = 1500): Promise<RealOcrResult> {
+export async function demoUploadCheckup(delayMs = 3000): Promise<RealOcrResult> {
   await wait(delayMs);
   return demoOcrResult();
 }
