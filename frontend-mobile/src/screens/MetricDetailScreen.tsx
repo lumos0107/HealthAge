@@ -4,7 +4,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
 import { metricContent, yearsWithMetric } from '../data';
 import { deltaText, formatMetricValue, headline, metricPeerRank, positionTitle, yearDelta } from '../interpret';
-import { StatusBadge, T } from '../components/UI';
+import { StatusBadge, T, WebFrame } from '../components/UI';
 import { categoryVisual, MetricTrendChart, PeerRankBlock, RangeBar, SquircleIcon } from '../components/v2';
 
 // L2 항목 상세 — 이야기 순서로 읽힌다: 판단 → 이 항목이 뭔지(정의, 펼치면 심화) → 내 위치 → 근거 → 그래서 뭘 하면 되는지.
@@ -34,6 +34,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
+      <WebFrame>
       <View style={{ flex: 1, backgroundColor: T.bg }}>
         {/* 헤더 — 뒤로가기 + 항목명 */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 54, paddingBottom: 10, backgroundColor: T.white }}>
@@ -156,6 +157,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
           <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
         </ScrollView>
       </View>
+      </WebFrame>
     </Modal>
   );
 }

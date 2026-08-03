@@ -81,6 +81,20 @@ export const T = {
 // 노트북 화면 가득 늘어나 비율이 깨진다(실기기 빌드는 영향 없음).
 export const W = Platform.OS === 'web' ? Math.min(Dimensions.get('window').width, 430) : Dimensions.get('window').width;
 
+// RN의 Modal은 웹에서 document.body로 별도 포탈되어, 화면(App.tsx)에 씌운 폰 폭
+// 래퍼 바깥으로 빠져나간다 — 그 안에서 이 프레임으로 한 번 더 감싸야 비율이 맞는다.
+// 네이티브 빌드에서는 아무 효과가 없다(children을 그대로 통과시킴).
+export function WebFrame({ children, backgroundColor = T.bg }: { children: React.ReactNode; backgroundColor?: string }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return (
+    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: '100vh' as any }}>
+      <View style={{ flex: 1, width: 430, maxWidth: '100%' as any, backgroundColor }}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
 // ─── Status helpers ──────────────────────────────────────
 export function statusColor(status: Status) {
   if (status === '정상') return { color: T.success, bg: T.successBg };
