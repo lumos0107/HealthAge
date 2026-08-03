@@ -76,19 +76,20 @@ export const T = {
   eyebrow: { fontSize: 11, fontWeight: '700' as const, color: '#8B95A1', letterSpacing: 1.6, textTransform: 'uppercase' as const },
 } as const;
 
-// 웹(노트북 브라우저)에서 실행할 때는 창 폭이 아니라 폰 폭 기준으로 고정한다.
-// 이 앱은 모바일 화면 전용으로 만들어져서, 창 폭을 그대로 쓰면 카드·차트가
-// 노트북 화면 가득 늘어나 비율이 깨진다(실기기 빌드는 영향 없음).
-export const W = Platform.OS === 'web' ? Math.min(Dimensions.get('window').width, 430) : Dimensions.get('window').width;
+// 이 앱은 폰 화면 전용으로 만들어졌다 — 노트북 브라우저든 태블릿 실기기든,
+// 화면이 폰보다 넓으면(430 초과) 카드·차트가 그 폭 그대로 늘어나 비율이 깨진다.
+// 그래서 플랫폼이 아니라 "화면이 넓은지"로 판단해 항상 430으로 고정한다.
+export const PHONE_WIDTH = 430;
+export const W = Math.min(Dimensions.get('window').width, PHONE_WIDTH);
 
-// RN의 Modal은 웹에서 document.body로 별도 포탈되어, 화면(App.tsx)에 씌운 폰 폭
-// 래퍼 바깥으로 빠져나간다 — 그 안에서 이 프레임으로 한 번 더 감싸야 비율이 맞는다.
-// 네이티브 빌드에서는 아무 효과가 없다(children을 그대로 통과시킴).
+// RN의 Modal은 웹에서는 document.body로 별도 포탈되어 화면(App.tsx)에 씌운 폰 폭
+// 래퍼 바깥으로 빠져나가고, 네이티브 태블릿에서는 애초에 래퍼 자체가 화면 전체 폭이라
+// 마찬가지로 넓게 뜬다. 둘 다 이 프레임으로 한 번 더 감싸야 비율이 맞는다.
 export function WebFrame({ children, backgroundColor = T.bg }: { children: React.ReactNode; backgroundColor?: string }) {
-  if (Platform.OS !== 'web') return <>{children}</>;
+  if (Dimensions.get('window').width <= PHONE_WIDTH) return <>{children}</>;
   return (
-    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: '100vh' as any }}>
-      <View style={{ flex: 1, width: 430, maxWidth: '100%' as any, backgroundColor }}>
+    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: Platform.OS === 'web' ? ('100vh' as any) : '100%' }}>
+      <View style={{ flex: 1, width: PHONE_WIDTH, maxWidth: '100%' as any, backgroundColor }}>
         {children}
       </View>
     </View>

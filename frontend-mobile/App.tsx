@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,7 +17,7 @@ import {
 // RN 내장 SafeAreaView는 iOS 전용(안드로이드에선 no-op) — 상태바/제스처바 겹침 방지를 위해 safe-area-context 사용
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/api';
-import { Chip, ChipRow, FieldInput, PrimaryBtn, T } from './src/components/UI';
+import { Chip, ChipRow, FieldInput, PHONE_WIDTH, PrimaryBtn, T } from './src/components/UI';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { applyGender, initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
@@ -614,14 +615,15 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
 }
 
 const s = StyleSheet.create({
-  // 노트북 브라우저에서 열면 폰 폭(430)짜리 화면을 가운데 띄운다 — 이 앱은
-  // 반응형 웹이 아니라 모바일 화면을 그대로 보여주는 용도라, 창 폭에 맞춰
-  // 늘리면 비율이 깨진다. 실기기 빌드는 이 값이 적용되지 않는다.
-  webShell: Platform.OS === 'web'
-    ? { flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: '100vh' as any }
+  // 노트북 브라우저든 태블릿 실기기든, 화면이 폰보다 넓으면(430 초과) 폰 폭짜리
+  // 화면을 가운데 띄운다 — 이 앱은 반응형이 아니라 모바일 화면을 그대로 보여주는
+  // 용도라, 화면 폭에 맞춰 늘리면 비율이 깨진다. 일반 폰 화면에서는 이미 430
+  // 이하라 아무 효과가 없다.
+  webShell: Dimensions.get('window').width > PHONE_WIDTH
+    ? { flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: Platform.OS === 'web' ? ('100vh' as any) : '100%' }
     : { flex: 1 },
-  safe: Platform.OS === 'web'
-    ? { flex: 1, backgroundColor: T.bg, width: 430, maxWidth: '100%' as any }
+  safe: Dimensions.get('window').width > PHONE_WIDTH
+    ? { flex: 1, backgroundColor: T.bg, width: PHONE_WIDTH, maxWidth: '100%' as any }
     : { flex: 1, backgroundColor: T.bg },
   header: {
     height: 60,
