@@ -1,7 +1,7 @@
 // 디자인 시스템 v2에서 새로 도입한 컴포넌트 모음.
 // 상태색(그린/앰버/레드)과 절대 겹치지 않는 카테고리 색을 쓴다 — 상태로 오인 방지.
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { SCORE_PENALTY } from '../data';
@@ -500,6 +500,33 @@ const LINE = '#1E88E5'; // 상태색과 겹치지 않는 추이선 색
  *  차트만 26.3(2024)을 강조해, 한 카드가 서로 다른 해를 말했다. 화면이 고른 해를 받아 쓴다.
  *  @param onSelectYear 있으면 그래프를 눌러 해를 바꿀 수 있다. 없으면 읽기 전용.
  */
+// 차트를 눌러 연도를 고르는 곳(MetricTrendChart·히스토리 차트)이 공통으로 쓰는 좌표 계산.
+// evt.nativeEvent.locationX는 네이티브에만 있는 필드라 웹에서는 undefined → NaN으로 번져
+// "항상 첫 해로 튕기거나"(reduce가 NaN 비교로 첫 값에 멈춤) "배열 밖 인덱스로 크래시"가 났다.
+// pageX(모든 플랫폼에 있음)에서 컨테이너의 절대 x 좌표(최초 레이아웃 시 측정)를 빼서 구한다.
+function extractPageX(nativeEvent: any): number | undefined {
+  if (typeof nativeEvent.pageX === 'number') return nativeEvent.pageX;
+  const touch = nativeEvent.touches?.[0] ?? nativeEvent.changedTouches?.[0];
+  return typeof touch?.pageX === 'number' ? touch.pageX : undefined;
+}
+
+export function useChartTouchX() {
+  const ref = useRef<View>(null);
+  const pageXRef = useRef(0);
+  const onLayout = () => {
+    // measure는 비동기라 레이아웃 시 한 번만 재고 캐시해 둔다 — 드래그 중(onTouchMove)마다
+    // 다시 재면 네이티브 브리지를 계속 타 버벅인다.
+    (ref.current as any)?.measure?.((_x: number, _y: number, _w: number, _h: number, pageX: number) => {
+      pageXRef.current = pageX;
+    });
+  };
+  const localX = (evt: any): number | undefined => {
+    const pageX = extractPageX(evt.nativeEvent);
+    return pageX == null ? undefined : pageX - pageXRef.current;
+  };
+  return { ref, onLayout, localX };
+}
+
 export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear }: {
   metric: MetricDefinition;
   reports: Report[];
@@ -537,9 +564,12 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
   // 누른 x를 «측정한 해»로 스냅한다. 안 잰 해로는 못 가게 막는 것이 핵심이다 —
   // 그 해엔 이 항목의 판정이 없어 상세 화면이 통째로 사라진다.
   // 세로 스크롤 안에 있으므로 onPress만 쓴다(히스토리 차트처럼 onTouchMove까지 잡으면 스크롤을 뺏는다).
+  const { ref: chartRef, onLayout: onChartLayout, localX } = useChartTouchX();
   const handlePress = (evt: any) => {
     if (!onSelectYear) return;
-    const x = evt.nativeEvent.locationX - PAD.left;
+    const raw = localX(evt);
+    if (raw == null) return;
+    const x = raw - PAD.left;
     const ratio = reports.length <= 1 ? 0 : Math.min(1, Math.max(0, x / PLOT_W));
     const idx = Math.round(ratio * (reports.length - 1));
     const nearest = pts.reduce((a, b) => (Math.abs(b.i - idx) < Math.abs(a.i - idx) ? b : a));
@@ -548,7 +578,7 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
 
   return (
     <View>
-      <Pressable hitSlop={8} onPress={handlePress} disabled={!onSelectYear}>
+      <Pressable ref={chartRef} onLayout={onChartLayout} hitSlop={8} onPress={handlePress} disabled={!onSelectYear}>
       <Svg width={CHART_W} height={CHART_H}>
         <G x={PAD.left} y={PAD.top}>
           {/* 정상범위 밴드 — infoOnly는 판정 기준이 없으므로 그리지 않는다 */}

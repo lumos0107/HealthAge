@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Eyebrow, FadeInUp, T, W } from '../components/UI';
-import { Expandable, NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard } from '../components/v2';
+import { Expandable, NORMAL_BAND, PeerRankBlock, Sparkline, scoreTone, SummaryCard, useChartTouchX } from '../components/v2';
 import { cardContent, cardContentFor, directionLabel, isBadStatus, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { metricPeerRank, normalBounds, normalRangeText, scoreGapNote, scoreSeries, scoreTrendText, subjectJosa, topicJosa, trendDirection } from '../interpret';
 import type { MetricDefinition, MetricKey, Report } from '../data';
@@ -771,16 +771,19 @@ function LineChart({ keys, selIdx, onSelect, reports, band, focusKey, color: col
     for (let v = Math.ceil(s.lo / step) * step; v <= s.hi + 1e-9; v += step) gridTicks.push({ v, y: yPos(v) });
   }
 
+  const { ref: chartRef, onLayout: onChartLayout, localX } = useChartTouchX();
   const handleTouch = (evt: any) => {
-    const x = evt.nativeEvent.locationX - PAD.left;
     if (reports.length <= 1) { onSelect(0); return; }
+    const raw = localX(evt);
+    if (raw == null) return;
+    const x = raw - PAD.left;
     const ratio = Math.min(1, Math.max(0, x / PLOT_W));
     const idx = Math.round(ratio * (reports.length - 1));
     onSelect(idx);
   };
 
   return (
-    <Pressable hitSlop={8} onPress={handleTouch} onTouchStart={handleTouch} onTouchMove={handleTouch}>
+    <Pressable ref={chartRef} onLayout={onChartLayout} hitSlop={8} onPress={handleTouch} onTouchStart={handleTouch} onTouchMove={handleTouch}>
     <Svg width={CHART_W} height={CHART_H}>
       <G x={PAD.left} y={PAD.top}>
         {/* 정상범위 밴드 — 축 눈금만으로는 "이 값이 괜찮은지"를 알 수 없어서,
