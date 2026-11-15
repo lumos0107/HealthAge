@@ -415,7 +415,7 @@ export default function App() {
             <Pressable style={s.modalSheet} onPress={(e) => e.stopPropagation()}>
               <View style={s.modalHandle} />
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: T.text1, marginBottom: 20 }}>로그인 / 회원가입</Text>
+                <Text style={{ fontSize: T.fs.h3, fontWeight: '700', color: T.text1, marginBottom: 20 }}>로그인 / 회원가입</Text>
                 <AuthForm loading={authLoading} onLogin={login} onSignup={signup} onClose={() => setAuthOpen(false)} errorMessage={authError} />
               </ScrollView>
             </Pressable>
@@ -430,17 +430,17 @@ export default function App() {
             <Pressable style={s.modalSheet} onPress={(e) => e.stopPropagation()}>
               <View style={s.modalHandle} />
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                <Text style={{ fontSize: 22, fontWeight: '700', color: T.text1, marginBottom: 6 }}>생활습관 문진</Text>
-                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginBottom: 20 }}>흡연·음주는 검진 수치로 알 수 없어 한 번만 확인합니다. 나중에 내정보에서 바꿀 수 있어요.</Text>
+                <Text style={{ fontSize: T.fs.h3, fontWeight: '700', color: T.text1, marginBottom: 6 }}>생활습관 문진</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 20 }}>흡연·음주는 검진 수치로 알 수 없어 한 번만 확인합니다. 나중에 내정보에서 바꿀 수 있어요.</Text>
                 <LifestyleForm value={lsDraft} onChange={setLsDraft} gender={profile.gender} />
                 <Pressable
                   style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
                   onPress={() => { saveProfile({ ...profile, ...lsDraft }); setLifestylePrompt(false); }}
                 >
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>저장</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>저장</Text>
                 </Pressable>
                 <Pressable style={{ height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 8 }} onPress={() => setLifestylePrompt(false)}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: T.text3 }}>나중에 하기 (건너뛰기)</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '600', color: T.text3 }}>나중에 하기 (건너뛰기)</Text>
                 </Pressable>
               </ScrollView>
             </Pressable>
@@ -462,12 +462,12 @@ function LockedNotice({ onPress }: { onPress: () => void }) {
       <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
         <Ionicons name="lock-closed" size={28} color={T.primary} />
       </View>
-      <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>로그인 후 확인 가능해요</Text>
-      <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21, marginBottom: 24 }}>
+      <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>로그인 후 확인 가능해요</Text>
+      <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', lineHeight: 21, marginBottom: 24 }}>
         이 화면은 로그인하면 바로 볼 수 있어요.{'\n'}지금 로그인하고 내 건강기록을 확인해보세요.
       </Text>
       <Pressable onPress={onPress} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>로그인 / 회원가입</Text>
+        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>로그인 / 회원가입</Text>
       </Pressable>
     </View>
   );
@@ -480,12 +480,12 @@ function EmptyDataState({ onUpload }: { onUpload: () => void }) {
       <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
         <Ionicons name="document-text-outline" size={28} color={T.primary} />
       </View>
-      <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>아직 검진 기록이 없어요</Text>
-      <Text style={{ fontSize: 14, color: T.text3, textAlign: 'center', lineHeight: 21, marginBottom: 24 }}>
+      <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>아직 검진 기록이 없어요</Text>
+      <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', lineHeight: 21, marginBottom: 24 }}>
         건강검진 결과지를 올리면{'\n'}분석 결과와 건강 점수를 확인할 수 있어요.
       </Text>
       <Pressable onPress={onUpload} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>결과지 업로드하기</Text>
+        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>결과지 업로드하기</Text>
       </Pressable>
     </View>
   );
@@ -567,7 +567,7 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
             style={[{ flex: 1, paddingVertical: 11, alignItems: 'center', borderRadius: T.radiusSm - 2 }, mode === m && { backgroundColor: T.white, ...T.shadow }]}
             onPress={() => { setMode(m); setLocalError(''); }}
           >
-            <Text style={{ fontWeight: mode === m ? '700' : '500', fontSize: 15, color: mode === m ? T.text1 : T.text3 }}>
+            <Text style={{ fontWeight: mode === m ? '700' : '500', fontSize: T.fs.body, color: mode === m ? T.text1 : T.text3 }}>
               {m === 'login' ? '로그인' : '회원가입'}
             </Text>
           </Pressable>
@@ -579,7 +579,7 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
         <>
           <FieldInput label="이름" value={form.name} onChangeText={(v) => setForm((s) => ({ ...s, name: v }))} placeholder="홍길동" />
           <FieldInput label="생년월일 (YYYY-MM-DD)" value={form.birth_date} onChangeText={(v) => setForm((s) => ({ ...s, birth_date: v }))} placeholder="1980-01-01" keyboardType="numbers-and-punctuation" />
-          <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 8 }}>성별</Text>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text2, marginBottom: 8 }}>성별</Text>
           <ChipRow>
             <Chip active={form.gender === '1'} label="남성" onPress={() => setForm((s) => ({ ...s, gender: '1' }))} />
             <Chip active={form.gender === '2'} label="여성" onPress={() => setForm((s) => ({ ...s, gender: '2' }))} />
@@ -588,25 +588,25 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
       )}
       <FieldInput label="비밀번호" value={form.password} onChangeText={(v) => setForm((s) => ({ ...s, password: v }))} secureTextEntry placeholder="••••••••" />
       {mode === 'signup' && (
-        <Text style={{ fontSize: 12, color: T.text3, marginTop: -6, marginBottom: 12 }}>6자 이상 입력해주세요.</Text>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: -6, marginBottom: 12 }}>6자 이상 입력해주세요.</Text>
       )}
       <PrimaryBtn label={loading ? '처리 중...' : mode === 'login' ? '로그인' : '회원가입'} onPress={submit} loading={loading} />
 
       {!!localError && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.dangerBg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
           <Ionicons name="alert-circle" size={16} color={T.danger} />
-          <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', flex: 1 }}>{localError}</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.danger, fontWeight: '600', flex: 1 }}>{localError}</Text>
         </View>
       )}
       {!!errorMessage && !localError && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.dangerBg, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 }}>
           <Ionicons name="alert-circle" size={16} color={T.danger} />
-          <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', flex: 1 }}>{errorMessage}</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.danger, fontWeight: '600', flex: 1 }}>{errorMessage}</Text>
         </View>
       )}
 
       {!supabaseConfigured && mode === 'login' && (
-        <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center', marginTop: 12 }}>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', marginTop: 12 }}>
           개발 모드: 아이디 root / 비밀번호 1234
         </Text>
       )}
@@ -643,8 +643,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brand: { fontSize: 17, fontWeight: '700', fontFamily: T.fontDisplay, color: T.text1 },
-  brandSub: { fontSize: 10, color: T.text3, fontWeight: '500', marginTop: 1 },
+  brand: { fontSize: T.fs.strong, fontWeight: '700', fontFamily: T.fontDisplay, color: T.text1 },
+  brandSub: { fontSize: T.fs.caption, color: T.text3, fontWeight: '500', marginTop: 1 },
   nav: {
     flexDirection: 'row',
     backgroundColor: T.white,
@@ -656,7 +656,7 @@ const s = StyleSheet.create({
   navItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
   navIconWrap: { width: 44, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
   navIconWrapActive: { backgroundColor: T.primaryLight },
-  navLabel: { fontSize: 10, fontWeight: '500', color: T.text3 },
+  navLabel: { fontSize: T.fs.caption, fontWeight: '500', color: T.text3 },
   toast: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 100 : 84,
@@ -671,7 +671,7 @@ const s = StyleSheet.create({
     gap: 8,
     ...T.shadow,
   },
-  toastText: { fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 },
+  toastText: { fontSize: T.fs.caption, fontWeight: '600', color: T.text1, flex: 1 },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
   modalSheet: {
     backgroundColor: T.white,
@@ -692,6 +692,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
   },
-  authBrand: { fontSize: 26, fontWeight: '700', fontFamily: T.fontDisplay, color: T.text1, marginBottom: 6 },
-  authTagline: { fontSize: 15, color: T.text2, fontWeight: '500' },
+  authBrand: { fontSize: T.fs.title, fontWeight: '700', fontFamily: T.fontDisplay, color: T.text1, marginBottom: 6 },
+  authTagline: { fontSize: T.fs.body, color: T.text2, fontWeight: '500' },
 });

@@ -260,7 +260,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
         <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
           <Eyebrow>UPLOAD</Eyebrow>
           <Text style={{ fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>결과지 업로드</Text>
-          <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>자료 종류를 선택한 뒤 내용을 확인하고 저장합니다.</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>자료 종류를 선택한 뒤 내용을 확인하고 저장합니다.</Text>
         </View>
         </FadeInUp>
 
@@ -276,7 +276,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 mode === m && { borderBottomColor: T.primary },
               ]}
             >
-              <Text style={{ fontSize: 14, fontWeight: mode === m ? '700' : '500', color: mode === m ? T.text1 : T.text3 }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: mode === m ? '700' : '500', color: mode === m ? T.text1 : T.text3 }}>
                 {m === 'checkup' ? '건강검진 결과지' : '처방전·복약자료'}
               </Text>
             </Pressable>
@@ -292,7 +292,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
               {/* 회원 정보 안내 — 박스 안에 박스를 두지 않고, 카드 안에서 아이콘+텍스트로 평평하게 표시 */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 16, marginBottom: 18, borderBottomWidth: 1, borderBottomColor: T.divider }}>
                 <Ionicons name="person-circle-outline" size={20} color={T.primary} />
-                <Text style={{ fontSize: 13, color: T.text2, flex: 1 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text2, flex: 1 }}>
                   <Text style={{ fontWeight: '700', color: T.text1 }}>{profile.name}</Text> / <Text style={{ fontWeight: '700', color: T.text1 }}>{profile.gender === 1 ? '남성' : '여성'}</Text> 정보가 자동 적용됩니다.
                 </Text>
               </View>
@@ -308,14 +308,14 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 disabled={ocrLoading}
                 style={{ paddingVertical: 14, borderRadius: T.radiusSm, alignItems: 'center', borderWidth: 1, borderColor: T.border, marginBottom: 8, opacity: ocrLoading ? 0.5 : 1 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>검진지 없이 직접 입력</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>검진지 없이 직접 입력</Text>
               </Pressable>
               <Pressable
                 onPress={() => loadExample()}
                 disabled={ocrLoading}
                 style={{ paddingVertical: 14, borderRadius: T.radiusSm, alignItems: 'center', backgroundColor: T.bg, opacity: ocrLoading ? 0.5 : 1 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
               </Pressable>
             </View>
 
@@ -325,7 +325,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 {missing.length > 0 && (!manualEntry || touched) && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 14, marginHorizontal: 16, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
                     <Ionicons name="alert-circle-outline" size={20} color={T.danger} />
-                    <Text style={{ fontSize: 13, color: T.danger, fontWeight: '700' }}>확인 필요 {missing.length}개 항목이 있습니다.</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.danger, fontWeight: '700' }}>확인 필요 {missing.length}개 항목이 있습니다.</Text>
                   </View>
                 )}
 
@@ -334,9 +334,9 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                   <View style={{ backgroundColor: T.warnBg, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 18, paddingVertical: 14, marginBottom: 8 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <Ionicons name="eye-outline" size={18} color={T.warn} />
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: T.warn }}>사진에서 흐릿하게 읽힌 항목 {lowConf.length}개</Text>
+                      <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.warn }}>사진에서 흐릿하게 읽힌 항목 {lowConf.length}개</Text>
                     </View>
-                    <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
                       {lowConf.map((f) => f.label).join(' · ')} — 검진표와 같은지 꼭 확인해주세요. 자동 저장하지 않고 확인을 받는 이유예요.
                     </Text>
                   </View>
@@ -344,7 +344,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
 
                 {(['기본 정보', '검사 수치'] as OcrField['section'][]).map((section) => (
                   <View key={section} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8, marginBottom: 8 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>{section}</Text>
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 16 }}>{section}</Text>
                     {fields.filter((f) => f.section === section).map((field, fi, arr) => {
                       const bad = touched && !!field.required && !field.value.trim();
                       // 확신도가 낮은 항목은 주의색 테두리로 눈에 띄게 한다(필수 누락은 여전히 빨강이 우선).
@@ -353,14 +353,14 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                       return (
                         <View key={field.id} style={[{ paddingBottom: 14 }, fi < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider, marginBottom: 14 }]}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                            <Text style={{ fontSize: 14, fontWeight: '600', color: bad ? T.danger : T.text2 }}>
+                            <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: bad ? T.danger : T.text2 }}>
                               {field.label}{field.required ? <Text style={{ color: T.danger }}> *</Text> : null}
                             </Text>
                             {bad ? (
-                              <Text style={{ fontSize: 12, color: T.danger, fontWeight: '600' }}>확인 필요</Text>
+                              <Text style={{ fontSize: T.fs.caption, color: T.danger, fontWeight: '600' }}>확인 필요</Text>
                             ) : uncertain ? (
                               <View style={{ backgroundColor: T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                                <Text style={{ fontSize: 11, fontWeight: '800', color: T.warn }}>확신 {Math.round(field.confidence! * 100)}%</Text>
+                                <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.warn }}>확신 {Math.round(field.confidence! * 100)}%</Text>
                               </View>
                             ) : null}
                           </View>
@@ -372,20 +372,20 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                                 borderColor: bad ? T.danger : uncertain ? T.warn : T.border,
                                 borderRadius: T.radiusSm,
                                 paddingHorizontal: 14,
-                                fontSize: 15, color: T.text1, backgroundColor: T.white,
+                                fontSize: T.fs.body, color: T.text1, backgroundColor: T.white,
                               }}
                               value={field.value}
                               onChangeText={(v) => updateField(field.id, v)}
                               placeholder={getPlaceholder(field)}
                               placeholderTextColor={T.text3}
                             />
-                            {field.unit ? <Text style={{ fontSize: 13, color: T.text3, fontWeight: '500', width: 48 }}>{field.unit}</Text> : null}
+                            {field.unit ? <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '500', width: 48 }}>{field.unit}</Text> : null}
                           </View>
                           {uncertain && flagText && (
-                            <Text style={{ fontSize: 11, color: T.warn, marginTop: 5, lineHeight: 16 }}>· {flagText}</Text>
+                            <Text style={{ fontSize: T.fs.caption, color: T.warn, marginTop: 5, lineHeight: 20 }}>· {flagText}</Text>
                           )}
                           {field.id === 'exam_date' && (
-                            <Text style={{ fontSize: 11, color: T.text3, marginTop: 5 }}>YYYY-MM-DD 형식으로 입력 (예: 2024-03-15)</Text>
+                            <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 5 }}>YYYY-MM-DD 형식으로 입력 (예: 2024-03-15)</Text>
                           )}
                         </View>
                       );
@@ -395,14 +395,14 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
 
                 {/* 생활습관 — 내정보(회원가입) 값을 prefill. 여기서 바꾸면 저장 시 내정보에도 반영된다 */}
                 <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>생활습관</Text>
-                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 18 }}>회원가입 때 입력한 값입니다. 바뀌었으면 여기서 수정하세요(내정보에도 반영됩니다).</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>생활습관</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 18 }}>회원가입 때 입력한 값입니다. 바뀌었으면 여기서 수정하세요(내정보에도 반영됩니다).</Text>
                   <LifestyleForm value={lifestyle} onChange={setLifestyle} gender={profile.gender} />
                 </View>
 
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
-                  <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
-                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>저장하기 전에 측정값과 검진기관, 검진일이 실제 검진표와 같은지 다시 확인해주세요.</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>!</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, flex: 1 }}>저장하기 전에 측정값과 검진기관, 검진일이 실제 검진표와 같은지 다시 확인해주세요.</Text>
                 </View>
                 <View style={{ paddingHorizontal: 16 }}>
                   {saved && (
@@ -410,7 +410,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                       style={{ height: 54, backgroundColor: T.white, borderRadius: T.radiusPill, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center', marginTop: 10 }}
                       onPress={() => onTab('records')}
                     >
-                      <Text style={{ fontSize: 15, fontWeight: '700', color: T.text2 }}>검진기록에서 확인하기</Text>
+                      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text2 }}>검진기록에서 확인하기</Text>
                     </Pressable>
                   )}
                   {/* 복약 정보 없이 분석된 경우 — 더 정확한 분석을 위해 복약자료 업로드를 안내한다 */}
@@ -420,7 +420,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                       style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12, padding: 14, backgroundColor: T.primaryLight, borderRadius: T.radiusSm }}
                     >
                       <Ionicons name="information-circle-outline" size={18} color={T.primary} style={{ marginTop: 1 }} />
-                      <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
+                      <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
                         복약 정보가 없어 <Text style={{ fontWeight: '700', color: T.text1 }}>약을 복용하지 않는 것으로 가정</Text>하고 분석했어요. '처방전·복약자료' 탭에서 복약자료를 올리면 약 복용을 감안한 더 정확한 분석을 받을 수 있어요.
                       </Text>
                     </Pressable>
@@ -442,10 +442,10 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 <Ionicons name="open-outline" size={24} color={T.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '700', color: T.text1, fontSize: 15, marginBottom: 3 }}>복약자료 발급 방법 안내</Text>
-                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>건강보험심사평가원에서 내 복약정보 조회</Text>
+                <Text style={{ fontWeight: '700', color: T.text1, fontSize: T.fs.body, marginBottom: 3 }}>복약자료 발급 방법 안내</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>건강보험심사평가원에서 내 복약정보 조회</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 5 }}>
-                  <Text style={{ fontSize: 12, color: T.primary, fontWeight: '700' }}>브라우저에서 열기</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>브라우저에서 열기</Text>
                   <Ionicons name="arrow-forward" size={11} color={T.primary} />
                 </View>
               </View>
@@ -454,13 +454,13 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
 
             {/* 단계 안내 */}
             <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>이렇게 진행하세요</Text>
+              <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 16 }}>이렇게 진행하세요</Text>
               {['건강보험심사평가원 접속', '내가 먹는 약! 한눈에 메뉴 선택', '공동인증서 또는 간편인증 로그인', '복약정보 조회 후 엑셀 파일 저장', '아래 파일 선택으로 업로드'].map((step, i) => (
                 <View key={i} style={[{ flexDirection: 'row', gap: 14, paddingVertical: 12, alignItems: 'flex-start' }, i < 4 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
                   <View style={{ width: 26, height: 26, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-                    <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>{i + 1}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.onPrimary, fontWeight: '700' }}>{i + 1}</Text>
                   </View>
-                  <Text style={{ fontSize: 14, color: T.text2, flex: 1, lineHeight: 21 }}>{step}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2, flex: 1, lineHeight: 21 }}>{step}</Text>
                 </View>
               ))}
             </View>
@@ -471,7 +471,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
               disabled={medUploading}
               style={{ marginHorizontal: 16, paddingVertical: 14, borderRadius: T.radiusSm, alignItems: 'center', backgroundColor: T.bg, marginBottom: medItems.length ? 8 : 0, opacity: medUploading ? 0.5 : 1 }}
             >
-              <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
             </Pressable>
 
             {/* 정리된 결과 — OCR/파싱 후 "효능군별로" 묶어서 보여준다.
@@ -482,18 +482,18 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
               <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                   <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.primary }}>{category}</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primary }}>{category}</Text>
                   </View>
-                  <Text style={{ fontSize: 12, color: T.text3 }}>{items.length}개</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>{items.length}개</Text>
                 </View>
                 {items.map((item, i) => (
                   <View key={`${item.drug_code ?? item.product_name}-${item.dispensed_date}`} style={[{ paddingBottom: 14 }, i < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider, marginBottom: 14 }]}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{item.product_name}</Text>
-                    <Text style={{ fontSize: 12, color: T.text3, marginBottom: 6 }}>성분: {item.ingredient_en}</Text>
-                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{medicationDosageText(item)}</Text>
-                    <Text style={{ fontSize: 12, color: T.text3, marginTop: 3 }}>복용 기간: {medicationPeriodText(item)}</Text>
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{item.product_name}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 6 }}>성분: {item.ingredient_en}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{medicationDosageText(item)}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 3 }}>복용 기간: {medicationPeriodText(item)}</Text>
                     {item.safety_alert ? (
-                      <Text style={{ fontSize: 12, color: T.danger, marginTop: 3 }}>⚠ {item.safety_alert}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.danger, marginTop: 3 }}>⚠ {item.safety_alert}</Text>
                     ) : null}
                   </View>
                 ))}
@@ -502,8 +502,8 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
 
             {medItems.length > 0 && (
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
-                <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
-                <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, flex: 1 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>!</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, flex: 1 }}>
                   {medUsingExample
                     ? '지금 보이는 내용은 형태를 보여주기 위한 예시 데이터로, 실제로 저장되지는 않습니다. 실제로 저장하려면 위의 "복약자료 파일 업로드"로 본인의 HIRA 엑셀 파일을 올려주세요.'
                     : medResult
@@ -519,7 +519,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
         {statusMsg ? (
           <View style={{ marginHorizontal: 16, marginTop: 8, paddingVertical: 12, borderTopWidth: 1, borderTopColor: T.divider, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
             <Ionicons name={isError ? 'alert-circle-outline' : 'checkmark-circle-outline'} size={18} color={isError ? T.danger : T.primary} style={{ marginTop: 1 }} />
-            <Text style={{ fontSize: 13, color: isError ? T.danger : T.primary, fontWeight: '600', flex: 1, lineHeight: 20 }}>{statusMsg}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: isError ? T.danger : T.primary, fontWeight: '600', flex: 1, lineHeight: 20 }}>{statusMsg}</Text>
           </View>
         ) : null}
       </ScrollView>
@@ -529,7 +529,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <View style={{ backgroundColor: T.white, borderRadius: T.radiusMd, paddingVertical: 32, paddingHorizontal: 36, alignItems: 'center' }}>
             <ActivityIndicator size="large" color={T.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>처리중입니다</Text>
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>처리중입니다</Text>
           </View>
         </View>
       </Modal>
@@ -541,8 +541,8 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
             <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Ionicons name="save-outline" size={24} color={T.primary} />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: T.text1, marginBottom: 8 }}>이 값으로 저장할까요?</Text>
-            <Text style={{ fontSize: 14, lineHeight: 22, color: T.text2, marginBottom: 24 }}>
+            <Text style={{ fontSize: T.fs.h3, fontWeight: '700', color: T.text1, marginBottom: 8 }}>이 값으로 저장할까요?</Text>
+            <Text style={{ fontSize: T.fs.caption, lineHeight: 22, color: T.text2, marginBottom: 24 }}>
               검진일, 검진기관, 주요 측정값이 실제 검진표와 같은지 마지막으로 확인해주세요.
             </Text>
             <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -550,13 +550,13 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 style={{ flex: 1, height: 52, backgroundColor: T.bg, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => setConfirmOpen(false)}
               >
-                <Text style={{ fontWeight: '600', color: T.text2, fontSize: 15 }}>다시 확인</Text>
+                <Text style={{ fontWeight: '600', color: T.text2, fontSize: T.fs.body }}>다시 확인</Text>
               </Pressable>
               <Pressable hitSlop={8}
                 style={{ flex: 1, height: 52, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={confirmSave}
               >
-                <Text style={{ fontWeight: '700', color: '#fff', fontSize: 15 }}>저장하기</Text>
+                <Text style={{ fontWeight: '700', color: T.onPrimary, fontSize: T.fs.body }}>저장하기</Text>
               </Pressable>
             </View>
           </View>
@@ -570,8 +570,8 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
             <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Ionicons name="lock-closed-outline" size={24} color={T.primary} />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: T.text1, marginBottom: 8 }}>생년월일을 입력해주세요</Text>
-            <Text style={{ fontSize: 14, lineHeight: 22, color: T.text2, marginBottom: 16 }}>
+            <Text style={{ fontSize: T.fs.h3, fontWeight: '700', color: T.text1, marginBottom: 8 }}>생년월일을 입력해주세요</Text>
+            <Text style={{ fontSize: T.fs.caption, lineHeight: 22, color: T.text2, marginBottom: 16 }}>
               HIRA 복약이력 파일은 생년월일이 열기 비밀번호예요. 파일 주인의 생년월일 8자리를 넣어주세요.
             </Text>
             <TextInput
@@ -581,21 +581,21 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
               placeholderTextColor={T.text3}
               keyboardType="number-pad"
               maxLength={8}
-              style={{ backgroundColor: T.bg, borderRadius: T.radiusSm, paddingHorizontal: 16, height: 52, fontSize: 17, color: T.text1, letterSpacing: 2, marginBottom: 20 }}
+              style={{ backgroundColor: T.bg, borderRadius: T.radiusSm, paddingHorizontal: 16, height: 52, fontSize: T.fs.strong, color: T.text1, letterSpacing: 2, marginBottom: 20 }}
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Pressable hitSlop={8}
                 style={{ flex: 1, height: 52, backgroundColor: T.bg, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => { setMedBirthdayAsk(null); setStatusMsg(''); setIsError(false); }}
               >
-                <Text style={{ fontWeight: '600', color: T.text2, fontSize: 15 }}>취소</Text>
+                <Text style={{ fontWeight: '600', color: T.text2, fontSize: T.fs.body }}>취소</Text>
               </Pressable>
               <Pressable hitSlop={8}
                 disabled={medBirthdayInput.length !== 8 || medUploading}
                 style={{ flex: 1, height: 52, backgroundColor: medBirthdayInput.length === 8 ? T.primary : T.cardAlt, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => { const a = medBirthdayAsk!; setMedBirthdayAsk(null); runMedUpload(a.uri, a.name, medBirthdayInput); }}
               >
-                <Text style={{ fontWeight: '700', color: medBirthdayInput.length === 8 ? '#fff' : T.text3, fontSize: 15 }}>다시 시도</Text>
+                <Text style={{ fontWeight: '700', color: medBirthdayInput.length === 8 ? T.onPrimary : T.text3, fontSize: T.fs.body }}>다시 시도</Text>
               </Pressable>
             </View>
           </View>
@@ -630,8 +630,8 @@ function UploadTile({ title, icon, primary, onPress, disabled }: { title: string
         opacity: disabled ? 0.6 : 1,
       }}
     >
-      <Ionicons name={icon} size={28} color={primary ? '#fff' : T.text2} />
-      <Text style={{ fontSize: 13, fontWeight: '700', color: primary ? '#fff' : T.text1 }}>{title}</Text>
+      <Ionicons name={icon} size={28} color={primary ? T.onPrimary : T.text2} />
+      <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: primary ? T.onPrimary : T.text1 }}>{title}</Text>
     </Pressable>
   );
 }

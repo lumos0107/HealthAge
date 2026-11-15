@@ -8,7 +8,37 @@ import { SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import { formatMetricValue, normalBounds, positionTitle, scoreGrade } from '../interpret';
 import type { PositionAxis } from '../interpret';
-import { T, W } from './UI';
+import { T, W, WebFrame } from './UI';
+
+/** 시니어 접근성 색 — 흰/연한 배경 위에서 글자 대비 4.5:1 이상. 글자는 T.success/warn/danger, 막대·점·큰 숫자는 T.*Fill.
+ *  (히스토리 개선안 §4) */
+/** 하위 호환 별칭 — 색의 원본은 UI.tsx의 T 하나다. */
+export const A11Y = {
+  warn: T.warn,
+  success: T.success,
+  danger: T.danger,
+  sub: T.text2,
+  onGreen: T.onPrimary,
+} as const;
+
+/** 상태 배지 — 색만으로 구분하지 않도록 «모양 + 글자»를 함께 쓴다. 정상 ■ · 주의 ● · 위험 ▲. */
+export function StatusChip({ status, label }: { status: '정상' | '주의' | '위험'; label?: string }) {
+  const tone = status === '정상'
+    ? { color: A11Y.success, fill: T.successFill, bg: T.successBg }
+    : status === '주의'
+      ? { color: A11Y.warn, fill: T.warnFill, bg: T.warnBg }
+      : { color: A11Y.danger, fill: T.dangerFill, bg: T.dangerBg };
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: tone.bg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, alignSelf: 'flex-start' }}>
+      <Svg width={12} height={12} viewBox="0 0 12 12">
+        {status === '정상' && <Rect x={1} y={1} width={10} height={10} rx={2} fill={tone.fill} />}
+        {status === '주의' && <Circle cx={6} cy={6} r={5} fill={tone.fill} />}
+        {status === '위험' && <Path d="M6 1l5.5 10h-11z" fill={tone.fill} />}
+      </Svg>
+      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: tone.color }}>{label ?? status}</Text>
+    </View>
+  );
+}
 
 export const CATEGORY_VISUAL: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
   '혈압': { icon: 'heart-outline', color: '#1E88E5', bg: '#E8F2FD' },
@@ -17,7 +47,7 @@ export const CATEGORY_VISUAL: Record<string, { icon: keyof typeof Ionicons.glyph
   '지질': { icon: 'analytics-outline', color: '#00897B', bg: '#E6F4F2' },
   '간 기능': { icon: 'shield-checkmark-outline', color: '#6D4C41', bg: '#F1EBE9' },
   '혈액': { icon: 'pulse-outline', color: '#5E35B1', bg: '#EFEAF8' },
-  '신장 기능': { icon: 'filter-outline', color: '#00ACC1', bg: '#E6F7FA' },
+  '신장 기능': { icon: 'filter-outline', color: '#009BAE', bg: '#E6F7FA' },
 };
 
 export function categoryVisual(category: string) {
@@ -43,10 +73,10 @@ export function PeerRankSlider({ rank, color }: { rank: number; color: string })
   const myBin = Math.min(9, Math.floor((rank - 1) / 10));
   return (
     <View style={{ marginTop: 10 }}>
-      <View style={{ height: 26 }}>
+      <View style={{ height: 32 }}>
         <View style={{ position: 'absolute', left: `${pct}%`, transform: [{ translateX: -16 }], alignItems: 'center' }}>
           <View style={{ backgroundColor: color, paddingHorizontal: 9, paddingVertical: 3, borderRadius: T.radiusPill }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>나</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: '#fff' }}>나</Text>
           </View>
           <View style={{ width: 2, height: 5, backgroundColor: color }} />
         </View>
@@ -56,16 +86,16 @@ export function PeerRankSlider({ rank, color }: { rank: number; color: string })
         {Array.from({ length: 10 }, (_, i) => (
           <View
             key={i}
-            style={{ flex: 1, height: 14, borderRadius: 3, backgroundColor: i === myBin ? color : T.cardAlt }}
+            style={{ flex: 1, height: 18, borderRadius: 4, backgroundColor: i === myBin ? color : T.cardAlt }}
           />
         ))}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-        <Text style={{ fontSize: 12, color: T.text3 }}>1등</Text>
-        <Text style={{ fontSize: 12, fontWeight: '600', color: T.text2 }}>
+        <Text style={{ fontSize: T.fs.caption, color: A11Y.sub }}>1등 (가장 좋음)</Text>
+        <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: A11Y.sub }}>
           {myBin * 10 + 1}~{myBin * 10 + 10}등 구간
         </Text>
-        <Text style={{ fontSize: 12, color: T.text3 }}>100등</Text>
+        <Text style={{ fontSize: T.fs.caption, color: A11Y.sub }}>100등</Text>
       </View>
     </View>
   );
@@ -95,17 +125,17 @@ export function PeerRankBlock({ subject, rank, color, measured, basis }: {
 }) {
   return (
     <>
-      <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, lineHeight: 23 }}>
-        {subject} 기준, 같은 나이대 100명 중 <Text style={{ color }}>{rank}등</Text>{measured ? '이에요' : '쯤이에요'}
+      <Text style={{ fontSize: T.fs.strong, fontWeight: '500', color: T.text1, lineHeight: 27 }}>
+        {subject} 기준, 같은 나이대 100명 중 <Text style={{ color, fontWeight: '800' }}>{rank}등</Text>{measured ? '이에요' : '쯤이에요'}
       </Text>
       <PeerRankSlider rank={rank} color={color} />
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8 }}>
         <View style={{ backgroundColor: measured ? T.cardAlt : T.warnBg, paddingHorizontal: 7, paddingVertical: 2, borderRadius: T.radiusPill }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: measured ? T.text2 : T.warn }}>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: measured ? A11Y.sub : A11Y.warn }}>
             {measured ? '모집단 분포' : '추정'}
           </Text>
         </View>
-        {!!basis && <Text style={{ fontSize: 12, color: T.text3, lineHeight: 17, flex: 1 }}>{basis}</Text>}
+        {!!basis && <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 20, flex: 1 }}>{basis}</Text>}
       </View>
     </>
   );
@@ -129,8 +159,8 @@ export function Expandable({ label, children }: { label: string; children: React
         hitSlop={8}
         style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
       >
-        <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : label}</Text>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: A11Y.sub }}>{open ? '접기' : label}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={A11Y.sub} />
       </Pressable>
     </>
   );
@@ -143,145 +173,184 @@ export function Expandable({ label, children }: { label: string; children: React
  *    ④ 그래서 이게 의미하는 건  ⑤ 그럼 뭘 하면 좋을까
  *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다).
  *  ③만은 «없음»을 문자열이 아니라 axes=[]로 선언한다 — 아래 axes 주석 참조. */
-export function SummaryCard({ title, term, summary, detailSummary, badge, preview, definition, detail, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, children, footer }: {
+export function SummaryCard({ title, term, summary, detailSummary, badge, preview, definition, detail, whyLines, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, valueArea, variant = 'card', first, open: openProp, onOpenChange, children, footer }: {
   title: string;
   /** 제목 옆의 작은 회색 용어(eGFR·FLI·HSI 등). 제목은 쉬운 질문이라 «어떤 검사인지»가
    *  드러나지 않는다 — 결과지나 진료에서 들은 이름과 맞춰 보려면 이름표가 필요하다.
-   *  검사항목 탭의 «항목명 + 작은 뜻풀이»와 같은 모양이고 방향만 반대다(쉬운 이름 + 용어).
    *  ⚠️ 여기 말고 제목에 용어를 넣으면 1뎁스 전문용어 금지(§2-1 축 2)에 걸린다. */
   term?: string;
   summary?: string | null;
-  /** 2뎁스 ① 결론 자리에 쓸 문장. 없으면 summary를 그대로 쓴다.
-   *  나누는 이유: 2뎁스에서 사용자가 보는 항목을 바꿀 수 있는 카드(히스토리)는 모달 안에서
-   *  헤드라인이 따라가야 하는데, 그 문장을 1뎁스에도 쓰면 모달을 닫은 뒤 카드 문장이
-   *  이유 없이 바뀌어 있게 된다. 1뎁스는 고정, 2뎁스는 따라가게 하려면 두 개가 필요하다. */
+  /** 2뎁스 ① 결론 자리에 쓸 문장. 없으면 summary를 그대로 쓴다. */
   detailSummary?: string | null;
   badge?: React.ReactNode;
-  /** 1뎁스 요약 아래에 얹는 작은 그림 — 스파크라인 등. 열지 않고도 흐름이 보이게 하는 자리다.
-   *  ⚠️ children은 2뎁스 모달로 들어가므로, 1뎁스에 그림을 두려면 반드시 이 prop을 써야 한다. */
+  /** 1뎁스 요약 아래에 얹는 작은 그림 — variant='card'일 때만 그린다. */
   preview?: React.ReactNode;
   /** ② 이게 뭔지 한 문장 */
   definition?: string;
-  /** ②의 2.5뎁스 — '자세히 알아보기'를 눌러야 보이는 심화 설명(용어 사용 가능) */
+  /** ②의 2.5뎁스 — 접힌 심화 설명(글). whyLines가 있으면 그쪽이 우선한다. */
   detail?: string;
+  /** ②의 2.5뎁스를 «기준 / 내 값 / 근거» 줄로 보여줄 때. 접힌 버튼 이름은 「왜 그럴까요?」. */
+  whyLines?: { label: string; text: string }[];
   /** ④ 그래서 이게 의미하는 것 */
   meaning?: string;
-  /** ④에 덧붙이는 근거 — 설명만으로는 와닿지 않는 수치 비교 등 */
   meaningExtra?: React.ReactNode;
-  /** ⑤ 그럼 뭘 하면 좋은지 */
+  /** ⑤ 그럼 뭘 하면 좋은지 — 번호 원과 함께 최대 3개 */
   tips?: string[];
-  /** ⑤에 덧붙이는 것 — 문장 목록으로 안 되는 행동 안내(권장사항 묶음 등) */
   tipsExtra?: React.ReactNode;
-  /** ③「나의 위치」의 비교축. **선언이 필수다.**
-   *  빈 배열이면 ③칸을 아예 그리지 않는다 — 비교 대상이 없는 것은 위치가 아니다.
-   *  ⚠️ 예전에는 positionTitle에 아무 문자열이나 넣을 수 있었다. 그래서 「이렇게 판정했어요」
-   *  (판정 근거=2.5뎁스)·「짚어낸 변화」·「남성 50대 · 2009 vs 2024」(집단 이야기라 «나»가 없다)가
-   *  전부 같은 칸에 들어왔고, 「맞춤 권장사항」은 이 칸에 ⑤의 내용을 통째로 담고 있었다. */
+  /** ③「나의 위치」의 비교축. 선언이 필수다. 빈 배열이면 ③칸을 아예 그리지 않는다. */
   axes: PositionAxis[];
-  /** ③ 근거 카드 맨 위에 얹는 요소 — 등수 슬라이더 등 */
   positionExtra?: React.ReactNode;
-  /** ③ 본문. axes가 비면 넘기지 않는다. */
+  /** ① 바로 아래 «값 영역» 카드 — 항목 탭·그래프·연도 이동·값 배지. 있으면 ③은 또래 비교만 맡는다. */
+  valueArea?: React.ReactNode;
+  /** card = 예전 모양(단독 카드) · row = 한 카드 안에 쌓이는 큰 행(히스토리 «항목별로 보기») ·
+   *  link = 제목만 있는 큰 링크 버튼(히스토리 아래 링크 2행). */
+  variant?: 'card' | 'row' | 'link';
   children?: React.ReactNode;
-  /** ⑤ 다음, 고지문 바로 위. **어느 칸에도 속하지 않는 «이 카드 전체의 한계»** 자리다.
-   *  ③ 안에 두면 그 한계가 «내 위치»에 대한 것으로 읽히는데, 실제로는 카드가 내놓은
-   *  모든 숫자에 걸린다(ASCVD의 «미국 코호트라 한국인에게 과대추정» 같은 것).
-   *  ⚠️ 오해 차단은 ④가 맡는다. 여기는 ④가 말한 뒤에도 남는 «출처와 적용 한계»만 온다. */
   footer?: React.ReactNode;
+  /** row일 때 맨 위 행이면 위 구분선을 뺀다 */
+  first?: boolean;
+  /** 바깥에서 열고 닫을 때(히스토리 «먼저 확인하세요» 행이 같은 상세를 연다). 없으면 스스로 연다. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => { if (openProp === undefined) setOpenState(v); onOpenChange?.(v); };
   const [showDetail, setShowDetail] = useState(false);
+  const chevron = <Ionicons name="chevron-forward" size={22} color="#6B7684" />;
+  const trigger = variant === 'row' ? (
+    <Pressable
+      onPress={() => setOpen(true)}
+      accessibilityRole="button"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 16, minHeight: 84, borderTopWidth: first ? 0 : 1, borderTopColor: T.divider }}
+    >
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1 }}>{title}</Text>
+        {!!summary && <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 24, marginTop: 2 }}>{summary}</Text>}
+      </View>
+      {badge}
+      {chevron}
+    </Pressable>
+  ) : variant === 'link' ? (
+    <Pressable
+      onPress={() => setOpen(true)}
+      accessibilityRole="button"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 68, paddingHorizontal: 20, backgroundColor: T.white, borderRadius: T.radius, marginHorizontal: 16, marginBottom: 12 }}
+    >
+      <Text style={{ flex: 1, fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>{title}</Text>
+      {chevron}
+    </Pressable>
+  ) : (
+    <Pressable onPress={() => setOpen(true)} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1 }}>
+          <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, flexShrink: 1 }}>{title}</Text>
+          {!!term && <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: A11Y.sub }}>{term}</Text>}
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {badge}
+          {chevron}
+        </View>
+      </View>
+      {!!summary && <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginTop: 4, lineHeight: 24 }}>{summary}</Text>}
+      {preview}
+    </Pressable>
+  );
+
+  const card = { backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 } as const;
+  const h = { fontSize: T.fs.strong, fontWeight: '800', color: T.text1, marginBottom: 6 } as const;
+  const body = { fontSize: T.fs.strong, color: A11Y.sub, lineHeight: 27 } as const;
+  const hasWhy = !!whyLines?.length;
+  const canFold = hasWhy || !!detail;
+
   return (
     <>
-      <Pressable onPress={() => setOpen(true)} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          {/* 용어는 제목과 «같은 줄, 다음 자리»에 둔다. 아래 줄로 내리면 결론과 헷갈리고,
-              괄호로 제목에 넣으면 제목이 길어져 배지를 밀어낸다. baseline을 맞춰
-              두 글자가 한 줄로 읽히게 한다. */}
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, flexShrink: 1 }}>{title}</Text>
-            {!!term && <Text style={{ fontSize: 12, fontWeight: '600', color: T.text3 }}>{term}</Text>}
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {badge}
-            <Ionicons name="chevron-forward" size={16} color={T.text3} />
-          </View>
-        </View>
-        {!!summary && <Text style={{ fontSize: 13, color: T.text2, marginTop: 4, lineHeight: 19 }}>{summary}</Text>}
-        {preview}
-      </Pressable>
+      {trigger}
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
+        {/* 웹에서 Modal은 폰 폭 래퍼 밖으로 빠져나가므로 WebFrame으로 다시 폰 폭에 맞춘다(검사항목 상세와 같다). */}
+        <WebFrame>
         <View style={{ flex: 1, backgroundColor: T.bg }}>
-          {/* 헤더 — 검사항목 상세와 같은 규격(뒤로가기 + 제목) */}
+          {/* 헤더 — 뒤로가기(44px 이상) + 제목 */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 54, paddingBottom: 10, backgroundColor: T.white }}>
-            <Pressable onPress={() => setOpen(false)} hitSlop={10} style={{ padding: 8 }}>
-              <Ionicons name="chevron-back" size={24} color={T.text1} />
+            <Pressable onPress={() => setOpen(false)} accessibilityLabel="뒤로" hitSlop={10} style={{ padding: 10 }}>
+              <Ionicons name="chevron-back" size={26} color={T.text1} />
             </Pressable>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, flex: 1 }} numberOfLines={1}>{title}</Text>
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, flex: 1 }} numberOfLines={1}>{title}</Text>
           </View>
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
-            {/* ① 결론 — 1뎁스에서 본 요약을 헤드라인으로(모달 안에서 항목을 바꾸는 카드는 detailSummary로 갈아끼운다) */}
+            {/* ① 결론 — 22px */}
             {!!(detailSummary ?? summary) && (
-              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-                <Text style={{ fontSize: 19, fontWeight: '800', color: T.text1, lineHeight: 28 }}>{detailSummary ?? summary}</Text>
+              <View style={card}>
+                <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, lineHeight: 32, letterSpacing: -0.3 }}>{detailSummary ?? summary}</Text>
               </View>
             )}
-            {/* ② 이 지표는요 — 정의 한 문장, 심화는 2.5뎁스로 접어둔다 */}
+            {/* 값 영역 — 항목 탭 · 그래프 · 연도 이동 · 값 */}
+            {!!valueArea && <View style={card}>{valueArea}</View>}
+            {/* ② 이 지표는요 — 정의, 접힌 「왜 그럴까요?」(2.5뎁스) */}
             {!!definition && (
-              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 지표는요</Text>
-                <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{definition}</Text>
-                {showDetail && !!detail && (
-                  <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21, marginTop: 10 }}>{detail}</Text>
-                )}
-                {!!detail && (
+              <View style={card}>
+                <Text style={h}>이 지표는요</Text>
+                <Text style={body}>{definition}</Text>
+                {canFold && (
                   <Pressable
                     onPress={() => setShowDetail((v) => !v)}
-                    hitSlop={8}
-                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+                    accessibilityRole="button"
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 52, marginTop: 14, borderRadius: T.radiusMd, backgroundColor: T.cardAlt }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{showDetail ? '접기' : '자세히 알아보기'}</Text>
-                    <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{hasWhy ? '왜 그럴까요?' : showDetail ? '접기' : '자세히 알아보기'}</Text>
+                    <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={18} color={T.text1} />
                   </Pressable>
+                )}
+                {showDetail && hasWhy && (
+                  <View style={{ marginTop: 12, padding: 16, borderRadius: T.radiusMd, backgroundColor: '#F7F8FA', gap: 8 }}>
+                    {whyLines!.map((l) => (
+                      <Text key={l.label} style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25 }}>
+                        <Text style={{ fontWeight: '800', color: T.text1 }}>{l.label}  </Text>{l.text}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+                {showDetail && !hasWhy && !!detail && (
+                  <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25, marginTop: 12 }}>{detail}</Text>
                 )}
               </View>
             )}
-            {/* ③ 나의 위치 — 근거(차트·지표 행). 비교축이 없으면 칸 자체가 없다. */}
+            {/* ③ 나의 위치 — valueArea가 있으면 «또래와 견주면»만 */}
             {axes.length > 0 && (
-              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 12 }}>{positionTitle(axes)}</Text>
+              <View style={card}>
+                <Text style={h}>{valueArea ? '또래와 견주면' : positionTitle(axes)}</Text>
                 {positionExtra}
                 {children}
               </View>
             )}
-            {/* ④ 그래서 이게 의미하는 건 */}
+            {/* ④ 그래서 어떤 뜻이에요? */}
             {(!!meaning || !!meaningExtra) && (
-              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>그래서 이게 의미하는 건</Text>
-                {!!meaning && <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{meaning}</Text>}
+              <View style={card}>
+                <Text style={h}>그래서 어떤 뜻이에요?</Text>
+                {!!meaning && <Text style={body}>{meaning}</Text>}
                 {meaningExtra}
               </View>
             )}
-            {/* ⑤ 그럼 뭘 하면 좋을까 */}
+            {/* ⑤ 이렇게 해 보세요 — 번호 원 + 최대 3개 */}
             {(!!tips?.length || !!tipsExtra) && (
-              <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 10 }}>그럼 뭘 하면 좋을까요</Text>
-                {tips?.map((tip, i) => (
-                  <View key={i} style={{ flexDirection: 'row', gap: 8, marginTop: i === 0 ? 0 : 8 }}>
-                    <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: T.text3, marginTop: 8 }} />
-                    <Text style={{ flex: 1, fontSize: 14, color: T.text2, lineHeight: 21 }}>{tip}</Text>
+              <View style={card}>
+                <Text style={{ ...h, marginBottom: 12 }}>이렇게 해 보세요</Text>
+                {tips?.slice(0, 3).map((tip, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, marginTop: i === 0 ? 0 : 6 }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: '#007A49' }}>{i + 1}</Text>
+                    </View>
+                    <Text style={{ flex: 1, fontSize: T.fs.strong, color: T.text1, lineHeight: 26 }}>{tip}</Text>
                   </View>
                 ))}
                 {tipsExtra}
               </View>
             )}
-            {/* 카드 전체에 걸리는 한계 — 고지문과 «같은 층위»다.
-                흰 카드로 감싸면 ①~⑤와 같은 무게로 읽혀 내용 칸처럼 보이는데, 이건 읽고
-                행동할 것이 아니라 «이 숫자를 어디까지 믿을지»를 밝히는 회피 문구다.
-                카드를 벗기고 고지문 바로 위에 회색으로 둔다. */}
             {!!footer && <View style={{ marginBottom: 10 }}>{footer}</View>}
-            <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
+            <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
           </ScrollView>
         </View>
+        </WebFrame>
       </Modal>
     </>
   );
@@ -373,15 +442,15 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
   return (
     <View style={{ marginTop: 6 }}>
       <View style={{ height: 20 }}>
-        {anchor((bandL + bandR) / 2, <Text style={{ fontSize: 12, color: T.success, fontWeight: '600', width: 80, textAlign: 'center' }}>정상 범위</Text>)}
+        {anchor((bandL + bandR) / 2, <Text style={{ fontSize: T.fs.caption, color: T.success, fontWeight: '600', width: 80, textAlign: 'center' }}>정상 범위</Text>)}
       </View>
       <View style={{ height: 10, borderRadius: 5, backgroundColor: T.cardAlt, overflow: 'hidden' }}>
         <View style={{ position: 'absolute', left: `${bandL}%`, width: `${Math.max(2, bandR - bandL)}%`, top: 0, bottom: 0, backgroundColor: NORMAL_BAND }} />
         <View style={{ position: 'absolute', left: `${pct(value)}%`, transform: [{ translateX: -6 }], top: -1, width: 12, height: 12, borderRadius: 6, backgroundColor: color, borderWidth: 2, borderColor: '#fff' }} />
       </View>
       <View style={{ height: 20, marginTop: 4 }}>
-        {low != null && anchor(bandL, <Text style={{ fontSize: 12, color: T.text3, width: 60, textAlign: 'center' }}>{low}</Text>)}
-        {high != null && anchor(bandR, <Text style={{ fontSize: 12, color: T.text3, width: 60, textAlign: 'center' }}>{high}</Text>)}
+        {low != null && anchor(bandL, <Text style={{ fontSize: T.fs.caption, color: T.text3, width: 60, textAlign: 'center' }}>{low}</Text>)}
+        {high != null && anchor(bandR, <Text style={{ fontSize: T.fs.caption, color: T.text3, width: 60, textAlign: 'center' }}>{high}</Text>)}
       </View>
       {/* 내 수치 — 점만 있고 숫자가 없어서 위치를 읽을 수 없었다.
           점 위('정상 범위' 라벨 자리)에 두면 값이 밴드 안에 있을 때 글자가 겹친다(AST 34처럼).
@@ -389,7 +458,7 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
           점과 x를 맞추고, 색은 점과 같은 상태색으로 묶는다. */}
       <View style={{ height: 18 }}>
         {anchor(pct(value), (
-          <Text style={{ fontSize: 12, fontWeight: '700', color, width: 76, textAlign: 'center' }}>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color, width: 76, textAlign: 'center' }}>
             {formatMetricValue(metric, value)}
           </Text>
         ))}
@@ -409,9 +478,9 @@ function statusTone(metric: MetricDefinition) {
  *  (70/40 경계 자체는 interpret.scoreGrade가 갖는다.) */
 export function scoreTone(score: number) {
   const grade = scoreGrade(score);
-  if (grade === '정상') return { color: T.success, bg: T.successBg, label: '양호해요' };
-  if (grade === '주의') return { color: T.warn, bg: T.warnBg, label: '주의가 필요해요' };
-  return { color: T.danger, bg: T.dangerBg, label: '관리가 필요해요' };
+  if (grade === '정상') return { color: T.success, fill: T.successFill, bg: T.successBg, label: '양호해요' };
+  if (grade === '주의') return { color: T.warn, fill: T.warnFill, bg: T.warnBg, label: '주의가 필요해요' };
+  return { color: T.danger, fill: T.dangerFill, bg: T.dangerBg, label: '관리가 필요해요' };
 }
 
 /** "어떻게 계산했나요?" 접이식 설명 — 점수를 보여주는 화면은 모두 이걸 단다.
@@ -428,14 +497,14 @@ export function ScoreCalcNote({ score, manageCount, trackCount, bare }: {
     <>
       {(open || bare) && (
         <>
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 16 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginBottom: 16 }}>
             100점에서 시작해 주의 항목은 {SCORE_PENALTY.manage}점, 위험 항목은 {SCORE_PENALTY.track}점씩 빼서 계산해요.{'\n'}
             100 − ({SCORE_PENALTY.manage}×주의 {manageCount}개) − ({SCORE_PENALTY.track}×위험 {trackCount}개) = {score}점
           </Text>
           {/* 점수의 범위를 여기서 못 박는다 — 이 점수는 '검사 항목 판정 개수'일 뿐인데,
               심혈관 위험·대사증후군·지방간처럼 여러 수치를 조합한 판정은 하나도 들어가지 않는다.
               그 사실을 밝히지 않으면 점수가 종합 건강 점수로 읽힌다. */}
-          <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 16 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 16 }}>
             검사 항목 하나하나의 판정만 셉니다. 여러 수치를 조합해 따로 판정하는 심혈관 10년 위험·대사증후군·지방간 지표는 이 점수에 들어가지 않아요 — 분석 탭에서 따로 확인하세요.
           </Text>
           {/* 감점 기준 — 옅은 색칠 박스 없이, 색은 글자에만 사용해 구분선으로 나열 */}
@@ -446,8 +515,8 @@ export function ScoreCalcNote({ score, manageCount, trackCount, bare }: {
               { label: '위험', note: `-${SCORE_PENALTY.track}점`, color: T.danger },
             ].map((item, i) => (
               <View key={item.label} style={[{ flex: 1, alignItems: 'center', paddingVertical: 10 }, i > 0 && { borderLeftWidth: 1, borderLeftColor: T.divider }]}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: item.color, textAlign: 'center', marginBottom: 4 }}>{item.label}</Text>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{item.note}</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: item.color, textAlign: 'center', marginBottom: 4 }}>{item.label}</Text>
+                <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{item.note}</Text>
               </View>
             ))}
           </View>
@@ -459,7 +528,7 @@ export function ScoreCalcNote({ score, manageCount, trackCount, bare }: {
           hitSlop={8}
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
         >
-          <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{open ? '접기' : '어떻게 계산했나요?'}</Text>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text3 }}>{open ? '접기' : '어떻게 계산했나요?'}</Text>
           <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
         </Pressable>
       )}
@@ -481,7 +550,7 @@ export function FixedCTA({ label, onPress, disabled, loading }: {
           backgroundColor: disabled || loading ? T.text3 : pressed ? T.primaryPressed : T.primary,
         })}
       >
-        {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>{label}</Text>}
+        {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: disabled ? '#fff' : T.onPrimary }}>{label}</Text>}
       </Pressable>
     </View>
   );
@@ -538,7 +607,7 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
     .map((r, i) => ({ i, year: r.year, v: r.values[metric.key] }))
     .filter((p): p is { i: number; year: number; v: number } => isNum(p.v));
   if (pts0.length === 0) {
-    return <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center', paddingVertical: 24 }}>이 항목의 기록이 없어요.</Text>;
+    return <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', paddingVertical: 24 }}>이 항목의 기록이 없어요.</Text>;
   }
   // infoOnly(키·체중)는 판정 대상이 아니라 정상범위 밴드가 없다 — 밴드 없이 값만 보여준다.
   const { low, high } = metric.infoOnly ? { low: undefined, high: undefined } : normalBounds(metric);
@@ -588,22 +657,22 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
           {gridVals.map((v, i) => (
             <G key={i}>
               <Line x1={0} y1={yPos(v)} x2={PLOT_W} y2={yPos(v)} stroke={T.divider} strokeWidth={1} />
-              <SvgText x={-6} y={yPos(v) + 4} fontSize={10} fill={T.text3} textAnchor="end">{Math.round(v)}</SvgText>
+              <SvgText x={-6} y={yPos(v) + 4} fontSize={T.fs.caption} fill={T.text3} textAnchor="end">{Math.round(v)}</SvgText>
             </G>
           ))}
           {reports.map((r, i) => (
-            <SvgText key={r.year} x={xPos(i)} y={PLOT_H + 20} fontSize={11} fill={T.text3} textAnchor="middle">{r.year}</SvgText>
+            <SvgText key={r.year} x={xPos(i)} y={PLOT_H + 20} fontSize={T.fs.caption} fill={T.text3} textAnchor="middle">{r.year}</SvgText>
           ))}
           <Path d={d} stroke={LINE} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           {pts.map((p) => (
             <Circle key={p.i} cx={p.x} cy={p.y} r={p.i === focus.i ? 6.5 : 4.5} fill={p.i === focus.i ? LINE : T.white} stroke={LINE} strokeWidth={2.5} />
           ))}
           {/* 지금 보고 있는 해의 값 라벨 */}
-          <SvgText x={focus.x} y={focus.y - 12} fontSize={12} fill={LINE} textAnchor="middle" fontWeight="700">{focus.v}</SvgText>
+          <SvgText x={focus.x} y={focus.y - 12} fontSize={T.fs.caption} fill={LINE} textAnchor="middle" fontWeight="700">{focus.v}</SvgText>
         </G>
       </Svg>
       </Pressable>
-      <Text style={{ fontSize: 11, color: T.text3, marginTop: 2 }}>
+      <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 2 }}>
         초록 밴드가 정상 범위예요. 단위: {metric.unit}
         {onSelectYear && pts.length > 1 ? ' · 그래프를 눌러 그해 수치를 봅니다.' : ''}
       </Text>

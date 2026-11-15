@@ -62,7 +62,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   // 검사항목 탭과 같은 기준(statusCounts) — 판정 대상이 아닌 참고 항목(키·몸무게)은 세지 않는다.
   const counts = statusCounts(metricDefinitions);
   const { score, manageCount, trackCount } = computeScore(metricDefinitions);
-  const { color: scoreColor, bg: scoreBg, label: scoreLabel } = scoreTone(score);
+  const { color: scoreColor, fill: scoreFill, bg: scoreBg, label: scoreLabel } = scoreTone(score);
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
@@ -72,17 +72,17 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         <FadeInUp delay={0}>
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 10 }}>
           <Eyebrow>헬스에이지</Eyebrow>
-          <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 8, lineHeight: 34 }}>
+          <Text style={{ fontSize: T.fs.title, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 8, lineHeight: 34 }}>
             내 건강검진 결과를{'\n'}한눈에 관리해요
           </Text>
-          <Text style={{ fontSize: 14, color: T.text3, lineHeight: 21, marginTop: 10, marginBottom: 20 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 21, marginTop: 10, marginBottom: 20 }}>
             검진 결과지를 올리면 건강 점수와 연도별 변화, 맞춤 안내를 확인할 수 있어요. 로그인하고 시작해보세요.
           </Text>
           <Pressable hitSlop={8} onPress={onRequireLogin} style={{ height: 52, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <Ionicons name="log-in-outline" size={19} color="#fff" />
-            <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>로그인 / 회원가입</Text>
+            <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>로그인 / 회원가입</Text>
           </Pressable>
-          <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center', marginTop: 12 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', marginTop: 12 }}>
             로그인 없이도 아래 <Text style={{ fontWeight: '700', color: T.text2 }}>검진기관·병원·약국 찾기</Text>는 이용할 수 있어요.
           </Text>
         </View>
@@ -91,25 +91,25 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       <FadeInUp delay={0}>
       <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 24, marginBottom: 12, marginTop: 10 }}>
         {/* 히어로 다이어트 — 판단 1번(배지)·정량 1번(점수)·구성 1번(범례)만. */}
-        <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1 }}>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1 }}>
           {latest.year}년 · {latest.hospital}
         </Text>
 
         {/* 무슨 점수인지부터 — 점수를 처음 만나는 화면인데 라벨 없이 큰 숫자만 있었다(분석 탭에는 있었다). */}
-        <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500', marginTop: 14 }}>참고 점수</Text>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '500', marginTop: 14 }}>참고 점수</Text>
 
         {/* 점수 + 판단 배지 한 행 */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 4, marginBottom: 18 }}>
-          <Text style={{ fontSize: 72, fontWeight: '800', fontFamily: T.fontDisplay, color: scoreColor, lineHeight: 76, letterSpacing: -1 }}>{score}</Text>
-          <Text style={{ fontSize: 15, color: T.text3, marginBottom: 12, marginLeft: 6 }}>/ 100점</Text>
+          <Text style={{ fontSize: 72, fontWeight: '800', fontFamily: T.fontDisplay, color: scoreFill, lineHeight: 76, letterSpacing: -1 }}>{score}</Text>
+          <Text style={{ fontSize: T.fs.body, color: T.text3, marginBottom: 12, marginLeft: 6 }}>/ 100점</Text>
           <View style={{ backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginLeft: 12, marginBottom: 12 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
           </View>
         </View>
 
         {/* 점수 바 — 22/100의 위치감. 그래프는 이거 하나만, 분포는 문장으로만 말한다. */}
         <View style={{ height: 10, backgroundColor: T.cardAlt, borderRadius: 5, overflow: 'hidden', marginBottom: 18 }}>
-          <View style={{ width: `${score}%`, height: 10, borderRadius: 5, backgroundColor: scoreColor }} />
+          <View style={{ width: `${score}%`, height: 10, borderRadius: 5, backgroundColor: scoreFill }} />
           {/* 구간 눈금 — 배지 기준(40 미만 관리 필요 · 70 이상 양호)의 경계 */}
           {[40, 70].map((t) => (
             <View key={t} style={{ position: 'absolute', left: `${t}%`, top: 0, bottom: 0, width: 3, backgroundColor: T.white }} />
@@ -119,13 +119,13 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
         {/* 구성 — 검사항목 카드 헤더와 같은 점 범례 한 줄 */}
         <View style={{ flexDirection: 'row', gap: 14 }}>
           {[
-            { label: '정상', count: counts.정상, color: T.success },
-            { label: '주의', count: counts.주의, color: T.warn },
-            { label: '위험', count: counts.위험, color: T.danger },
+            { label: '정상', count: counts.정상, color: T.successFill },
+            { label: '주의', count: counts.주의, color: T.warnFill },
+            { label: '위험', count: counts.위험, color: T.dangerFill },
           ].map((c) => (
             <View key={c.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
               <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: c.color }} />
-              <Text style={{ fontSize: 13, color: T.text2 }}>{c.label} <Text style={{ fontWeight: '700', color: T.text1 }}>{c.count}</Text></Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>{c.label} <Text style={{ fontWeight: '700', color: T.text1 }}>{c.count}</Text></Text>
             </View>
           ))}
         </View>
@@ -145,7 +145,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           요약(점수)과 목록(TOP 3) 사이의 구분선 노릇도 한다. */}
       <FadeInUp delay={90}>
       <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: 16, marginBottom: 12 }}>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
+        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           {QUICK_LINKS.map((link) => (
             <Pressable hitSlop={8}
@@ -162,7 +162,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
                   ? <PillIcon size={26} />
                   : <Ionicons name={link.icon} size={26} color={link.color} />}
               </View>
-              <Text style={{ fontSize: 11, color: T.text2, fontWeight: '500', textAlign: 'center', lineHeight: 15 }}>{link.label}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, fontWeight: '500', textAlign: 'center', lineHeight: 20 }}>{link.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -173,13 +173,13 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       {!isPreview && (
         <FadeInUp delay={180}>
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8, marginBottom: 12 }}>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 4 }}>지금 주의할 항목 TOP 3</Text>
-          <Text style={{ fontSize: 13, color: T.text3, marginBottom: 8 }}>가장 먼저 확인하면 좋은 항목이에요.</Text>
+          <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1, marginBottom: 4 }}>지금 주의할 항목 TOP 3</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 8 }}>가장 먼저 확인하면 좋은 항목이에요.</Text>
           {top3.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: 20 }}>
               <Ionicons name="checkmark-circle" size={36} color={T.success} />
-              <Text style={{ fontSize: 15, fontWeight: '700', color: T.success, marginTop: 8 }}>모두 정상이에요</Text>
-              <Text style={{ fontSize: 13, color: T.text3, marginTop: 3 }}>지금의 생활습관을 유지해보세요.</Text>
+              <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.success, marginTop: 8 }}>모두 정상이에요</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 3 }}>지금의 생활습관을 유지해보세요.</Text>
             </View>
           ) : top3.map((m, i) => {
             const visual = categoryVisual(m.category);
@@ -190,11 +190,11 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
                 style={[{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
                         i < top3.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}
               >
-                <Text style={{ width: 16, fontSize: 15, fontWeight: '700', color: T.text3 }}>{i + 1}</Text>
+                <Text style={{ width: 16, fontSize: T.fs.body, fontWeight: '700', color: T.text3 }}>{i + 1}</Text>
                 <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{m.name}</Text>
-                  <Text style={{ fontSize: 13, color: T.text2, marginTop: 2 }}>{headline(m, latest.values[m.key])}</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{m.name}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2, marginTop: 2 }}>{headline(m, latest.values[m.key])}</Text>
                 </View>
                 <StatusBadge status={m.status} />
                 <Ionicons name="chevron-forward" size={18} color={T.text3} />
@@ -203,7 +203,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           })}
           {/* 전체 보기 — 하단 탭 '검사항목'으로 이동 */}
           <Pressable onPress={() => onTab('records')} style={{ paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: T.divider }}>
-            <Text style={{ fontSize: 14, fontWeight: '600', color: T.primary }}>전체 항목 보기</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primary }}>전체 항목 보기</Text>
           </Pressable>
         </View>
         </FadeInUp>

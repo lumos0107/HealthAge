@@ -117,8 +117,8 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
   return (
     <>
       <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }}>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>다음 검진 목표 세우기</Text>
-        <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
+        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>다음 검진 목표 세우기</Text>
+        <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
           지금 걸리는 것부터 짚고, 그걸 움직이는 행동을 고르면, 다음 검진에서 판정이 어떻게 달라지는지 보여드려요.
           {'\n'}
           <Text style={{ color: T.text3 }}>기준은 가장 최근 검진인 {latest.year}년 값이에요.</Text>
@@ -127,40 +127,40 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
           onPress={openModal}
           style={{ height: 50, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary }}
         >
-          <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>목표 세우기</Text>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>목표 세우기</Text>
         </Pressable>
         {demoMode && !!demoNote && (
-          <Text style={{ fontSize: 11, color: T.text3, marginTop: 8, lineHeight: 16 }}>{demoNote}</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 8, lineHeight: 20 }}>{demoNote}</Text>
         )}
       </View>
 
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, backgroundColor: T.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 52, paddingBottom: 14, backgroundColor: T.white, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1 }}>다음 검진 목표 세우기</Text>
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1 }}>다음 검진 목표 세우기</Text>
             <Pressable onPress={() => setOpen(false)} hitSlop={12}><Ionicons name="close" size={24} color={T.text2} /></Pressable>
           </View>
 
           <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
             {/* ① 지금 뭐가 걸리나 */}
             <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 12, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: T.primary, marginBottom: 4 }}>① 지금 걸리는 것</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary, marginBottom: 4 }}>① 지금 걸리는 것</Text>
               {problems.length === 0 ? (
-                <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 21 }}>
                   {latest.year}년 검진에서 대사 관련 항목은 모두 기준 안이에요. 지금 상태를 유지하는 것이 목표예요.
                 </Text>
               ) : (
                 <>
-                  <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21, marginBottom: 10 }}>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 21, marginBottom: 10 }}>
                     {latest.year}년 검진에서 {problems.length}개 항목이 기준을 벗어났어요.
                   </Text>
                   {problems.map((p) => (
                     <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                       <View style={{ backgroundColor: p.status === '위험' ? T.dangerBg : T.warnBg, paddingHorizontal: 7, paddingVertical: 2, borderRadius: T.radiusPill }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: p.status === '위험' ? T.danger : T.warn }}>{p.status}</Text>
+                        <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: p.status === '위험' ? T.danger : T.warn }}>{p.status}</Text>
                       </View>
-                      <Text style={{ fontSize: 14, color: T.text1, fontWeight: '600' }}>{p.label}</Text>
-                      <Text style={{ fontSize: 14, color: T.text2 }}>{p.value}{p.unit}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text1, fontWeight: '600' }}>{p.label}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>{p.value}{p.unit}</Text>
                     </View>
                   ))}
                 </>
@@ -169,13 +169,13 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
 
             {/* ② 뭘 하면 되나 — 한 번에 하나만. 효과크기는 더할 수 없다(대부분 체중을 통해 작용). */}
             <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: T.primary, marginBottom: 4 }}>② 그러려면 뭘 하면 되나</Text>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 12 }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary, marginBottom: 4 }}>② 그러려면 뭘 하면 되나</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 12 }}>
                 효과가 큰 것부터 차례로 놓았어요. 하나만 골라주세요 — 여러 행동의 효과는 그대로 더할 수 없어요.
                 대부분 체중을 통해 겹쳐서 작용하거든요.
               </Text>
               {actions.length === 0 ? (
-                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
                   지금 정보로 제시할 수 있는 행동이 없어요. 내정보에서 몸무게·흡연·음주를 입력하면 더 정확해집니다.
                 </Text>
               ) : actions.map((a, i) => {
@@ -193,17 +193,17 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: on ? T.primary : T.text3 }}>{i + 1}</Text>
-                      <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: on ? T.primary : T.text1 }}>{a.title(ctx)}</Text>
+                      <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: on ? T.primary : T.text3 }}>{i + 1}</Text>
+                      <Text style={{ flex: 1, fontSize: T.fs.caption, fontWeight: '700', color: on ? T.primary : T.text1 }}>{a.title(ctx)}</Text>
                     </View>
-                    <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 3 }}>{a.detail(ctx)}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 3 }}>{a.detail(ctx)}</Text>
                     {/* 왜 이 순서인지를 숫자로 밝힌다. 근거 없이 1·2·3만 붙이면 앱이 정한 취향으로 읽힌다. */}
                     {pct > 0 ? (
-                      <Text style={{ fontSize: 11, color: T.success, lineHeight: 17, marginTop: 5, fontWeight: '600' }}>
+                      <Text style={{ fontSize: T.fs.caption, color: T.success, lineHeight: 20, marginTop: 5, fontWeight: '600' }}>
                         기준까지의 거리가 {pct}% 줄어요 — {rank!.movedFactors.join(' · ')}
                       </Text>
                     ) : (
-                      <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 5 }}>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 5 }}>
                         대사증후군 5기준을 움직이지는 않아요. 이 행동이 겨냥하는 건 다른 수치예요.
                       </Text>
                     )}
@@ -212,7 +212,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
               })}
               {/* 이 순서가 무엇으로 매겨졌는지 — 안 밝히면 "앱이 정한 우선순위"로 읽힌다. */}
               {actions.some((a) => (rankById.get(a.id)?.reductionRatio ?? 0) > 0) && (
-                <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>
                   · 순서는 대사증후군 5기준에서 지금 얼마나 벗어나 있는지를 재고, 각 행동이 그 거리를 몇 %
                   좁히는지로 매겼어요. 범위 중 <Text style={{ fontWeight: '700' }}>변화가 작은 쪽</Text>으로 계산해
                   아래 판정 재계산과 같은 기준을 씁니다.
@@ -220,12 +220,12 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
               )}
               {/* 목록에서 뺀 행동은 왜 뺐는지 밝힌다 — 조용히 빼면 "그건 상관없다"로 읽힌다. */}
               {ctx.alcoholWeeklyG > 0 && ctx.alcoholWeeklyG / 7 / GRAMS_PER_DRINK <= 2 && (
-                <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4 }}>
                   · 절주는 목록에 없어요. 지금 음주량(하루 2잔 이하)에서는 줄여도 혈압이 내려간다는 근거가 없습니다.
                 </Text>
               )}
               {!ctx.hypertensive && ((ctx.values.sbp ?? 0) >= 130 || (ctx.values.dbp ?? 0) >= 80) && (
-                <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4 }}>
                   · 저염(하루 소금 3g 줄이기)은 목록에 없어요. 지침이 주는 효과크기가 고혈압군(140/90 이상) 기준이라,
                   지금 혈압에서 얼마나 내려가는지는 수치로 말할 수 없습니다. 저염 자체는 여전히 권장돼요.
                 </Text>
@@ -236,10 +236,10 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
             {action && (
               <>
                 <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: T.primary, marginBottom: 4 }}>③ 그러면 이렇게 됩니다</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary, marginBottom: 4 }}>③ 그러면 이렇게 됩니다</Text>
                   {/* ⚠️ 문구는 "되면"이지 "하면"이 아니다. 문헌 계수는 그 변화가 실제로 일어났을 때의
                       값이고, 일으키고 유지할 확률은 훨씬 낮다(근거문서 §7-4). */}
-                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 12 }}>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 12 }}>
                     아래는 <Text style={{ fontWeight: '700' }}>그 변화가 실제로 일어났을 때</Text>의 문헌 평균 범위예요. 내 몸에 대한 예측이 아닙니다.
                   </Text>
                   {effects.map((e) => {
@@ -249,14 +249,14 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                     return (
                       <View key={e.from} style={{ paddingVertical: 9, borderTopWidth: 1, borderTopColor: T.divider }}>
                         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                          <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{e.label}</Text>
-                          <Text style={{ fontSize: 14, color: T.text2 }}>
+                          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{e.label}</Text>
+                          <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>
                             {base}{e.unit} → <Text style={{ fontWeight: '800', color: T.text1 }}>
                               {round1(base + dMin)}~{round1(base + dMax)}{e.unit}
                             </Text>
                           </Text>
                         </View>
-                        <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>
+                        <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 2 }}>
                           {fmt(dMin)} ~ {fmt(dMax)}{e.unit}{e.note ? ` · ${e.note}` : ''}
                         </Text>
                       </View>
@@ -265,25 +265,25 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                   {/* 판정 재계산에 못 들어가는 항목을 밝힌다 — 안 밝히면 아래 '대사증후군 5→4'가
                       간 수치까지 반영한 결과로 읽힌다. */}
                   {effects.some((e) => !e.sim) && (
-                    <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>
                       · {effects.filter((e) => !e.sim).map((e) => e.label).join('·')}는 대사증후군 5기준·LDL 목표 어느 판정식에도 들어가지 않아, 아래 판정 재계산에는 반영되지 않아요.
                     </Text>
                   )}
                   {!!action.noEffect?.length && (
                     <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 4 }}>이건 안 움직여요</Text>
+                      <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 4 }}>이건 안 움직여요</Text>
                       {action.noEffect.map((n, i) => (
-                        <Text key={i} style={{ fontSize: 12, color: T.text3, lineHeight: 19, marginBottom: 3 }}>· {n}</Text>
+                        <Text key={i} style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 3 }}>· {n}</Text>
                       ))}
                     </View>
                   )}
                   {!!action.caution && (
                     <View style={{ marginTop: 12, backgroundColor: T.warnBg, borderRadius: 10, padding: 12 }}>
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: T.warn, marginBottom: 4 }}>⚠️ 함께 지킬 것</Text>
-                      <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>{action.caution}</Text>
+                      <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.warn, marginBottom: 4 }}>⚠️ 함께 지킬 것</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{action.caution}</Text>
                     </View>
                   )}
-                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 12 }}>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 12 }}>
                     근거: {action.source} · 등급 {action.grade}
                   </Text>
                 </View>
@@ -293,22 +293,22 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                     onPress={loading ? undefined : run}
                     style={{ height: 54, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary, opacity: loading ? 0.6 : 1 }}
                   >
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>{loading ? '다시 계산하는 중...' : '이 수치가 되면 판정은?'}</Text>
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>{loading ? '다시 계산하는 중...' : '이 수치가 되면 판정은?'}</Text>
                   </Pressable>
                 </View>
               </>
             )}
 
             {!!error && (
-              <Text style={{ fontSize: 13, color: T.danger, marginHorizontal: 20, marginTop: 14, lineHeight: 19 }}>{error}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.danger, marginHorizontal: 20, marginTop: 14, lineHeight: 20 }}>{error}</Text>
             )}
 
             {result && !result.error && (
               <>
                 <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 2 }}>대사증후군 기준 충족</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 2 }}>대사증후군 기준 충족</Text>
                   {/* 여기부터는 추정이 아니다 — 위에서 나온 수치를 넣고 학회 기준으로 정확히 다시 센 결과다. */}
-                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 12 }}>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 12 }}>
                     범위 중 <Text style={{ fontWeight: '700' }}>변화가 작은 쪽</Text>으로 계산했어요. 이 층은 추정이 아니라 학회 기준으로 정확히 다시 센 값이에요.
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -320,15 +320,15 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                     }}>
                       {result.metabolic_syndrome.after.count ?? '—'}
                     </Text>
-                    <Text style={{ fontSize: 14, color: T.text2, marginTop: 8 }}>/ 5개 기준</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text2, marginTop: 8 }}>/ 5개 기준</Text>
                   </View>
                   {result.metabolic_syndrome.before.is_metabolic_syndrome && !result.metabolic_syndrome.after.is_metabolic_syndrome && (
                     <View style={{ alignSelf: 'flex-start', marginTop: 12, backgroundColor: T.successBg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: T.radiusPill }}>
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: T.success }}>3개 미만이 되어 대사증후군 기준에서 벗어나요</Text>
+                      <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.success }}>3개 미만이 되어 대사증후군 기준에서 벗어나요</Text>
                     </View>
                   )}
                   {!!result.metabolic_syndrome.after.met_factors.length && (
-                    <Text style={{ fontSize: 12, color: T.text3, marginTop: 10, lineHeight: 18 }}>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 10, lineHeight: 20 }}>
                       남는 항목: {result.metabolic_syndrome.after.met_factors.join(' · ')}
                     </Text>
                   )}
@@ -337,21 +337,21 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                 {/* LDL 개인 목표 — 위험군마다 목표선이 달라, 같은 LDL이라도 달성 여부가 다르다. */}
                 {result.ldl_target?.target_ldl != null && result.ldl_target.after_ldl != null && (
                   <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>LDL 개인 목표</Text>
-                    <Text style={{ fontSize: 12, color: T.text3, marginBottom: 12 }}>
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>LDL 개인 목표</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 12 }}>
                       {result.ldl_target.label ? `${result.ldl_target.label} 기준 ` : ''}목표 {result.ldl_target.target_ldl}mg/dL 미만이에요.
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      <Text style={{ fontSize: 26, fontWeight: '800', color: T.text3 }}>{result.ldl_target.before_ldl ?? '—'}</Text>
+                      <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text3 }}>{result.ldl_target.before_ldl ?? '—'}</Text>
                       <Ionicons name="arrow-forward" size={20} color={T.text3} />
                       <Text style={{ fontSize: 30, fontWeight: '800', color: result.ldl_target.after_achieved ? T.success : T.text1 }}>
                         {result.ldl_target.after_ldl}
                       </Text>
-                      <Text style={{ fontSize: 13, color: T.text2, marginTop: 6 }}>mg/dL</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text2, marginTop: 6 }}>mg/dL</Text>
                     </View>
                     {result.ldl_target.after_achieved != null && (
                       <View style={{ alignSelf: 'flex-start', marginTop: 12, backgroundColor: result.ldl_target.after_achieved ? T.successBg : T.warnBg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: T.radiusPill }}>
-                        <Text style={{ fontSize: 12, fontWeight: '800', color: result.ldl_target.after_achieved ? T.success : T.warn }}>
+                        <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: result.ldl_target.after_achieved ? T.success : T.warn }}>
                           {result.ldl_target.after_achieved
                             ? (result.ldl_target.before_achieved ? '목표 달성 유지' : '목표를 달성해요')
                             : `목표까지 ${round1(result.ldl_target.after_ldl - result.ldl_target.target_ldl)}mg/dL 남아요`}
@@ -363,12 +363,12 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
 
                 {(!!result.groups.resolved.length || !!result.groups.added.length) && (
                   <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 10 }}>집단군 변화</Text>
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 10 }}>집단군 변화</Text>
                     {!!result.groups.resolved.length && (
-                      <Text style={{ fontSize: 13, color: T.success, lineHeight: 20, fontWeight: '600' }}>벗어남: {result.groups.resolved.join(' · ')}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.success, lineHeight: 20, fontWeight: '600' }}>벗어남: {result.groups.resolved.join(' · ')}</Text>
                     )}
                     {!!result.groups.added.length && (
-                      <Text style={{ fontSize: 13, color: T.warn, lineHeight: 20, fontWeight: '600', marginTop: 4 }}>새로 해당: {result.groups.added.join(' · ')}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.warn, lineHeight: 20, fontWeight: '600', marginTop: 4 }}>새로 해당: {result.groups.added.join(' · ')}</Text>
                     )}
                   </View>
                 )}
@@ -378,19 +378,19 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                   if (!changed.length) return null;
                   return (
                     <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 8 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>달라지는 지표 {changed.length}종</Text>
-                      <Text style={{ fontSize: 12, color: T.text3, marginBottom: 12 }}>또래 백분위가 있는 지표는 내 위치가 어디로 움직이는지도 함께 볼 수 있어요.</Text>
+                      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>달라지는 지표 {changed.length}종</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 12 }}>또래 백분위가 있는 지표는 내 위치가 어디로 움직이는지도 함께 볼 수 있어요.</Text>
                       {changed.map((c, i) => {
                         const moved = c.before_percentile != null && c.after_percentile != null;
                         const better = moved && c.after_percentile! < c.before_percentile!;
                         return (
                           <View key={c.key} style={[{ paddingVertical: 11 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 3 }}>{c.title}</Text>
-                            <Text style={{ fontSize: 15, color: T.text2 }}>
+                            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 3 }}>{c.title}</Text>
+                            <Text style={{ fontSize: T.fs.body, color: T.text2 }}>
                               {c.before} → <Text style={{ fontWeight: '800', color: T.text1 }}>{c.after}</Text>
                             </Text>
                             {moved && (
-                              <Text style={{ fontSize: 12, color: better ? T.success : T.warn, marginTop: 3, fontWeight: '600' }}>
+                              <Text style={{ fontSize: T.fs.caption, color: better ? T.success : T.warn, marginTop: 3, fontWeight: '600' }}>
                                 또래 상위 {c.before_percentile}% → 상위 {c.after_percentile}%
                               </Text>
                             )}
@@ -406,8 +406,8 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                     조용히 빼면 "안 보이니 상관없나 보다"가 된다. */}
                 {!!result.unchanged.length && (
                   <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 6 }}>그대로인 지표 {result.unchanged.length}종</Text>
-                    <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 6 }}>그대로인 지표 {result.unchanged.length}종</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
                       {result.unchanged.join(' · ')} — 이 행동으로 달라지는 값이 이 지표의 계산식에 들어가지 않아서예요.
                     </Text>
                   </View>
@@ -416,11 +416,11 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                 <View style={{ marginHorizontal: 16, marginTop: 12, paddingHorizontal: 4 }}>
                   {/* 유지 확률 — 계산으로는 옳지만 2년 뒤에도 남아 있을 확률은 절반 이하다.
                       "다음 검진 목표"라는 틀 자체가 이 한계에 맞춰 고른 것이므로 문구로도 밝힌다. */}
-                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 4 }}>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 4 }}>
                     · 이건 다음 한 번의 검진을 위한 목표예요. 체중 감량은 2년 안에 절반 이상이 되돌아온다는 보고가 있습니다 — 평생 유지된다는 뜻이 아닙니다.
                   </Text>
                   {result.limitations.map((l, i) => (
-                    <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 4 }}>· {l}</Text>
+                    <Text key={i} style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 4 }}>· {l}</Text>
                   ))}
                 </View>
               </>

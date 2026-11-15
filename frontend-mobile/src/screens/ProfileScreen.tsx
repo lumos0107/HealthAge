@@ -128,8 +128,8 @@ export default function ProfileScreen({
           </View>
           <View style={{ flex: 1 }}>
             <Eyebrow>PROFILE</Eyebrow>
-            <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 4 }}>{profile.name}</Text>
-            {profile.email ? <Text style={{ fontSize: 13, color: T.text3, marginTop: 2 }}>{profile.email}</Text> : null}
+            <Text style={{ fontSize: T.fs.title, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 4 }}>{profile.name}</Text>
+            {profile.email ? <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 2 }}>{profile.email}</Text> : null}
           </View>
         </View>
         </FadeInUp>
@@ -138,14 +138,14 @@ export default function ProfileScreen({
         <FadeInUp delay={70}>
         <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1 }}>내 정보</Text>
+            <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>내 정보</Text>
             {editState === 'locked' ? (
               <Pressable
                 onPress={() => setEditState('verifying')}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.primaryLight, paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill }}
               >
                 <Ionicons name="lock-closed-outline" size={13} color={T.primary} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.primary }}>수정하기</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primary }}>수정하기</Text>
               </Pressable>
             ) : editState === 'unlocked' ? (
               <Pressable
@@ -153,7 +153,7 @@ export default function ProfileScreen({
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.successBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill }}
               >
                 <Ionicons name="lock-open-outline" size={13} color={T.success} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.success }}>수정 중</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.success }}>수정 중</Text>
               </Pressable>
             ) : null}
           </View>
@@ -164,7 +164,7 @@ export default function ProfileScreen({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={valueStyle}>{profile.email || '이메일 없음'}</Text>
               <View style={{ backgroundColor: T.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                <Text style={{ fontSize: 10, color: T.text3, fontWeight: '600' }}>고정</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '600' }}>고정</Text>
               </View>
             </View>
           </View>
@@ -180,7 +180,7 @@ export default function ProfileScreen({
           ) : (
             <View style={{ paddingTop: 14 }}>
               <FieldInput label="이름" value={form.name} onChangeText={(v) => setForm((s) => ({ ...s, name: v }))} />
-              <Text style={{ fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 10 }}>성별</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text2, marginBottom: 10 }}>성별</Text>
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
                 {(['1', '2'] as const).map((g) => (
                   <Pressable hitSlop={8}
@@ -194,7 +194,7 @@ export default function ProfileScreen({
                       alignItems: 'center', justifyContent: 'center',
                     }}
                   >
-                    <Text style={{ fontWeight: '700', color: form.gender === g ? T.primary : T.text2, fontSize: 15 }}>
+                    <Text style={{ fontWeight: '700', color: form.gender === g ? T.primary : T.text2, fontSize: T.fs.body }}>
                       {g === '1' ? '남성' : '여성'}
                     </Text>
                   </Pressable>
@@ -208,13 +208,13 @@ export default function ProfileScreen({
                 hint="YYYY-MM-DD 형식으로 입력해주세요."
                 keyboardType="numbers-and-punctuation"
               />
-              <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginTop: 8, marginBottom: 14 }}>생활습관</Text>
+              <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginTop: 8, marginBottom: 14 }}>생활습관</Text>
               <LifestyleForm value={lifestyle} onChange={setLifestyle} gender={Number(form.gender) === 2 ? 2 : 1} />
               <Pressable hitSlop={8}
                 style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 16 }}
                 onPress={handleSave}
               >
-                <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>저장하기</Text>
+                <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>저장하기</Text>
               </Pressable>
             </View>
           )}
@@ -224,7 +224,7 @@ export default function ProfileScreen({
         {/* 알림·표시 설정 — 박스 없이 구분선 목록으로 */}
         <FadeInUp delay={140}>
         <View style={{ paddingHorizontal: 20, marginBottom: 8, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 18 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>알림 및 표시 설정</Text>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 16 }}>알림 및 표시 설정</Text>
           {([
             { key: 'checkupReminder' as const, title: '검진 일정 알림', desc: '다음 검진 시기를 놓치지 않도록 알려줍니다.' },
             { key: 'medicationReminder' as const, title: '복약 자료 알림', desc: '내가 먹는 약 자료를 정기적으로 확인하도록 안내합니다.' },
@@ -233,8 +233,8 @@ export default function ProfileScreen({
             <View key={item.key} style={[{ paddingVertical: 14 }, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ flex: 1, marginRight: 14 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: T.text1, marginBottom: 3 }}>{item.title}</Text>
-                  <Text style={{ fontSize: 13, color: T.text3, lineHeight: 18 }}>{item.desc}</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '600', color: T.text1, marginBottom: 3 }}>{item.title}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>{item.desc}</Text>
                 </View>
                 <Switch
                   value={localSettings[item.key]}
@@ -244,7 +244,7 @@ export default function ProfileScreen({
                 />
               </View>
               {item.key === 'checkupReminder' && localSettings.checkupReminder && (
-                <Text style={{ fontSize: 12, color: reminderAt ? T.success : T.text3, marginTop: 8, lineHeight: 18 }}>
+                <Text style={{ fontSize: T.fs.caption, color: reminderAt ? T.success : T.text3, marginTop: 8, lineHeight: 20 }}>
                   {reminderAt
                     ? `예약됨 · ${reminderAt.getFullYear()}년 ${reminderAt.getMonth() + 1}월 ${reminderAt.getDate()}일 ${String(reminderAt.getHours()).padStart(2, '0')}:${String(reminderAt.getMinutes()).padStart(2, '0')}`
                     : '아직 예약된 알림이 없어요. 검진 기록을 등록하면 다음 검진 시기에 맞춰 알려드려요.'}
@@ -258,15 +258,15 @@ export default function ProfileScreen({
         {/* 앱 정보 — 박스 없이 구분선 목록으로 */}
         <FadeInUp delay={210}>
         <View style={{ paddingHorizontal: 20, marginBottom: 8, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 18 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 16 }}>앱 정보</Text>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 16 }}>앱 정보</Text>
           {[
             { label: '앱 이름', value: '헬스에이지' },
             { label: '버전', value: '1.0.0' },
             { label: '문의', value: 'support@healthage.kr' },
           ].map((item, i, arr) => (
             <View key={item.label} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
-              <Text style={{ fontSize: 15, color: T.text2 }}>{item.label}</Text>
-              <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500' }}>{item.value}</Text>
+              <Text style={{ fontSize: T.fs.body, color: T.text2 }}>{item.label}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '500' }}>{item.value}</Text>
             </View>
           ))}
         </View>
@@ -277,15 +277,15 @@ export default function ProfileScreen({
         <FadeInUp delay={245}>
         {/* 위 세 섹션과 같은 '박스 없이 구분선' 문법 — 이 카드만 흰 박스라 한 화면에 두 문법이 섞여 있었다. */}
         <View style={{ paddingHorizontal: 20, marginBottom: 8, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 18 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 4 }}>검진 결과 내보내기</Text>
-          <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginBottom: 14 }}>병원 지참·가족 공유용 PDF로 저장해요.</Text>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>검진 결과 내보내기</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 14 }}>병원 지참·가족 공유용 PDF로 저장해요.</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {[...reports].reverse().map((r) => {
               const active = (pdfYear ?? reports[reports.length - 1]?.year) === r.year;
               return (
                 <Pressable key={r.year} onPress={() => setPdfYear(r.year)}
                   style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.cardAlt }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text2 }}>{r.year}년</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: active ? T.onPrimary : T.text2 }}>{r.year}년</Text>
                 </Pressable>
               );
             })}
@@ -302,7 +302,7 @@ export default function ProfileScreen({
             onPress={onLogout}
             style={{ height: 54, backgroundColor: T.white, borderRadius: T.radiusPill, borderWidth: 1, borderColor: T.danger, alignItems: 'center', justifyContent: 'center' }}
           >
-            <Text style={{ fontSize: 16, fontWeight: '700', color: T.danger }}>로그아웃</Text>
+            <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.danger }}>로그아웃</Text>
           </Pressable>
         </View>
         </FadeInUp>
@@ -312,7 +312,7 @@ export default function ProfileScreen({
           <FadeInUp delay={340}>
           <View style={{ alignItems: 'center', marginTop: 4, marginBottom: 12 }}>
             <Pressable onPress={onDeleteAccount} hitSlop={8} style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
-              <Text style={{ fontSize: 13, color: T.text3, fontWeight: '600', textDecorationLine: 'underline' }}>회원탈퇴</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '600', textDecorationLine: 'underline' }}>회원탈퇴</Text>
             </Pressable>
           </View>
           </FadeInUp>
@@ -337,8 +337,8 @@ export default function ProfileScreen({
                 <Ionicons name="shield-checkmark-outline" size={22} color={T.primary} />
               </View>
               <View>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: T.text1 }}>본인 확인</Text>
-                <Text style={{ fontSize: 13, color: T.text3, marginTop: 2 }}>정보 수정을 위해 비밀번호를 입력해주세요.</Text>
+                <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>본인 확인</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 2 }}>정보 수정을 위해 비밀번호를 입력해주세요.</Text>
               </View>
             </View>
             <TextInput
@@ -348,7 +348,7 @@ export default function ProfileScreen({
                 borderColor: pwError ? T.danger : T.border,
                 borderRadius: T.radiusSm,
                 paddingHorizontal: 16,
-                fontSize: 16,
+                fontSize: T.fs.body,
                 color: T.text1,
                 backgroundColor: T.white,
                 letterSpacing: 2,
@@ -362,12 +362,12 @@ export default function ProfileScreen({
               autoFocus
               onSubmitEditing={verifyPassword}
             />
-            {pwError ? <Text style={{ fontSize: 13, color: T.danger, fontWeight: '600', marginBottom: 16 }}>{pwError}</Text> : null}
+            {pwError ? <Text style={{ fontSize: T.fs.caption, color: T.danger, fontWeight: '600', marginBottom: 16 }}>{pwError}</Text> : null}
             <Pressable hitSlop={8}
               style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
               onPress={verifyPassword}
             >
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>확인</Text>
+              <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>확인</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -378,8 +378,8 @@ export default function ProfileScreen({
 }
 
 const rowStyle = { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const, paddingVertical: 14 };
-const labelStyle = { fontSize: 14, color: T.text3, fontWeight: '500' as const };
-const valueStyle = { fontSize: 15, color: T.text1, fontWeight: '600' as const };
+const labelStyle = { fontSize: T.fs.caption, color: T.text3, fontWeight: '500' as const };
+const valueStyle = { fontSize: T.fs.body, color: T.text1, fontWeight: '600' as const };
 
 function InfoRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
   return (

@@ -24,7 +24,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 // ─── 디자인 시스템 v2: 토스 구조 × 뱅샐 그린 ─────────────────
 // - 연회색 배경(#F3F5F7) 위 흰 카드(radius 20, 무테두리·무그림자)로 영역 구분
-// - 브랜드 그린(#00C073)은 "누를 수 있는 것" 전용. '정상' 상태는 #3CB371로 분리
+// - 브랜드 그린(#00C073)은 "누를 수 있는 것" 전용. '정상' 상태는 success/successFill로 분리
 // - 상태 배지는 틴트 배경 + 상태색 텍스트 병기 (색만으로 구분 금지)
 export const T = {
   // Primary = 브랜드 그린. 버튼·링크·활성 탭 등 인터랙션 전용.
@@ -32,6 +32,10 @@ export const T = {
   primaryPressed: '#00A862',
   primaryLight: '#E6F9F1',
   primaryDark: '#00A862',
+  // 초록 *글자*·링크용(흰 카드 4.9:1, 앱 배경 4.5:1). 아이콘·선은 primaryDark(3.1:1).
+  primaryText: '#00814D',
+  // 초록 채움 버튼 위 글자. 흰 글자는 2.4:1이라 어두운 색을 쓴다(6.6:1).
+  onPrimary: '#06281C',
 
   // Backgrounds — 연회색 화면 배경, 카드만 흰색
   bg: '#F3F5F7',
@@ -41,20 +45,35 @@ export const T = {
   // Text hierarchy
   text1: '#191F28',
   text2: '#4E5968',
-  text3: '#8B95A1',
+  text3: '#66717E', // 흰 5.0:1 · 앱 배경 4.5:1 (WCAG AA)
 
   // 테두리는 원칙적으로 안 쓴다 — 남은 사용처를 위해 구분선과 같은 색으로.
   border: '#F2F4F6',
   divider: '#F2F4F6',
 
-  // Semantic colors — 상태 전용(인터랙션 그린과 분리).
-  // 채도는 백업본 톤(#3CB371/#FF8A3D/#F44336)을 따른다 — 낮춘 버전(#1F8A5D/#D97706/#F04452)은 흐릿하다는 피드백.
-  success: '#3CB371',
+  // Semantic colors — 상태 전용(인터랙션 그린과 분리). WCAG AA(4.5:1) 기준으로 명도만 낮춘 값.
+  // 흰 카드·앱 배경·틴트 배지 위에서 모두 4.5:1 이상. 글자·아이콘·차트선 공용.
+  success: '#1D7F56',
   successBg: '#EAF7F1',
-  warn: '#FF8A3D',
+  warn: '#A95D05',
   warnBg: '#FFF3E7',
-  danger: '#F44336',
+  danger: '#D71121',
+  // 글자가 아닌 것(막대·점·선·아이콘·24px 이상 큰 숫자)용 선명한 색 — 흰 카드 위 3:1 이상(WCAG 비텍스트 기준).
+  // 작은 글자에는 쓰지 않는다(그건 위의 success/warn/danger).
+  successFill: '#38A86A',
+  warnFill: '#FD6400',
+  dangerFill: '#F44336',
   dangerBg: '#FEE9EB',
+
+  // 글자 크기 — 역할별 토큰 (px). 화면에서 숫자를 직접 쓰지 말고 이 토큰을 쓴다.
+  // 하한은 시니어 기준(본문 16 / 캡션 14 / 버튼·메뉴 18 / 제목 20~24). 14 미만 금지.
+  fs: {
+    caption: 14, // 보조 글자·배지·칩·단위·출처
+    body: 16,    // 읽는 문장
+    strong: 18,  // 버튼·메뉴·소제목
+    h3: 20,      // 카드·섹션 제목
+    title: 24,   // 화면 제목
+  },
 
   // Radius — 카드 20 · 버튼 14 · 입력 12 · 칩 999
   radius: 20,
@@ -73,7 +92,7 @@ export const T = {
 
   fontDisplay: 'Pretendard',
 
-  eyebrow: { fontSize: 11, fontWeight: '700' as const, color: '#8B95A1', letterSpacing: 1.6, textTransform: 'uppercase' as const },
+  eyebrow: { fontSize: 14, fontWeight: '700' as const, color: '#66717E', letterSpacing: 1.6, textTransform: 'uppercase' as const },
 } as const;
 
 // 이 앱은 폰 화면 전용으로 만들어졌다 — 노트북 브라우저든 태블릿 실기기든,
@@ -124,10 +143,10 @@ export function Collapsible({ title, children, defaultOpen, badge }: { title: st
     <View>
       <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{title}</Text>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{title}</Text>
           {badge ? (
             <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 11, fontWeight: '600', color: T.primary }}>{badge}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primary }}>{badge}</Text>
             </View>
           ) : null}
         </View>
@@ -142,7 +161,7 @@ export function StatusBadge({ status }: { status: Status }) {
   const { color, bg } = statusColor(status);
   return (
     <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: bg }}>
-      <Text style={{ fontSize: 11, fontWeight: '600', color }}>{status}</Text>
+      <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color }}>{status}</Text>
     </View>
   );
 }
@@ -173,10 +192,10 @@ export function Eyebrow({ children }: { children: React.ReactNode }) {
 export function SectionTitle({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, marginTop: 8 }}>
-      <Text style={{ fontSize: 18, fontWeight: '700', color: T.text1 }}>{title}</Text>
+      <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>{title}</Text>
       {action ? (
         <Pressable hitSlop={8} onPress={onAction}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: T.primary }}>{action}</Text>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primary }}>{action}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -187,10 +206,10 @@ export function Board({ title, children, attention, style }: { title: string; ch
   return (
     <View style={[ui.card, style]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>{title}</Text>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>{title}</Text>
         {attention && (
           <View style={{ backgroundColor: T.dangerBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-            <Text style={{ fontSize: 11, fontWeight: '600', color: T.danger }}>주의 포함</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.danger }}>주의 포함</Text>
           </View>
         )}
       </View>
@@ -271,8 +290,8 @@ export function FieldInput({ label, required, error, hint, ...props }: TextInput
         autoCapitalize="none"
         {...props}
       />
-      {hint ? <Text style={{ fontSize: 12, color: T.text3, marginTop: 5 }}>{hint}</Text> : null}
-      {error ? <Text style={{ fontSize: 12, color: T.danger, marginTop: 4, fontWeight: '600' }}>확인 필요</Text> : null}
+      {hint ? <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 5 }}>{hint}</Text> : null}
+      {error ? <Text style={{ fontSize: T.fs.caption, color: T.danger, marginTop: 4, fontWeight: '600' }}>확인 필요</Text> : null}
     </View>
   );
 }
@@ -282,7 +301,7 @@ export function FieldDisplay({ label, value }: { label: string; value: string })
     <View style={{ marginBottom: 16 }}>
       <Text style={ui.fieldLabel}>{label}</Text>
       <View style={[ui.fieldInput, { backgroundColor: T.cardAlt, justifyContent: 'center' }]}>
-        <Text style={{ fontSize: 15, color: T.text2 }}>{value || '—'}</Text>
+        <Text style={{ fontSize: T.fs.body, color: T.text2 }}>{value || '—'}</Text>
       </View>
     </View>
   );
@@ -314,11 +333,11 @@ export function MetricBar({ label, value, width, color, valueText }: {
   return (
     <View style={{ marginBottom: 10 }}>
       <Row style={{ marginBottom: 5 }}>
-        <Text style={{ width: 72, fontSize: 12, color: T.text3, fontWeight: '500' }}>{label}</Text>
+        <Text style={{ width: 72, fontSize: T.fs.caption, color: T.text3, fontWeight: '500' }}>{label}</Text>
         <View style={{ flex: 1, height: 6, backgroundColor: T.divider, borderRadius: 3, overflow: 'hidden' }}>
           <View style={{ width: `${Math.min(100, Math.max(3, width))}%`, height: 6, backgroundColor: color, borderRadius: 3 }} />
         </View>
-        <Text style={{ width: 90, fontSize: 12, color: T.text1, fontWeight: '700', textAlign: 'right' }}>{valueText}</Text>
+        <Text style={{ width: 90, fontSize: T.fs.caption, color: T.text1, fontWeight: '700', textAlign: 'right' }}>{valueText}</Text>
       </Row>
     </View>
   );
@@ -376,7 +395,7 @@ export function AnimatedScore({ score, color, max = 100 }: { score: number; colo
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 }}>
         <Text style={{ fontSize: 64, fontWeight: '700', color, lineHeight: 68 }}>{display}</Text>
         {/* 홈 히어로와 같은 표기("/ 100점") — 같은 점수인데 화면마다 단위가 달랐다. */}
-        <Text style={{ fontSize: 18, color: T.text3, marginBottom: 10, marginLeft: 4 }}>/ {max}점</Text>
+        <Text style={{ fontSize: T.fs.strong, color: T.text3, marginBottom: 10, marginLeft: 4 }}>/ {max}점</Text>
       </View>
       <View style={{ height: 8, backgroundColor: T.bg, borderRadius: 4, overflow: 'hidden' }}>
         <Animated.View
@@ -407,15 +426,15 @@ export function DirectionalBar({
   // 정상 기준·또래 평균은 흐릿한 톤 대신 분명히 구분되는 색을 써서, 한눈에 봐도 세 막대가 또렷이 비교되도록 한다.
   const rows: { label: string; value: number; barColor: string; borderColor?: string; textColor: string; bold?: boolean }[] = [
     { label: '내 수치', value: myValue, barColor: color, textColor: color, bold: true },
-    { label: '정상 기준', value: normalValue, barColor: T.success, textColor: T.success },
+    { label: '정상 기준', value: normalValue, barColor: T.successFill, textColor: T.success },
     ...(peerMean != null ? [{ label: '또래 평균', value: peerMean, barColor: T.text3, textColor: T.text2 }] : []),
   ];
 
   return (
     <View style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <Text style={{ fontSize: 11, color: T.text3, fontWeight: '500' }}>{dirIcon}</Text>
-        <Text style={{ fontSize: 13, fontWeight: '700', color }}>{valueText}</Text>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '500' }}>{dirIcon}</Text>
+        <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color }}>{valueText}</Text>
       </View>
       <View style={{ gap: 7 }}>
         {rows.map((row, i) => (
@@ -447,7 +466,7 @@ function AnimatedBarRow({ row, pct, delay }: {
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <Text style={{ width: 56, fontSize: 11, color: T.text3, fontWeight: '600' }}>{row.label}</Text>
+      <Text style={{ width: 56, fontSize: T.fs.caption, color: T.text3, fontWeight: '600' }}>{row.label}</Text>
       <View style={{ flex: 1, height: 10, backgroundColor: T.bg, borderRadius: 5, overflow: 'hidden' }}>
         <Animated.View
           style={{
@@ -457,7 +476,7 @@ function AnimatedBarRow({ row, pct, delay }: {
           }}
         />
       </View>
-      <Text style={{ width: 64, textAlign: 'right', fontSize: 12, fontWeight: row.bold ? '700' : '600', color: row.textColor }}>
+      <Text style={{ width: 64, textAlign: 'right', fontSize: T.fs.caption, fontWeight: row.bold ? '700' : '600', color: row.textColor }}>
         {row.value}
       </Text>
     </View>
@@ -472,13 +491,13 @@ const ui = StyleSheet.create({
     marginBottom: 12,
   },
   pageTitle: { fontSize: 34, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 },
-  pageSubtitle: { fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 },
+  pageSubtitle: { fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 },
   notice: {
     flexDirection: 'row', alignItems: 'flex-start',
     backgroundColor: T.cardAlt, borderRadius: T.radiusSm,
     padding: 14, marginBottom: 14,
   },
-  noticeText: { flex: 1, fontSize: 13, lineHeight: 20, color: T.text2, fontWeight: '500' },
+  noticeText: { flex: 1, fontSize: T.fs.caption, lineHeight: 20, color: T.text2, fontWeight: '500' },
   primaryBtn: {
     backgroundColor: T.primary,
     height: 52,
@@ -487,7 +506,7 @@ const ui = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
   },
-  primaryBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  primaryBtnText: { color: T.onPrimary, fontWeight: '700', fontSize: T.fs.body },
   secondaryBtn: {
     backgroundColor: T.cardAlt,
     height: 54,
@@ -496,9 +515,9 @@ const ui = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
   },
-  secondaryBtnText: { color: T.primary, fontWeight: '700', fontSize: 15 },
+  secondaryBtnText: { color: T.primary, fontWeight: '700', fontSize: T.fs.body },
   ghostBtn: { height: 48, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
-  ghostBtnText: { color: T.text3, fontWeight: '600', fontSize: 15 },
+  ghostBtnText: { color: T.text3, fontWeight: '600', fontSize: T.fs.body },
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -506,15 +525,15 @@ const ui = StyleSheet.create({
     backgroundColor: T.cardAlt,
   },
   chipActive: { backgroundColor: T.primaryLight },
-  chipText: { fontSize: 14, fontWeight: '500', color: T.text3 },
+  chipText: { fontSize: T.fs.caption, fontWeight: '500', color: T.text3 },
   chipTextActive: { color: T.primary, fontWeight: '700' },
-  fieldLabel: { fontSize: 14, fontWeight: '600', color: T.text2, marginBottom: 8 },
+  fieldLabel: { fontSize: T.fs.caption, fontWeight: '600', color: T.text2, marginBottom: 8 },
   fieldInput: {
     height: 52,
     borderWidth: 0,
     borderRadius: T.radiusSm,
     paddingHorizontal: 16,
-    fontSize: 15,
+    fontSize: T.fs.body,
     color: T.text1,
     backgroundColor: T.cardAlt,
   },

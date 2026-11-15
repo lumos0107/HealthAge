@@ -18,6 +18,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
   onClose: () => void;
 }) {
   const value = report.values[metric.key];
+  const statusFill = metric.status === '정상' ? T.successFill : metric.status === '주의' ? T.warnFill : T.dangerFill;
   const statusColor = metric.status === '정상' ? T.success : metric.status === '주의' ? T.warn : T.danger;
   const delta = yearDelta(reports, metric.key, report.year);
   const visual = categoryVisual(metric.category);
@@ -41,7 +42,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
           <Pressable onPress={onClose} hitSlop={10} style={{ padding: 8 }}>
             <Ionicons name="chevron-back" size={24} color={T.text1} />
           </Pressable>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
+          <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
@@ -57,7 +58,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
                     onPress={() => onYear(y)}
                     style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.white }}
                   >
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text2 }}>{y}년</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: active ? T.onPrimary : T.text2 }}>{y}년</Text>
                   </Pressable>
                 );
               })}
@@ -70,28 +71,28 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
               <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
               {metric.infoOnly ? (
                 <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: T.text3 }}>참고</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text3 }}>참고</Text>
                 </View>
               ) : (
                 <StatusBadge status={metric.status} />
               )}
             </View>
-            <Text style={{ fontSize: 24, fontWeight: '800', color: T.text1, lineHeight: 33 }}>{headline(metric, value)}</Text>
+            <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 34 }}>{headline(metric, value)}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 12 }}>
-              <Text style={{ fontSize: 40, fontWeight: '800', color: metric.infoOnly ? T.text1 : statusColor, lineHeight: 44 }}>{formatMetricValue(metric, value)}</Text>
-              {metric.unit ? <Text style={{ fontSize: 14, color: T.text3, marginLeft: 4, marginBottom: 5 }}>{metric.unit}</Text> : null}
+              <Text style={{ fontSize: 40, fontWeight: '800', color: metric.infoOnly ? T.text1 : statusFill, lineHeight: 44 }}>{formatMetricValue(metric, value)}</Text>
+              {metric.unit ? <Text style={{ fontSize: T.fs.caption, color: T.text3, marginLeft: 4, marginBottom: 5 }}>{metric.unit}</Text> : null}
             </View>
-            {delta && <Text style={{ fontSize: 15, color: T.text2, marginTop: 6 }}>{deltaText(delta, metric.unit)}</Text>}
+            {delta && <Text style={{ fontSize: T.fs.body, color: T.text2, marginTop: 6 }}>{deltaText(delta, metric.unit)}</Text>}
           </View>
 
           {/* 정의 — 이 항목이 뭔지부터. 기본 설명 한 문장, 심화(기준 구간·용어)는 펼치기 뒤에 둔다. */}
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 지표는요</Text>
-            <Text style={{ fontSize: 15, color: T.text2, lineHeight: 22 }}>{metric.description}</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 지표는요</Text>
+            <Text style={{ fontSize: T.fs.body, color: T.text2, lineHeight: 22 }}>{metric.description}</Text>
             {showDetail && (
               <>
-                {!!content.detail && <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21, marginTop: 10 }}>{content.detail}</Text>}
-                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 8 }}>{metric.note}</Text>
+                {!!content.detail && <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 21, marginTop: 10 }}>{content.detail}</Text>}
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>{metric.note}</Text>
               </>
             )}
             <Pressable
@@ -99,7 +100,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
               hitSlop={8}
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
             >
-              <Text style={{ fontSize: 13, fontWeight: '600', color: T.text3 }}>{showDetail ? '접기' : '자세히 알아보기'}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text3 }}>{showDetail ? '접기' : '자세히 알아보기'}</Text>
               <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
             </Pressable>
           </View>
@@ -108,7 +109,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
               등수 문장·근거 배지는 PeerRankBlock 한 곳에 모아 두어 분석·히스토리와 같은 모양으로 말한다. */}
           {!metric.infoOnly && (
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1 }}>정상 범위와 비교하면 여기예요</Text>
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>정상 범위와 비교하면 여기예요</Text>
             <RangeBar metric={metric} value={value} />
             {(() => {
               const peer = metricPeerRank(metric, value);
@@ -127,7 +128,7 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
               위는 기준·또래로 «지금»을 말하고 여기는 «흐름»을 말하는 다른 비교다.
               제목은 규격대로 축에서 뽑는다(§2-1) — 두 화면이 같은 함수를 쓴다. */}
           <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: T.text1, marginBottom: 14 }}>{positionTitle(['time'])}</Text>
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1, marginBottom: 14 }}>{positionTitle(['time'])}</Text>
             <View style={{ flexDirection: 'row', gap: 24, marginBottom: 16 }}>
               <DetailCell label="내 수치" value={`${formatMetricValue(metric, value)}${metric.unit}`} color={metric.infoOnly ? T.text1 : statusColor} />
               <DetailCell label="정상 기준" value={metric.normalText} />
@@ -139,22 +140,22 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
           {/* 행동 — 그래서 뭘 하면 되는지. 참고값(infoOnly)이나 팁이 없는 항목은 카드를 그리지 않는다. */}
           {content.tips.length > 0 && (
             <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 10 }}>{tipsTitle}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 10 }}>{tipsTitle}</Text>
               {content.tips.map((tip, i) => (
                 <View key={i} style={{ flexDirection: 'row', gap: 8, marginTop: i === 0 ? 0 : 8 }}>
                   <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: T.text3, marginTop: 8 }} />
-                  <Text style={{ flex: 1, fontSize: 14, color: T.text2, lineHeight: 21 }}>{tip}</Text>
+                  <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 21 }}>{tip}</Text>
                 </View>
               ))}
               {metric.status === '위험' && (
-                <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 10 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>
                   수치가 반복해서 범위를 벗어난다면 의료기관 상담을 참고하세요.
                 </Text>
               )}
             </View>
           )}
 
-          <Text style={{ fontSize: 12, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
         </ScrollView>
       </View>
       </WebFrame>
@@ -165,8 +166,8 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
 function DetailCell({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <View>
-      <Text style={{ fontSize: 12, color: T.text3, marginBottom: 3 }}>{label}</Text>
-      <Text style={{ fontSize: 15, fontWeight: '700', color: color ?? T.text1 }}>{value}</Text>
+      <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 3 }}>{label}</Text>
+      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: color ?? T.text1 }}>{value}</Text>
     </View>
   );
 }

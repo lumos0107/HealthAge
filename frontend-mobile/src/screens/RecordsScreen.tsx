@@ -95,8 +95,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
       <FadeInUp delay={0}>
       <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 14 }}>
         <Eyebrow>METRICS</Eyebrow>
-        <Text style={{ fontSize: 26, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>검사항목</Text>
-        <Text style={{ fontSize: 13, color: T.text3, lineHeight: 19, marginTop: 6 }}>연도를 고르고 항목을 누르면 자세한 설명을 볼 수 있어요.</Text>
+        <Text style={{ fontSize: T.fs.title, fontWeight: '800', fontFamily: T.fontDisplay, color: T.text1, letterSpacing: -0.5, marginTop: 6 }}>검사항목</Text>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>연도를 고르고 항목을 누르면 자세한 설명을 볼 수 있어요.</Text>
       </View>
       </FadeInUp>
 
@@ -119,8 +119,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                 backgroundColor: active ? T.primary : 'transparent',
               }}
             >
-              <Ionicons name={tab.icon} size={15} color={active ? '#fff' : T.text3} />
-              <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text3 }}>{tab.label}</Text>
+              <Ionicons name={tab.icon} size={15} color={active ? T.onPrimary : T.text3} />
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: active ? T.onPrimary : T.text3 }}>{tab.label}</Text>
             </Pressable>
           );
         })}
@@ -137,7 +137,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
               return (
                 <Pressable key={r.year} onPress={() => setSelectedYear(r.year)}
                   style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.white }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : T.text2 }}>{r.year}년</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: active ? T.onPrimary : T.text2 }}>{r.year}년</Text>
                 </Pressable>
               );
             })}
@@ -154,7 +154,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
           {/* 카드 헤더 — 이 카드가 어느 검진인지(연도·병원, 월일 생략)와 상태 요약. 배경 위에 띄우지 않고 결과 카드에 소속시킨다. */}
           <View style={{ paddingTop: 18, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: T.divider }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: T.text1 }}>
+              <Text style={{ flex: 1, fontSize: T.fs.strong, fontWeight: '800', color: T.text1 }}>
                 {detailReport.year}년 · {detailReport.hospital}
               </Text>
               {/* 이 검진을 PDF로 — 병원 지참·가족 공유용. 아이콘만 두면 무슨 기능인지 모호해서
@@ -166,7 +166,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 3, opacity: exporting ? 0.4 : 1 }}
               >
                 <Ionicons name="document-text-outline" size={16} color={T.text3} />
-                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text3 }}>PDF</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text3 }}>PDF</Text>
               </Pressable>
               {usingRealData && !!userId && (
                 <Pressable hitSlop={8} onPress={confirmDelete}>
@@ -175,17 +175,17 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
               )}
             </View>
             <View style={{ flexDirection: 'row', gap: 14, marginTop: 10 }}>
-              {([['정상', counts.정상, T.success], ['주의', counts.주의, T.warn], ['위험', counts.위험, T.danger]] as const).map(([label, n, color]) => (
+              {([['정상', counts.정상, T.successFill], ['주의', counts.주의, T.warnFill], ['위험', counts.위험, T.dangerFill]] as const).map(([label, n, color]) => (
                 <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: color }} />
-                  <Text style={{ fontSize: 13, color: T.text2 }}>{label} <Text style={{ fontWeight: '700', color: T.text1 }}>{n}</Text></Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>{label} <Text style={{ fontWeight: '700', color: T.text1 }}>{n}</Text></Text>
                 </View>
               ))}
             </View>
             {/* 정렬 기준을 화면이 말한다(§2-1 축 4) — 네 탭 중 여기만 침묵하고 있었다.
                 순서가 눈에 보이는 홈 TOP3(「가장 먼저 확인하면 좋은 항목」)와 달리, 목록이
                 길어 «왜 이 순서인지»를 스스로 알아내야 했다. */}
-            <Text style={{ fontSize: 12, color: T.text3, marginTop: 8 }}>먼저 확인하면 좋은 순서로 정렬했어요.</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 8 }}>먼저 확인하면 좋은 순서로 정렬했어요.</Text>
           </View>
           {rows.map((metric, i) => {
             const visual = categoryVisual(metric.category);
@@ -196,19 +196,19 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                         i < rows.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
                 <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
                   {/* 이름만으로 모를 항목에만 짧은 뜻풀이. 카테고리는 왼쪽 아이콘 색이 이미 말해주고,
                       상태는 오른쪽 값·배지가 말해주므로 여기서 반복하지 않는다. 자세한 정의는 2뎁스. */}
                   {!!metricGloss[metric.key] && (
-                    <Text style={{ fontSize: 12, color: T.text3, marginTop: 2 }} numberOfLines={1}>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 2 }} numberOfLines={1}>
                       {metricGloss[metric.key]}
                     </Text>
                   )}
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: metric.infoOnly ? T.text1 : color }}>{formatMetricValue(metric, detailReport.values[metric.key])}{metric.unit ? <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text> : null}</Text>
+                <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: metric.infoOnly ? T.text1 : color }}>{formatMetricValue(metric, detailReport.values[metric.key])}{metric.unit ? <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text> : null}</Text>
                 {metric.infoOnly ? (
                   <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: T.text3 }}>참고</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text3 }}>참고</Text>
                   </View>
                 ) : (
                   <StatusBadge status={metric.status} />
@@ -229,16 +229,16 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
             <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Ionicons name="medkit-outline" size={26} color={T.primary} />
             </View>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>등록된 복약 정보가 없어요</Text>
-            <Text style={{ fontSize: 13, color: T.text3, textAlign: 'center', lineHeight: 20 }}>
+            <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>등록된 복약 정보가 없어요</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', lineHeight: 20 }}>
               업로드 화면의 "처방전·복약자료" 탭에서{'\n'}"내가 먹는 약! 한눈에" 엑셀 파일을 올리면{'\n'}복용 중인 약이 여기에 정리돼요.
             </Text>
           </View>
         ) : (
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-            <Text style={{ fontSize: 13, color: T.primary, fontWeight: '700' }}>!</Text>
-            <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
+            <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>!</Text>
+            <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
               {usingRealData
                 ? '"내가 먹는 약! 한눈에" 자료를 효능군별로 정리했어요. 검사 수치가 약 복용의 영향을 받을 수 있으니 함께 확인해보세요.'
                 : '예시 복약 정보입니다. "내가 먹는 약! 한눈에" 자료를 올리면 본인의 복약 정보가 효능군별로 정리돼요.'}
@@ -248,18 +248,18 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
             <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: T.primary }}>{category}</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primary }}>{category}</Text>
                 </View>
-                <Text style={{ fontSize: 12, color: T.text3 }}>{items.length}개</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>{items.length}개</Text>
               </View>
               {items.map((item, i) => (
                 <View key={`${item.drug_code ?? item.product_name}-${item.dispensed_date}`} style={[{ paddingBottom: 14 }, i < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider, marginBottom: 14 }]}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{item.product_name}</Text>
-                  <Text style={{ fontSize: 12, color: T.text3, marginBottom: 6 }}>성분: {item.ingredient_en}</Text>
-                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19 }}>{medicationDosageText(item)}</Text>
-                  <Text style={{ fontSize: 12, color: T.text3, marginTop: 3 }}>복용 기간: {medicationPeriodText(item)}</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{item.product_name}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 6 }}>성분: {item.ingredient_en}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{medicationDosageText(item)}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 3 }}>복용 기간: {medicationPeriodText(item)}</Text>
                   {item.safety_alert ? (
-                    <Text style={{ fontSize: 12, color: T.danger, marginTop: 3 }}>⚠ {item.safety_alert}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.danger, marginTop: 3 }}>⚠ {item.safety_alert}</Text>
                   ) : null}
                 </View>
               ))}

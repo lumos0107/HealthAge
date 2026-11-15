@@ -27,7 +27,7 @@ import type { Ctx } from '../lifestyleActions';
 function DomainHeader({ title }: { title: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginTop: 16, marginBottom: 6 }}>
-      <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1 }}>{title}</Text>
+      <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.text1 }}>{title}</Text>
     </View>
   );
 }
@@ -44,10 +44,10 @@ function LayerHeader({ step, title, sub, first }: { step: string; title: string;
       ? { marginHorizontal: 16, marginTop: 18, marginBottom: 4 }
       : { marginHorizontal: 16, marginTop: 26, marginBottom: 4, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-        <Text style={{ fontSize: 15, fontWeight: '800', color: T.primary }}>{step}</Text>
-        <Text style={{ fontSize: 18, fontWeight: '800', color: T.text1, letterSpacing: -0.3 }}>{title}</Text>
+        <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.primary }}>{step}</Text>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, letterSpacing: -0.3 }}>{title}</Text>
       </View>
-      <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 4 }}>{sub}</Text>
+      <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4 }}>{sub}</Text>
     </View>
   );
 }
@@ -85,7 +85,7 @@ function TabIntroNote({ title }: { title: string }) {
       >
         {/* 설명 뒤에 «누를 말»을 붙인다. 설명문만 두면 읽는 글로만 보여서 아무도 안 누른다 —
             화살표 하나로는 약하다. 진한 글씨가 여기가 누르는 자리라고 말한다. */}
-        <Text style={{ flex: 1, fontSize: 13, color: T.text3, lineHeight: 19 }}>
+        <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
           검진 수치를 네 단계로 나눠 읽습니다.{'  '}
           <Text style={{ color: T.text2, fontWeight: '700' }}>{open ? '접기' : '분석 탭 보는 법'}</Text>
         </Text>
@@ -95,8 +95,8 @@ function TabIntroNote({ title }: { title: string }) {
         <View style={{ marginTop: 14 }}>
           {LAYERS.map((l) => (
             <View key={l.step} style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: T.primary }}>{l.step}</Text>
-              <Text style={{ flex: 1, fontSize: 13, color: T.text2, lineHeight: 20 }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary }}>{l.step}</Text>
+              <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
                 <Text style={{ fontWeight: '700', color: T.text1 }}>{l.title}</Text> — {l.intro}
               </Text>
             </View>
@@ -119,9 +119,9 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
       {items.map((it, i) => (
         <View key={it.key} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{it.title}</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, flex: 1 }}>{it.title}</Text>
             <View style={{ backgroundColor: calcLevelBg(it.level), paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: calcLevelColor(it.level) }}>{it.interpretation}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: calcLevelColor(it.level) }}>{it.interpretation}</Text>
             </View>
           </View>
           {/* 뜻풀이 — 제목이 「AIP 죽상형성지수」·「METS-IR」처럼 전부 전문용어라 이게 없으면
@@ -129,22 +129,22 @@ function CalcRows({ items }: { items: RealCalcItem[] }) {
               설명을 맡지만, 대사·지질 9종과 심혈관 4종은 한 카드에 여러 지표가 들어와
               ② 한 문장으로 덮이지 않는다. 값보다 «위»에 둔다 — 무엇인지 알고 숫자를 본다. */}
           {!!calcGloss[it.key] && (
-            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginBottom: 4 }}>{calcGloss[it.key]}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginBottom: 4 }}>{calcGloss[it.key]}</Text>
           )}
-          <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>
+          <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>
             {it.value}{it.unit ?? ''}{it.value_30yr != null ? `  ·  30년 ${it.value_30yr}%` : ''}
           </Text>
           {!!it.peer_label && (
             <View style={{ alignSelf: 'flex-start', marginTop: 6, backgroundColor: T.text1, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: '#fff' }}>또래비교 · {it.peer_label}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: '#fff' }}>또래비교 · {it.peer_label}</Text>
             </View>
           )}
-          {!!it.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {it.cutoffs}</Text>}
+          {!!it.cutoffs && <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 3 }}>기준: {it.cutoffs}</Text>}
           {/* 어느 입력이 끌어올렸나 — 계산기가 «내 값»으로 말해주는 유일한 자리다.
               값·기준 바로 아래에 둔다: 숫자를 보고 «왜 이렇게 나왔지»가 이어지는 순서다.
               끌어올린 것이 없으면 백엔드가 안 내려보내므로 여기서 빈칸이 생기지 않는다. */}
           {!!it.driver && (
-            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginTop: 6 }}>{it.driver}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 6 }}>{it.driver}</Text>
           )}
         </View>
       ))}
@@ -166,9 +166,9 @@ function CalcFormulas({ items }: { items: RealCalcItem[] }) {
     <>
       {withText.map((it, i) => (
         <View key={it.key} style={{ marginTop: i === 0 ? 4 : 10 }}>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: T.text2 }}>{it.title}</Text>
-          {!!it.formula && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 2 }}>{it.formula}</Text>}
-          {!!it.note && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 2 }}>{it.note}</Text>}
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2 }}>{it.title}</Text>
+          {!!it.formula && <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 2 }}>{it.formula}</Text>}
+          {!!it.note && <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 2 }}>{it.note}</Text>}
         </View>
       ))}
     </>
@@ -202,17 +202,17 @@ function OffRangeRow({ metric, report, first }: { metric: MetricDefinition; repo
   return (
     <View style={[{ paddingVertical: 9 }, !first && { borderTopWidth: 1, borderTopColor: T.divider }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1, flex: 1 }}>{metric.name}</Text>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: bad ? T.danger : T.warn }}>
+        <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text1, flex: 1 }}>{metric.name}</Text>
+        <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: bad ? T.danger : T.warn }}>
           {formatMetricValue(metric, value)}
-          <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text3 }}>{metric.unit}</Text>
         </Text>
         <View style={{ backgroundColor: bad ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: bad ? T.danger : T.warn }}>{metric.status}</Text>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: bad ? T.danger : T.warn }}>{metric.status}</Text>
         </View>
       </View>
       {!!peer && (
-        <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 3 }}>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 3 }}>
           같은 또래 100명 중 {peer.rank}등{peer.measured ? '' : ' (어림)'}이에요
         </Text>
       )}
@@ -343,7 +343,7 @@ function ActionRoundup({ ranks, ctx, combos, ascvd, calcs }: {
         summary={`${rows[0].a.title(ctx)}부터가 가장 크게 움직여요`}
         axes={[]}
         footer={
-          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
             여기 순서는 «수치를 얼마나 움직이나»로 매긴 것이지 의학적 우선순위가 아니에요. 복용 중인 약이나 진료 계획이 있으면 그쪽이 먼저입니다.
           </Text>
         }
@@ -352,29 +352,29 @@ function ActionRoundup({ ranks, ctx, combos, ascvd, calcs }: {
             {rows.map(({ r, a, ev }, i) => (
               <View key={a.id} style={[{ paddingTop: 12 }, i > 0 && { marginTop: 12, borderTopWidth: 1, borderTopColor: T.divider }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '800', color: T.primary }}>{i + 1}</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, flex: 1 }}>{a.title(ctx)}</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.primary }}>{i + 1}</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, flex: 1 }}>{a.title(ctx)}</Text>
                   {r.reductionRatio > 0 && (
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.success }}>−{Math.round(r.reductionRatio * 100)}%</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.success }}>−{Math.round(r.reductionRatio * 100)}%</Text>
                   )}
                 </View>
                 {r.movedFactors.length > 0 && (
-                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 2 }}>움직이는 기준: {r.movedFactors.join(' · ')}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 2 }}>움직이는 기준: {r.movedFactors.join(' · ')}</Text>
                 )}
                 {/* 근거는 3개까지 — 넘으면 «왜 이걸 하나»가 아니라 목록 읽기가 된다.
                     조합·심혈관이 앞에 오도록 담는 순서를 지킨다. */}
                 {ev.slice(0, 3).map((e, j) => (
                   <View key={j} style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
-                    <Text style={{ fontSize: 12, color: T.text3 }}>·</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>·</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{e.text}</Text>
-                      <Text style={{ fontSize: 11, color: T.text3, marginTop: 1 }}>{e.from}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{e.text}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 1 }}>{e.from}</Text>
                     </View>
                   </View>
                 ))}
               </View>
             ))}
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 12 }}>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 12 }}>
               −%는 대사증후군 5기준에서 벗어난 정도가 얼마나 줄어드는지예요. 효과 크기는 문헌값의 보수적인 끝을 씁니다.
             </Text>
           </>
@@ -427,21 +427,21 @@ function PeerRankRoundup({ metrics, report, groups, prevalence, calcs }: {
       >
         {metricRows.length > 0 && (
           <>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 6 }}>검진 항목 {metricRows.length}개</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 6 }}>검진 항목 {metricRows.length}개</Text>
             {metricRows.slice(0, 5).map(({ m, peer }, i) => (
               <View key={m.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{m.shortName ?? m.name}</Text>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: peer!.rank >= 75 ? T.warn : T.text2 }}>{peer!.rank}등</Text>
-                {!peer!.measured && <Text style={{ fontSize: 11, color: T.text3 }}>어림</Text>}
+                <Text style={{ fontSize: T.fs.caption, color: T.text1, flex: 1 }}>{m.shortName ?? m.name}</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: peer!.rank >= 75 ? T.warn : T.text2 }}>{peer!.rank}등</Text>
+                {!peer!.measured && <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>어림</Text>}
               </View>
             ))}
             {metricRows.length > 5 && (
               <Expandable label={`나머지 항목 ${metricRows.length - 5}개`}>
                 {metricRows.slice(5).map(({ m, peer }) => (
                   <View key={m.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7, borderTopWidth: 1, borderTopColor: T.divider }}>
-                    <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{m.shortName ?? m.name}</Text>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2 }}>{peer!.rank}등</Text>
-                    {!peer!.measured && <Text style={{ fontSize: 11, color: T.text3 }}>어림</Text>}
+                    <Text style={{ fontSize: T.fs.caption, color: T.text1, flex: 1 }}>{m.shortName ?? m.name}</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2 }}>{peer!.rank}등</Text>
+                    {!peer!.measured && <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>어림</Text>}
                   </View>
                 ))}
               </Expandable>
@@ -450,26 +450,26 @@ function PeerRankRoundup({ metrics, report, groups, prevalence, calcs }: {
         )}
         {groupRows.length > 0 && (
           <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 6 }}>해당하는 상태 {groupRows.length}개</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 6 }}>해당하는 상태 {groupRows.length}개</Text>
             {groupRows.map(({ g, p }, i) => (
               <View key={g.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{g.name}</Text>
-                <Text style={{ fontSize: 13, color: T.text2 }}>또래 100명 중 {Math.round(p.pct)}명</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text1, flex: 1 }}>{g.name}</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>또래 100명 중 {Math.round(p.pct)}명</Text>
               </View>
             ))}
           </View>
         )}
         {calcRows.length > 0 && (
           <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 6 }}>계산 지표 {calcRows.length}개</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 6 }}>계산 지표 {calcRows.length}개</Text>
             {calcRows.map((c, i) => (
               <View key={c.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{c.title}</Text>
-                <Text style={{ fontSize: 13, color: T.text2 }}>{c.peer_label?.replace(/^한국인 \d+세 (남성|여성) 중 /, '')}</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text1, flex: 1 }}>{c.title}</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>{c.peer_label?.replace(/^한국인 \d+세 (남성|여성) 중 /, '')}</Text>
               </View>
             ))}
             {/* 기준연도가 지표마다 다르다 — 지질은 2017 고정이고 전수 측정은 검진 연도다. */}
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>
               기준 연도 {[...new Set(calcRows.map((c) => c.peer_year).filter(Boolean))].sort().join('·')}년 국가검진. 지질 지표는 전수 측정된 2017년으로 견줍니다.
             </Text>
           </View>
@@ -522,22 +522,22 @@ function ComboActions({ combos }: { combos: RealComboGroup[] }) {
       {strong.map((c, i) => (
         <View key={c.combo_name} style={[{ paddingTop: 10 }, i > 0 && { marginTop: 10, borderTopWidth: 1, borderTopColor: T.divider }]}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>{c.combo_name}</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{c.combo_name}</Text>
             {!!c.population?.observed_to_expected && (
-              <Text style={{ fontSize: 11, color: T.text3 }}>{c.population.observed_to_expected}배 동반</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>{c.population.observed_to_expected}배 동반</Text>
             )}
           </View>
-          <Text style={{ fontSize: 14, color: T.text2, lineHeight: 21, marginTop: 3 }}>{c.action}</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 21, marginTop: 3 }}>{c.action}</Text>
         </View>
       ))}
       {/* 출처가 둘이라는 것을 밝힌다 — 배수는 실측이고 «왜»는 임상 지식이다(§1-1 조항 3). */}
       {!!strong.length && (
-        <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 12 }}>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 12 }}>
           «몇 배 동반»은 공단 표본에서 센 값이고, «왜 같이 나타나는지»는 임상 지식에 따른 설명이에요.
         </Text>
       )}
       {weak.length > 0 && (
-        <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>
           나머지 {weak.length}개({weak.map((c) => c.combo_name).join(' · ')})는 동반경향이 {COMBO_SYNERGY_MIN}배에 못 미쳐 행동으로 내세우지 않았어요. 위 목록에서 값은 볼 수 있어요.
         </Text>
       )}
@@ -556,14 +556,14 @@ function CareDistBars({ dist, mine, height = 46 }: { dist: { hits: number; pct: 
         const isMine = x.hits === mine;
         return (
           <View key={x.hits} style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={{ fontSize: 10, fontWeight: isMine ? '800' : '500', color: isMine ? T.danger : T.text3, marginBottom: 3 }}>{x.pct}%</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: isMine ? '800' : '500', color: isMine ? T.danger : T.text3, marginBottom: 3 }}>{x.pct}%</Text>
             <View style={{ height, width: '100%', justifyContent: 'flex-end' }}>
               <View style={{
                 width: '100%', height: Math.max(3, (x.pct / peak) * height), borderRadius: 3,
-                backgroundColor: isMine ? T.danger : T.cardAlt,
+                backgroundColor: isMine ? T.dangerFill : T.cardAlt,
               }} />
             </View>
-            <Text style={{ fontSize: 10, fontWeight: isMine ? '800' : '500', color: isMine ? T.danger : T.text3, marginTop: 4 }}>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: isMine ? '800' : '500', color: isMine ? T.danger : T.text3, marginTop: 4 }}>
               {x.hits}개
             </Text>
           </View>
@@ -582,25 +582,25 @@ function ComboMeanCompare({ combo }: { combo: RealComboGroup }) {
   if (!rows.length) return null;
   return (
     <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: T.divider }}>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>같은 조합인 분들은 뭐가 다를까요</Text>
-      <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+      <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 2 }}>같은 조합인 분들은 뭐가 다를까요</Text>
+      <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
         '{combo.combo_name}'에 해당하는 분들과 그렇지 않은 분들의 평균 차이가 가장 큰 항목이에요. 공단 표본의 집단 평균이라 내 수치와는 다릅니다.
       </Text>
       {rows.slice(0, 3).map((m) => {
         const max = Math.max(m.combo_mean, m.non_combo_mean) || 1;
         return (
           <View key={m.metric} style={{ marginTop: 14 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 6 }}>{metricLabel(m.metric)}</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 6 }}>{metricLabel(m.metric)}</Text>
             {([
               { label: '같은 조합', value: m.combo_mean, color: T.warn },
               { label: '아닌 분들', value: m.non_combo_mean, color: T.text3 },
             ] as const).map((r) => (
               <View key={r.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                <Text style={{ fontSize: 11, color: T.text3, width: 52 }}>{r.label}</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, width: 52 }}>{r.label}</Text>
                 <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
                   <View style={{ width: `${(r.value / max) * 100}%`, height: '100%', backgroundColor: r.color, borderRadius: 4 }} />
                 </View>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 52, textAlign: 'right' }}>{r.value}</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, width: 52, textAlign: 'right' }}>{r.value}</Text>
               </View>
             ))}
           </View>
@@ -700,7 +700,7 @@ function VerdictBadge({ v }: { v: Verdict | null }) {
   const s = VERDICT[v];
   return (
     <View style={{ backgroundColor: s.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-      <Text style={{ fontSize: 11, fontWeight: '700', color: s.color }}>{s.text}</Text>
+      <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: s.color }}>{s.text}</Text>
     </View>
   );
 }
@@ -820,7 +820,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 참고 점수: 그 해 검진 결과에 기록된 값을 그대로 보여준다(대시보드·기록 화면과 항상 일치).
   // 감점 근거(주의/위험 개수)도 그 해 기록과 함께 저장해 둔 값을 그대로 쓴다 — 연도가 바뀌어도 항상 점수와 일치한다.
   const scorePct = report.score;
-  const { color: scoreColor, bg: scoreBg, label: scoreLabel } = scoreTone(scorePct);
+  const { color: scoreColor, fill: scoreFill, bg: scoreBg, label: scoreLabel } = scoreTone(scorePct);
 
   // 점수 밖에 있는 신호 — 참고 점수는 '검사 항목 하나하나의 주의/위험 개수'만 감점한다.
   // 심혈관 10년 위험·대사증후군·지방간 지표·LDL 개인 목표·신장 기능은 이 점수에 전혀 들어가지 않아
@@ -911,7 +911,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               backgroundColor: i === yearIdx ? T.primary : T.white,
             }}
           >
-            <Text style={{ fontSize: 13, fontWeight: '700', color: i === yearIdx ? '#fff' : T.text3 }}>{r.year}년</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: i === yearIdx ? T.onPrimary : T.text3 }}>{r.year}년</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -922,11 +922,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           "그래서 무엇이 나쁜가"는 바로 아래 카드가 맡는다. */}
       <FadeInUp delay={100}>
       <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }}>
-        <Text style={{ fontSize: 14, color: T.text3, fontWeight: '500', marginBottom: 6 }}>참고 점수</Text>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '500', marginBottom: 6 }}>참고 점수</Text>
         {/* 연도를 바꿀 때마다 0에서부터 채워지며 그려져, 변화가 자연스럽게 느껴진다 */}
-        <AnimatedScore score={scorePct} color={scoreColor} />
+        <AnimatedScore score={scorePct} color={scoreFill} />
         <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, marginTop: 10, marginBottom: 4 }}>
-          <Text style={{ fontSize: 13, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
         </View>
         {/* 점수가 세지 않는 것 — 「이 점수에」로 시작하는 말이라 점수 옆에 있어야 한다.
             아래 카드로 내려봤다가 되돌렸다(2026-08-02): 점수만 보고 "괜찮다"고 덮지 않게
@@ -939,17 +939,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 안 하면 목적을 잃는다. 유도 문장이 그 일을 대신한다.
                 ⚠️ «위험»이라는 낱말은 쓰지 않는다 — 앱에서 위험은 상태 등급 이름(정상/주의/위험)인데
                 여기 항목들의 등급은 제각각이다(G2 경도 감소 · 중간 구간 …). */}
-            <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+            <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
               점수만 보고 넘기면 놓치는 신호가 {outsideScore.length}가지 있어요.
             </Text>
             <Expandable label={`신호 ${outsideScore.length}가지 보기`}>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 4, marginBottom: 10 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4, marginBottom: 10 }}>
                 점수는 검사 항목별 주의·위험 개수만 셉니다. 아래는 여러 수치를 조합해 따로 판정한 것이라 점수에 반영되지 않지만, 그렇다고 가벼운 건 아니에요.
               </Text>
               {outsideScore.map((o) => (
                 <View key={o.label} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-                  <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: T.warn, marginTop: 7 }} />
-                  <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, flex: 1 }}>
+                  <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: T.warnFill, marginTop: 7 }} />
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, flex: 1 }}>
                     <Text style={{ fontWeight: '700', color: T.text1 }}>{o.label}</Text> — {o.detail}
                   </Text>
                 </View>
@@ -988,7 +988,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         ].filter(Boolean).join(' · ') || `${report.year}년 검진은 모두 기준 안이에요.`}
         badge={
           <View style={{ backgroundColor: scoreBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
           </View>
         }
         axes={['standard']}
@@ -998,8 +998,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             ⚠️ 개수만 세지 않고 **어느 항목인지** 이름과 값까지 적는다 — 히어로가 40점만
             말하고 «무엇이» 나쁜지는 말하지 않아서, 그 답이 앱 어디에도 없었다.
             정상 항목은 적지 않는다: 벗어난 것만 보여주는 게 이 층의 질문이다. */}
-        <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 6 }}>항목으로 보면</Text>
-        <Text style={{ fontSize: 15, color: T.text2, lineHeight: 23, marginBottom: 12 }}>
+        <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.text1, marginBottom: 6 }}>항목으로 보면</Text>
+        <Text style={{ fontSize: T.fs.body, color: T.text2, lineHeight: 23, marginBottom: 12 }}>
           {report.trackCount + report.manageCount === 0
             ? `${report.year}년 검진은 검사 항목이 모두 기준 안이에요.`
             : `${report.year}년 검진에서 ${[
@@ -1022,7 +1022,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 ))}
                 {/* 이 안내는 «목록을 다 본 사람»에게만 필요하다. 접힌 채로 밖에 두면
                     4개만 보고 있는 사람에게 "적지 않았어요"부터 읽히는 셈이라 순서가 거꾸로다. */}
-                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginTop: 10 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>
                   기준 안에 있는 항목은 적지 않았어요. 전체 목록과 항목별 설명은 검사항목 탭에 있어요.
                 </Text>
               </Expandable>
@@ -1044,10 +1044,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           왜 없는지(예전 방식으로 저장된 회차) 밝히고, 최신 회차를 보라고 안내한다. */}
       {!comboAnalysis && !egfr && !recommendations && (
         <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 4 }}>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>
             {report.year}년은 상세 분석이 저장돼 있지 않아요
           </Text>
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
             상세 분석(신장·간·대사·심혈관·권장사항)은 검진 회차마다 따로 계산해 저장돼요.
             이 회차는 예전 방식으로 저장돼 있어 보여드릴 내용이 없습니다.
             {reports.length > 1 && ' 위에서 최근 연도를 선택해 주세요.'}
@@ -1063,7 +1063,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             판정 불가(그 해 입력값 없음)한 그룹은 지어내지 않고 '판정 불가'로 표시한다. */}
         {!!singleGroups?.length && (
           <View style={{ marginTop: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
-          <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 6 }}>상태로 보면</Text>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.text1, marginBottom: 6 }}>상태로 보면</Text>
 
           {/* 요약 줄 — 아래 13줄을 다 읽지 않아도 "몇 개에 해당하는지"가 먼저 보이게 한다.
               백엔드 필드명은 rarity지만 희귀도가 아니라 '해당 집단군 개수 + 해석'이다.
@@ -1072,10 +1072,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               요약이 아니다 — 이미 다 읽은 사람에게만 보인다. */}
           {rarity && (
             <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 14, marginTop: 8, marginBottom: 2 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>
                 임상 {rarity.clinical_count}개 · 생활습관 {rarity.lifestyle_count}개에 해당
               </Text>
-              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 19, marginTop: 4 }}>{rarity.interpretation}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 4 }}>{rarity.interpretation}</Text>
             </View>
           )}
 
@@ -1087,16 +1087,16 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               {appliedGroups.slice(0, OFF_RANGE_HEAD).map((g, i) => (
                 <View key={g.key} style={[{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 9 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
-                    {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
+                    {!!g.desc && <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 2 }}>{g.desc}</Text>}
                   </View>
                   <View style={{ backgroundColor: T.dangerBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: T.danger }}>해당</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.danger }}>해당</Text>
                   </View>
                 </View>
               ))}
               {appliedGroups.length > OFF_RANGE_HEAD && (
-                <Text style={{ fontSize: 12, color: T.text3, marginTop: 8 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 8 }}>
                   외 {appliedGroups.length - OFF_RANGE_HEAD}개에 더 해당해요 — 아래에서 전부 볼 수 있어요.
                 </Text>
               )}
@@ -1108,11 +1108,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               각 인자가 수치 때문인지 약 복용 때문인지까지 백엔드가 이미 보내주므로 그대로 보여준다. */}
           {msDetail && (
             <View style={{ marginTop: 12, marginBottom: 6, backgroundColor: T.bg, borderRadius: T.radiusSm, padding: 14 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 2 }}>
                 대사증후군 5개 기준 중 {msDetail.count}개 충족
                 {msDetail.evaluable < 5 ? ` (판정 가능 ${msDetail.evaluable}개)` : ''}
               </Text>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 8 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 8 }}>
                 3개 이상이면 대사증후군으로 봐요. {msDetail.is_metabolic_syndrome ? '지금은 해당해요.' : '지금은 해당하지 않아요.'}
               </Text>
               {Object.entries(msDetail.factors).map(([name, f], i) => (
@@ -1122,12 +1122,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                     size={16}
                     color={f.met ? T.danger : T.text3}
                   />
-                  <Text style={{ fontSize: 13, fontWeight: f.met ? '700' : '500', color: f.met ? T.text1 : T.text3, width: 76 }}>{name}</Text>
-                  <Text style={{ flex: 1, fontSize: 12, color: T.text2, lineHeight: 17 }}>{f.reason}</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: f.met ? '700' : '500', color: f.met ? T.text1 : T.text3, width: 76 }}>{name}</Text>
+                  <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{f.reason}</Text>
                   {/* 약으로 충족된 인자는 따로 표시 — 수치가 정상이어도 관리 중이라 충족된 것이다 */}
                   {f.by_medication && (
                     <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 7, paddingVertical: 2, borderRadius: T.radiusPill }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: T.primaryDark }}>약</Text>
+                      <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryDark }}>약</Text>
                     </View>
                   )}
                 </View>
@@ -1143,7 +1143,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             if (!rows.length) return null;
             return (
               <View key={cat} style={{ marginTop: 10 }}>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: T.text3, marginBottom: 4 }}>{cat}</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text3, marginBottom: 4 }}>{cat}</Text>
                 {rows.map((g, i) => {
                   // A2' — 같은 키 공간(g_*)의 또래 유병률(peer_prevalence)을 줄에 병합.
                   // 유병률이 없는 그룹(전단계·흡연 등 6/13)은 줄 자체를 생략한다 — 빈칸을 만들지 않는다.
@@ -1151,16 +1151,16 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                   return (
                     <View key={g.key} style={[{ paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
-                        {!!g.desc && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 2 }}>{g.desc}</Text>}
+                        <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text1 }}>{g.name}</Text>
+                        {!!g.desc && <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 2 }}>{g.desc}</Text>}
                         {!!pp && (
-                          <Text style={{ fontSize: 11, color: T.text2, lineHeight: 16, marginTop: 2 }}>
+                          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 2 }}>
                             같은 또래는 100명 중 {Math.round(pp.pct)}명이 해당해요
                           </Text>
                         )}
                       </View>
                       <View style={{ backgroundColor: g.applies == null ? T.cardAlt : g.applies ? T.dangerBg : T.successBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: g.applies == null ? T.text3 : g.applies ? T.danger : T.success }}>
+                        <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: g.applies == null ? T.text3 : g.applies ? T.danger : T.success }}>
                           {g.applies == null ? '판정 불가' : g.applies ? '해당' : '비해당'}
                         </Text>
                       </View>
@@ -1171,7 +1171,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             );
           })}
           {singleGroups.some((g) => pop16?.peer_prevalence?.[g.key]) && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>
               '같은 또래 100명 중 N명'은 공단 표본에서 나와 같은 성별·연령대를 수치 기준으로 센 유병률이에요. 원자료에 약 복용 정보가 없어 앱 판정보다 좁게 잡힙니다.
             </Text>
           )}
@@ -1187,7 +1187,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           두 답이라 붙어 있어야 한다. 문구도 "여기부터 아래"에서 화면 전체로 바꿨다 —
           아래로 내려온 이상 위 두 카드도 같은 연도 기준이기 때문이다. */}
       <View style={{ paddingHorizontal: 20, marginTop: 10, marginBottom: 2 }}>
-        <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
           이 화면의 카드는 모두 {report.year}년 수치로 계산했어요. 위에서 연도를 바꾸면 함께 바뀝니다.
         </Text>
       </View>
@@ -1206,9 +1206,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           badge={<VerdictBadge v={egfr.severity === 'normal' ? 'good' : egfr.severity === 'high' ? 'bad' : 'watch'} />}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{egfr.egfr}</Text>
-            <Text style={{ fontSize: 13, color: T.text3 }}>{egfr.unit}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>{egfr.unit}</Text>
             <View style={{ marginLeft: 6, backgroundColor: egfr.severity === 'normal' ? T.successBg : egfr.severity === 'high' ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: egfr.severity === 'normal' ? T.success : egfr.severity === 'high' ? T.danger : T.warn }}>{egfr.stage} · {egfr.label}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: egfr.severity === 'normal' ? T.success : egfr.severity === 'high' ? T.danger : T.warn }}>{egfr.stage} · {egfr.label}</Text>
             </View>
           </View>
           {/* ③은 카드를 열자마자 보이는 칸이라 «89.4 mL/min/1.73㎡»만 있으면 그 숫자가
@@ -1216,29 +1216,29 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               단위를 풀어 쓴 한 줄과 눈금을 붙인다 — 계산기 행이 «값 + 기준:»을 쓰는 것과
               같은 모양이고, §7 「수치엔 항상 해석 한 줄」이 요구하는 것이다.
               컷오프 숫자는 값의 눈금이라 2뎁스에 남긴다(§2-1). */}
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
             1분에 {egfr.egfr}mL의 피를 걸러내고 있어요.
           </Text>
-          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 3, marginBottom: 5 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 3, marginBottom: 5 }}>
             기준: 90 이상 정상 / 60~89 경도 감소 / 60 미만이 3개월 이상이면 만성 신장질환 범위
           </Text>
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{egfr.description}</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{egfr.description}</Text>
           {/* CrCl — 그 해 검진에 체중이 기록된 경우에만 백엔드가 함께 계산해 준다(약물 용량 참고용).
               ⚠️ 접는다: 이건 «약을 처방받을 때 쓰는 값»이라 검진 결과를 보러 온 사람에게는 부차적이다.
               내 신장이 어떤지는 위 89.4와 구간 배지가 이미 말했다(§2-1 「2뎁스는 요약이다」). */}
           {egfr.crcl != null && (
             <Expandable label="약 먹을 때 쓰는 값도 보기">
             <View style={{ marginTop: 4 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>약물 용량 참고 (CrCl)</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>약물 용량 참고 (CrCl)</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: T.text1 }}>{egfr.crcl}</Text>
-                <Text style={{ fontSize: 12, color: T.text3 }}>mL/min · {egfr.crcl_method ?? 'Cockcroft-Gault'}</Text>
+                <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>{egfr.crcl}</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>mL/min · {egfr.crcl_method ?? 'Cockcroft-Gault'}</Text>
                 {!!egfr.crcl_label && (
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: T.text2, backgroundColor: T.cardAlt, paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>{egfr.crcl_label}</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, backgroundColor: T.cardAlt, paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>{egfr.crcl_label}</Text>
                 )}
               </View>
               {!!egfr.crcl_note && (
-                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>{egfr.crcl_note}</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>{egfr.crcl_note}</Text>
               )}
             </View>
             </Expandable>
@@ -1266,7 +1266,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           axes={['standard']}
           badge={<VerdictBadge v={worstVerdict([flIndices.fli, flIndices.hsi].filter(Boolean).map((x) => x!.level))} />}>
           {/* ── 가능성은 어느 정도인가 ─────────────────── */}
-          <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 4 }}>가능성은 어느 정도인가</Text>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.text1, marginBottom: 4 }}>가능성은 어느 정도인가</Text>
           {([
             { title: 'FLI', idx: flIndices.fli },
             { title: 'HSI', idx: flIndices.hsi },
@@ -1275,28 +1275,28 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 {/* 영문 원명(formula)은 아래 펼침으로 내렸다 — 「Fatty Liver Index (Bedogni 2006)」이
                     값 옆에 붙어 있으면 정작 57.3과 구간 배지가 안 읽힌다(§2-1 축 2). */}
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{r.title}</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, flex: 1 }}>{r.title}</Text>
                 <View style={{ backgroundColor: levelBg(r.idx!.level), paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: levelColor(r.idx!.level) }}>{r.idx!.interpretation}</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: levelColor(r.idx!.level) }}>{r.idx!.interpretation}</Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{r.idx!.value}</Text>
-              {!!r.idx!.cutoffs && <Text style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>기준: {r.idx!.cutoffs}</Text>}
+              <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>{r.idx!.value}</Text>
+              {!!r.idx!.cutoffs && <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 3 }}>기준: {r.idx!.cutoffs}</Text>}
             </View>
           ))}
           <Expandable label="계산식과 한계 보기">
             {([{ title: 'FLI', idx: flIndices.fli }, { title: 'HSI', idx: flIndices.hsi }] as const)
               .filter((r) => r.idx?.formula)
               .map((r) => (
-                <Text key={r.title} style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginTop: 4 }}>
+                <Text key={r.title} style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 4 }}>
                   <Text style={{ fontWeight: '700' }}>{r.title}</Text> — {r.idx!.formula}
                 </Text>
               ))}
             {!!flIndices.unavailable?.length && (
-              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· 계산 불가: {flIndices.unavailable.join(' / ')}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>· 계산 불가: {flIndices.unavailable.join(' / ')}</Text>
             )}
             {!!flIndices.disclaimer && (
-              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>{flIndices.disclaimer}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>{flIndices.disclaimer}</Text>
             )}
           </Expandable>
 
@@ -1306,33 +1306,33 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               「원래 없는 기능」으로 읽혔다. 왜 지금은 판정하지 않는지 밝히는 것이
               §1-1②(무엇을 왜 뺐고 어디서 볼 수 있는지)를 지키는 방법이다. */}
           <View style={{ marginTop: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: T.text1, marginBottom: 6 }}>원인은 무엇인가</Text>
+            <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.text1, marginBottom: 6 }}>원인은 무엇인가</Text>
             {fattyLiverType ? (
               <>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: T.text1, marginBottom: 6 }}>
+                <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 6 }}>
                   {fattyLiverType.type}{fattyLiverType.provisional ? ' (잠정)' : ''}
                 </Text>
-                <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>{fattyLiverType.basis}</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{fattyLiverType.basis}</Text>
                 {/* 판정 근거인 심장대사 위험인자 — 결론(유형)만 있고 근거가 없으면 왜 그렇게 나뉘었는지 알 수 없다.
                     2025 MASLD 지침의 5종 중 실제로 해당한 것만 백엔드가 담아 보낸다. */}
                 {!!fattyLiverType.cardiometabolic_factors?.length && (
                   <View style={{ marginTop: 14 }}>
-                    <Text style={{ fontSize: 12, color: T.text3, marginBottom: 6 }}>해당하는 심장대사 위험인자</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 6 }}>해당하는 심장대사 위험인자</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                       {fattyLiverType.cardiometabolic_factors.map((f) => (
                         <View key={f} style={{ backgroundColor: T.warnBg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: T.warn }}>{f}</Text>
+                          <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.warn }}>{f}</Text>
                         </View>
                       ))}
                     </View>
                   </View>
                 )}
                 {!!fattyLiverType.note && (
-                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{fattyLiverType.note}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>{fattyLiverType.note}</Text>
                 )}
               </>
             ) : (
-              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
                 간 수치(ALT·감마-GTP)가 모두 기준 안이라 {report.year}년은 유형을 가릴 대상이 아니에요.
                 기준을 넘은 해를 위에서 고르면 그 해의 유형이 나옵니다.
               </Text>
@@ -1340,7 +1340,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             {/* 유형 카드에 있던 2.5뎁스(2025 MASLD 지침)를 여기로 옮겼다.
                 ②의 detail은 FLI·HSI 설명이 이미 쓰고 있어, 둘을 합치면 6줄 상한을 넘는다. */}
             <Expandable label="유형을 어떻게 나누나">
-              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginTop: 4 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 4 }}>
                 {FATTY_LIVER_TYPE_CRITERIA}
               </Text>
             </Expandable>
@@ -1363,13 +1363,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           <Expandable label={liverOthers.length > 0 ? `손상 원인 지표 ${liverOthers.length}종 · 공식과 근거` : '공식과 근거'}>
             {liverOthers.length > 0 && (
               <>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 4 }}>
-                  손상 원인 지표 {liverOthers.length}종 <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>(굳기가 아니라 «왜»를 본다)</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginTop: 4 }}>
+                  손상 원인 지표 {liverOthers.length}종 <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text3 }}>(굳기가 아니라 «왜»를 본다)</Text>
                 </Text>
                 <CalcRows items={liverOthers} />
               </>
             )}
-            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
               공식과 근거
             </Text>
             <CalcFormulas items={liverCalcs} />
@@ -1393,13 +1393,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           <Expandable label={metabolicRedundant.length > 0 ? `관련 지표 ${metabolicRedundant.length}종 · 공식과 근거` : '공식과 근거'}>
             {metabolicRedundant.length > 0 && (
               <>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 4 }}>
-                  관련 지표 {metabolicRedundant.length}종 <Text style={{ fontSize: 12, fontWeight: '500', color: T.text3 }}>(대표 지표와 강한 상관)</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginTop: 4 }}>
+                  관련 지표 {metabolicRedundant.length}종 <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text3 }}>(대표 지표와 강한 상관)</Text>
                 </Text>
                 <CalcRows items={metabolicRedundant} />
               </>
             )}
-            <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
               공식과 근거
             </Text>
             <CalcFormulas items={metabolicCalcs} />
@@ -1408,19 +1408,19 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               무엇이 왜 빠졌는지(어떤 검사가 필요한지) 백엔드 문구를 그대로 밝힌다. */}
           {calcUnavailable.length > 0 && (
             <View style={{ marginTop: 4, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 2 }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 2 }}>
                 계산하지 못한 지표 {calcUnavailable.length}종
               </Text>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 6 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 6 }}>
                 이번 검진에 필요한 값이 없어 만들지 못했어요(간·심혈관 지표 포함).
               </Text>
               {calcUnavailable.map((u) => (
-                <Text key={u} style={{ fontSize: 12, color: T.text3, lineHeight: 19 }}>· {u}</Text>
+                <Text key={u} style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>· {u}</Text>
               ))}
             </View>
           )}
           {!!calcDisclaimer && (
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{calcDisclaimer}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>{calcDisclaimer}</Text>
           )}
         </SummaryCard>
         </FadeInUp>
@@ -1445,10 +1445,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           axes={['standard']}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: T.text1 }}>{ldlTarget.target_text}</Text>
+            <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>{ldlTarget.target_text}</Text>
             {ldlTarget.achieved != null && (
               <View style={{ backgroundColor: ldlTarget.achieved ? T.successBg : T.warnBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                <Text style={{ fontSize: 12, fontWeight: '800', color: ldlTarget.achieved ? T.success : T.warn }}>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: ldlTarget.achieved ? T.success : T.warn }}>
                   {ldlTarget.achieved ? '목표 달성' : `목표 초과${ldlTarget.gap != null ? ` +${ldlTarget.gap}` : ''}`}
                 </Text>
               </View>
@@ -1456,17 +1456,17 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             {/* 중성지방이 높으면 LDL 계산값을 믿기 어려워 달성 여부를 단정하지 않는다. */}
             {ldlTarget.ldl_reliable === false && (
               <View style={{ backgroundColor: T.cardAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                <Text style={{ fontSize: 12, fontWeight: '800', color: T.text3 }}>판정 보류</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.text3 }}>판정 보류</Text>
               </View>
             )}
           </View>
           {ldlTarget.current_ldl != null && (
-            <Text style={{ fontSize: 13, color: T.text2, marginBottom: 4 }}>현재 LDL {ldlTarget.current_ldl}mg/dL · 위험군: {ldlTarget.label}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text2, marginBottom: 4 }}>현재 LDL {ldlTarget.current_ldl}mg/dL · 위험군: {ldlTarget.label}</Text>
           )}
           {ldlTarget.ldl_reliable === false && !!ldlTarget.reliability_note && (
             <View style={{ backgroundColor: T.warnBg, borderRadius: 10, padding: 12, marginTop: 8, marginBottom: 4 }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: T.warn, marginBottom: 4 }}>⚠️ LDL 수치 신뢰도 확인 필요</Text>
-              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>{ldlTarget.reliability_note}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.warn, marginBottom: 4 }}>⚠️ LDL 수치 신뢰도 확인 필요</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{ldlTarget.reliability_note}</Text>
             </View>
           )}
           {/* 위험인자는 2뎁스에 둔다 — 「왜 내 목표가 이 숫자인가」가 이 카드에서 가장
@@ -1475,19 +1475,19 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               «어떻게» 정했는지의 한계·출처만 2.5뎁스에 남긴다. */}
           {!!ldlTarget.risk_factors?.length && (
             <View style={{ marginTop: 8, backgroundColor: T.cardAlt, borderRadius: 10, padding: 12 }}>
-              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
                 내 목표가 {ldlTarget.target_ldl ?? ldlTarget.target_text}인 이유 — 위험 요인 {ldlTarget.risk_factors.length}개가 있어요.
               </Text>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, lineHeight: 18, marginTop: 4 }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, lineHeight: 20, marginTop: 4 }}>
                 {ldlTarget.risk_factors.join(' · ')}
               </Text>
             </View>
           )}
           <Expandable label="위험군을 어떻게 정했나">
             {!!ldlTarget.limitations?.length && (
-              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 8 }}>· {ldlTarget.limitations[0]}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>· {ldlTarget.limitations[0]}</Text>
             )}
-            <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>기준: {ldlTarget.reference}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4 }}>기준: {ldlTarget.reference}</Text>
           </Expandable>
         </SummaryCard>
         </FadeInUp>
@@ -1520,7 +1520,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           footer={!!ascvd.limitations?.length && (
             <>
               {ascvd.limitations.map((l, i) => (
-                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: i === 0 ? 0 : 3 }}>· {l}</Text>
+                <Text key={i} style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: i === 0 ? 0 : 3 }}>· {l}</Text>
               ))}
             </>
           )}
@@ -1529,22 +1529,22 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             <Text style={{ fontSize: 28, fontWeight: '800', color: T.text1 }}>{ascvd.risk_percent}%</Text>
             {!!ascvd.risk_label && (
               <View style={{ marginLeft: 2, backgroundColor: ascvd.risk_level === 'low' ? T.successBg : ascvd.risk_level === 'high' ? T.dangerBg : T.warnBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: ascvd.risk_level === 'low' ? T.success : ascvd.risk_level === 'high' ? T.danger : T.warn }}>{ascvd.risk_label}</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: ascvd.risk_level === 'low' ? T.success : ascvd.risk_level === 'high' ? T.danger : T.warn }}>{ascvd.risk_label}</Text>
               </View>
             )}
           </View>
           {!!ascvd.how_to_read && (
-            <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginBottom: 10 }}>{ascvd.how_to_read}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginBottom: 10 }}>{ascvd.how_to_read}</Text>
           )}
           {/* what-if — 절대값보다 "무엇을 바꾸면 얼마나 달라지는가"를 보여준다 */}
           {!!ascvd.scenarios?.length && (
             <View style={{ paddingTop: 10, borderTopWidth: 1, borderTopColor: T.divider, gap: 8 }}>
               {ascvd.scenarios.map((s) => (
                 <View key={s.name} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={{ fontSize: 13, color: T.text1, flex: 1 }}>{s.name}</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1 }}>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text1, flex: 1 }}>{s.name}</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>
                     {s.risk_percent}%{' '}
-                    <Text style={{ color: s.delta < 0 ? T.success : T.text3, fontSize: 12 }}>({s.delta > 0 ? '+' : ''}{s.delta}%p)</Text>
+                    <Text style={{ color: s.delta < 0 ? T.success : T.text3, fontSize: T.fs.caption }}>({s.delta > 0 ? '+' : ''}{s.delta}%p)</Text>
                   </Text>
                 </View>
               ))}
@@ -1558,7 +1558,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               방법이 둘이면 사용자가 다른 기능으로 읽는다. Expandable로 통일한다. */}
           {cvCalcs.length > 0 && (
             <Expandable label={`다른 계산법 ${cvCalcs.length}종으로도 계산해보기`}>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 4 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 4 }}>
                 같은 위험을 다른 공식으로 계산한 값이에요. 서로 비슷하면 그만큼 믿을 만하고,
                 많이 다르면 절대값보다 구간으로 이해하는 게 맞아요.
               </Text>
@@ -1625,7 +1625,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             >
               {/* 대표 묶음의 분포는 1뎁스 preview에 이미 그려져 있다. 여기 나머지 묶음까지
                   전부 펼치면 막대가 다섯 벌이라 카드가 한 화면을 넘는다 — 접는다(§2-1). */}
-              <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
                 묶음 {withDist.length}개마다 «기준을 벗어난 항목 수»가 또래에서 어떻게 퍼져 있는지 봤어요.
               </Text>
               <Expandable label={`묶음 ${withDist.length}개 분포 보기`}>
@@ -1634,22 +1634,22 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 const gp = samePct(g);
                 return (
                   <View key={g.name} style={[{ paddingVertical: 14 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{g.name}</Text>
-                    <Text style={{ fontSize: 12, color: T.text2, lineHeight: 18, marginBottom: 10 }}>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{g.name}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginBottom: 10 }}>
                       {g.matches > 0 ? `${g.keys.length}개 중 ${g.matches}개 해당 — 나 같은 사람은 100명 중 ${fmtN(gp)}명` : `해당 없음 — 나 같은 사람은 100명 중 ${fmtN(gp)}명`}
                     </Text>
                     <CareDistBars dist={d.dist} mine={g.matches} />
-                    <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 8 }}>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>
                       같은 성별·연령대 {d.total.toLocaleString()}명 기준
                     </Text>
                     {/* 묶음 근거(A7·§1-1③) — 참고군 카드가 제거된 뒤 이 묶음이 노출되는 유일한 자리라 근거도 여기서 밝힌다. */}
-                    <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 4 }}>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4 }}>
                       {g.basis}
                     </Text>
                   </View>
                 );
               })}
-              <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 6 }}>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>
                 공단 표본 1,596만 건에서 나와 같은 성별·연령대만 골라 센 값이에요. 모집단은 학회 기준 수치로만 세어 앱 판정과 조금 다를 수 있어요.
               </Text>
               </Expandable>
@@ -1680,7 +1680,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           summary={comboSummary(comboGroups.matched)}
           axes={['peer']} meaningExtra={leadCombo ? <ComboMeanCompare combo={leadCombo} /> : undefined}
           tipsExtra={<ComboActions combos={comboGroups.matched} />}>
-          <Text style={{ fontSize: 13, color: T.text2, marginBottom: 14 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, marginBottom: 14 }}>
             국민건강보험공단 표본{comboGroups.population.total_n ? ` ${(comboGroups.population.total_n / 10000).toFixed(0)}만명` : ''}과 견줬어요.
           </Text>
 
@@ -1688,24 +1688,24 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {comboGroups.matched.slice(0, 4).map((c, i) => (
             <View key={c.combo_name} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1, flex: 1 }}>{c.combo_name}</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, flex: 1 }}>{c.combo_name}</Text>
                 {c.is_ascvd_risk && (
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: T.text3, backgroundColor: T.cardAlt, paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text3, backgroundColor: T.cardAlt, paddingHorizontal: 7, paddingVertical: 3, borderRadius: T.radiusPill }}>
                     심혈관 지표 참고
                   </Text>
                 )}
               </View>
-              <Text style={{ fontSize: 12, color: T.text2, lineHeight: 19, marginBottom: 6 }}>{c.meaning}</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginBottom: 6 }}>{c.meaning}</Text>
               {/* 관계 유형 — 이 조합이 «개별 판정에 더해» 말해주는 것. 두 항목이 같은
                   원인에서 나오는지, 하나가 다른 하나를 미는지, 서로 다른 축인지에 따라
                   «무엇부터 잡아야 하나»가 달라진다. 그 순서가 ⑤의 행동이 된다. */}
               {!!c.relation_label && (
-                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 19, marginBottom: 6 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 6 }}>
                   두 항목은 {c.relation_label}
                 </Text>
               )}
               {c.population && (
-                <Text style={{ fontSize: 12, color: T.text3, lineHeight: 19 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
                   같은 조합 {c.population.n_in_combo.toLocaleString()}명 (표본의 {c.population.pct_of_total}%)
                   {c.population.observed_to_expected >= 1.2 && (
                     <Text style={{ color: T.warn, fontWeight: '700' }}>
@@ -1720,7 +1720,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
                 const o = pop16?.combo_oe?.[c.combo_name];
                 if (!o) return null;
                 return (
-                  <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 4 }}>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4 }}>
                     {o.year_from}~{o.year_to}년 {o.n_years}개 연도에서도 {o.min}~{o.max}배로 꾸준했어요 (중앙값 {o.median}배).
                     {o.lipid_era_only ? ' 지질검사를 전원 받던 시기만 세어 기준을 맞췄습니다.' : ''}
                   </Text>
@@ -1730,7 +1730,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           ))}
 
           {comboGroups.matched.length > 4 && (
-            <Text style={{ fontSize: 12, color: T.text3, marginTop: 10 }}>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 10 }}>
               외 {comboGroups.matched.length - 4}개 조합에 더 해당해요.
             </Text>
           )}
@@ -1738,12 +1738,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {/* 판정 불가 조합 — 입력값이 없어 판정 못 한 조합을 지어내지 않고 그대로 밝힌다(정직성). */}
           {!!comboGroups.not_evaluable?.length && (
             <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 2 }}>판정 불가 (데이터 부족)</Text>
-              <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, marginBottom: 8 }}>입력값이 없어 지어내지 않고 '판정 불가'로 둔 조합이에요.</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 2 }}>판정 불가 (데이터 부족)</Text>
+              <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 8 }}>입력값이 없어 지어내지 않고 '판정 불가'로 둔 조합이에요.</Text>
               {comboGroups.not_evaluable.map((n, i) => (
                 <View key={n.combo_name} style={[{ paddingVertical: 8 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{n.combo_name}</Text>
-                  <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18 }}>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 2 }}>{n.combo_name}</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
                     {n.reason}{n.missing?.length ? ` (부족: ${n.missing.join('·')})` : ''}
                   </Text>
                 </View>
@@ -1755,7 +1755,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {!!comboGroups.caveats?.length && (
             <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
               {comboGroups.caveats.map((c, i) => (
-                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· {c}</Text>
+                <Text key={i} style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 3 }}>· {c}</Text>
               ))}
             </View>
           )}
@@ -1789,7 +1789,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           })()}
           axes={[]}
           meaningExtra={<>
-          <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 12, marginBottom: 14 }}>
             {pop16.age_fixed_trend.sex} {pop16.age_fixed_trend.age_band} · 2009년 vs 2024년. 나와 같은 성별·연령대만 뽑아 16년 전과 비교했어요. 나이를 고정했기 때문에 고령화로 생기는 착시가 없어요.
           </Text>
           <Expandable label={`항목 ${pop16.age_fixed_trend.items.length}개 변화 보기`}>
@@ -1799,24 +1799,24 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             return (
               <View key={it.group} style={[{ paddingVertical: 12 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{it.name}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: worse ? T.danger : T.success }}>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{it.name}</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: worse ? T.danger : T.success }}>
                     {worse ? '+' : ''}{it.diff}%p{it.ratio >= 1.5 ? ` · ${it.ratio}배` : ''}
                   </Text>
                 </View>
                 {([{ y: '2009년', v: it.y2009, c: T.text3 }, { y: '2024년', v: it.y2024, c: worse ? T.danger : T.success }] as const).map((r) => (
                   <View key={r.y} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <Text style={{ fontSize: 11, color: T.text3, width: 44 }}>{r.y}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text3, width: 44 }}>{r.y}</Text>
                     <View style={{ flex: 1, height: 8, backgroundColor: T.cardAlt, borderRadius: 4, overflow: 'hidden' }}>
                       <View style={{ width: `${(r.v / max) * 100}%`, height: '100%', backgroundColor: r.c, borderRadius: 4 }} />
                     </View>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: T.text1, width: 46, textAlign: 'right' }}>{r.v}%</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, width: 46, textAlign: 'right' }}>{r.v}%</Text>
                   </View>
                 ))}
               </View>
             );
           })}
-          <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 10 }}>{pop16.disclaimer}</Text>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>{pop16.disclaimer}</Text>
           </Expandable>
           </>}
         />
@@ -1856,7 +1856,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {!!recommendations.priority_messages?.length && (
             <View style={{ gap: 6, marginBottom: 10 }}>
               {recommendations.priority_messages!.map((msg, i) => (
-                <Text key={i} style={{ fontSize: 13, color: T.text1, fontWeight: '700', lineHeight: 20 }}>{msg}</Text>
+                <Text key={i} style={{ fontSize: T.fs.caption, color: T.text1, fontWeight: '700', lineHeight: 20 }}>{msg}</Text>
               ))}
             </View>
           )}
@@ -1878,18 +1878,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             if (!gaps.length) return null;
             return (
               <View style={{ marginTop: 4 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: T.text2, marginBottom: 4 }}>목표까지 얼마나 남았나 {gaps.length}가지</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 4 }}>목표까지 얼마나 남았나 {gaps.length}가지</Text>
                 {gaps.map((x, i) => (
                   <View key={i} style={[{ paddingVertical: 9 }, i > 0 && { borderTopWidth: 1, borderTopColor: T.divider }]}>
                     {/* ⚠️ 목표를 제목과 «같은 줄»에 두었더니 「HDL 콜레스테롤 관 / 리」로
                         제목이 잘렸다(목표 문구가 「남 ≥40mg/dL, 여 ≥50mg/dL (이상적: ≥60)」로 길다).
                         제목이 먼저 온전히 읽혀야 하므로 목표는 아래 줄로 내린다. */}
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: T.text1 }}>{x.title}</Text>
-                    {!!x.target && <Text style={{ fontSize: 11, color: T.text3, lineHeight: 16, marginTop: 1 }}>목표 {x.target}</Text>}
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{x.title}</Text>
+                    {!!x.target && <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 1 }}>목표 {x.target}</Text>}
                     {/* 거리는 굵기를 낮춘다 — 제목보다 세게 읽히면 위계가 뒤집힌다. */}
-                    <Text style={{ fontSize: 13, color: T.text2, lineHeight: 20, marginTop: 4 }}>{x.gap}</Text>
+                    <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 4 }}>{x.gap}</Text>
                     {x.by_med && !!x.reason && (
-                      <Text style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginTop: 3 }}>※ {x.reason}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 3 }}>※ {x.reason}</Text>
                     )}
                   </View>
                 ))}
@@ -1908,45 +1908,45 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           })()}>
           {recommendations.recommendations?.common?.map((c, i) => (
             <View key={`common-${i}`} style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{c.category}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{c.category}</Text>
               {c.items.map((item, j) => (
-                <Text key={j} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {item}</Text>
+                <Text key={j} style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>· {item}</Text>
               ))}
             </View>
           ))}
 
           {recommendations.recommendations?.metabolic_factors?.map((f, i) => (
             <View key={`mf-${i}`} style={{ marginBottom: 12, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{f.title}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{f.title}</Text>
               {f.details.map((d, j) => (
-                <Text key={j} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {d}</Text>
+                <Text key={j} style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>· {d}</Text>
               ))}
             </View>
           ))}
 
           {recommendations.recommendations?.group_specific?.map((g, i) => (
             <View key={`gs-${i}`} style={{ marginBottom: 12, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{g.title}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>{g.title}</Text>
               {g.details.map((d, j) => (
-                <Text key={j} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {d}</Text>
+                <Text key={j} style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>· {d}</Text>
               ))}
             </View>
           ))}
 
           {!!recommendations.recommendations?.medication_notes?.length && (
             <View style={{ marginBottom: 12, borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>복용 약 관련 안내</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>복용 약 관련 안내</Text>
               {recommendations.recommendations!.medication_notes!.map((m, i) => (
-                <Text key={i} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· [{m.medication}] {m.note}</Text>
+                <Text key={i} style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>· [{m.medication}] {m.note}</Text>
               ))}
             </View>
           )}
 
           {!!recommendations.recommendations?.elderly_notes?.length && (
             <View style={{ borderTopWidth: 1, borderTopColor: T.divider, paddingTop: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: T.text1, marginBottom: 4 }}>고령 기준 추가 안내</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>고령 기준 추가 안내</Text>
               {recommendations.recommendations!.elderly_notes!.map((n, i) => (
-                <Text key={i} style={{ fontSize: 12, color: T.text2, lineHeight: 19 }}>· {n}</Text>
+                <Text key={i} style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>· {n}</Text>
               ))}
             </View>
           )}
@@ -1956,15 +1956,15 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
               행동의 이유를 밝히는 것과 같은 규칙이다. */}
           {!!recommendations.recommendations?.omitted?.length && (
             <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: T.text2, marginBottom: 4 }}>넣지 않은 항목</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2, marginBottom: 4 }}>넣지 않은 항목</Text>
               {recommendations.recommendations!.omitted!.map((o, i) => (
-                <Text key={i} style={{ fontSize: 11, color: T.text3, lineHeight: 17, marginBottom: 3 }}>· [{o.category}] {o.reason}</Text>
+                <Text key={i} style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 3 }}>· [{o.category}] {o.reason}</Text>
               ))}
             </View>
           )}
 
           {recommendations._meta?.disclaimer && (
-            <Text style={{ fontSize: 11, color: T.text3, marginTop: 14, lineHeight: 17 }}>{recommendations._meta.disclaimer}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 14, lineHeight: 20 }}>{recommendations._meta.disclaimer}</Text>
           )}
           </Expandable>
           </>}
@@ -1991,7 +1991,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 면책 — 히스토리 탭과 같이 맨 아래 회색 한 줄로 둔다.
           예전에는 헤더 바로 아래에 경고 기호 + 두 줄이라, 첫 화면에서 내 수치보다 먼저 읽혔다.
           내용은 그대로다 — 위치만 옮긴다(스펙 §7 "첫 화면을 텍스트로 막지 않는다"). */}
-      <Text style={{ fontSize: 12, color: T.text3, lineHeight: 18, paddingHorizontal: 20, paddingTop: 20 }}>
+      <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, paddingHorizontal: 20, paddingTop: 20 }}>
         이 화면은 건강검진 수치를 이해하기 위한 참고 정보입니다. 질병 진단이나 치료 판단을 대체하지 않습니다.
       </Text>
 
