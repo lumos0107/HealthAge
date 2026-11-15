@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
-import { Circle, G, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
+import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { FadeIn, FadeInUp, T, W } from '../components/UI';
 import { A11Y, Expandable, PeerRankBlock, StatusChip, SummaryCard, useChartTouchX } from '../components/v2';
 import { cardContent, cardContentFor, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
@@ -744,7 +744,17 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
   const sel = pts.find((p) => p.idx === selIdx);
   const firstP = pts[0];
   const lastP = pts[pts.length - 1];
-  const showSelYear = !!sel && sel !== firstP && sel !== lastP && Math.abs(x(sel.idx) - x(firstP.idx)) > 44 && Math.abs(x(sel.idx) - x(lastP.idx)) > 44;
+  // 연도 눈금 — 잰 해마다 눈금과 연도를 단다. 자리가 모자라면(라벨 폭 약 44px) 건너뛰되
+  // 처음·끝·고른 해는 항상 남기고, 그 곁의 이웃 라벨은 겹치지 않게 뺀다.
+  const LABEL_GAP = 44;
+  const minGap = pts.length > 1 ? Math.min(...pts.slice(1).map((p, i) => x(p.idx) - x(pts[i].idx))) : LABEL_GAP;
+  const stride = Math.max(1, Math.ceil(LABEL_GAP / Math.max(minGap, 1)));
+  const must = new Set<number>([firstP.idx, lastP.idx, ...(sel ? [sel.idx] : [])]);
+  const tickPts = pts.filter((p, i) => {
+    if (must.has(p.idx)) return true;
+    if (i % stride !== 0) return false;
+    return [...must].every((m) => Math.abs(x(p.idx) - x(m)) >= LABEL_GAP);
+  });
 
   return (
     <Pressable ref={chartRef} onLayout={onChartLayout} hitSlop={8} onPress={handleTouch} onTouchMove={handleTouch} accessible accessibilityLabel={desc}>
@@ -788,14 +798,26 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
               </SvgText>
             </G>
           )}
-          {/* 연도는 처음·끝(+고른 해)만 — 가운데 숫자는 늘기만 하고 읽히지 않는다. */}
-          <SvgText x={x(firstP.idx)} y={PLOT_H + 24} fontSize={T.fs.body} fill={A11Y.sub} textAnchor={firstP.idx === 0 ? 'start' : 'middle'}>{firstP.year}</SvgText>
-          {lastP !== firstP && (
-            <SvgText x={x(lastP.idx)} y={PLOT_H + 24} fontSize={T.fs.body} fill={A11Y.sub} textAnchor={lastP.idx === n - 1 ? 'end' : 'middle'}>{lastP.year}</SvgText>
-          )}
-          {showSelYear && sel && (
-            <SvgText x={x(sel.idx)} y={PLOT_H + 24} fontSize={T.fs.body} fontWeight="800" fill={T.text1} textAnchor="middle">{sel.year}</SvgText>
-          )}
+          {/* 고른 해 안내선 — 점에서 연도 눈금까지 */}
+          {sel && <Line x1={x(sel.idx)} y1={y(sel.v)} x2={x(sel.idx)} y2={PLOT_H} stroke={selFill} strokeWidth={1.5} strokeDasharray="3 3" opacity={0.5} />}
+          {/* 연도 눈금 + 라벨 — 잰 해마다 */}
+          <Line x1={0} y1={PLOT_H} x2={PLOT_W} y2={PLOT_H} stroke="#D9DCE1" strokeWidth={1} />
+          {tickPts.map((p) => {
+            const isSel = !!sel && p.idx === sel.idx;
+            return (
+              <G key={`yr${p.idx}`}>
+                <Line x1={x(p.idx)} y1={PLOT_H} x2={x(p.idx)} y2={PLOT_H + (isSel ? 7 : 5)} stroke={isSel ? T.text1 : '#8B95A1'} strokeWidth={isSel ? 2 : 1} />
+                <SvgText
+                  x={x(p.idx)}
+                  y={PLOT_H + 26}
+                  fontSize={T.fs.body}
+                  fontWeight={isSel ? '800' : '500'}
+                  fill={isSel ? T.text1 : A11Y.sub}
+                  textAnchor={p.idx === 0 ? 'start' : p.idx === n - 1 ? 'end' : 'middle'}
+                >{p.year}</SvgText>
+              </G>
+            );
+          })}
         </G>
       </Svg>
     </Pressable>

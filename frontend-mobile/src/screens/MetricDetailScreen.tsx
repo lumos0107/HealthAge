@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { MetricDefinition, Report } from '../data';
 import { metricContent, yearsWithMetric } from '../data';
-import { deltaText, formatMetricValue, headline, metricPeerRank, positionTitle, yearDelta } from '../interpret';
-import { StatusBadge, T, WebFrame } from '../components/UI';
-import { categoryVisual, MetricTrendChart, PeerRankBlock, RangeBar, SquircleIcon } from '../components/v2';
+import { deltaText, formatMetricValue, headline, metricPeerRank, yearDelta } from '../interpret';
+import { T, WebFrame } from '../components/UI';
+import { A11Y, MetricTrendChart, PeerRankBlock, RangeBar, StatusChip } from '../components/v2';
 
-// L2 항목 상세 — 이야기 순서로 읽힌다: 판단 → 이 항목이 뭔지(정의, 펼치면 심화) → 내 위치 → 근거 → 그래서 뭘 하면 되는지.
-// 화면 전환은 이 오버레이 한 번만. 심화 설명만 2.5뎁스(펼치기)로 접어둔다 — 기본 설명으로 충분한 사람에게는 안 보여도 되는 층.
+// L2 항목 상세 — 히스토리·분석 상세(SummaryCard)와 같은 순서·같은 규격으로 읽힌다:
+// ① 결론(22px) → 값 영역(연도·값·추이) → ② 이 지표는요(+「왜 그럴까요?」) → ③ 또래와 견주면 → ⑤ 이렇게 해 보세요.
+// 화면 전환은 이 오버레이 한 번만. 심화 설명만 접어둔다(2.5뎁스).
 export default function MetricDetailScreen({ metric, report, reports, onYear, onClose }: {
   metric: MetricDefinition;
   report: Report;
@@ -21,153 +22,144 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
   const statusFill = metric.status === '정상' ? T.successFill : metric.status === '주의' ? T.warnFill : T.dangerFill;
   const statusColor = metric.status === '정상' ? T.success : metric.status === '주의' ? T.warn : T.danger;
   const delta = yearDelta(reports, metric.key, report.year);
-  const visual = categoryVisual(metric.category);
   // 실데이터 경로에서 키가 어긋나도 화면이 깨지지 않게 폴백을 둔다(심화=note, 팁 없음).
   const content = metricContent[metric.key] ?? { detail: '', tips: [] };
-  // 2.5뎁스 — 심화 설명은 접어두고, 원하는 사람만 화살표로 연다.
+  // 2.5뎁스 — 「왜 그럴까요?」는 접어두고, 원하는 사람만 연다.
   const [showDetail, setShowDetail] = useState(false);
-  // 행동 카드 프레임 — 같은 습관 팁이라도 상태에 따라 읽히는 맥락이 다르다:
-  // 정상은 유지, 주의는 개선 제안, 위험은 우선순위로 프레이밍한다.
-  const tipsTitle = metric.status === '정상' ? '지금처럼 유지하려면' : metric.status === '주의' ? '이렇게 하면 좋아요' : '먼저 이것부터';
   // 이 항목을 실제로 잰 해만 고를 수 있게 한다 — 안 잰 해에는 그 해의 판정이 없어
   // 상세 화면을 만들 수 없고, 고르는 순간 화면이 통째로 사라진다.
   const years = yearsWithMetric(reports, metric.key);
+  const peer = metric.infoOnly ? null : metricPeerRank(metric, value);
+
+  // SummaryCard와 같은 규격(카드·제목·본문)
+  const card = { backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 } as const;
+  const h = { fontSize: T.fs.strong, fontWeight: '800', color: T.text1, marginBottom: 6 } as const;
+  const body = { fontSize: T.fs.strong, color: A11Y.sub, lineHeight: 27 } as const;
+  const whyLines = [
+    ...(metric.infoOnly ? [] : [{ label: '기준', text: metric.normalText }]),
+    { label: '내 값', text: `${formatMetricValue(metric, value)}${metric.unit ?? ''}` },
+    ...(metric.peerMean != null ? [{ label: '또래 평균', text: `${metric.peerMean}${metric.unit ?? ''}` }] : []),
+    ...(content.detail ? [{ label: '설명', text: content.detail }] : []),
+    ...(metric.note ? [{ label: '근거', text: metric.note }] : []),
+  ];
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <WebFrame>
       <View style={{ flex: 1, backgroundColor: T.bg }}>
-        {/* 헤더 — 뒤로가기 + 항목명 */}
+        {/* 헤더 — 뒤로가기(44px 이상) + 항목명 */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 54, paddingBottom: 10, backgroundColor: T.white }}>
-          <Pressable onPress={onClose} hitSlop={10} style={{ padding: 8 }}>
-            <Ionicons name="chevron-back" size={24} color={T.text1} />
+          <Pressable onPress={onClose} accessibilityLabel="뒤로" hitSlop={10} style={{ padding: 10 }}>
+            <Ionicons name="chevron-back" size={26} color={T.text1} />
           </Pressable>
-          <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>{metric.name}</Text>
+          <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, flex: 1 }} numberOfLines={1}>{metric.name}</Text>
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
-          {/* 연도 — 분석 탭과 같은 방식으로 여기서도 해를 바꾼다. 예전에는 들어올 때의 해로 고정이라
-              다른 해를 보려면 목록으로 나갔다 다시 들어와야 했다. */}
-          {onYear && years.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
-              {[...years].reverse().map((y) => {
-                const active = y === report.year;
-                return (
-                  <Pressable
-                    key={y}
-                    onPress={() => onYear(y)}
-                    style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.white }}
-                  >
-                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: active ? T.onPrimary : T.text2 }}>{y}년</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
+          {/* ① 결론 — 22px */}
+          <View style={card}>
+            <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, lineHeight: 32, letterSpacing: -0.3 }}>{headline(metric, value)}</Text>
+          </View>
 
-          {/* L2 상단 — 판단 먼저: 배지 → 쉬운 문장 → 값·전년 대비 */}
-          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
+          {/* 값 영역 — 연도 · 상태 · 값 · 전년 대비 · 추이 */}
+          <View style={card}>
+            {onYear && years.length > 1 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 14 }}>
+                {[...years].reverse().map((y) => {
+                  const active = y === report.year;
+                  return (
+                    <Pressable
+                      key={y}
+                      onPress={() => onYear(y)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      style={{ minHeight: 44, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', borderRadius: T.radiusPill, backgroundColor: active ? T.primary : T.cardAlt }}
+                    >
+                      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: active ? T.onPrimary : A11Y.sub }}>{y}년</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', flexShrink: 1 }}>
+                <Text style={{ fontSize: 40, fontWeight: '800', color: metric.infoOnly ? T.text1 : statusFill, lineHeight: 44 }}>{formatMetricValue(metric, value)}</Text>
+                {metric.unit ? <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginLeft: 6, marginBottom: 5 }}>{metric.unit}</Text> : null}
+              </View>
               {metric.infoOnly ? (
-                <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
-                  <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text3 }}>참고</Text>
+                <View style={{ paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: A11Y.sub }}>참고</Text>
                 </View>
               ) : (
-                <StatusBadge status={metric.status} />
+                <StatusChip status={metric.status} />
               )}
             </View>
-            <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 34 }}>{headline(metric, value)}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginTop: 12 }}>
-              <Text style={{ fontSize: 40, fontWeight: '800', color: metric.infoOnly ? T.text1 : statusFill, lineHeight: 44 }}>{formatMetricValue(metric, value)}</Text>
-              {metric.unit ? <Text style={{ fontSize: T.fs.caption, color: T.text3, marginLeft: 4, marginBottom: 5 }}>{metric.unit}</Text> : null}
+            {delta && <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginTop: 8 }}>{deltaText(delta, metric.unit)}</Text>}
+            <View style={{ marginTop: 16 }}>
+              <MetricTrendChart metric={metric} reports={reports} highlightYear={report.year} onSelectYear={onYear} />
             </View>
-            {delta && <Text style={{ fontSize: T.fs.body, color: T.text2, marginTop: 6 }}>{deltaText(delta, metric.unit)}</Text>}
           </View>
 
-          {/* 정의 — 이 항목이 뭔지부터. 기본 설명 한 문장, 심화(기준 구간·용어)는 펼치기 뒤에 둔다. */}
-          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 4 }}>이 지표는요</Text>
-            <Text style={{ fontSize: T.fs.body, color: T.text2, lineHeight: 22 }}>{metric.description}</Text>
-            {showDetail && (
-              <>
-                {!!content.detail && <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 21, marginTop: 10 }}>{content.detail}</Text>}
-                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>{metric.note}</Text>
-              </>
-            )}
+          {/* ② 이 지표는요 — 정의, 접힌 「왜 그럴까요?」(2.5뎁스: 기준 / 내 값 / 근거) */}
+          <View style={card}>
+            <Text style={h}>이 지표는요</Text>
+            <Text style={body}>{metric.description}</Text>
             <Pressable
               onPress={() => setShowDetail((v) => !v)}
-              hitSlop={8}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}
+              accessibilityRole="button"
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 52, marginTop: 14, borderRadius: T.radiusMd, backgroundColor: T.cardAlt }}
             >
-              <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text3 }}>{showDetail ? '접기' : '자세히 알아보기'}</Text>
-              <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={15} color={T.text3} />
+              <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>왜 그럴까요?</Text>
+              <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={18} color={T.text1} />
             </Pressable>
+            {showDetail && (
+              <View style={{ marginTop: 12, padding: 16, borderRadius: T.radiusMd, backgroundColor: '#F7F8FA', gap: 8 }}>
+                {whyLines.map((l) => (
+                  <Text key={l.label} style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25 }}>
+                    <Text style={{ fontWeight: '800', color: T.text1 }}>{l.label}  </Text>{l.text}
+                  </Text>
+                ))}
+              </View>
+            )}
           </View>
 
-          {/* 나의 위치 — 위: 정상범위 바, 아래: "100명 중 N등" 또래 그래프(별도). infoOnly는 판정 대상이 아니라 카드 자체를 렌더하지 않는다.
-              등수 문장·근거 배지는 PeerRankBlock 한 곳에 모아 두어 분석·히스토리와 같은 모양으로 말한다. */}
+          {/* ③ 또래와 견주면 — 정상범위 바 + «100명 중 N등». infoOnly는 판정 대상이 아니라 그리지 않는다. */}
           {!metric.infoOnly && (
-          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>정상 범위와 비교하면 여기예요</Text>
-            <RangeBar metric={metric} value={value} />
-            {(() => {
-              const peer = metricPeerRank(metric, value);
-              if (!peer) return null;
-              return (
+            <View style={card}>
+              <Text style={h}>또래와 견주면</Text>
+              <RangeBar metric={metric} value={value} />
+              {peer && (
                 <View style={{ marginTop: 16, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
                   <PeerRankBlock subject={metric.name} color={statusColor} {...peer} />
                 </View>
-              );
-            })()}
-          </View>
+              )}
+            </View>
           )}
 
-          {/* 원본 수치·정상범위 표 + 추이 차트 — 접지 않고 바로 보여준다(내용이 한 카드 분량)
-              이 카드도 ③「나의 위치」다(time 축). 제목이 없어 위 카드의 꼬리처럼 보였는데,
-              위는 기준·또래로 «지금»을 말하고 여기는 «흐름»을 말하는 다른 비교다.
-              제목은 규격대로 축에서 뽑는다(§2-1) — 두 화면이 같은 함수를 쓴다. */}
-          <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-            <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1, marginBottom: 14 }}>{positionTitle(['time'])}</Text>
-            <View style={{ flexDirection: 'row', gap: 24, marginBottom: 16 }}>
-              <DetailCell label="내 수치" value={`${formatMetricValue(metric, value)}${metric.unit}`} color={metric.infoOnly ? T.text1 : statusColor} />
-              <DetailCell label="정상 기준" value={metric.normalText} />
-              {metric.peerMean != null && <DetailCell label="또래 평균" value={`${metric.peerMean}${metric.unit}`} />}
-            </View>
-            <MetricTrendChart metric={metric} reports={reports} highlightYear={report.year} onSelectYear={onYear} />
-          </View>
-
-          {/* 행동 — 그래서 뭘 하면 되는지. 참고값(infoOnly)이나 팁이 없는 항목은 카드를 그리지 않는다. */}
+          {/* ⑤ 이렇게 해 보세요 — 번호 원 + 최대 3개. 참고값(infoOnly)이나 팁이 없는 항목은 카드를 그리지 않는다. */}
           {content.tips.length > 0 && (
-            <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
-              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1, marginBottom: 10 }}>{tipsTitle}</Text>
-              {content.tips.map((tip, i) => (
-                <View key={i} style={{ flexDirection: 'row', gap: 8, marginTop: i === 0 ? 0 : 8 }}>
-                  <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: T.text3, marginTop: 8 }} />
-                  <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 21 }}>{tip}</Text>
+            <View style={card}>
+              <Text style={{ ...h, marginBottom: 12 }}>이렇게 해 보세요</Text>
+              {content.tips.slice(0, 3).map((tip, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, marginTop: i === 0 ? 0 : 6 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: '#007A49' }}>{i + 1}</Text>
+                  </View>
+                  <Text style={{ flex: 1, fontSize: T.fs.strong, color: T.text1, lineHeight: 26 }}>{tip}</Text>
                 </View>
               ))}
               {metric.status === '위험' && (
-                <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 10 }}>
+                <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 24, marginTop: 12 }}>
                   수치가 반복해서 범위를 벗어난다면 의료기관 상담을 참고하세요.
                 </Text>
               )}
             </View>
           )}
 
-          <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center' }}>참고용이며 진단이 아닙니다</Text>
+          <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
         </ScrollView>
       </View>
       </WebFrame>
     </Modal>
-  );
-}
-
-function DetailCell({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <View>
-      <Text style={{ fontSize: T.fs.caption, color: T.text3, marginBottom: 3 }}>{label}</Text>
-      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: color ?? T.text1 }}>{value}</Text>
-    </View>
   );
 }
