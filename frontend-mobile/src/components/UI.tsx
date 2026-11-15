@@ -34,8 +34,8 @@ export const T = {
   primaryDark: '#00A862',
   // 초록 *글자*·링크용(흰 카드 4.9:1, 앱 배경 4.5:1). 아이콘·선은 primaryDark(3.1:1).
   primaryText: '#00814D',
-  // 초록 채움 버튼 위 글자. 흰 글자는 2.4:1이라 어두운 색을 쓴다(6.6:1).
-  onPrimary: '#06281C',
+  // 초록 채움 버튼 위 글자. 흰색(디자인 선택) — #00C073 위 대비는 2.4:1이라 AA 미달(큰 글자 3:1도 미달).
+  onPrimary: '#FFFFFF',
 
   // Backgrounds — 연회색 화면 배경, 카드만 흰색
   bg: '#F3F5F7',
@@ -146,7 +146,7 @@ export function Collapsible({ title, children, defaultOpen, badge }: { title: st
           <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{title}</Text>
           {badge ? (
             <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 8, paddingVertical: 2, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primary }}>{badge}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primaryText }}>{badge}</Text>
             </View>
           ) : null}
         </View>
@@ -195,7 +195,7 @@ export function SectionTitle({ title, action, onAction }: { title: string; actio
       <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>{title}</Text>
       {action ? (
         <Pressable hitSlop={8} onPress={onAction}>
-          <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primary }}>{action}</Text>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primaryText }}>{action}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -506,7 +506,7 @@ const ui = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
   },
-  primaryBtnText: { color: T.onPrimary, fontWeight: '700', fontSize: T.fs.body },
+  primaryBtnText: { color: T.onPrimary, fontWeight: '700', fontSize: T.fs.strong },
   secondaryBtn: {
     backgroundColor: T.cardAlt,
     height: 54,
@@ -515,9 +515,9 @@ const ui = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
   },
-  secondaryBtnText: { color: T.primary, fontWeight: '700', fontSize: T.fs.body },
+  secondaryBtnText: { color: T.primaryText, fontWeight: '700', fontSize: T.fs.strong },
   ghostBtn: { height: 48, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
-  ghostBtnText: { color: T.text3, fontWeight: '600', fontSize: T.fs.body },
+  ghostBtnText: { color: T.text3, fontWeight: '600', fontSize: T.fs.strong },
   chip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -526,7 +526,7 @@ const ui = StyleSheet.create({
   },
   chipActive: { backgroundColor: T.primaryLight },
   chipText: { fontSize: T.fs.caption, fontWeight: '500', color: T.text3 },
-  chipTextActive: { color: T.primary, fontWeight: '700' },
+  chipTextActive: { color: T.primaryText, fontWeight: '700' },
   fieldLabel: { fontSize: T.fs.caption, fontWeight: '600', color: T.text2, marginBottom: 8 },
   fieldInput: {
     height: 52,

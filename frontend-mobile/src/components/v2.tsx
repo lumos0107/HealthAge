@@ -550,7 +550,7 @@ export function FixedCTA({ label, onPress, disabled, loading }: {
           backgroundColor: disabled || loading ? T.text3 : pressed ? T.primaryPressed : T.primary,
         })}
       >
-        {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: disabled ? '#fff' : T.onPrimary }}>{label}</Text>}
+        {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: disabled ? '#fff' : T.onPrimary }}>{label}</Text>}
       </Pressable>
     </View>
   );

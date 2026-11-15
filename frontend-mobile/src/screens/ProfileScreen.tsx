@@ -145,7 +145,7 @@ export default function ProfileScreen({
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.primaryLight, paddingHorizontal: 14, paddingVertical: 8, borderRadius: T.radiusPill }}
               >
                 <Ionicons name="lock-closed-outline" size={13} color={T.primary} />
-                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primary }}>수정하기</Text>
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>수정하기</Text>
               </Pressable>
             ) : editState === 'unlocked' ? (
               <Pressable
@@ -214,7 +214,7 @@ export default function ProfileScreen({
                 style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 16 }}
                 onPress={handleSave}
               >
-                <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>저장하기</Text>
+                <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>저장하기</Text>
               </Pressable>
             </View>
           )}
@@ -367,7 +367,7 @@ export default function ProfileScreen({
               style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
               onPress={verifyPassword}
             >
-              <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>확인</Text>
+              <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>확인</Text>
             </Pressable>
           </Pressable>
         </Pressable>

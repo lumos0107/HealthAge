@@ -44,7 +44,7 @@ function LayerHeader({ step, title, sub, first }: { step: string; title: string;
       ? { marginHorizontal: 16, marginTop: 18, marginBottom: 4 }
       : { marginHorizontal: 16, marginTop: 26, marginBottom: 4, paddingTop: 18, borderTopWidth: 1, borderTopColor: T.divider }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
-        <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.primary }}>{step}</Text>
+        <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.primaryText }}>{step}</Text>
         <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, letterSpacing: -0.3 }}>{title}</Text>
       </View>
       <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 4 }}>{sub}</Text>
@@ -95,7 +95,7 @@ function TabIntroNote({ title }: { title: string }) {
         <View style={{ marginTop: 14 }}>
           {LAYERS.map((l) => (
             <View key={l.step} style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary }}>{l.step}</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primaryText }}>{l.step}</Text>
               <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
                 <Text style={{ fontWeight: '700', color: T.text1 }}>{l.title}</Text> — {l.intro}
               </Text>
@@ -352,7 +352,7 @@ function ActionRoundup({ ranks, ctx, combos, ascvd, calcs }: {
             {rows.map(({ r, a, ev }, i) => (
               <View key={a.id} style={[{ paddingTop: 12 }, i > 0 && { marginTop: 12, borderTopWidth: 1, borderTopColor: T.divider }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-                  <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.primary }}>{i + 1}</Text>
+                  <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.primaryText }}>{i + 1}</Text>
                   <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, flex: 1 }}>{a.title(ctx)}</Text>
                   {r.reductionRatio > 0 && (
                     <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.success }}>−{Math.round(r.reductionRatio * 100)}%</Text>

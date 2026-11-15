@@ -80,7 +80,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           </Text>
           <Pressable hitSlop={8} onPress={onRequireLogin} style={{ height: 52, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 }}>
             <Ionicons name="log-in-outline" size={19} color="#fff" />
-            <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>로그인 / 회원가입</Text>
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>로그인 / 회원가입</Text>
           </Pressable>
           <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', marginTop: 12 }}>
             로그인 없이도 아래 <Text style={{ fontWeight: '700', color: T.text2 }}>검진기관·병원·약국 찾기</Text>는 이용할 수 있어요.
@@ -203,7 +203,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
           })}
           {/* 전체 보기 — 하단 탭 '검사항목'으로 이동 */}
           <Pressable onPress={() => onTab('records')} style={{ paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: T.divider }}>
-            <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primary }}>전체 항목 보기</Text>
+            <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.primaryText }}>전체 항목 보기</Text>
           </Pressable>
         </View>
         </FadeInUp>

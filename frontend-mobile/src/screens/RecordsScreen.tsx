@@ -237,7 +237,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
         ) : (
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
-            <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>!</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.primaryText, fontWeight: '700' }}>!</Text>
             <Text style={{ flex: 1, fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>
               {usingRealData
                 ? '"내가 먹는 약! 한눈에" 자료를 효능군별로 정리했어요. 검사 수치가 약 복용의 영향을 받을 수 있으니 함께 확인해보세요.'
@@ -248,7 +248,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
             <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                 <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primary }}>{category}</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>{category}</Text>
                 </View>
                 <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>{items.length}개</Text>
               </View>

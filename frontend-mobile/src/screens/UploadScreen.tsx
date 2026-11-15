@@ -401,7 +401,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 </View>
 
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
-                  <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>!</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.primaryText, fontWeight: '700' }}>!</Text>
                   <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, flex: 1 }}>저장하기 전에 측정값과 검진기관, 검진일이 실제 검진표와 같은지 다시 확인해주세요.</Text>
                 </View>
                 <View style={{ paddingHorizontal: 16 }}>
@@ -445,7 +445,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 <Text style={{ fontWeight: '700', color: T.text1, fontSize: T.fs.body, marginBottom: 3 }}>복약자료 발급 방법 안내</Text>
                 <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>건강보험심사평가원에서 내 복약정보 조회</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 5 }}>
-                  <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>브라우저에서 열기</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.primaryText, fontWeight: '700' }}>브라우저에서 열기</Text>
                   <Ionicons name="arrow-forward" size={11} color={T.primary} />
                 </View>
               </View>
@@ -482,7 +482,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
               <View key={category} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 6, marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                   <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill }}>
-                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primary }}>{category}</Text>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>{category}</Text>
                   </View>
                   <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>{items.length}개</Text>
                 </View>
@@ -502,7 +502,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
 
             {medItems.length > 0 && (
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginHorizontal: 16, paddingVertical: 12, marginBottom: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
-                <Text style={{ fontSize: T.fs.caption, color: T.primary, fontWeight: '700' }}>!</Text>
+                <Text style={{ fontSize: T.fs.caption, color: T.primaryText, fontWeight: '700' }}>!</Text>
                 <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, flex: 1 }}>
                   {medUsingExample
                     ? '지금 보이는 내용은 형태를 보여주기 위한 예시 데이터로, 실제로 저장되지는 않습니다. 실제로 저장하려면 위의 "복약자료 파일 업로드"로 본인의 HIRA 엑셀 파일을 올려주세요.'
@@ -519,7 +519,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
         {statusMsg ? (
           <View style={{ marginHorizontal: 16, marginTop: 8, paddingVertical: 12, borderTopWidth: 1, borderTopColor: T.divider, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
             <Ionicons name={isError ? 'alert-circle-outline' : 'checkmark-circle-outline'} size={18} color={isError ? T.danger : T.primary} style={{ marginTop: 1 }} />
-            <Text style={{ fontSize: T.fs.caption, color: isError ? T.danger : T.primary, fontWeight: '600', flex: 1, lineHeight: 20 }}>{statusMsg}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: isError ? T.danger : T.primaryText, fontWeight: '600', flex: 1, lineHeight: 20 }}>{statusMsg}</Text>
           </View>
         ) : null}
       </ScrollView>
@@ -556,7 +556,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 style={{ flex: 1, height: 52, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={confirmSave}
               >
-                <Text style={{ fontWeight: '700', color: T.onPrimary, fontSize: T.fs.body }}>저장하기</Text>
+                <Text style={{ fontWeight: '700', color: T.onPrimary, fontSize: T.fs.strong }}>저장하기</Text>
               </Pressable>
             </View>
           </View>
@@ -595,7 +595,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 style={{ flex: 1, height: 52, backgroundColor: medBirthdayInput.length === 8 ? T.primary : T.cardAlt, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => { const a = medBirthdayAsk!; setMedBirthdayAsk(null); runMedUpload(a.uri, a.name, medBirthdayInput); }}
               >
-                <Text style={{ fontWeight: '700', color: medBirthdayInput.length === 8 ? T.onPrimary : T.text3, fontSize: T.fs.body }}>다시 시도</Text>
+                <Text style={{ fontWeight: '700', color: medBirthdayInput.length === 8 ? T.onPrimary : T.text3, fontSize: T.fs.strong }}>다시 시도</Text>
               </Pressable>
             </View>
           </View>

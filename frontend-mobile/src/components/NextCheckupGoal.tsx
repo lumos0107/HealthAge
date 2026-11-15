@@ -127,7 +127,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
           onPress={openModal}
           style={{ height: 50, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary }}
         >
-          <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>목표 세우기</Text>
+          <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>목표 세우기</Text>
         </Pressable>
         {demoMode && !!demoNote && (
           <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 8, lineHeight: 20 }}>{demoNote}</Text>
@@ -144,7 +144,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
           <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
             {/* ① 지금 뭐가 걸리나 */}
             <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 12, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary, marginBottom: 4 }}>① 지금 걸리는 것</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primaryText, marginBottom: 4 }}>① 지금 걸리는 것</Text>
               {problems.length === 0 ? (
                 <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 21 }}>
                   {latest.year}년 검진에서 대사 관련 항목은 모두 기준 안이에요. 지금 상태를 유지하는 것이 목표예요.
@@ -169,7 +169,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
 
             {/* ② 뭘 하면 되나 — 한 번에 하나만. 효과크기는 더할 수 없다(대부분 체중을 통해 작용). */}
             <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary, marginBottom: 4 }}>② 그러려면 뭘 하면 되나</Text>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primaryText, marginBottom: 4 }}>② 그러려면 뭘 하면 되나</Text>
               <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 12 }}>
                 효과가 큰 것부터 차례로 놓았어요. 하나만 골라주세요 — 여러 행동의 효과는 그대로 더할 수 없어요.
                 대부분 체중을 통해 겹쳐서 작용하거든요.
@@ -236,7 +236,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
             {action && (
               <>
                 <View style={{ backgroundColor: T.white, marginHorizontal: 16, marginTop: 8, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18 }}>
-                  <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primary, marginBottom: 4 }}>③ 그러면 이렇게 됩니다</Text>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.primaryText, marginBottom: 4 }}>③ 그러면 이렇게 됩니다</Text>
                   {/* ⚠️ 문구는 "되면"이지 "하면"이 아니다. 문헌 계수는 그 변화가 실제로 일어났을 때의
                       값이고, 일으키고 유지할 확률은 훨씬 낮다(근거문서 §7-4). */}
                   <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginBottom: 12 }}>
@@ -293,7 +293,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
                     onPress={loading ? undefined : run}
                     style={{ height: 54, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary, opacity: loading ? 0.6 : 1 }}
                   >
-                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>{loading ? '다시 계산하는 중...' : '이 수치가 되면 판정은?'}</Text>
+                    <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>{loading ? '다시 계산하는 중...' : '이 수치가 되면 판정은?'}</Text>
                   </Pressable>
                 </View>
               </>

@@ -383,7 +383,7 @@ export default function App() {
               <View style={[s.navIconWrap, active && s.navIconWrapActive]}>
                 <Ionicons name={active ? item.activeIcon : item.icon} size={22} color={active ? T.primary : T.text3} />
               </View>
-              <Text style={[s.navLabel, active && { color: T.primary, fontWeight: '700' }]}>{item.label}</Text>
+              <Text style={[s.navLabel, active && { color: T.primaryText, fontWeight: '700' }]}>{item.label}</Text>
             </Pressable>
           );
         })}
@@ -437,7 +437,7 @@ export default function App() {
                   style={{ height: 54, backgroundColor: T.primary, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
                   onPress={() => { saveProfile({ ...profile, ...lsDraft }); setLifestylePrompt(false); }}
                 >
-                  <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>저장</Text>
+                  <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>저장</Text>
                 </Pressable>
                 <Pressable style={{ height: 48, alignItems: 'center', justifyContent: 'center', marginTop: 8 }} onPress={() => setLifestylePrompt(false)}>
                   <Text style={{ fontSize: T.fs.body, fontWeight: '600', color: T.text3 }}>나중에 하기 (건너뛰기)</Text>
@@ -467,7 +467,7 @@ function LockedNotice({ onPress }: { onPress: () => void }) {
         이 화면은 로그인하면 바로 볼 수 있어요.{'\n'}지금 로그인하고 내 건강기록을 확인해보세요.
       </Text>
       <Pressable onPress={onPress} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>로그인 / 회원가입</Text>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>로그인 / 회원가입</Text>
       </Pressable>
     </View>
   );
@@ -485,7 +485,7 @@ function EmptyDataState({ onUpload }: { onUpload: () => void }) {
         건강검진 결과지를 올리면{'\n'}분석 결과와 건강 점수를 확인할 수 있어요.
       </Text>
       <Pressable onPress={onUpload} style={{ height: 50, paddingHorizontal: 28, borderRadius: T.radiusPill, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.onPrimary }}>결과지 업로드하기</Text>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>결과지 업로드하기</Text>
       </Pressable>
     </View>
   );
