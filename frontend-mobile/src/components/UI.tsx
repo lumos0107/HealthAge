@@ -366,6 +366,22 @@ export function FadeInUp({ children, delay = 0 }: { children: React.ReactNode; d
 }
 
 /** 단순히 옅게 사라졌다 나타나는 페이드 — 탭 전환이나 새로고침처럼 위치 이동 없이 갱신될 때 쓴다 */
+/** 그래프 «그려지는» 애니메이션 진행도 0→1. key가 바뀌면 처음부터 다시 그린다(탭·항목 전환).
+ *  연도를 고르는 것처럼 같은 그래프 안의 조작에는 key를 바꾸지 말 것 — 만질 때마다 다시 그려진다.
+ *  SVG 속성은 네이티브 드라이버를 못 쓰므로 JS로 값을 받아 state로 돌린다(480~900ms, 프레임 수가 적다).
+ *  쓰는 법: ClipPath의 Rect width = 전체 폭 × 진행도 → 선·점·값이 왼쪽부터 드러난다. */
+export function useChartReveal(key: string | number, duration = 900, delay = 0): number {
+  const anim = useRef(new Animated.Value(0)).current;
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    anim.setValue(0);
+    const id = anim.addListener(({ value }) => setP(value));
+    Animated.timing(anim, { toValue: 1, duration, delay, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    return () => anim.removeListener(id);
+  }, [key]);
+  return p;
+}
+
 export function FadeIn({ children, delay = 0, duration = 420 }: { children: React.ReactNode; delay?: number; duration?: number }) {
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {

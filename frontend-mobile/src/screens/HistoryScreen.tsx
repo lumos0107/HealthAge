@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
-import { Circle, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
-import { FadeIn, FadeInUp, T, W } from '../components/UI';
+import { ClipPath, Circle, Defs, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
+import { FadeIn, FadeInUp, T, useChartReveal, W } from '../components/UI';
 import { A11Y, Expandable, PeerRankBlock, StatusChip, SummaryCard, useChartTouchX } from '../components/v2';
 import { cardContent, cardContentFor, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { metricPeerRank, normalBounds, scoreGrade, scoreSeries, subjectJosa, topicJosa, trendDirection } from '../interpret';
@@ -452,6 +452,7 @@ function ScoreHero({ reports }: { reports: Report[] }) {
 }
 
 function ScoreChart({ series }: { series: { year: number; score: number; complete: boolean }[] }) {
+  const reveal = useChartReveal(series.length, 1000, 150);
   const H = 190;
   const pad = { top: 22, right: 8, bottom: 34, left: 8 };
   const plotW = CHART_W - pad.left - pad.right;
@@ -489,6 +490,12 @@ function ScoreChart({ series }: { series: { year: number; score: number; complet
             )}
           </G>
         ))}
+        <Defs>
+          <ClipPath id="score-reveal">
+            <Rect x={0} y={0} width={CHART_W * reveal} height={H} />
+          </ClipPath>
+        </Defs>
+        <G clipPath="url(#score-reveal)">
         <Path
           d={series.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(p.score)}`).join(' ')}
           stroke="#191F28" strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
@@ -522,6 +529,7 @@ function ScoreChart({ series }: { series: { year: number; score: number; complet
         {keyIdx.map((i) => (
           <SvgText key={`y${i}`} x={x(i)} y={H - 8} fontSize={T.fs.body} fill={A11Y.sub} textAnchor={anchorOf(i)}>{series[i].year}</SvgText>
         ))}
+        </G>
       </Svg>
     </View>
   );
@@ -708,6 +716,7 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
   selFill: string;
   desc: string;
 }) {
+  const reveal = useChartReveal(metricKey, 900);   // 항목 탭을 바꿀 때만 다시 그린다 — 연도를 고를 때는 아니다
   const pts = reports
     .map((rep, i) => ({ idx: i, v: rep.values[metricKey], year: rep.year }))
     .filter((p): p is { idx: number; v: number; year: number } => isFiniteNum(p.v));
@@ -776,6 +785,12 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
               )}
             </G>
           )}
+          <Defs>
+            <ClipPath id="line-reveal">
+              <Rect x={-PAD.left} y={-PAD.top} width={(PLOT_W + PAD.left + PAD.right) * reveal} height={CH} />
+            </ClipPath>
+          </Defs>
+          <G clipPath="url(#line-reveal)">
           <Path
             d={pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.idx)},${y(p.v)}`).join(' ')}
             stroke="#191F28" strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
@@ -798,6 +813,7 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
               </SvgText>
             </G>
           )}
+          </G>
           {/* 고른 해 안내선 — 점에서 연도 눈금까지 */}
           {sel && <Line x1={x(sel.idx)} y1={y(sel.v)} x2={x(sel.idx)} y2={PLOT_H} stroke={selFill} strokeWidth={1.5} strokeDasharray="3 3" opacity={0.5} />}
           {/* 연도 눈금 + 라벨 — 잰 해마다 */}

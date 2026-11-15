@@ -3,12 +3,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { ClipPath, Circle, Defs, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import { formatMetricValue, normalBounds, positionTitle, scoreGrade } from '../interpret';
 import type { PositionAxis } from '../interpret';
-import { T, W, WebFrame } from './UI';
+import { T, useChartReveal, W, WebFrame } from './UI';
 
 /** 시니어 접근성 색 — 흰/연한 배경 위에서 글자 대비 4.5:1 이상. 글자는 T.success/warn/danger, 막대·점·큰 숫자는 T.*Fill.
  *  (히스토리 개선안 §4) */
@@ -602,6 +602,7 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
   highlightYear: number;
   onSelectYear?: (year: number) => void;
 }) {
+  const reveal = useChartReveal(metric.key);   // 훅은 early return 앞에서 부른다
   const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
   const pts0 = reports
     .map((r, i) => ({ i, year: r.year, v: r.values[metric.key] }))
@@ -663,12 +664,19 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
           {reports.map((r, i) => (
             <SvgText key={r.year} x={xPos(i)} y={PLOT_H + 20} fontSize={T.fs.caption} fill={T.text3} textAnchor="middle">{r.year}</SvgText>
           ))}
-          <Path d={d} stroke={LINE} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          {pts.map((p) => (
-            <Circle key={p.i} cx={p.x} cy={p.y} r={p.i === focus.i ? 6.5 : 4.5} fill={p.i === focus.i ? LINE : T.white} stroke={LINE} strokeWidth={2.5} />
-          ))}
-          {/* 지금 보고 있는 해의 값 라벨 */}
-          <SvgText x={focus.x} y={focus.y - 12} fontSize={T.fs.caption} fill={LINE} textAnchor="middle" fontWeight="700">{focus.v}</SvgText>
+          <Defs>
+            <ClipPath id={`reveal-${metric.key}`}>
+              <Rect x={-PAD.left} y={-PAD.top} width={(PLOT_W + PAD.left + 12) * reveal} height={CHART_H} />
+            </ClipPath>
+          </Defs>
+          <G clipPath={`url(#reveal-${metric.key})`}>
+            <Path d={d} stroke={LINE} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            {pts.map((p) => (
+              <Circle key={p.i} cx={p.x} cy={p.y} r={p.i === focus.i ? 6.5 : 4.5} fill={p.i === focus.i ? LINE : T.white} stroke={LINE} strokeWidth={2.5} />
+            ))}
+            {/* 지금 보고 있는 해의 값 라벨 */}
+            <SvgText x={focus.x} y={focus.y - 12} fontSize={T.fs.caption} fill={LINE} textAnchor="middle" fontWeight="700">{focus.v}</SvgText>
+          </G>
         </G>
       </Svg>
       </Pressable>
