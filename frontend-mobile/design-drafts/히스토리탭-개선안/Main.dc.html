@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>히스토리 탭 (간결안)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;border:0;background:none;padding:0;cursor:pointer;text-align:left}
+.card{background:#fff;margin:0 16px 12px;border-radius:20px;overflow:hidden}
+.h2{font-size:21px;font-weight:800;color:#191F28;letter-spacing:-0.4px;margin:0}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:700;padding:5px 12px;border-radius:999px;white-space:nowrap}
+.cw{background:#FFF3E7;color:#A8520A}
+.cd{background:#FEE9EB;color:#C4281C}
+.cs{background:#EAF7F1;color:#1B7A4B}
+.row{display:flex;align-items:center;gap:12px;padding:16px 20px;border-top:1px solid #F2F4F6;min-height:84px;width:100%;box-sizing:border-box}
+.rt{font-size:19px;font-weight:800;color:#191F28}
+.rs{font-size:16px;color:#4E5968;line-height:24px;margin-top:2px}
+</style>
+</helmet>
+<div style="width:390px;height:1500px;box-sizing:border-box;background:#F3F5F7;font-family:'Noto Sans KR',sans-serif;color:#191F28;padding-bottom:40px">
+
+<div style="padding:32px 20px 16px">
+<h1 style="margin:0;font-size:30px;font-weight:800;letter-spacing:-0.6px">히스토리</h1>
+<p style="margin:6px 0 0;font-size:17px;color:#4E5968;line-height:25px">해마다 어떻게 달라졌는지 봐요.</p>
+</div>
+
+<!-- 점수 -->
+<div class="card" style="padding:20px">
+<div style="display:flex;align-items:flex-end;gap:12px">
+<div style="font-size:60px;font-weight:800;line-height:64px;color:#C4281C;letter-spacing:-1px">22<span style="font-size:24px;font-weight:700;margin-left:2px">점</span></div>
+<div class="chip cd" style="margin-bottom:10px"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1l5.5 10h-11z" fill="#C4281C"/></svg>관리 필요</div>
+</div>
+<div style="font-size:20px;font-weight:800;line-height:30px;margin-top:10px;letter-spacing:-0.3px">2020년 이후 <span style="color:#1B7A4B">점수가 오르고 있어요.</span></div>
+
+<svg width="318" height="190" viewBox="0 0 318 190" role="img" aria-label="점수 추이: 2012년 100점, 2020년 14점, 2024년 22점" style="display:block;margin-top:14px">
+<rect x="6" y="14" width="306" height="42" fill="#EAF7F1"/>
+<rect x="6" y="56" width="306" height="42" fill="#FFF3E7"/>
+<rect x="6" y="98" width="306" height="56" fill="#FEE9EB"/>
+<text x="12" y="148" font-size="14" font-weight="700" fill="#C4281C">관리 필요</text>
+<polyline points="24,14 74,40 124,66 174,92 224,140 262,132 296,128" fill="none" stroke="#191F28" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="224" cy="140" r="8" fill="#fff" stroke="#191F28" stroke-width="2.5" stroke-dasharray="3.5 3"/>
+<circle cx="296" cy="128" r="12" fill="#C4281C" opacity=".18"/>
+<circle cx="296" cy="128" r="8" fill="#C4281C" stroke="#fff" stroke-width="2.5"/>
+<circle cx="24" cy="14" r="6" fill="#191F28" stroke="#fff" stroke-width="2"/>
+<g font-size="16" font-weight="800" text-anchor="middle"><text x="40" y="12" fill="#191F28">100</text><text x="224" y="170" fill="#191F28">14</text><text x="296" y="108" fill="#C4281C">22</text></g>
+<g font-size="15" fill="#4E5968" text-anchor="middle"><text x="24" y="184" text-anchor="start">2012</text><text x="224" y="184" font-size="15">2020</text><text x="312" y="184" text-anchor="end">2024</text></g>
+</svg>
+<div style="display:flex;align-items:center;gap:8px;font-size:15px;color:#4E5968;line-height:22px;margin-top:10px"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" style="flex:none"><circle cx="10" cy="10" r="7.5" fill="#fff" stroke="#191F28" stroke-width="2.5" stroke-dasharray="3.5 3"/></svg><span>점선 원은 일부 검사가 빠진 해예요.</span></div>
+</div>
+
+<!-- 먼저 확인 -->
+<div style="padding:20px 20px 12px"><h2 class="h2">먼저 확인하세요</h2></div>
+<div class="card">
+<button style="display:flex;align-items:center;gap:14px;padding:18px 20px;width:100%;box-sizing:border-box;min-height:84px">
+<span style="width:44px;height:44px;border-radius:22px;background:#FFF3E7;display:flex;align-items:center;justify-content:center;flex:none"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 15l5-5 4 3 7-8" stroke="#A8520A" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+<span style="flex:1"><span style="display:block;font-size:18px;font-weight:800">나쁜 콜레스테롤이 올랐어요</span><span style="display:block;font-size:16px;color:#4E5968;line-height:24px">기준을 넘었어요</span></span>
+<svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+</button>
+<button class="row" style="gap:14px">
+<span style="width:44px;height:44px;border-radius:22px;background:#FFF3E7;display:flex;align-items:center;justify-content:center;flex:none"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 15l5-5 4 3 7-8" stroke="#A8520A" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+<span style="flex:1"><span style="display:block;font-size:18px;font-weight:800">공복 혈당이 올랐어요</span><span style="display:block;font-size:16px;color:#4E5968;line-height:24px">기준을 넘었어요</span></span>
+<svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+</button>
+</div>
+
+<!-- 항목 -->
+<div style="padding:20px 20px 12px"><h2 class="h2">항목별로 보기</h2></div>
+<div class="card">
+<button class="row" style="border-top:0"><span style="flex:1;min-width:0"><span class="rt">지질</span><span style="display:block" class="rs">LDL이 33 올랐어요</span></span><span class="chip cw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#A8520A"/></svg>주의</span><svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+<button class="row"><span style="flex:1;min-width:0"><span class="rt">혈당·체중</span><span style="display:block" class="rs">혈당이 20 올랐어요</span></span><span class="chip cw"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#A8520A"/></svg>주의</span><svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+<button class="row"><span style="flex:1;min-width:0"><span class="rt">혈압</span><span style="display:block" class="rs">조금 내려갔어요</span></span><span class="chip cs"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2" fill="#1B7A4B"/></svg>정상</span><svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+<button class="row"><span style="flex:1;min-width:0"><span class="rt">혈액·신장</span><span style="display:block" class="rs">신장 수치가 조금 올랐어요</span></span><span class="chip cs"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2" fill="#1B7A4B"/></svg>정상</span><svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+<button class="row"><span style="flex:1;min-width:0"><span class="rt">간 기능</span><span style="display:block" class="rs">변화가 거의 없어요</span></span><span class="chip cs"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" rx="2" fill="#1B7A4B"/></svg>정상</span><svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+</div>
+
+<!-- 더 보기 -->
+<div style="padding:8px 0 0">
+<button style="display:flex;align-items:center;gap:10px;width:calc(100% - 32px);margin:0 16px 12px;min-height:68px;padding:0 20px;background:#fff;border-radius:20px;box-sizing:border-box"><span style="flex:1;font-size:18px;font-weight:700">또래보다 빨리 변한 항목</span><svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+<button style="display:flex;align-items:center;gap:10px;width:calc(100% - 32px);margin:0 16px;min-height:68px;padding:0 20px;background:#fff;border-radius:20px;box-sizing:border-box"><span style="flex:1;font-size:18px;font-weight:700">그 밖의 변화 보기</span><svg width="22" height="22" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="#6B7684" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+</div>
+<div style="font-size:14px;color:#4E5968;line-height:21px;padding:20px 20px 0">참고용이에요. 걱정되면 의료진과 상담해 보세요.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
