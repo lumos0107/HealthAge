@@ -1,3 +1,4 @@
+import { useLayout } from '../responsive';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -741,7 +742,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   egfrByYear?: Record<number, RealEgfr>;
   comboAnalysisByYear?: Record<number, RealComboAnalysis>;
 }) {
+  const { isTablet } = useLayout();
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
+  const [showFullTabletAnalysis, setShowFullTabletAnalysis] = useState(false);
   // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
   // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
   const report = reports[yearIdx];
@@ -861,6 +864,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
     () => sortByAttention(metricsForReport(report, metricDefinitions).filter((m) => !m.infoOnly && m.status !== '정상')),
     [report, metricDefinitions],
   );
+  const normalCount = useMemo(
+    () => metricsForReport(report, metricDefinitions).filter((m) => !m.infoOnly && m.status === '정상').length,
+    [report, metricDefinitions],
+  );
 
   /** 실제로 «해당»한 상태만. 임상이 먼저 오도록 원래 순서를 지킨다(백엔드 GROUP_INFO 순).
    *  applies가 null인 것(판정 불가)은 해당이 아니므로 뺀다 — 지어내지 않는다. */
@@ -871,14 +878,126 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
     () => new Set(appliedGroups.slice(0, OFF_RANGE_HEAD).map((g) => g.key)),
     [appliedGroups],
   );
+
+  // 태블릿 첫 화면은 시안처럼 네 층을 2×2 요약 카드로 보여준다. 기존의 깊은 분석은
+  // 별도 상세 화면으로 남겨 모든 근거·계산기·접힘 내용을 계속 볼 수 있게 한다.
+  if (isTablet && !showFullTabletAnalysis) {
+    const peerHighlights = metricsForReport(report, metricDefinitions)
+      .filter((m) => !m.infoOnly && typeof report.values[m.key] === 'number')
+      .map((m) => ({ metric: m, peer: metricPeerRank(m, report.values[m.key] as number) }))
+      .filter((row) => row.peer != null)
+      .sort((a, b) => b.peer!.rank - a.peer!.rank)
+      .slice(0, 3);
+    const action = actionRanks[0] ? ACTIONS.find((a) => a.id === actionRanks[0].id) : null;
+    const layer2Rows = [
+      egfr ? ['신장 기능', `${egfr.egfr} ${egfr.unit} · ${egfr.stage} ${egfr.label}`] : null,
+      flIndices ? ['지방간 지표', worstInterpretation([flIndices.fli, flIndices.hsi].filter(Boolean) as { level: string; interpretation?: string | null }[])] : null,
+      metabolicCalcs.length ? ['대사·지질', levelSummary(metabolicCalcs.map((it) => it.level)) ?? '계산 결과를 확인해 보세요'] : null,
+      ascvd?.available ? ['심혈관 10년 위험', `${ascvd.risk_percent}% · ${ascvd.risk_label ?? '계산 완료'}`] : null,
+      ldlTarget ? ['LDL 개인 목표', ldlTarget.achieved ? '목표 범위예요' : `목표 ${ldlTarget.target_text} · 현재 목표보다 높아요`] : null,
+    ].filter((row): row is [string, string] => row != null);
+    const tileStyle = { flexBasis: 'calc(50% - 6px)', flexGrow: 0, minWidth: 0 } as any;
+    const summaryText = { fontSize: T.fs.body, color: T.text2, lineHeight: 24 } as const;
+    const renderTile = (step: string, title: string, subtitle: string, body: React.ReactNode) => (
+      <View key={step} style={[tileStyle, { backgroundColor: T.white, borderRadius: T.radius, padding: 20, gap: 10 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: T.text1 }}>
+            <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.white }}>{step}</Text>
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={{ fontSize: T.fs.h3, lineHeight: 27, fontWeight: '800', color: T.text1 }}>{title}</Text>
+            <Text style={{ fontSize: T.fs.caption, lineHeight: 20, color: T.text3, marginTop: 2 }}>{subtitle}</Text>
+          </View>
+        </View>
+        {body}
+      </View>
+    );
+
+    return (
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12, maxWidth: 1280, width: '100%', alignSelf: 'center' }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+        <View style={{ paddingRight: 64 }}>
+          <Eyebrow>ANALYSIS</Eyebrow>
+          <TabIntroNote title="건강분석" />
+        </View>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {reports.map((r, i) => ({ r, i })).reverse().map(({ r, i }) => (
+            <Pressable key={r.year} onPress={() => setYearIdx(i)} style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: 16, borderRadius: T.radiusPill, backgroundColor: i === yearIdx ? T.primary : T.white }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: i === yearIdx ? T.onPrimary : T.text3 }}>{r.year}년</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, backgroundColor: T.white, borderRadius: T.radius, padding: 20 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '600', marginBottom: 4 }}>참고 점수</Text>
+            <AnimatedScore score={scorePct} color={scoreFill} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0, borderLeftWidth: 1, borderLeftColor: T.divider, paddingLeft: 24, gap: 8 }}>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill }}>
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+            </View>
+            <Text style={summaryText}>{report.trackCount ? `위험 ${report.trackCount}` : '위험 0'} · {report.manageCount ? `주의 ${report.manageCount}` : '주의 0'}</Text>
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>점수에 포함되지 않는 별도 신호 {outsideScore.length}가지</Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'stretch' }}>
+          {renderTile('1', LAYERS[0].title, `${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`, <>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {([
+                ['■ 정상', normalCount, T.success, T.successBg],
+                ['● 주의', report.manageCount, T.warn, T.warnBg],
+                ['▲ 위험', report.trackCount, T.danger, T.dangerBg],
+              ] as const).map(([label, count, color, bg]) => (
+                <View key={label} style={{ backgroundColor: bg, paddingHorizontal: 10, paddingVertical: 6, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color }}>{label} {count}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={summaryText}>{offRangeMetrics.length ? `먼저 확인할 항목 ${offRangeMetrics.slice(0, 3).map((m) => m.shortName ?? m.name).join(' · ')}` : '모든 검사 항목이 기준 안이에요.'}</Text>
+            {!!outsideScore.length && <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>점수에 포함되지 않는 신호가 {outsideScore.length}가지 있어요.</Text>}
+          </>)}
+
+          {renderTile('2', LAYERS[1].title, '검진 수치를 묶어 결과지에 없는 지표를 계산합니다.', layer2Rows.length ? <View style={{ gap: 8 }}>{layer2Rows.map(([label, value]) => <View key={label} style={{ paddingTop: 8, borderTopWidth: 1, borderTopColor: T.divider }}><Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{label}</Text><Text style={summaryText}>{value}</Text></View>)}</View> : <Text style={summaryText}>이 연도에 저장된 추가 분석이 없어요.</Text>)}
+
+          {renderTile('3', LAYERS[2].title, '같은 성별·연령대 안에서 내 위치를 확인합니다.', <>
+            {peerHighlights.length ? peerHighlights.map(({ metric, peer }) => <View key={metric.key} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingVertical: 7, borderTopWidth: 1, borderTopColor: T.divider }}><Text style={{ flex: 1, fontSize: T.fs.body, color: T.text1 }}>{metric.shortName ?? metric.name}</Text><Text style={{ fontSize: T.fs.body, fontWeight: '800', color: peer!.rank >= 75 ? T.warn : T.text2 }}>{peer!.rank}등</Text></View>) : <Text style={summaryText}>비교할 수 있는 또래 자료가 없어요.</Text>}
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>등수가 높을수록 또래 중 관리가 더 필요한 쪽이에요.</Text>
+          </>)}
+
+          {renderTile('4', LAYERS[3].title, '앞에서 확인한 결과를 실천과 다음 검진 목표로 옮깁니다.', <>
+            <Text style={summaryText}>{action ? `${action.title(actionCtx)}부터 시작하면 현재 지표를 가장 크게 움직여요.` : '현재 조건에 맞는 우선 행동을 계산할 수 없어요.'}</Text>
+            {!!recommendations?.priority_messages?.[0] && <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 12 }}><Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{recommendations.priority_messages[0]}</Text></View>}
+            {reports.length > 0 && <NextCheckupGoal
+              latest={reports[reports.length - 1]}
+              gender={gender}
+              smoking={smoking}
+              alcoholWeeklyG={alcoholWeeklyG}
+              demoMode={!usingRealData}
+              compact
+            />}
+          </>)}
+        </View>
+
+        <Pressable onPress={() => setShowFullTabletAnalysis(true)} style={{ minHeight: 52, borderRadius: T.radiusMd, backgroundColor: T.white, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
+          <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.primaryText }}>상세 분석 모두 보기  ›</Text>
+        </Pressable>
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, textAlign: 'center' }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
+      </ScrollView>
+    );
+  }
+
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
+    // 태블릿: 레일을 뺀 본문 안에서 읽기 편한 폭(820)으로 가운데 모은다. 카드는 아직 1열 그대로다
+    // (태블릿 시안의 «네 층 2×2»는 이 화면이 하나의 긴 흐름이라 별도 작업으로 남긴다).
+    <ScrollView contentContainerStyle={isTablet ? { paddingBottom: 40, alignSelf: 'center', width: '100%', maxWidth: 820 } : { paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...(isTablet ? { wordBreak: 'keep-all' as const } : {}) }}>
 
       {/* 페이지 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
       <FadeInUp delay={0}>
       {/* paddingBottom을 줄인다 — 아래 LayerHeader가 이미 marginTop 26 + paddingTop 18을
           갖고 있어, 헤더까지 여백을 두면 제목과 ①층 사이가 60px 넘게 벌어진다. */}
-      <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 2 }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 2, paddingRight: isTablet ? 84 : 20 }}>
         <Eyebrow>ANALYSIS</Eyebrow>
         {/* 네 층을 나열하던 부제는 지웠다 — 바로 아래 「이 화면은 무엇을 하나요?」가 같은 LAYERS를
             펼쳐 보여주고, 스크롤하면 층 머리말로 세 번째 나왔다. 같은 말을 첫 화면에서 두 번 하는
@@ -886,6 +1005,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <TabIntroNote title="건강분석" />
       </View>
       </FadeInUp>
+      {isTablet && showFullTabletAnalysis && (
+        <Pressable onPress={() => setShowFullTabletAnalysis(false)} style={{ alignSelf: 'flex-start', minHeight: 48, justifyContent: 'center', marginHorizontal: 20, paddingHorizontal: 14, borderRadius: T.radiusPill, backgroundColor: T.white }}>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>‹ 요약으로 돌아가기</Text>
+        </Pressable>
+      )}
 
       <LayerHeader
         first

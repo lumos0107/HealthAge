@@ -47,7 +47,7 @@ const WATCH: { key: keyof Report['values']; label: string; unit: string }[] = [
 
 const fmt = (n: number) => `${n > 0 ? '+' : ''}${round1(n)}`;
 
-export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoMode, demoNote }: {
+export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoMode, demoNote, compact = false }: {
   latest: Report;
   gender: 1 | 2;
   smoking?: 'never' | 'former' | 'current' | null;
@@ -55,6 +55,8 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
   /** 데모 계정 — 서버 재계산을 쓸 수 없어 앱 안에서 다시 센다(simulateDemo 주석 참고). */
   demoMode?: boolean;
   demoNote?: string;
+  /** 태블릿 분석 요약 카드 안에 배치할 때 소개 패널 없이 시안형 CTA만 표시한다. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
@@ -116,7 +118,11 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
 
   return (
     <>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }}>
+      {compact ? (
+      <Pressable hitSlop={8} onPress={openModal} accessibilityRole="button" style={{ width: '100%', minHeight: 52, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', backgroundColor: T.primary, marginTop: 4 }}>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>다음 검진 목표 세우기</Text>
+      </Pressable>
+      ) : <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }}>
         <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 4 }}>다음 검진 목표 세우기</Text>
         <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginBottom: 14 }}>
           지금 걸리는 것부터 짚고, 그걸 움직이는 행동을 고르면, 다음 검진에서 판정이 어떻게 달라지는지 보여드려요.
@@ -132,7 +138,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
         {demoMode && !!demoNote && (
           <Text style={{ fontSize: T.fs.caption, color: T.text3, marginTop: 8, lineHeight: 20 }}>{demoNote}</Text>
         )}
-      </View>
+      </View>}
 
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, backgroundColor: T.bg }}>

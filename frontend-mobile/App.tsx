@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  Dimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -18,6 +17,8 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/api';
 import { Chip, ChipRow, FieldInput, PHONE_WIDTH, PrimaryBtn, T } from './src/components/UI';
+import { TabletRail } from './src/components/TabletRail';
+import { RAIL_W, useLayout } from './src/responsive';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { applyGender, initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
@@ -57,6 +58,8 @@ export default function App() {
   // 전체 글꼴을 Pretendard(가변)로 통일. 아래 Text 패치가 모든 텍스트에 기본 적용한다.
   const [fontsLoaded] = useFonts({ Pretendard: require('./assets/fonts/PretendardVariable.ttf') });
 
+  const layout = useLayout();
+  const isTablet = layout.isTablet;
   const [loggedIn, setLoggedIn] = useState(false);
   // root/1234 데모(개발자) 계정 여부 — Supabase 설정과 무관하게 더미 데이터로 시연할 때 쓴다.
   const [demoMode, setDemoMode] = useState(false);
@@ -315,14 +318,42 @@ export default function App() {
     return <View style={[s.safe, { alignItems: 'center', justifyContent: 'center' }]} />;
   }
 
+  // 폰 폭보다 넓지만 태블릿 구조는 아닌 화면(폰 가로·좁은 브라우저)은 예전처럼 폰 폭 화면을 가운데 둔다.
+  const centeredPhone = !isTablet && layout.width > PHONE_WIDTH;
+  const shellStyle = centeredPhone
+    ? { flex: 1, alignItems: 'center' as const, backgroundColor: '#d9dce1', height: Platform.OS === 'web' ? ('100vh' as any) : '100%' }
+    : { flex: 1 };
+  const safeStyle = centeredPhone
+    ? { flex: 1, backgroundColor: T.bg, width: PHONE_WIDTH, maxWidth: '100%' as any }
+    : { flex: 1, backgroundColor: T.bg };
+
+  const profileButton = (
+    <Pressable
+      onPress={() => (loggedIn ? handleTab('profile') : requireLogin())}
+      accessibilityRole="button"
+      accessibilityLabel="내 정보"
+      style={isTablet
+        ? { position: 'absolute', top: 28, right: 28, zIndex: 10, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === 'profile' ? T.primaryLight : T.white }
+        : { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === 'profile' ? T.primaryLight : T.bg }}
+    >
+      <Ionicons name={tab === 'profile' ? 'person' : 'person-outline'} size={isTablet ? 24 : 20} color={tab === 'profile' ? T.primary : T.text3} />
+    </Pressable>
+  );
+
   return (
-    <View style={s.webShell}>
+    <View style={shellStyle}>
     <SafeAreaProvider>
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={safeStyle}>
       <StatusBar style="dark" />
 
-      {/* 헤더 */}
+      {/* 태블릿: 좌측 레일 + 본문 / 모바일: 상단 헤더 + 본문 + 하단 탭 */}
+      <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
+      {isTablet && <TabletRail items={TABS} active={tab} onSelect={handleTab} onHome={() => handleTab('dashboard')} />}
+      <View style={{ flex: 1, minWidth: 0 }}>
+
+      {/* 헤더 (모바일) — 태블릿은 화면마다 제목 줄이 있고, 내 정보 버튼만 오른쪽 위에 띄운다 */}
       {/* 홈은 히어로 카드가 바로 이어져 구분선 없이, 나머지 탭은 실선으로 콘텐츠와 구분 */}
+      {isTablet ? profileButton : (
       <View style={[s.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, tab === 'dashboard' && { borderBottomWidth: 0 }]}>
         <Pressable onPress={() => handleTab('dashboard')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={s.logoIcon}>
@@ -334,13 +365,9 @@ export default function App() {
           </View>
         </Pressable>
         {/* 프로필 아이콘 — 누르면 프로필 화면(수정 포함)으로 이동 */}
-        <Pressable
-          onPress={() => (loggedIn ? handleTab('profile') : requireLogin())}
-          style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: tab === 'profile' ? T.primaryLight : T.bg }}
-        >
-          <Ionicons name={tab === 'profile' ? 'person' : 'person-outline'} size={20} color={tab === 'profile' ? T.primary : T.text3} />
-        </Pressable>
+        {profileButton}
       </View>
+      )}
 
       {/* 콘텐츠 — 대시보드는 항상 미리보기로 보여주고, 그 외 화면은 로그인 후에만 */}
       <View style={{ flex: 1, backgroundColor: T.bg }}>
@@ -350,7 +377,7 @@ export default function App() {
         {tab !== 'dashboard' && !loggedIn && <LockedNotice onPress={requireLogin} />}
         {tab === 'records' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} userName={profile.name} onDeleted={() => loadHealthData(profile.id)} medications={medications} onOpenDetail={openDetail} />)}
+          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} userName={profile.name} onDeleted={() => loadHealthData(profile.id)} medications={medications} onOpenDetail={openDetail} onUpload={() => handleTab('upload')} />)}
         {tab === 'history' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}
@@ -374,7 +401,11 @@ export default function App() {
         )}
       </View>
 
-      {/* 하단 탭바 */}
+      </View>
+      </View>
+
+      {/* 하단 탭바 (모바일) */}
+      {!isTablet && (
       <View style={s.nav}>
         {TABS.map((item) => {
           const active = tab === item.key;
@@ -388,6 +419,7 @@ export default function App() {
           );
         })}
       </View>
+      )}
 
       {/* L2 상세 오버레이 */}
       {detail && (() => {
@@ -400,7 +432,7 @@ export default function App() {
 
       {/* 토스트 */}
       {toast ? (
-        <View style={s.toast} pointerEvents="none">
+        <View style={[s.toast, isTablet && { bottom: 32, left: RAIL_W + 28, right: 28 }]} pointerEvents="none">
           <Ionicons name="checkmark-circle" size={16} color={T.primary} />
           <Text style={s.toastText}>{toast}</Text>
         </View>
@@ -615,16 +647,7 @@ function AuthForm({ loading, onLogin, onSignup, onClose, errorMessage }: {
 }
 
 const s = StyleSheet.create({
-  // 노트북 브라우저든 태블릿 실기기든, 화면이 폰보다 넓으면(430 초과) 폰 폭짜리
-  // 화면을 가운데 띄운다 — 이 앱은 반응형이 아니라 모바일 화면을 그대로 보여주는
-  // 용도라, 화면 폭에 맞춰 늘리면 비율이 깨진다. 일반 폰 화면에서는 이미 430
-  // 이하라 아무 효과가 없다.
-  webShell: Dimensions.get('window').width > PHONE_WIDTH
-    ? { flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: Platform.OS === 'web' ? ('100vh' as any) : '100%' }
-    : { flex: 1 },
-  safe: Dimensions.get('window').width > PHONE_WIDTH
-    ? { flex: 1, backgroundColor: T.bg, width: PHONE_WIDTH, maxWidth: '100%' as any }
-    : { flex: 1, backgroundColor: T.bg },
+  safe: { flex: 1, backgroundColor: T.bg },
   header: {
     height: 60,
     justifyContent: 'center',
@@ -681,6 +704,10 @@ const s = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 44 : 28,
     paddingTop: 16,
     maxHeight: '92%',
+    // 태블릿에서는 시트가 화면 끝까지 늘어나지 않게 폭을 제한한다.
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
   },
   modalHandle: { width: 36, height: 4, backgroundColor: T.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
   authLogoWrap: {

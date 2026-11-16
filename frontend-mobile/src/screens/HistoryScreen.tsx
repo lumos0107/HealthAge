@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { ClipPath, Circle, Defs, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
-import { FadeIn, FadeInUp, T, useChartReveal, W } from '../components/UI';
+import { FadeIn, FadeInUp, MeasuredChart, T, useChartReveal, useChartW, W } from '../components/UI';
+import { useLayout } from '../responsive';
 import { A11Y, BAND_TEXT, Expandable, LINE, LINE_TEXT, NORMAL_BAND, PeerRankBlock, StatusChip, SummaryCard, useChartTouchX } from '../components/v2';
 import { cardContent, cardContentFor, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { metricPeerRank, normalBounds, scoreGrade, scoreSeries, subjectJosa, topicJosa, trendDirection } from '../interpret';
@@ -20,7 +21,7 @@ type ChangePace = NonNullable<RealTimeseries['change_pace']>[number];
 // 묶음의 '대표 항목'을 고르는 순서 — 가장 나쁜 상태를 대표로 삼는다.
 const ATTENTION: Record<string, number> = { 위험: 0, 주의: 1, 정상: 2 };
 
-const CHART_W = W - 32 - 40; // 16px 카드 여백 + 20px 카드 패딩, 양쪽
+const CHART_W0 = W - 32 - 40; // 16px 카드 여백 + 20px 카드 패딩, 양쪽
 const isFiniteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 const statusFill = (s: Status | undefined) => (s === '정상' ? T.successFill : s === '주의' ? T.warnFill : s === '위험' ? T.dangerFill : A11Y.sub);
@@ -182,6 +183,7 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
   insight?: Insight | null;
   changePace?: ChangePace[] | null;
 }) {
+  const { isTablet } = useLayout();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const infos = useMemo(() => buildInfos(reports, metricDefinitions), [reports, metricDefinitions]);
   // 먼저 확인 — 기준을 벗어난 묶음 중 가장 급한 2개.
@@ -192,6 +194,188 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
   );
   // 항목별 — 주의가 먼저, 같은 상태끼리는 원래 순서.
   const ordered = useMemo(() => [...infos].sort((a, b) => (rank(a) - rank(b)) || (a.order - b.order)), [infos]);
+
+  const paceCard = !!changePace?.length ? (
+    <SummaryCard
+            tabletResponsive
+            variant="link"
+            flush={isTablet}
+            title="또래보다 빨리 변한 항목"
+            summary={`${changePace[0]?.span_years ?? ''}년을 통틀어 ${changePace.length}개 항목이 또래보다 크게 변했어요.`}
+            definition={cardContent['또래보다 빠르게 변한 항목'].definition}
+            detail={cardContent['또래보다 빠르게 변한 항목'].detail}
+            meaning={cardContent['또래보다 빠르게 변한 항목'].meaning}
+            tips={cardContent['또래보다 빠르게 변한 항목'].tips}
+            axes={['peer']}
+          >
+            <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginBottom: 10 }}>악화 방향만 모았어요.</Text>
+            {/* ⚠️ 이 값은 «첫 회차와 마지막 회차»만 빼서 만든다. 중간에 바닥을 찍고 돌아섰어도 그 반등은 담기지 않는다.
+                문구의 "악화 중"은 백엔드가 만든 문장이라 고치지 않고, 무엇을 비교한 값인지만 밝힌다. */}
+            <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 21, marginBottom: 12 }}>
+              첫 회차와 마지막 회차를 비교한 값이에요. 중간에 좋아진 구간이 있어도 여기엔 담기지 않아요 — 최근 흐름은 위 점수 추이를 보세요.
+            </Text>
+            <Expandable label={`항목 ${changePace.length}개 보기`}>
+              <View style={{ gap: 8 }}>
+                {changePace.map((p, i) => {
+                  const strong = (p.pace.ratio ?? 0) >= 2;
+                  const ink = p.pace.ratio == null ? A11Y.sub : strong ? A11Y.danger : A11Y.warn;
+                  const bg = p.pace.ratio == null ? T.cardAlt : strong ? T.dangerBg : T.warnBg;
+                  return (
+                    <View key={i} style={[{ paddingVertical: 12 }, i < changePace.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
+                        <View style={{ backgroundColor: bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: T.radiusPill }}>
+                          <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: ink }}>
+                            {p.pace.ratio != null ? `또래의 ${p.pace.ratio}배` : '또래와 다른 방향'}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{metricLabel(p.metric)}</Text>
+                        {p.span_years != null && <Text style={{ fontSize: T.fs.caption, color: A11Y.sub }}>{p.span_years}년간</Text>}
+                      </View>
+                      <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 23 }}>{p.pace.text}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 20, marginTop: 10 }}>
+                기준: 건강보험공단 검진 표본의 성별·연령대별 평균 변화량. 위험도 예측이 아니라 변화 폭 비교예요.
+              </Text>
+            </Expandable>
+          </SummaryCard>
+  ) : null;
+
+  const highlightCard = !!highlights?.length ? (
+    <SummaryCard
+            tabletResponsive
+            variant="link"
+            flush={isTablet}
+            title="그 밖의 변화 보기"
+            summary={insight?.top_concerns?.length
+              ? `우려할 만한 변화 ${insight.top_concerns.length}건을 포함해 ${highlights.length}건을 짚었어요.`
+              : `변화 ${highlights.length}건을 짚었고, 우려할 만한 건 없어요.`}
+            definition={cardContent['주목할 만한 변화'].definition}
+            detail={cardContent['주목할 만한 변화'].detail}
+            meaning={cardContent['주목할 만한 변화'].meaning}
+            axes={['time']}
+          >
+            {/* insight.summary(긴 서사)는 접힌 곳으로 내렸다 — 첫 화면은 «가장 먼저 볼 것»이어야 한다. */}
+            {!!insight?.top_concerns?.length && (
+              <View style={{ marginBottom: 16, paddingBottom: 4 }}>
+                <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 6 }}>가장 먼저 볼 것</Text>
+                {insight.top_concerns.map((c, i) => {
+                  const high = c.level === 'high';
+                  return (
+                    <View key={i} style={{ paddingVertical: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <StatusChip status={high ? '위험' : '주의'} label={`${high ? '위험' : '주의'} ${i + 1}`} />
+                        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, flex: 1 }}>{c.title}</Text>
+                      </View>
+                      {!!c.current_value && <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, marginBottom: 2 }}>{c.current_value}</Text>}
+                      <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 23 }}>{c.details}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+            <Expandable label={`16년 요약과 변화 ${highlights.length}건 보기`}>
+              {!!insight?.summary && (
+                <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25, marginTop: 4, marginBottom: 14 }}>{insight.summary}</Text>
+              )}
+              <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginBottom: 12 }}>여러 해의 기록을 비교해 짚어낸 변화 {highlights.length}건이에요.</Text>
+              <View style={{ gap: 8 }}>
+                {highlights.map((h, i) => (
+                  <View key={i} style={[{ paddingVertical: 12 }, i < highlights.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <StatusChip status={h.severity === 'high' ? '위험' : '주의'} label={h.type} />
+                      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{metricLabel(h.metric)}</Text>
+                    </View>
+                    <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 23 }}>{h.message}</Text>
+                  </View>
+                ))}
+              </View>
+            </Expandable>
+            {insight?.next_exam_year != null && (
+              <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, marginTop: 12 }}>다음 검진 권장: {insight.next_exam_year}년</Text>
+            )}
+          </SummaryCard>
+  ) : null;
+
+  // ── 태블릿: 제목 → 점수+그래프 한 카드 → 먼저 확인하세요(2열) → 항목별로 보기(2열 카드 격자)
+  if (isTablet) {
+    const gridStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 12 } as const;
+    // 마지막 홀수 타일도 두 칸 폭을 유지한다. flexGrow: 1이면 마지막 타일이 한 줄 전체로 늘어난다.
+    const cell = { flexBasis: 'calc(50% - 6px)', flexGrow: 0, minWidth: 0 } as any;
+    const tiles = [
+      ...ordered.map((info) => (
+        <View key={info.group.title} style={[cell, { backgroundColor: T.white, borderRadius: T.radius, overflow: 'hidden' }]}>
+          <ChartCard
+            first
+            group={info.group}
+            lead={info.lead}
+            reports={reports}
+            metricDefinitions={metricDefinitions}
+            open={openGroup === info.group.title}
+            onOpenChange={(v) => setOpenGroup(v ? info.group.title : null)}
+          />
+        </View>
+      )),
+      ...(paceCard ? [<View key="pace" style={cell}>{paceCard}</View>] : []),
+      ...(highlightCard ? [<View key="hl" style={cell}>{highlightCard}</View>] : []),
+    ];
+    return (
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+        <View style={{ paddingRight: 64 }}>
+          <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 32 }}>히스토리</Text>
+          <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginTop: 2 }}>해마다 어떻게 달라졌는지 봐요.</Text>
+        </View>
+
+        <ScoreHero reports={reports} tablet />
+
+        {attention.length > 0 && (
+          <>
+            <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>먼저 확인하세요</Text>
+            <View style={gridStyle}>
+              {attention.map((info) => {
+                const m = info.lead!;
+                const pts = seriesOf(m.key, reports);
+                const dir = trendDirection(pts.map((p) => p.v));
+                const name = plainShort(m);
+                const title = dir === 'up' || dir === 'down'
+                  ? `${name}${josaSub(m, name)} ${dir === 'up' ? '올랐어요' : '내렸어요'}`
+                  : `${name}${josaTop(m, name)} 기준 밖이에요`;
+                const latestV = reports[reports.length - 1].values[m.key];
+                const sd = isFiniteNum(latestV) ? side(m, latestV) : 'in';
+                const sub = sd === 'low' ? '기준에 못 미쳐요' : '기준을 넘었어요';
+                return (
+                  <Pressable
+                    key={info.group.title}
+                    onPress={() => setOpenGroup(info.group.title)}
+                    accessibilityRole="button"
+                    style={[cell, { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, paddingHorizontal: 18, paddingVertical: 16, backgroundColor: T.white, borderRadius: T.radius }]}
+                  >
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: m.status === '위험' ? T.dangerBg : T.warnBg, alignItems: 'center', justifyContent: 'center' }}>
+                      <Svg width={22} height={22} viewBox="0 0 22 22">
+                        <Path d={dir === 'down' ? 'M3 7l5 5 4-3 7 8' : 'M3 15l5-5 4 3 7-8'} stroke={statusFill(m.status)} strokeWidth={2.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                      </Svg>
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1 }}>{title}</Text>
+                      <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 24 }}>{sub}</Text>
+                    </View>
+                    <Chevron />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>항목별로 보기</Text>
+        <View style={gridStyle}>{tiles}</View>
+
+        <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
@@ -268,107 +452,9 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
       <View style={{ paddingTop: 8 }}>
         {/* 또래 대비 변화 '속도' — 공단 표본의 같은 성별·연령대 평균 변화량과 내 변화 폭을 배수로 비교.
             배수는 또래 변화가 뚜렷할 때만(±0.5 이상) 나온다 — 0에 가까운 값으로 나누면 배수가 발산하므로. */}
-        {!!changePace?.length && (
-          <SummaryCard
-            variant="link"
-            title="또래보다 빨리 변한 항목"
-            summary={`${changePace[0]?.span_years ?? ''}년을 통틀어 ${changePace.length}개 항목이 또래보다 크게 변했어요.`}
-            definition={cardContent['또래보다 빠르게 변한 항목'].definition}
-            detail={cardContent['또래보다 빠르게 변한 항목'].detail}
-            meaning={cardContent['또래보다 빠르게 변한 항목'].meaning}
-            tips={cardContent['또래보다 빠르게 변한 항목'].tips}
-            axes={['peer']}
-          >
-            <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginBottom: 10 }}>악화 방향만 모았어요.</Text>
-            {/* ⚠️ 이 값은 «첫 회차와 마지막 회차»만 빼서 만든다. 중간에 바닥을 찍고 돌아섰어도 그 반등은 담기지 않는다.
-                문구의 "악화 중"은 백엔드가 만든 문장이라 고치지 않고, 무엇을 비교한 값인지만 밝힌다. */}
-            <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 21, marginBottom: 12 }}>
-              첫 회차와 마지막 회차를 비교한 값이에요. 중간에 좋아진 구간이 있어도 여기엔 담기지 않아요 — 최근 흐름은 위 점수 추이를 보세요.
-            </Text>
-            <Expandable label={`항목 ${changePace.length}개 보기`}>
-              <View style={{ gap: 8 }}>
-                {changePace.map((p, i) => {
-                  const strong = (p.pace.ratio ?? 0) >= 2;
-                  const ink = p.pace.ratio == null ? A11Y.sub : strong ? A11Y.danger : A11Y.warn;
-                  const bg = p.pace.ratio == null ? T.cardAlt : strong ? T.dangerBg : T.warnBg;
-                  return (
-                    <View key={i} style={[{ paddingVertical: 12 }, i < changePace.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
-                        <View style={{ backgroundColor: bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: T.radiusPill }}>
-                          <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: ink }}>
-                            {p.pace.ratio != null ? `또래의 ${p.pace.ratio}배` : '또래와 다른 방향'}
-                          </Text>
-                        </View>
-                        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{metricLabel(p.metric)}</Text>
-                        {p.span_years != null && <Text style={{ fontSize: T.fs.caption, color: A11Y.sub }}>{p.span_years}년간</Text>}
-                      </View>
-                      <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 23 }}>{p.pace.text}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-              <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 20, marginTop: 10 }}>
-                기준: 건강보험공단 검진 표본의 성별·연령대별 평균 변화량. 위험도 예측이 아니라 변화 폭 비교예요.
-              </Text>
-            </Expandable>
-          </SummaryCard>
-        )}
+        {paceCard}
 
-        {/* 시계열 분석 하이라이트 — 백엔드가 연도별 추세를 분석해 실제로 짚어준 변화만(2년 미만 기록이면 비어있음).
-            1뎁스 결론은 «판단»이다 — 우려 유무를 문장으로 만든다. */}
-        {!!highlights?.length && (
-          <SummaryCard
-            variant="link"
-            title="그 밖의 변화 보기"
-            summary={insight?.top_concerns?.length
-              ? `우려할 만한 변화 ${insight.top_concerns.length}건을 포함해 ${highlights.length}건을 짚었어요.`
-              : `변화 ${highlights.length}건을 짚었고, 우려할 만한 건 없어요.`}
-            definition={cardContent['주목할 만한 변화'].definition}
-            detail={cardContent['주목할 만한 변화'].detail}
-            meaning={cardContent['주목할 만한 변화'].meaning}
-            axes={['time']}
-          >
-            {/* insight.summary(긴 서사)는 접힌 곳으로 내렸다 — 첫 화면은 «가장 먼저 볼 것»이어야 한다. */}
-            {!!insight?.top_concerns?.length && (
-              <View style={{ marginBottom: 16, paddingBottom: 4 }}>
-                <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, marginBottom: 6 }}>가장 먼저 볼 것</Text>
-                {insight.top_concerns.map((c, i) => {
-                  const high = c.level === 'high';
-                  return (
-                    <View key={i} style={{ paddingVertical: 10, borderTopWidth: 1, borderTopColor: T.divider }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <StatusChip status={high ? '위험' : '주의'} label={`${high ? '위험' : '주의'} ${i + 1}`} />
-                        <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, flex: 1 }}>{c.title}</Text>
-                      </View>
-                      {!!c.current_value && <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, marginBottom: 2 }}>{c.current_value}</Text>}
-                      <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 23 }}>{c.details}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-            <Expandable label={`16년 요약과 변화 ${highlights.length}건 보기`}>
-              {!!insight?.summary && (
-                <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25, marginTop: 4, marginBottom: 14 }}>{insight.summary}</Text>
-              )}
-              <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginBottom: 12 }}>여러 해의 기록을 비교해 짚어낸 변화 {highlights.length}건이에요.</Text>
-              <View style={{ gap: 8 }}>
-                {highlights.map((h, i) => (
-                  <View key={i} style={[{ paddingVertical: 12 }, i < highlights.length - 1 && { borderBottomWidth: 1, borderBottomColor: T.divider }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <StatusChip status={h.severity === 'high' ? '위험' : '주의'} label={h.type} />
-                      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{metricLabel(h.metric)}</Text>
-                    </View>
-                    <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 23 }}>{h.message}</Text>
-                  </View>
-                ))}
-              </View>
-            </Expandable>
-            {insight?.next_exam_year != null && (
-              <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, marginTop: 12 }}>다음 검진 권장: {insight.next_exam_year}년</Text>
-            )}
-          </SummaryCard>
-        )}
+        {highlightCard}
       </View>
 
       <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 21, paddingHorizontal: 20, paddingTop: 12 }}>
@@ -384,7 +470,7 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
 const GRADE_LABEL: Record<Status, string> = { 정상: '양호', 주의: '주의 필요', 위험: '관리 필요' };
 
 /** 점수 추이 한 줄 결론 — «바닥 이후»를 먼저 말한다("2020년 이후 점수가 오르고 있어요."). */
-function scoreConclusion(series: { year: number; score: number }[]): { lead: string; main: string; ink: string } {
+export function scoreConclusion(series: { year: number; score: number }[]): { lead: string; main: string; ink: string } {
   const last = series[series.length - 1];
   let trough = 0;
   for (let i = 1; i < series.length; i++) if (series[i].score <= series[trough].score) trough = i;
@@ -416,7 +502,7 @@ function useCountUp(target: number): number {
  * 검사 항목이 빠진 해는 점선 원으로 그린다. 참고 점수는 판정된 항목만 감점하므로 검사가 적은 해는
  * 점수가 높게 나와, 표시가 없으면 "검사를 안 받아서 좋아진 것처럼" 읽힌다. 범례는 문장 대신
  * 그래프의 점과 같은 모양의 아이콘 + 짧은 말이다. */
-function ScoreHero({ reports }: { reports: Report[] }) {
+function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: boolean }) {
   const series = useMemo(() => scoreSeries(reports), [reports]);
   const lastScore = series.length ? series[series.length - 1].score : 0;
   const shown = useCountUp(lastScore);   // 훅은 early return 앞에서 부른다
@@ -426,6 +512,34 @@ function ScoreHero({ reports }: { reports: Report[] }) {
   const ink = statusInk(grade);
   const concl = scoreConclusion(series);
   const hasGap = series.some((p) => !p.complete);
+
+  if (tablet) {
+    // 태블릿 — 왼쪽에 점수·배지·한 줄 결론, 오른쪽에 추이 그래프를 한 카드로 묶는다.
+    return (
+      <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 22, flexDirection: 'row', alignItems: 'stretch', gap: 20 }}>
+        <View style={{ width: 188 }}>
+          <Text style={{ fontSize: 64, fontWeight: '800', lineHeight: 70, color: statusFill(grade), letterSpacing: -1 }}>
+            {shown}<Text style={{ fontSize: T.fs.h3, fontWeight: '800' }}>점</Text>
+          </Text>
+          <View style={{ alignSelf: 'flex-start', marginTop: 6 }}><StatusChip status={grade} label={GRADE_LABEL[grade]} /></View>
+          <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, marginTop: 14, color: T.text1 }}>
+            {concl.lead}<Text style={{ color: concl.ink }}>{concl.main}</Text>
+          </Text>
+        </View>
+        <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+          {series.length >= 2 && <MeasuredChart><ScoreChart series={series} /></MeasuredChart>}
+          {series.length >= 2 && hasGap && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+              <Svg width={20} height={20} viewBox="0 0 20 20">
+                <Circle cx={10} cy={10} r={7.5} fill="#fff" stroke="#191F28" strokeWidth={2.5} strokeDasharray="3.5 3" />
+              </Svg>
+              <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 22 }}>일부 검사가 빠진 해예요</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12 }}>
@@ -453,6 +567,7 @@ function ScoreHero({ reports }: { reports: Report[] }) {
 
 function ScoreChart({ series }: { series: { year: number; score: number; complete: boolean }[] }) {
   const reveal = useChartReveal(series.length, 1000, 150);
+  const CHART_W = useChartW(CHART_W0);
   const H = 190;
   const pad = { top: 22, right: 8, bottom: 34, left: 8 };
   const plotW = CHART_W - pad.left - pad.right;
@@ -626,7 +741,7 @@ function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpe
         reports={reports}
         band={normalBounds(focus)}
         bandLabel={/\d/.test(focus.normalText ?? '') ? `정상 (${normalPhrase(focus)})` : undefined}
-                desc={`${labelOf(focus.key)} 추이`}
+        desc={`${labelOf(focus.key)} 추이`}
       />
 
       {/* 이전 해 / 다음 해 */}
@@ -654,6 +769,7 @@ function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpe
 
   return (
     <SummaryCard
+      tabletResponsive
       variant="row"
       first={first}
       open={open}
@@ -703,7 +819,6 @@ function StepButton({ label, dir, disabled, onPress }: { label: string; dir: 'pr
 
 const CH = 190;
 const PAD = { top: 34, right: 12, bottom: 34, left: 12 };
-const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CH - PAD.top - PAD.bottom;
 
 function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc }: {
@@ -712,7 +827,9 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc
   bandLabel?: string;
   desc: string;
 }) {
-  const reveal = useChartReveal(metricKey, 900);   // 항목 탭을 바꿀 때만 다시 그린다 — 연도를 고를 때는 아니다
+  const reveal = useChartReveal(metricKey, 900);
+  const CHART_W = useChartW(CHART_W0);
+  const PLOT_W = CHART_W - PAD.left - PAD.right;   // 항목 탭을 바꿀 때만 다시 그린다 — 연도를 고를 때는 아니다
   const pts = reports
     .map((rep, i) => ({ idx: i, v: rep.values[metricKey], year: rep.year }))
     .filter((p): p is { idx: number; v: number; year: number } => isFiniteNum(p.v));

@@ -8,7 +8,8 @@ import { SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import { formatMetricValue, normalBounds, positionTitle, scoreGrade } from '../interpret';
 import type { PositionAxis } from '../interpret';
-import { T, useChartReveal, W, WebFrame } from './UI';
+import { MeasuredChart, T, useChartReveal, useChartW, W, WebFrame } from './UI';
+import { useLayout } from '../responsive';
 
 /** 시니어 접근성 색 — 흰/연한 배경 위에서 글자 대비 4.5:1 이상. 글자는 T.success/warn/danger, 막대·점·큰 숫자는 T.*Fill.
  *  (히스토리 개선안 §4) */
@@ -173,7 +174,7 @@ export function Expandable({ label, children }: { label: string; children: React
  *    ④ 그래서 이게 의미하는 건  ⑤ 그럼 뭘 하면 좋을까
  *  definition/meaning/tips가 없으면 그 칸은 그리지 않는다(있는 정보만 보여준다).
  *  ③만은 «없음»을 문자열이 아니라 axes=[]로 선언한다 — 아래 axes 주석 참조. */
-export function SummaryCard({ title, term, summary, detailSummary, badge, preview, definition, detail, whyLines, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, valueArea, variant = 'card', first, open: openProp, onOpenChange, children, footer }: {
+export function SummaryCard({ title, term, summary, detailSummary, badge, preview, definition, detail, whyLines, meaning, meaningExtra, tips, tipsExtra, axes, positionExtra, valueArea, variant = 'card', first, flush, open: openProp, onOpenChange, tabletResponsive = false, children, footer }: {
   title: string;
   /** 제목 옆의 작은 회색 용어(eGFR·FLI·HSI 등). 제목은 쉬운 질문이라 «어떤 검사인지»가
    *  드러나지 않는다 — 결과지나 진료에서 들은 이름과 맞춰 보려면 이름표가 필요하다.
@@ -205,6 +206,8 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
   /** card = 예전 모양(단독 카드) · row = 한 카드 안에 쌓이는 큰 행(히스토리 «항목별로 보기») ·
    *  link = 제목만 있는 큰 링크 버튼(히스토리 아래 링크 2행). */
   variant?: 'card' | 'row' | 'link';
+  /** 태블릿 격자 안에 놓을 때 — 바깥 여백(좌우 16·아래 12)을 격자가 맡으므로 0으로 둔다(link 변형). */
+  flush?: boolean;
   children?: React.ReactNode;
   footer?: React.ReactNode;
   /** row일 때 맨 위 행이면 위 구분선을 뺀다 */
@@ -212,7 +215,11 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
   /** 바깥에서 열고 닫을 때(히스토리 «먼저 확인하세요» 행이 같은 상세를 연다). 없으면 스스로 연다. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** 태블릿에서 전체 폭 상세 배치를 적용한다. */
+  tabletResponsive?: boolean;
 }) {
+  const { isTablet: tabletViewport, isLandscape } = useLayout();
+  const isTablet = tabletResponsive && tabletViewport;
   const [openState, setOpenState] = useState(false);
   const open = openProp ?? openState;
   const setOpen = (v: boolean) => { if (openProp === undefined) setOpenState(v); onOpenChange?.(v); };
@@ -235,7 +242,7 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
     <Pressable
       onPress={() => setOpen(true)}
       accessibilityRole="button"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 68, paddingHorizontal: 20, backgroundColor: T.white, borderRadius: T.radius, marginHorizontal: 16, marginBottom: 12 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 68, paddingHorizontal: 20, backgroundColor: T.white, borderRadius: T.radius, marginHorizontal: flush ? 0 : 16, marginBottom: flush ? 0 : 12 }}
     >
       <Text style={{ flex: 1, fontSize: T.fs.strong, fontWeight: '700', color: T.text1 }}>{title}</Text>
       {chevron}
@@ -262,91 +269,41 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
   const body = { fontSize: T.fs.strong, color: A11Y.sub, lineHeight: 27 } as const;
   const hasWhy = !!whyLines?.length;
   const canFold = hasWhy || !!detail;
+  const detailCard = (content: React.ReactNode, key: string) => <View key={key} style={isTablet ? { ...card, marginBottom: 0, paddingHorizontal: 24 } : card}>{content}</View>;
+  const conclusionCard = (detailSummary ?? summary) ? detailCard(<Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, lineHeight: 32, letterSpacing: -0.3 }}>{detailSummary ?? summary}</Text>, 'conclusion') : null;
+  const valueCard = valueArea ? detailCard(isTablet ? <MeasuredChart>{valueArea}</MeasuredChart> : valueArea, 'value') : null;
+  const definitionCard = definition ? detailCard(<>
+    <Text style={h}>이 지표는요</Text><Text style={body}>{definition}</Text>
+    {canFold && <Pressable onPress={() => setShowDetail((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: showDetail }} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: isTablet ? 'space-between' : 'center', paddingHorizontal: isTablet ? 20 : 0, gap: 6, minHeight: 52, marginTop: 14, borderRadius: T.radiusMd, backgroundColor: T.cardAlt }}><Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{hasWhy ? '왜 그럴까요?' : showDetail ? '접기' : '자세히 알아보기'}</Text><Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={18} color={T.text1} /></Pressable>}
+    {showDetail && hasWhy && <View style={{ marginTop: 12, padding: 16, borderRadius: T.radiusMd, backgroundColor: '#F7F8FA', gap: 8 }}>{whyLines!.map((l) => <Text key={l.label} style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25 }}><Text style={{ fontWeight: '800', color: T.text1 }}>{l.label}  </Text>{l.text}</Text>)}</View>}
+    {showDetail && !hasWhy && !!detail && <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25, marginTop: 12 }}>{detail}</Text>}
+  </>, 'definition') : null;
+  const positionCard = axes.length > 0 ? detailCard(<><Text style={h}>{valueArea ? '또래와 견주면' : positionTitle(axes)}</Text>{positionExtra}{children}</>, 'position') : null;
+  const meaningCard = (meaning || meaningExtra) ? detailCard(<><Text style={h}>그래서 어떤 뜻이에요?</Text>{!!meaning && <Text style={body}>{meaning}</Text>}{meaningExtra}</>, 'meaning') : null;
+  const tipsCard = (tips?.length || tipsExtra) ? detailCard(<><Text style={{ ...h, marginBottom: 12 }}>이렇게 해 보세요</Text>{tips?.slice(0, 3).map((tip, i) => <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, marginTop: i === 0 ? 0 : 6 }}><View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: T.fs.body, fontWeight: '800', color: '#007A49' }}>{i + 1}</Text></View><Text style={{ flex: 1, fontSize: T.fs.strong, color: T.text1, lineHeight: 26 }}>{tip}</Text></View>)}{tipsExtra}</>, 'tips') : null;
+  const tabletColumns = isLandscape
+    ? [[conclusionCard, valueCard], [definitionCard, positionCard, meaningCard], [tipsCard]]
+    : [[conclusionCard, valueCard, definitionCard], [positionCard, meaningCard, tipsCard]];
 
   return (
     <>
       {trigger}
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
-        {/* 웹에서 Modal은 폰 폭 래퍼 밖으로 빠져나가므로 WebFrame으로 다시 폰 폭에 맞춘다(검사항목 상세와 같다). */}
-        <WebFrame>
+        {/* 태블릿에서는 검사항목 상세와 같은 전체 폭 프레임을 쓴다. */}
+        <WebFrame wide={isTablet}>
         <View style={{ flex: 1, backgroundColor: T.bg }}>
           {/* 헤더 — 뒤로가기(44px 이상) + 제목 */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 54, paddingBottom: 10, backgroundColor: T.white }}>
+          <View style={isTablet
+            ? { height: 72, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, backgroundColor: T.white }
+            : { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 54, paddingBottom: 10, backgroundColor: T.white }}>
             <Pressable onPress={() => setOpen(false)} accessibilityLabel="뒤로" hitSlop={10} style={{ padding: 10 }}>
               <Ionicons name="chevron-back" size={26} color={T.text1} />
             </Pressable>
-            <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, flex: 1 }} numberOfLines={1}>{title}</Text>
+            <Text style={{ fontSize: isTablet ? T.fs.h3 : T.fs.strong, fontWeight: '800', color: T.text1, flex: 1 }} numberOfLines={1}>{title}</Text>
           </View>
-          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
-            {/* ① 결론 — 22px */}
-            {!!(detailSummary ?? summary) && (
-              <View style={card}>
-                <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, lineHeight: 32, letterSpacing: -0.3 }}>{detailSummary ?? summary}</Text>
-              </View>
-            )}
-            {/* 값 영역 — 항목 탭 · 그래프 · 연도 이동 · 값 */}
-            {!!valueArea && <View style={card}>{valueArea}</View>}
-            {/* ② 이 지표는요 — 정의, 접힌 「왜 그럴까요?」(2.5뎁스) */}
-            {!!definition && (
-              <View style={card}>
-                <Text style={h}>이 지표는요</Text>
-                <Text style={body}>{definition}</Text>
-                {canFold && (
-                  <Pressable
-                    onPress={() => setShowDetail((v) => !v)}
-                    accessibilityRole="button"
-                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 52, marginTop: 14, borderRadius: T.radiusMd, backgroundColor: T.cardAlt }}
-                  >
-                    <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{hasWhy ? '왜 그럴까요?' : showDetail ? '접기' : '자세히 알아보기'}</Text>
-                    <Ionicons name={showDetail ? 'chevron-up' : 'chevron-down'} size={18} color={T.text1} />
-                  </Pressable>
-                )}
-                {showDetail && hasWhy && (
-                  <View style={{ marginTop: 12, padding: 16, borderRadius: T.radiusMd, backgroundColor: '#F7F8FA', gap: 8 }}>
-                    {whyLines!.map((l) => (
-                      <Text key={l.label} style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25 }}>
-                        <Text style={{ fontWeight: '800', color: T.text1 }}>{l.label}  </Text>{l.text}
-                      </Text>
-                    ))}
-                  </View>
-                )}
-                {showDetail && !hasWhy && !!detail && (
-                  <Text style={{ fontSize: T.fs.body, color: A11Y.sub, lineHeight: 25, marginTop: 12 }}>{detail}</Text>
-                )}
-              </View>
-            )}
-            {/* ③ 나의 위치 — valueArea가 있으면 «또래와 견주면»만 */}
-            {axes.length > 0 && (
-              <View style={card}>
-                <Text style={h}>{valueArea ? '또래와 견주면' : positionTitle(axes)}</Text>
-                {positionExtra}
-                {children}
-              </View>
-            )}
-            {/* ④ 그래서 어떤 뜻이에요? */}
-            {(!!meaning || !!meaningExtra) && (
-              <View style={card}>
-                <Text style={h}>그래서 어떤 뜻이에요?</Text>
-                {!!meaning && <Text style={body}>{meaning}</Text>}
-                {meaningExtra}
-              </View>
-            )}
-            {/* ⑤ 이렇게 해 보세요 — 번호 원 + 최대 3개 */}
-            {(!!tips?.length || !!tipsExtra) && (
-              <View style={card}>
-                <Text style={{ ...h, marginBottom: 12 }}>이렇게 해 보세요</Text>
-                {tips?.slice(0, 3).map((tip, i) => (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, marginTop: i === 0 ? 0 : 6 }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: '#007A49' }}>{i + 1}</Text>
-                    </View>
-                    <Text style={{ flex: 1, fontSize: T.fs.strong, color: T.text1, lineHeight: 26 }}>{tip}</Text>
-                  </View>
-                ))}
-                {tipsExtra}
-              </View>
-            )}
-            {!!footer && <View style={{ marginBottom: 10 }}>{footer}</View>}
+          <ScrollView contentContainerStyle={isTablet ? { padding: 24, paddingBottom: 48, gap: 12 } : { padding: 16, paddingBottom: 48 }} showsVerticalScrollIndicator={false} style={isTablet ? { ...({ wordBreak: 'keep-all' } as any) } : undefined}>
+            {isTablet ? <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>{tabletColumns.map((items, i) => <View key={i} style={{ flex: isLandscape ? [368, 290, 290][i] : [408, 300][i], minWidth: 0, gap: 12 }}>{items}</View>)}</View> : <>{conclusionCard}{valueCard}{definitionCard}{positionCard}{meaningCard}{tipsCard}</>}
+            {!!footer && <View style={{ marginBottom: isTablet ? 0 : 10 }}>{footer}</View>}
             <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
           </ScrollView>
         </View>
@@ -557,10 +514,9 @@ export function FixedCTA({ label, onPress, disabled, loading }: {
 }
 
 // ── 단일 지표 추이 차트 (L3) — 정상범위는 연한 배경 밴드, 최신 값 강조 ──
-const CHART_W = W - 32 - 40;
+const CHART_W0 = W - 32 - 40;
 const CHART_H = 170;
 const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
-const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 export const LINE = '#1E88E5'; // 상태색과 겹치지 않는 추이선 색 — 모든 추이 그래프(검사항목·히스토리)가 같이 쓴다
 /** 그래프 위 «글자»용 파랑 — LINE은 흰 바탕 3.7:1이라 글자엔 모자라다(5.7:1). */
@@ -607,6 +563,8 @@ export function MetricTrendChart({ metric, reports, highlightYear, onSelectYear 
   onSelectYear?: (year: number) => void;
 }) {
   const reveal = useChartReveal(metric.key);   // 훅은 early return 앞에서 부른다
+  const CHART_W = useChartW(CHART_W0);          // 태블릿은 카드에서 잰 폭
+  const PLOT_W = CHART_W - PAD.left - PAD.right;
   const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
   const pts0 = reports
     .map((r, i) => ({ i, year: r.year, v: r.values[metric.key] }))

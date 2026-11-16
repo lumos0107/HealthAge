@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -107,13 +107,30 @@ export const W = Math.min(Dimensions.get('window').width, PHONE_WIDTH);
 // RN의 Modal은 웹에서는 document.body로 별도 포탈되어 화면(App.tsx)에 씌운 폰 폭
 // 래퍼 바깥으로 빠져나가고, 네이티브 태블릿에서는 애초에 래퍼 자체가 화면 전체 폭이라
 // 마찬가지로 넓게 뜬다. 둘 다 이 프레임으로 한 번 더 감싸야 비율이 맞는다.
-export function WebFrame({ children, backgroundColor = T.bg }: { children: React.ReactNode; backgroundColor?: string }) {
-  if (Dimensions.get('window').width <= PHONE_WIDTH) return <>{children}</>;
+export function WebFrame({ children, backgroundColor = T.bg, wide = false }: { children: React.ReactNode; backgroundColor?: string; wide?: boolean }) {
+  // wide: 태블릿 반응형 화면 — 폰 폭으로 가두지 않고 화면 전체를 쓴다.
+  if (wide || Dimensions.get('window').width <= PHONE_WIDTH) return <>{children}</>;
   return (
     <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: Platform.OS === 'web' ? ('100vh' as any) : '100%' }}>
       <View style={{ flex: 1, width: PHONE_WIDTH, maxWidth: '100%' as any, backgroundColor }}>
         {children}
       </View>
+    </View>
+  );
+}
+
+// 차트 폭 — 모바일은 기존처럼 폰 폭(W) 기준 고정값을 쓰고, 태블릿은 카드 안에서 실제로 잰 폭을 쓴다.
+// 차트 컴포넌트는 useChartW(기본폭)로 폭을 받고, 태블릿 화면은 <MeasuredChart>로 감싸 실제 폭을 내려준다.
+export const ChartWidthContext = createContext<number | null>(null);
+export function useChartW(defaultW: number) {
+  const w = useContext(ChartWidthContext);
+  return w ?? defaultW;
+}
+export function MeasuredChart({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
+  const [w, setW] = useState(0);
+  return (
+    <View style={[{ alignSelf: 'stretch' }, style]} onLayout={(e) => setW(Math.floor(e.nativeEvent.layout.width))}>
+      {w > 0 ? <ChartWidthContext.Provider value={w}>{children}</ChartWidthContext.Provider> : null}
     </View>
   );
 }

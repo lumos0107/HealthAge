@@ -8,8 +8,9 @@ import type { MedicationItem, MetricDefinition, MetricKey, Report } from '../dat
 import { deleteReport } from '../health';
 import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
 import { exportReportPdf } from '../reportExport';
+import { useLayout } from '../responsive';
 
-export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail }: {
+export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail, onUpload }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
@@ -21,7 +22,10 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   medications?: MedicationItem[];
   // 항목을 탭하면 그 항목의 상세(L2/L3)로 이동한다.
   onOpenDetail?: (key: MetricKey, year: number) => void;
+  // 복약자료 올리기 카드(태블릿)에서 업로드 탭으로 간다.
+  onUpload?: () => void;
 }) {
+  const { isTablet, itemCols, isLandscape } = useLayout();
   const [selectedYear, setSelectedYear] = useState<number>(reports[reports.length - 1].year);
   // 검사 항목 / 복용약 — 같은 연도 기록 안에서 전환해서 볼 수 있게 한다.
   const [view, setView] = useState<'metrics' | 'medications'>('metrics');
@@ -87,6 +91,188 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
     }
     return order.map((category) => ({ category, items: map.get(category)! }));
   }, [medSource]);
+
+  // ── 태블릿: 제목 → 선택 막대 → (연도 칩 → 상태 칩 → 항목 카드 격자) 또는 (복약 카드 2열 → 올리기 카드)
+  if (isTablet) {
+    const statusChips = ([['정상', counts.정상, T.success, T.successBg, '■'], ['주의', counts.주의, T.warn, T.warnBg, '●'], ['위험', counts.위험, T.danger, T.dangerBg, '▲']] as const);
+    // 열 우선 정렬 — 먼저 확인할 위험·주의가 왼쪽 열에 모이도록 위에서 아래로 채운다.
+    const perCol = Math.ceil(rows.length / itemCols);
+    const columns = Array.from({ length: itemCols }, (_, c) => rows.slice(c * perCol, (c + 1) * perCol));
+    // 태블릿 시안은 세로·가로 모두 효능군 카드를 2열로 배치한다.
+    const medCols = 2;
+    const medFlat = medGroups.flatMap(({ category, items }) => items.map((item) => ({ category, count: items.length, item })));
+
+    return (
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+        {/* 오른쪽 위 내 정보 버튼(App) 자리를 비운다 */}
+        <View style={{ paddingRight: 64 }}>
+          <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 32 }}>검사항목</Text>
+          <Text style={{ fontSize: T.fs.body, color: T.text2, marginTop: 2 }}>연도를 고르고 항목을 누르면 자세한 설명을 볼 수 있어요.</Text>
+        </View>
+
+        {/* 검사 항목 | 복용약 정보 — 연도와 무관한 복용약을 같은 선에 두지 않도록 맨 위에서 먼저 고른다. */}
+        <View style={{ flexDirection: 'row', backgroundColor: T.white, borderRadius: 16, padding: 4, gap: 4 }}>
+          {([
+            { key: 'metrics' as const, label: '검사 항목', icon: 'document-text-outline' as const },
+            { key: 'medications' as const, label: '복용약 정보', icon: 'medkit-outline' as const },
+          ]).map((tab) => {
+            const active = view === tab.key;
+            return (
+              <Pressable key={tab.key} onPress={() => setView(tab.key)} accessibilityRole="button" accessibilityState={{ selected: active }}
+                style={{ flex: 1, minHeight: 48, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: active ? T.primary : 'transparent' }}>
+                <Ionicons name={tab.icon} size={20} color={active ? T.onPrimary : T.text2} />
+                <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: active ? T.onPrimary : T.text2 }}>{tab.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {view === 'metrics' ? (
+          <FadeIn key={`tab-metrics-${detailReport.year}`}>
+            {/* 연도 칩 */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ flexGrow: 0 }}>
+              {[...reports].reverse().map((r) => {
+                const active = r.year === selectedYear;
+                return (
+                  <Pressable key={r.year} onPress={() => setSelectedYear(r.year)} accessibilityRole="button" accessibilityState={{ selected: active }}
+                    style={{ minHeight: 48, paddingHorizontal: 18, borderRadius: T.radiusPill, alignItems: 'center', justifyContent: 'center', backgroundColor: active ? T.text1 : T.white }}>
+                    <Text style={{ fontSize: T.fs.caption, fontWeight: active ? '700' : '500', color: active ? '#fff' : T.text1 }}>{r.year}년</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* 정상·주의·위험 칩 — 색 + 모양 + 글자 */}
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              {statusChips.map(([label, n, color, bg, mark]) => (
+                <View key={label} style={{ minHeight: 48, paddingHorizontal: 18, borderRadius: T.radiusPill, backgroundColor: bg, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color }}>{mark} {label} {n}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* 제목 줄 */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16, paddingHorizontal: 4 }}>
+              <Text style={{ flex: 1, fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>{detailReport.year}년 · {detailReport.hospital}</Text>
+              <Pressable onPress={handleExport} disabled={exporting} accessibilityRole="button" accessibilityLabel="PDF로 내보내기"
+                style={{ minHeight: 48, paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', gap: 4, opacity: exporting ? 0.4 : 1 }}>
+                <Ionicons name="document-text-outline" size={18} color={T.text2} />
+                <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2 }}>PDF</Text>
+              </Pressable>
+              {usingRealData && !!userId && (
+                <Pressable onPress={confirmDelete} accessibilityRole="button" accessibilityLabel="이 연도 기록 삭제" style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="trash-outline" size={20} color={T.text2} />
+                </Pressable>
+              )}
+              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>항목을 눌러 자세히 보기</Text>
+            </View>
+            <Text style={{ fontSize: T.fs.caption, color: T.text2, paddingHorizontal: 4, marginTop: 2, marginBottom: 10 }}>먼저 확인하면 좋은 순서로 정렬했어요.</Text>
+
+            {/* 항목마다 개별 카드 버튼 — 열 우선 정렬 */}
+            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+              {columns.map((col, ci) => (
+                <View key={ci} style={{ flex: 1, minWidth: 0, gap: 10 }}>
+                  {col.map((metric) => {
+                    const visual = categoryVisual(metric.category);
+                    const { color } = getStatusStyle(metric.status);
+                    return (
+                      <Pressable key={metric.key} onPress={() => onOpenDetail?.(metric.key, selectedYear)} accessibilityRole="button" accessibilityLabel={`${metric.name} 자세히 보기`}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 76, paddingVertical: 10, paddingLeft: 12, paddingRight: 10, borderRadius: 16, backgroundColor: T.white }}>
+                        <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text numberOfLines={isTablet ? 2 : undefined} style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, lineHeight: 22, ...({ wordBreak: 'keep-all' } as any) }}>{metric.name}</Text>
+                          {!!metricGloss[metric.key] && (
+                            <Text style={{ fontSize: T.fs.caption, color: T.text2 }} numberOfLines={isTablet ? 2 : 1}>{metricGloss[metric.key]}</Text>
+                          )}
+                        </View>
+                        <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                          <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: metric.infoOnly ? T.text1 : color }}>
+                            {formatMetricValue(metric, detailReport.values[metric.key])}
+                            {metric.unit ? <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text2 }}> {metric.unit}</Text> : null}
+                          </Text>
+                          {metric.infoOnly ? (
+                            <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
+                              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2 }}>○ 참고</Text>
+                            </View>
+                          ) : <StatusBadge status={metric.status} />}
+                        </View>
+                        <Ionicons name="chevron-forward" size={20} color={T.text3} />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+          </FadeIn>
+        ) : (
+          <FadeIn key="tab-medications">
+            {usingRealData && medGroups.length === 0 ? (
+              <View style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingVertical: 40, backgroundColor: T.white, borderRadius: T.radius }}>
+                <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                  <Ionicons name="medkit-outline" size={26} color={T.primary} />
+                </View>
+                <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.text1, marginBottom: 6, textAlign: 'center' }}>등록된 복약 정보가 없어요</Text>
+                <Text style={{ fontSize: T.fs.body, color: T.text2, textAlign: 'center', lineHeight: 24, marginBottom: 16 }}>
+                  "내가 먹는 약! 한눈에" 엑셀 파일을 올리면{'\n'}복용 중인 약이 여기에 정리돼요.
+                </Text>
+                {!!onUpload && (
+                  <Pressable onPress={onUpload} accessibilityRole="button" style={{ minHeight: 48, paddingHorizontal: 20, borderRadius: T.radiusMd, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>복약자료 올리기</Text>
+                  </Pressable>
+                )}
+              </View>
+            ) : (
+              <View style={{ gap: 12 }}>
+                {/* 안내 배너 */}
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 16, paddingHorizontal: 20, borderRadius: T.radius, backgroundColor: T.primaryLight }}>
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: T.primaryText, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: '#fff' }}>!</Text>
+                  </View>
+                  <Text style={{ flex: 1, fontSize: T.fs.body, color: T.text1, lineHeight: 24 }}>
+                    {usingRealData
+                      ? '"내가 먹는 약! 한눈에" 자료를 효능군별로 정리했어요. 검사 수치가 약 복용의 영향을 받을 수 있으니 함께 확인해보세요.'
+                      : '예시 복약 정보입니다. "내가 먹는 약! 한눈에" 자료를 올리면 본인의 복약 정보가 효능군별로 정리돼요.'}
+                  </Text>
+                </View>
+                {/* 약 카드 격자 — 약 하나가 카드 하나 */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                  {medFlat.map(({ category, count, item }) => (
+                    <View key={`${item.drug_code ?? item.product_name}-${item.dispensed_date}`}
+                      style={{ flexBasis: (medCols === 2 ? 'calc(50% - 6px)' : 'calc(33.333% - 8px)') as any, flexGrow: 0, minWidth: 0, backgroundColor: T.white, borderRadius: T.radius, padding: 20, gap: 6 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 14, paddingVertical: 6, borderRadius: T.radiusPill }}>
+                          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>{category}</Text>
+                        </View>
+                        <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>{count}개</Text>
+                      </View>
+                      <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 8 }}>{item.product_name}</Text>
+                      <Text style={{ fontSize: T.fs.body, color: T.text2 }}>성분: {item.ingredient_en}</Text>
+                      <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1 }}>{medicationDosageText(item)}</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text2 }}>복용 기간: {medicationPeriodText(item)}</Text>
+                      {item.safety_alert ? <Text style={{ fontSize: T.fs.caption, color: T.danger }}>⚠ {item.safety_alert}</Text> : null}
+                    </View>
+                  ))}
+                </View>
+                {/* 복약자료 올리기 카드 — 태블릿 시안에서 새로 넣은 제안 */}
+                {!!onUpload && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 24, paddingVertical: 20 }}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>내 복약 정보를 올려 보세요</Text>
+                      <Text style={{ fontSize: T.fs.caption, color: T.text2, marginTop: 4 }}>처방전이나 복약자료를 올리면 내가 먹는 약이 효능군별로 정리돼요.</Text>
+                    </View>
+                    <Pressable onPress={onUpload} accessibilityRole="button" style={{ minHeight: 48, paddingHorizontal: 20, borderRadius: T.radiusMd, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>복약자료 올리기</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            )}
+          </FadeIn>
+        )}
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
