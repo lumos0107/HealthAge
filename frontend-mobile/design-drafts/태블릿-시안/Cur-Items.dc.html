@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>현재 검사항목</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+body{margin:0;font-family:'Noto Sans KR',sans-serif;color:#191F28}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.r{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid #F2F4F6}
+.n{flex:1;font-size:14px;font-weight:700}
+.n small{display:block;font-size:11px;font-weight:400;color:#4E5968}
+.v{font-size:15px;font-weight:800}.v small{font-size:11px;font-weight:500;color:#4E5968}
+.b{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
+.w{background:#FFF0E2;color:#A8520A}.d{background:#FDE7E5;color:#C4281C}.o{background:#E3F4EA;color:#1B7A4B}
+.ico{width:34px;height:34px;border-radius:50%;background:#E8F1FF;color:#3182F6;display:flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div style="width:390px;height:844px;position:relative;overflow:hidden;background:#F3F4F6">
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff">
+    <div style="width:30px;height:30px;border-radius:9px;background:#00C073;color:#fff;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>
+    <div style="flex:1"><div style="font-size:16px;font-weight:800;line-height:1.2">헬스에이지</div><div style="font-size:12px;color:#4E5968">건강검진 관리 서비스</div></div>
+    <svg class="ic" viewBox="0 0 24 24" role="img" aria-label="내 정보" style="color:#4E5968"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+  </div>
+  <div style="padding:16px 14px 0">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.12em;color:#4E5968">METRICS</div>
+    <div style="font-size:26px;font-weight:800;margin-top:2px">검사항목</div>
+    <div style="font-size:13px;color:#4E5968;margin-top:4px">연도를 고르고 항목을 누르면 자세한 설명을 볼 수 있어요.</div>
+    <div style="display:flex;gap:6px;margin-top:12px;background:#E9ECEF;border-radius:12px;padding:4px">
+      <div style="flex:1;text-align:center;background:#fff;border-radius:9px;padding:8px 0;font-size:13px;font-weight:700">검사 항목</div>
+      <div style="flex:1;text-align:center;padding:8px 0;font-size:13px;color:#4E5968">복용약 정보</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;overflow:hidden">
+      <span style="background:#191F28;color:#fff;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px">2024년</span>
+      <span style="background:#fff;font-size:13px;padding:7px 14px;border-radius:999px">2022년</span>
+      <span style="background:#fff;font-size:13px;padding:7px 14px;border-radius:999px">2020년</span>
+      <span style="background:#fff;font-size:13px;padding:7px 14px;border-radius:999px">2018년</span>
+      <span style="background:#fff;font-size:13px;padding:7px 14px;border-radius:999px">2016년</span>
+    </div>
+  </div>
+  <div style="margin:12px 10px 0;background:#fff;border-radius:22px;padding:16px 16px 4px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:800">2024년 · 서울대병원 강남센터</div><div style="font-size:12px;color:#4E5968">PDF</div></div>
+    <div style="display:flex;gap:12px;font-size:12px;margin-top:6px"><span><span style="color:#2E9E6A">●</span> 정상 <b>6</b></span><span><span style="color:#FF6B00">●</span> 주의 <b>8</b></span><span><span style="color:#E5483D">●</span> 위험 <b>1</b></span></div>
+    <div style="font-size:12px;color:#4E5968;margin:6px 0 4px">먼저 확인하면 좋은 순서로 정렬했어요.</div>
+    <div class="r"><div class="ico">◎</div><div class="n">체질량지수(BMI)<small>키·몸무게 비만도</small></div><div class="v">25.2<small>kg/m²</small></div><span class="b d">위험</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="ico">♡</div><div class="n">수축기 혈압</div><div class="v">134<small>mmHg</small></div><span class="b w">주의</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="ico">♡</div><div class="n">이완기 혈압</div><div class="v">85<small>mmHg</small></div><span class="b w">주의</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="ico">◐</div><div class="n">공복혈당</div><div class="v">110<small>mg/dL</small></div><span class="b w">주의</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="ico">◐</div><div class="n">총콜레스테롤</div><div class="v">216<small>mg/dL</small></div><span class="b w">주의</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="ico">◐</div><div class="n">LDL-C<small>나쁜 콜레스테롤</small></div><div class="v">145<small>mg/dL</small></div><span class="b w">주의</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="ico">◐</div><div class="n">HDL-C<small>좋은 콜레스테롤</small></div><div class="v">39<small>mg/dL</small></div><span class="b w">주의</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="ico">◐</div><div class="n">중성지방<small>혈액 속 지방</small></div><div class="v">168<small>mg/dL</small></div><span class="b w">주의</span><span style="color:#8B95A1">›</span></div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid #EEF0F3;display:flex;justify-content:space-around;align-items:center;font-size:11px;color:#4E5968">
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>홈</div>
+    <div style="text-align:center;color:#00A862;font-weight:700"><div style="background:#E6F8EF;border-radius:999px;width:46px;height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></div>검사항목</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/></svg></div>히스토리</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>분석</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>업로드</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

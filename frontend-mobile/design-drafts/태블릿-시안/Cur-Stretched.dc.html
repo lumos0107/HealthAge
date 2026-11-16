@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>현재 태블릿 폭 히스토리</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+body{margin:0;font-family:'Noto Sans KR',sans-serif;color:#191F28}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.r{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid #F2F4F6}
+.n{flex:1;font-size:15px;font-weight:800}
+.n small{display:block;font-size:13px;font-weight:400;color:#4E5968;margin-top:1px}
+.b{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+.w{background:#FFF0E2;color:#A8520A}.d{background:#FDE7E5;color:#C4281C}.o{background:#E3F4EA;color:#1B7A4B}
+</style>
+</helmet>
+<div style="width:768px;height:1024px;position:relative;overflow:hidden;background:#F3F4F6">
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff">
+    <div style="width:30px;height:30px;border-radius:9px;background:#00C073;color:#fff;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>
+    <div style="flex:1"><div style="font-size:16px;font-weight:800;line-height:1.2">헬스에이지</div><div style="font-size:12px;color:#4E5968">건강검진 관리 서비스</div></div>
+    <svg class="ic" viewBox="0 0 24 24" role="img" aria-label="내 정보" style="color:#4E5968"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+  </div>
+  <div style="padding:16px 14px 0">
+    <div style="font-size:26px;font-weight:800">히스토리</div>
+    <div style="font-size:14px;color:#4E5968;margin-top:2px">해마다 어떻게 달라졌는지 봐요.</div>
+  </div>
+  <div style="margin:12px 10px 0;background:#fff;border-radius:22px;padding:18px 18px 14px">
+    <div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:40px;font-weight:800;color:#FF6B00;line-height:1">40</span><span style="font-size:16px;font-weight:800;color:#FF6B00">점</span><span style="margin-left:8px;background:#FFF0E2;color:#A8520A;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px">● 주의 필요</span></div>
+    <div style="font-size:17px;font-weight:800;margin-top:14px">2020년 이후 <span style="color:#1B7A4B">점수가 오르고 있어요.</span></div>
+    <svg viewBox="0 0 340 150" width="100%" style="margin-top:8px" role="img" aria-label="점수 추이: 2008년 94점, 2020년 22점, 2024년 40점">
+      <rect x="14" y="14" width="312" height="33" fill="#E8F6EE"/><rect x="14" y="47" width="312" height="35" fill="#FFF1E3"/><rect x="14" y="82" width="312" height="52" fill="#FDE9E7"/>
+      <text x="20" y="69" font-size="11" font-weight="700" fill="#A8520A">주의 필요</text>
+      <polyline points="14,21 92,34 131,57 210,84 248,100 287,90 326,80" fill="none" stroke="#191F28" stroke-width="2.6" stroke-linejoin="round"/>
+      <circle cx="14" cy="21" r="4" fill="#191F28"/><circle cx="248" cy="100" r="4" fill="#191F28"/><circle cx="326" cy="80" r="5" fill="#FF6B00"/>
+      <text x="14" y="11" font-size="13" font-weight="800">94</text><text x="248" y="118" font-size="13" font-weight="800" text-anchor="middle">22</text><text x="326" y="71" font-size="13" font-weight="800" fill="#A8520A" text-anchor="end">40</text>
+      <text x="14" y="148" font-size="12" fill="#4E5968">2008</text><text x="248" y="148" font-size="12" fill="#4E5968" text-anchor="middle">2020</text><text x="326" y="148" font-size="12" fill="#4E5968" text-anchor="end">2024</text>
+    </svg>
+  </div>
+  <div style="padding:14px 14px 0;font-size:17px;font-weight:800">먼저 확인하세요</div>
+  <div style="margin:8px 10px 0;background:#fff;border-radius:22px;overflow:hidden">
+    <div class="r" style="border-top:0"><div style="width:36px;height:36px;border-radius:50%;background:#FDE7E5;color:#C4281C;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/></svg></div><div class="n">체질량지수가 올랐어요<small>기준을 넘었어요</small></div><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div style="width:36px;height:36px;border-radius:50%;background:#FFF0E2;color:#A8520A;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/></svg></div><div class="n">이완기 혈압이 올랐어요<small>기준을 넘었어요</small></div><span style="color:#8B95A1">›</span></div>
+  </div>
+  <div style="padding:14px 14px 0;font-size:17px;font-weight:800">항목별로 보기</div>
+  <div style="margin:8px 10px 0;background:#fff;border-radius:22px;overflow:hidden">
+    <div class="r" style="border-top:0"><div class="n">혈당·체중<small>체질량지수가 3 올랐어요</small></div><span class="b d">▲ 위험</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="n">혈압<small>이완기가 11 올랐어요</small></div><span class="b w">● 주의</span><span style="color:#8B95A1">›</span></div>
+    <div class="r"><div class="n">지질<small>중성지방이 42 올랐어요</small></div><span class="b w">● 주의</span><span style="color:#8B95A1">›</span></div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid #EEF0F3;display:flex;justify-content:space-around;align-items:center;font-size:11px;color:#4E5968">
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>홈</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></div>검사항목</div>
+    <div style="text-align:center;color:#00A862;font-weight:700"><div style="background:#E6F8EF;border-radius:999px;width:46px;height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/></svg></div>히스토리</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>분석</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>업로드</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":768,"height":1024}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

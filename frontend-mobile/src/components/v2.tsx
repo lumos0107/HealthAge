@@ -562,7 +562,11 @@ const CHART_H = 170;
 const PAD = { top: 16, right: 16, bottom: 28, left: 44 };
 const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CHART_H - PAD.top - PAD.bottom;
-const LINE = '#1E88E5'; // 상태색과 겹치지 않는 추이선 색
+export const LINE = '#1E88E5'; // 상태색과 겹치지 않는 추이선 색 — 모든 추이 그래프(검사항목·히스토리)가 같이 쓴다
+/** 그래프 위 «글자»용 파랑 — LINE은 흰 바탕 3.7:1이라 글자엔 모자라다(5.7:1). */
+export const LINE_TEXT = '#1565C0';
+/** 정상 밴드 위 «글자»용 초록 — 밴드(#C9EDDC) 위 5.8:1. */
+export const BAND_TEXT = '#14633F';
 
 /** @param highlightYear 지금 화면이 말하고 있는 해. 이 점을 크게·채워서 그리고 값을 적는다.
  *  ⚠️ 예전에는 무조건 마지막 점을 강조했다. 2018년 상세를 열면 "내 수치 23.9" 바로 아래에서

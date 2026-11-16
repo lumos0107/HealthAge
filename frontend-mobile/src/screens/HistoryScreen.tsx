@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { ClipPath, Circle, Defs, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { FadeIn, FadeInUp, T, useChartReveal, W } from '../components/UI';
-import { A11Y, Expandable, PeerRankBlock, StatusChip, SummaryCard, useChartTouchX } from '../components/v2';
+import { A11Y, BAND_TEXT, Expandable, LINE, LINE_TEXT, NORMAL_BAND, PeerRankBlock, StatusChip, SummaryCard, useChartTouchX } from '../components/v2';
 import { cardContent, cardContentFor, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { metricPeerRank, normalBounds, scoreGrade, scoreSeries, subjectJosa, topicJosa, trendDirection } from '../interpret';
 import type { MetricDefinition, MetricKey, Report, Status } from '../data';
@@ -498,15 +498,15 @@ function ScoreChart({ series }: { series: { year: number; score: number; complet
         <G clipPath="url(#score-reveal)">
         <Path
           d={series.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(p.score)}`).join(' ')}
-          stroke="#191F28" strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
+          stroke={LINE} strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
         />
         {/* 검사가 빠진 해 — 점선 원 */}
         {series.map((p, i) => !p.complete && (
-          <Circle key={`gap${p.year}`} cx={x(i)} cy={y(p.score)} r={8} fill="#fff" stroke="#191F28" strokeWidth={2.5} strokeDasharray="3.5 3" />
+          <Circle key={`gap${p.year}`} cx={x(i)} cy={y(p.score)} r={8} fill="#fff" stroke={LINE} strokeWidth={2.5} strokeDasharray="3.5 3" />
         ))}
         {/* 처음·바닥·지금 점 */}
         {keyIdx.filter((i) => series[i].complete).map((i) => (
-          <Circle key={`dot${i}`} cx={x(i)} cy={y(series[i].score)} r={i === lastI ? 8 : 6} fill={i === lastI ? statusFill(lastGrade) : '#191F28'} stroke="#fff" strokeWidth={2.5} />
+          <Circle key={`dot${i}`} cx={x(i)} cy={y(series[i].score)} r={i === lastI ? 8 : 6} fill={i === lastI ? LINE : '#fff'} stroke={i === lastI ? '#fff' : LINE} strokeWidth={i === lastI ? 2.5 : 3} />
         ))}
         {keyIdx.map((i) => {
           const p = series[i];
@@ -520,7 +520,7 @@ function ScoreChart({ series }: { series: { year: number; score: number; complet
               fontSize={T.fs.body}
               fontWeight="800"
               textAnchor={i === 0 ? 'start' : i === lastI ? 'end' : 'middle'}
-              fill={i === lastI ? statusInk(lastGrade) : '#191F28'}
+              fill={LINE_TEXT}
             >
               {p.score}
             </SvgText>
@@ -626,9 +626,7 @@ function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpe
         reports={reports}
         band={normalBounds(focus)}
         bandLabel={/\d/.test(focus.normalText ?? '') ? `정상 (${normalPhrase(focus)})` : undefined}
-        selColor={inkNow}
-        selFill={statusFill(focusStatus)}
-        desc={`${labelOf(focus.key)} 추이`}
+                desc={`${labelOf(focus.key)} 추이`}
       />
 
       {/* 이전 해 / 다음 해 */}
@@ -708,12 +706,10 @@ const PAD = { top: 34, right: 12, bottom: 34, left: 12 };
 const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CH - PAD.top - PAD.bottom;
 
-function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selColor, selFill, desc }: {
+function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc }: {
   metricKey: MetricKey; selIdx: number; onSelect: (i: number) => void; reports: Report[];
   band?: { low?: number; high?: number } | null;
   bandLabel?: string;
-  selColor: string;
-  selFill: string;
   desc: string;
 }) {
   const reveal = useChartReveal(metricKey, 900);   // 항목 탭을 바꿀 때만 다시 그린다 — 연도를 고를 때는 아니다
@@ -771,7 +767,7 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
         <G x={PAD.left} y={PAD.top}>
           {showBand && (
             <G>
-              <Rect x={0} y={bandTop} width={PLOT_W} height={bandBottom - bandTop} fill="#EAF7F1" />
+              <Rect x={0} y={bandTop} width={PLOT_W} height={bandBottom - bandTop} fill={NORMAL_BAND} />
               {!!bandLabel && (
                 // 라벨이 선과 겹치지 않게 — 선이 더 먼 쪽(처음/끝)에 붙인다.
                 <SvgText
@@ -779,7 +775,7 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
                   y={labelY}
                   fontSize={T.fs.body}
                   fontWeight="700"
-                  fill={A11Y.success}
+                  fill={BAND_TEXT}
                   textAnchor={labelRight ? 'end' : 'start'}
                 >{bandLabel}</SvgText>
               )}
@@ -793,20 +789,20 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
           <G clipPath="url(#line-reveal)">
           <Path
             d={pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.idx)},${y(p.v)}`).join(' ')}
-            stroke="#191F28" strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
+            stroke={LINE} strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
           />
-          {pts.map((p) => p.idx !== selIdx && <Circle key={p.idx} cx={x(p.idx)} cy={y(p.v)} r={3.5} fill="#191F28" />)}
+          {pts.map((p) => p.idx !== selIdx && <Circle key={p.idx} cx={x(p.idx)} cy={y(p.v)} r={5} fill="#fff" stroke={LINE} strokeWidth={2.5} />)}
           {sel && (
             <G>
-              <Circle cx={x(sel.idx)} cy={y(sel.v)} r={12} fill={selFill} opacity={0.2} />
-              <Circle cx={x(sel.idx)} cy={y(sel.v)} r={8} fill={selFill} stroke="#fff" strokeWidth={2.5} />
+              <Circle cx={x(sel.idx)} cy={y(sel.v)} r={12} fill={LINE} opacity={0.2} />
+              <Circle cx={x(sel.idx)} cy={y(sel.v)} r={8} fill={LINE} stroke="#fff" strokeWidth={2.5} />
               {/* 숫자는 고른 해 하나만 크게 — 나머지는 아래 값 영역이 말한다. 가장자리에선 안쪽으로 붙인다. */}
               <SvgText
                 x={sel.idx === 0 ? x(sel.idx) - 4 : sel.idx === n - 1 ? x(sel.idx) + 4 : x(sel.idx)}
                 y={y(sel.v) - 18 < -14 ? y(sel.v) + 32 : y(sel.v) - 18}
                 fontSize={T.fs.strong}
                 fontWeight="800"
-                fill={selColor}
+                fill={LINE_TEXT}
                 textAnchor={sel.idx === 0 ? 'start' : sel.idx === n - 1 ? 'end' : 'middle'}
               >
                 {sel.v}
@@ -815,7 +811,7 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, selC
           )}
           </G>
           {/* 고른 해 안내선 — 점에서 연도 눈금까지 */}
-          {sel && <Line x1={x(sel.idx)} y1={y(sel.v)} x2={x(sel.idx)} y2={PLOT_H} stroke={selFill} strokeWidth={1.5} strokeDasharray="3 3" opacity={0.5} />}
+          {sel && <Line x1={x(sel.idx)} y1={y(sel.v)} x2={x(sel.idx)} y2={PLOT_H} stroke={LINE} strokeWidth={1.5} strokeDasharray="3 3" opacity={0.5} />}
           {/* 연도 눈금 + 라벨 — 잰 해마다 */}
           <Line x1={0} y1={PLOT_H} x2={PLOT_W} y2={PLOT_H} stroke="#D9DCE1" strokeWidth={1} />
           {tickPts.map((p) => {

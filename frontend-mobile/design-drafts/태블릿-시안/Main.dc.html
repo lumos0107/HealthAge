@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>현재 홈</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+body{margin:0;font-family:'Noto Sans KR',sans-serif;color:#191F28}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="width:390px;height:844px;position:relative;overflow:hidden;background:#F3F4F6">
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff">
+    <div style="width:30px;height:30px;border-radius:9px;background:#00C073;color:#fff;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>
+    <div style="flex:1"><div style="font-size:16px;font-weight:800;line-height:1.2">헬스에이지</div><div style="font-size:12px;color:#4E5968">건강검진 관리 서비스</div></div>
+    <svg class="ic" viewBox="0 0 24 24" role="img" aria-label="내 정보" style="color:#4E5968"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+  </div>
+  <div style="padding:10px 10px 0;display:flex;flex-direction:column;gap:10px">
+    <div style="background:#fff;border-radius:22px;padding:20px 20px 0">
+      <div style="font-size:17px;font-weight:800">2024년 · 서울대병원 강남센터</div>
+      <div style="font-size:13px;color:#4E5968;margin-top:10px">참고 점수</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+        <span style="font-size:68px;font-weight:800;line-height:1.1;color:#FF6B00">40</span>
+        <span style="font-size:14px;color:#4E5968">/ 100점</span>
+        <span style="margin-left:4px;background:#FFF0E2;color:#A8520A;font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px">주의가 필요해요</span>
+      </div>
+      <div style="display:flex;gap:3px;margin-top:10px"><div style="flex:40;height:6px;border-radius:3px;background:#FF6B00"></div><div style="flex:30;height:6px;border-radius:3px;background:#EEF0F3"></div><div style="flex:30;height:6px;border-radius:3px;background:#EEF0F3"></div></div>
+      <div style="display:flex;gap:14px;font-size:13px;margin-top:12px"><span><span style="color:#2E9E6A">●</span> 정상 <b>6</b></span><span><span style="color:#FF6B00">●</span> 주의 <b>8</b></span><span><span style="color:#E5483D">●</span> 위험 <b>1</b></span></div>
+      <div style="border-top:1px solid #EEF0F3;margin-top:14px;text-align:center;padding:14px 0;font-size:13px;font-weight:700;color:#4E5968">어떻게 계산했나요? ⌄</div>
+    </div>
+    <div style="background:#fff;border-radius:22px;padding:18px 16px 16px">
+      <div style="font-size:15px;font-weight:800;margin-bottom:14px">빠른 이동</div>
+      <div style="display:flex;justify-content:space-between">
+        <div style="width:84px;text-align:center;font-size:12px;line-height:1.4"><div style="width:52px;height:52px;border-radius:17px;background:#F2F4F6;color:#00A862;margin:0 auto 8px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16 16l4 4"/></svg></div>검진기관<br>찾기</div>
+        <div style="width:84px;text-align:center;font-size:12px;line-height:1.4"><div style="width:52px;height:52px;border-radius:17px;background:#F2F4F6;color:#00A862;margin:0 auto 8px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="3"/><path d="M12 10v6M9 13h6M9 6V4h6v2"/></svg></div>근처<br>병원</div>
+        <div style="width:84px;text-align:center;font-size:12px;line-height:1.4"><div style="width:52px;height:52px;border-radius:17px;background:#F2F4F6;color:#00A862;margin:0 auto 8px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-40 12 12)"/></svg></div>약국<br>찾기</div>
+        <div style="width:84px;text-align:center;font-size:12px;line-height:1.4"><div style="width:52px;height:52px;border-radius:17px;background:#F2F4F6;color:#00A862;margin:0 auto 8px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>결과지<br>업로드</div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:22px;padding:18px 18px 16px">
+      <div style="font-size:17px;font-weight:800">지금 주의할 항목 TOP 3</div>
+      <div style="font-size:13px;color:#4E5968;margin-top:2px">가장 먼저 확인하면 좋은 항목이에요.</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid #EEF0F3;display:flex;justify-content:space-around;align-items:center;font-size:11px;color:#4E5968">
+    <div style="text-align:center;color:#00A862;font-weight:700"><div style="background:#E6F8EF;border-radius:999px;width:46px;height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>홈</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></div>검사항목</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/></svg></div>히스토리</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg></div>분석</div>
+    <div style="text-align:center"><div style="height:28px;margin:0 auto 2px;display:flex;align-items:center;justify-content:center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>업로드</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
