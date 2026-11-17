@@ -532,17 +532,16 @@ function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: bo
     // 왼쪽 점수 / 오른쪽 그래프로 나누면 그래프가 좁아 해마다의 점·연도를 다 못 그렸고 왼쪽 아래가 비었다.
     return (
       <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 22 }}>
-        {/* 결론을 오른쪽 끝에 붙이면 배지와 사이가 넓게 비어 한 줄로 안 읽혔다 — 배지 바로 옆에 둔다. */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
             <Text style={{ fontSize: 64, fontWeight: '800', lineHeight: 70, color: statusFill(grade), letterSpacing: -1 }}>
               {shown}<Text style={{ fontSize: T.fs.h3, fontWeight: '800' }}>점</Text>
             </Text>
             <View style={{ marginBottom: 12 }}><StatusChip status={grade} label={GRADE_LABEL[grade]} /></View>
           </View>
-          <View style={{ flexShrink: 1, marginBottom: 8 }}>
-            {!!concl.lead.trim() && <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, color: T.text1 }}>{concl.lead.trim()}</Text>}
-            <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, color: concl.ink }}>{concl.main}</Text>
+          <View style={{ flexShrink: 1, alignItems: 'flex-end', marginBottom: 8 }}>
+            {!!concl.lead.trim() && <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, color: T.text1, textAlign: 'right' }}>{concl.lead.trim()}</Text>}
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, color: concl.ink, textAlign: 'right' }}>{concl.main}</Text>
           </View>
         </View>
         <View>
