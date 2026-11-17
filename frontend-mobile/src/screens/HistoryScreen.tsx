@@ -528,20 +528,24 @@ function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: bo
   const hasGap = series.some((p) => !p.complete);
 
   if (tablet) {
-    // 태블릿 — 왼쪽에 점수·배지·한 줄 결론, 오른쪽에 추이 그래프를 한 카드로 묶는다.
+    // 태블릿(design-d 4안) — 위 한 줄에 점수·배지(왼쪽)와 결론(오른쪽), 아래에 추이 그래프를 카드 폭 전체로.
+    // 왼쪽 점수 / 오른쪽 그래프로 나누면 그래프가 좁아 해마다의 점·연도를 다 못 그렸고 왼쪽 아래가 비었다.
     return (
-      <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 22, flexDirection: 'row', alignItems: 'stretch', gap: 20 }}>
-        <View style={{ width: 188 }}>
-          <Text style={{ fontSize: 64, fontWeight: '800', lineHeight: 70, color: statusFill(grade), letterSpacing: -1 }}>
-            {shown}<Text style={{ fontSize: T.fs.h3, fontWeight: '800' }}>점</Text>
-          </Text>
-          <View style={{ alignSelf: 'flex-start', marginTop: 6 }}><StatusChip status={grade} label={GRADE_LABEL[grade]} /></View>
-          <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, marginTop: 14, color: T.text1 }}>
-            {concl.lead}<Text style={{ color: concl.ink }}>{concl.main}</Text>
-          </Text>
+      <View style={{ backgroundColor: T.white, borderRadius: T.radius, padding: 22 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
+            <Text style={{ fontSize: 64, fontWeight: '800', lineHeight: 70, color: statusFill(grade), letterSpacing: -1 }}>
+              {shown}<Text style={{ fontSize: T.fs.h3, fontWeight: '800' }}>점</Text>
+            </Text>
+            <View style={{ marginBottom: 12 }}><StatusChip status={grade} label={GRADE_LABEL[grade]} /></View>
+          </View>
+          <View style={{ flexShrink: 1, alignItems: 'flex-end', marginBottom: 8 }}>
+            {!!concl.lead.trim() && <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, color: T.text1, textAlign: 'right' }}>{concl.lead.trim()}</Text>}
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '800', lineHeight: 27, color: concl.ink, textAlign: 'right' }}>{concl.main}</Text>
+          </View>
         </View>
-        <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
-          {series.length >= 2 && <MeasuredChart><ScoreChart series={series} /></MeasuredChart>}
+        <View>
+          {series.length >= 2 && <MeasuredChart><ScoreChart series={series} wide /></MeasuredChart>}
           {series.length >= 2 && hasGap && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
               <Svg width={20} height={20} viewBox="0 0 20 20">
@@ -579,11 +583,12 @@ function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: bo
   );
 }
 
-function ScoreChart({ series }: { series: { year: number; score: number; complete: boolean }[] }) {
+function ScoreChart({ series, wide = false }: { series: { year: number; score: number; complete: boolean }[]; wide?: boolean }) {
   const reveal = useChartReveal(series.length, 1000, 150);
   const CHART_W = useChartW(CHART_W0);
-  const H = 190;
-  const pad = { top: 22, right: 8, bottom: 34, left: 8 };
+  // wide(태블릿 4안): 처음·가장 낮음·지금에 이름표(점수 위/아래 한 줄 더)를 달아 위아래 여백을 늘린다.
+  const H = wide ? 260 : 190;
+  const pad = wide ? { top: 46, right: 12, bottom: 40, left: 12 } : { top: 22, right: 8, bottom: 34, left: 8 };
   const plotW = CHART_W - pad.left - pad.right;
   const plotH = H - pad.top - pad.bottom;
   const n = series.length;
@@ -614,8 +619,9 @@ function ScoreChart({ series }: { series: { year: number; score: number; complet
         {zones.map((z) => (
           <G key={z.name}>
             <Rect x={pad.left - 2} y={y(z.from)} width={plotW + 4} height={y(z.to) - y(z.from)} fill={z.bg} />
-            {z.name === lastGrade && (
-              <SvgText x={pad.left + 6} y={y(z.to) - 8} fontSize={T.fs.caption} fontWeight="700" fill={statusInk(z.name)}>{GRADE_LABEL[z.name]}</SvgText>
+            {/* 띠 이름 — 폰은 지금 구간 하나만, 태블릿(wide)은 셋 다. 띠 왼쪽 아래 모서리에 적어 선의 시작점(보통 위쪽)과 덜 겹친다. */}
+            {(wide || z.name === lastGrade) && (
+              <SvgText x={pad.left + 6} y={y(z.to) - 8} fontSize={T.fs.caption} fontWeight="700" fill={statusInk(z.name)}>{wide ? z.name : GRADE_LABEL[z.name]}</SvgText>
             )}
           </G>
         ))}
@@ -633,6 +639,10 @@ function ScoreChart({ series }: { series: { year: number; score: number; complet
         {series.map((p, i) => !p.complete && (
           <Circle key={`gap${p.year}`} cx={x(i)} cy={y(p.score)} r={8} fill="#fff" stroke={LINE} strokeWidth={2.5} strokeDasharray="3.5 3" />
         ))}
+        {/* 태블릿(wide) — 해마다 작은 점. 처음·바닥·지금은 아래에서 크게 다시 그린다. */}
+        {wide && series.map((p, i) => p.complete && !keyIdx.includes(i) && (
+          <Circle key={`yd${i}`} cx={x(i)} cy={y(p.score)} r={4.5} fill="#fff" stroke={LINE} strokeWidth={2.5} />
+        ))}
         {/* 처음·바닥·지금 점 */}
         {keyIdx.filter((i) => series[i].complete).map((i) => (
           <Circle key={`dot${i}`} cx={x(i)} cy={y(series[i].score)} r={i === lastI ? 8 : 6} fill={i === lastI ? LINE : '#fff'} stroke={i === lastI ? '#fff' : LINE} strokeWidth={i === lastI ? 2.5 : 3} />
@@ -642,21 +652,36 @@ function ScoreChart({ series }: { series: { year: number; score: number; complet
           const below = i === trough && i !== 0 && i !== lastI;       // 바닥 숫자는 점 아래에
           const ty = below ? y(p.score) + 26 : Math.max(16, y(p.score) - 14);
           return (
-            <SvgText
-              key={`v${i}`}
-              x={i === 0 ? x(i) + 14 : i === lastI ? x(i) - 12 : x(i)}
-              y={ty}
-              fontSize={T.fs.body}
-              fontWeight="800"
-              textAnchor={i === 0 ? 'start' : i === lastI ? 'end' : 'middle'}
-              fill={LINE_TEXT}
-            >
-              {p.score}
-            </SvgText>
+            <G key={`v${i}`}>
+              <SvgText
+                x={i === 0 ? x(i) + 14 : i === lastI ? x(i) - 12 : x(i)}
+                y={ty}
+                fontSize={wide ? T.fs.strong : T.fs.body}
+                fontWeight="800"
+                textAnchor={i === 0 ? 'start' : i === lastI ? 'end' : 'middle'}
+                fill={LINE_TEXT}
+              >
+                {wide ? `${p.score}점` : p.score}
+              </SvgText>
+              {/* 태블릿(wide) — 점수 위(바닥은 아래)에 «처음·가장 낮음·지금» 이름표 */}
+              {wide && (
+                <SvgText
+                  x={i === 0 ? x(i) + 14 : i === lastI ? x(i) - 12 : x(i)}
+                  y={below ? ty + 18 : ty - 20}
+                  fontSize={T.fs.caption}
+                  fontWeight="600"
+                  textAnchor={i === 0 ? 'start' : i === lastI ? 'end' : 'middle'}
+                  fill={A11Y.sub}
+                >
+                  {i === 0 ? '처음' : i === lastI ? '지금' : '가장 낮음'}
+                </SvgText>
+              )}
+            </G>
           );
         })}
-        {keyIdx.map((i) => (
-          <SvgText key={`y${i}`} x={x(i)} y={H - 8} fontSize={T.fs.body} fill={A11Y.sub} textAnchor={anchorOf(i)}>{series[i].year}</SvgText>
+        {/* 연도 — 폰은 처음·바닥·지금만, 태블릿(wide)은 자리가 되는 만큼 해마다(라벨 폭 약 44px). */}
+        {(wide ? series.map((_, i) => i).filter((i) => keyIdx.includes(i) || (i % Math.max(1, Math.ceil(44 / Math.max(1, x(1) - x(0)))) === 0 && keyIdx.every((k) => k === i || Math.abs(x(k) - x(i)) >= 44))) : keyIdx).map((i) => (
+          <SvgText key={`y${i}`} x={x(i)} y={H - 8} fontSize={wide ? T.fs.caption : T.fs.body} fontWeight={wide && i === lastI ? '800' : '400'} fill={wide && i === lastI ? T.text1 : A11Y.sub} textAnchor={anchorOf(i)}>{series[i].year}</SvgText>
         ))}
         </G>
       </Svg>
