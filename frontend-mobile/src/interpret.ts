@@ -146,6 +146,22 @@ const REBOUND_MIN = 2;
  *  그래프는 V자를 그리는데 문장은 "42점 내려갔어요"만 해서, 한 카드 안에서
  *  그림과 글이 다른 이야기를 했다. 바닥을 찍고 올라왔으면 그 사실을 뒤에 붙인다.
  *  (전체가 올라간 해에는 붙이지 않는다 — "내려갔지만"이 성립하지 않는다.) */
+/** 점수 추이 한 줄 결론 — «바닥 이후»를 먼저 말한다("2020년 이후 점수가 오르고 있어요.").
+ *  히스토리 화면(scoreConclusion이 색을 붙임)과 결과 요약 PDF가 같이 쓴다(design-d). */
+export function scoreTrend(series: { year: number; score: number }[]): { lead: string; main: string; tone: 'up' | 'down' | 'flat' | 'single' } {
+  if (series.length < 2) return { lead: '', main: '이번 검진 점수예요.', tone: 'single' };
+  const last = series[series.length - 1];
+  let trough = 0;
+  for (let i = 1; i < series.length; i++) if (series[i].score <= series[trough].score) trough = i;
+  if (trough < series.length - 1 && last.score > series[trough].score) {
+    return { lead: `${series[trough].year}년 이후 `, main: '점수가 오르고 있어요.', tone: 'up' };
+  }
+  const diff = last.score - series[0].score;
+  if (diff < 0) return { lead: '', main: '점수가 내려가고 있어요.', tone: 'down' };
+  if (diff > 0) return { lead: '', main: '점수가 오르고 있어요.', tone: 'up' };
+  return { lead: '', main: '점수가 그대로예요.', tone: 'flat' };
+}
+
 export function scoreTrendText(series: ScorePoint[]): string | null {
   if (series.length < 2) return null;
   const first = series[0];

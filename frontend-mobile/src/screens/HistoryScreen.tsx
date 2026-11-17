@@ -5,7 +5,7 @@ import { FadeIn, FadeInUp, MeasuredChart, T, useChartReveal, useChartW, W } from
 import { useGridCell, useLayout } from '../responsive';
 import { A11Y, BAND_TEXT, Expandable, LINE, LINE_TEXT, NORMAL_BAND, PeerRankBlock, StatusChip, SummaryCard, useChartTouchX } from '../components/v2';
 import { cardContent, cardContentFor, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
-import { metricPeerRank, normalBounds, scoreGrade, scoreSeries, subjectJosa, topicJosa, trendDirection } from '../interpret';
+import { metricPeerRank, normalBounds, scoreGrade, scoreSeries, scoreTrend, subjectJosa, topicJosa, trendDirection } from '../interpret';
 import type { MetricDefinition, MetricKey, Report, Status } from '../data';
 import type { RealTimeseries } from '../health';
 
@@ -487,17 +487,9 @@ const GRADE_LABEL: Record<Status, string> = { 정상: '양호', 주의: '주의 
 
 /** 점수 추이 한 줄 결론 — «바닥 이후»를 먼저 말한다("2020년 이후 점수가 오르고 있어요."). */
 export function scoreConclusion(series: { year: number; score: number }[]): { lead: string; main: string; ink: string } {
-  const last = series[series.length - 1];
-  let trough = 0;
-  for (let i = 1; i < series.length; i++) if (series[i].score <= series[trough].score) trough = i;
-  if (series.length < 2) return { lead: '', main: '이번 검진 점수예요.', ink: T.text1 };
-  if (trough < series.length - 1 && last.score > series[trough].score) {
-    return { lead: `${series[trough].year}년 이후 `, main: '점수가 오르고 있어요.', ink: A11Y.success };
-  }
-  const diff = last.score - series[0].score;
-  if (diff < 0) return { lead: '', main: '점수가 내려가고 있어요.', ink: A11Y.danger };
-  if (diff > 0) return { lead: '', main: '점수가 오르고 있어요.', ink: A11Y.success };
-  return { lead: '', main: '점수가 그대로예요.', ink: T.text1 };
+  // 문장은 scoreTrend(결과 요약 PDF와 공용), 여기서는 색만 붙인다.
+  const { lead, main, tone } = scoreTrend(series);
+  return { lead, main, ink: tone === 'up' ? A11Y.success : tone === 'down' ? A11Y.danger : T.text1 };
 }
 
 /** 점수 숫자가 0에서 올라온다 — 분석 탭 AnimatedScore와 같은 값(700ms, easeOutCubic). */

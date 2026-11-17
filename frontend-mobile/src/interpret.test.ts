@@ -266,3 +266,29 @@ describe('metricPeerRank — 등수를 말하는 네 화면이 같은 판단을 
     expect(metricPeerRank(by('creatinine'), 1.0)).toBeNull();
   });
 });
+
+describe('scoreTrend — 점수 추이 한 줄 결론(히스토리 화면·결과 요약 PDF 공용)', () => {
+  it('바닥 뒤로 오르면 «바닥 연도 이후 오르고 있어요»', async () => {
+    const { scoreTrend } = await import('./interpret');
+    expect(scoreTrend([{ year: 2020, score: 22 }, { year: 2022, score: 30 }, { year: 2024, score: 40 }]))
+      .toEqual({ lead: '2020년 이후 ', main: '점수가 오르고 있어요.', tone: 'up' });
+  });
+  it('데모 16년 기록은 바닥 2020년 이후 오름', async () => {
+    const { scoreTrend } = await import('./interpret');
+    const r = scoreTrend(reports.map((x) => ({ year: x.year, score: x.score })).sort((a, b) => a.year - b.year));
+    expect(r.lead).toBe('2020년 이후 ');
+    expect(r.tone).toBe('up');
+  });
+  it('한 해뿐이면 «이번 검진 점수예요.»', async () => {
+    const { scoreTrend } = await import('./interpret');
+    expect(scoreTrend([{ year: 2024, score: 40 }])).toEqual({ lead: '', main: '이번 검진 점수예요.', tone: 'single' });
+  });
+  it('계속 내려가면 down', async () => {
+    const { scoreTrend } = await import('./interpret');
+    expect(scoreTrend([{ year: 2020, score: 80 }, { year: 2022, score: 60 }])).toEqual({ lead: '', main: '점수가 내려가고 있어요.', tone: 'down' });
+  });
+  it('같으면 flat', async () => {
+    const { scoreTrend } = await import('./interpret');
+    expect(scoreTrend([{ year: 2020, score: 50 }, { year: 2022, score: 50 }])).toEqual({ lead: '', main: '점수가 그대로예요.', tone: 'flat' });
+  });
+});
