@@ -1,0 +1,43 @@
+diff --git a/node_modules/expo-print/android/src/main/java/expo/modules/print/PrintPDFRenderTask.kt b/node_modules/expo-print/android/src/main/java/expo/modules/print/PrintPDFRenderTask.kt
+index d1e413e..39c1ca0 100644
+--- a/node_modules/expo-print/android/src/main/java/expo/modules/print/PrintPDFRenderTask.kt
++++ b/node_modules/expo-print/android/src/main/java/expo/modules/print/PrintPDFRenderTask.kt
+@@ -31,6 +31,9 @@ internal class PrintPDFRenderTask(private val context: Context, private val opti
+ 
+   @UiThread
+   fun render(outputFile: File?, fileDescriptor: ParcelFileDescriptor?, callbacks: Callbacks) {
++    // healthage patch: keep this task (and its offscreen WebView) reachable until rendering ends.
++    // Otherwise GC can collect the WebView mid-load, its renderer is torn down and the promise never settles.
++    alive.add(this)
+     this.callbacks = callbacks
+     this.fileDescriptor = fileDescriptor
+     outputFile?.let {
+@@ -98,6 +101,7 @@ internal class PrintPDFRenderTask(private val context: Context, private val opti
+       if (fileDescriptor != null) {
+         document.onWrite(arrayOf(PageRange.ALL_PAGES), fileDescriptor, null, printDocumentWriteCallback)
+       } else {
++        alive.remove(this@PrintPDFRenderTask)
+         callbacks.onRenderFinished(document, null, numberOfPages)
+       }
+     }
+@@ -105,14 +109,20 @@ internal class PrintPDFRenderTask(private val context: Context, private val opti
+   private val printDocumentWriteCallback: PrintDocumentAdapterWriteCallback = object : PrintDocumentAdapterWriteCallback() {
+     override fun onWriteFinished(pages: Array<PageRange>) {
+       // document and output file are now ready to finish
++      alive.remove(this@PrintPDFRenderTask)
+       callbacks.onRenderFinished(document, outputFile, numberOfPages)
+     }
+ 
+     override fun onWriteFailed(error: CharSequence?) {
++      alive.remove(this@PrintPDFRenderTask)
+       callbacks.onRenderError(PdfWriteException())
+     }
+   }
+ 
++  companion object {
++    private val alive = java.util.Collections.synchronizedSet(HashSet<PrintPDFRenderTask>())
++  }
++
+   abstract class Callbacks {
+     open fun onRenderFinished(document: PrintDocumentAdapter, outputFile: File?, numberOfPages: Int) = Unit
+ 

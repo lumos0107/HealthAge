@@ -8,9 +8,10 @@ import type { MedicationItem, MetricDefinition, MetricKey, Report } from '../dat
 import { deleteReport } from '../health';
 import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
 import { exportReportPdf } from '../reportExport';
+import type { PdfExtras } from '../reportExport';
 import { useGridCell, useLayout } from '../responsive';
 
-export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail, onUpload }: {
+export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail, onUpload, pdfExtras }: {
   reports: Report[];
   metricDefinitions: MetricDefinition[];
   usingRealData?: boolean;
@@ -24,6 +25,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   onOpenDetail?: (key: MetricKey, year: number) => void;
   // 복약자료 올리기 카드(태블릿)에서 업로드 탭으로 간다.
   onUpload?: () => void;
+  // PDF 2·3쪽(히스토리·분석)용 자료 — 없으면 검사항목 1쪽만(design-d).
+  pdfExtras?: PdfExtras | null;
 }) {
   const { isTablet, itemCols, isLandscape } = useLayout();
   // 약 카드 격자 칸 폭 — calc()는 APK에서 칸이 접혀서 잰 값으로(useGridCell, 시안대로 2열).
@@ -73,7 +76,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
     if (exporting) return;
     setExporting(true);
     try {
-      await exportReportPdf(detailReport, yearMetrics, userName ?? '');
+      await exportReportPdf(detailReport, metricDefinitions, userName ?? '', pdfExtras);
     } catch (e) {
       Alert.alert('내보내기 실패', e instanceof Error ? e.message : 'PDF를 만들지 못했습니다.');
     } finally {

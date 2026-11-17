@@ -3,10 +3,11 @@ import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { Eyebrow, FadeInUp, FieldInput, SecondaryBtn, T } from '../components/UI';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
-import { birthDateFromProfile, metricsForReport, profileBirthFromDate } from '../data';
+import { birthDateFromProfile, profileBirthFromDate } from '../data';
 import type { MetricDefinition, Report, UserProfile, UserSettings } from '../data';
 import { cancelCheckupReminder, getScheduledCheckupReminder, scheduleCheckupReminder } from '../notifications';
 import { exportReportPdf, printReport } from '../reportExport';
+import type { PdfExtras } from '../reportExport';
 
 type EditState = 'locked' | 'verifying' | 'unlocked';
 
@@ -20,6 +21,7 @@ export default function ProfileScreen({
   onDeleteAccount,
   reports,
   metricDefinitions,
+  pdfExtras,
 }: {
   profile: UserProfile;
   settings: UserSettings;
@@ -33,6 +35,8 @@ export default function ProfileScreen({
   // 검진 결과 PDF 내보내기용 — 없으면(비로그인/기록 없음) 카드 자체를 숨긴다.
   reports?: Report[] | null;
   metricDefinitions?: MetricDefinition[] | null;
+  // PDF 2·3쪽(히스토리·분석)용 자료 — 없으면 검사항목 1쪽만 만든다(design-d).
+  pdfExtras?: PdfExtras | null;
 }) {
   const [editState, setEditState] = useState<EditState>('locked');
   const [pwInput, setPwInput] = useState('');
@@ -110,7 +114,7 @@ export default function ProfileScreen({
     if (exporting || !pdfReport || !metricDefinitions) return;
     setExporting(true);
     try {
-      await exportReportPdf(pdfReport, metricsForReport(pdfReport, metricDefinitions), profile.name);
+      await exportReportPdf(pdfReport, metricDefinitions, profile.name, pdfExtras);
     } catch (e) {
       Alert.alert('내보내기 실패', e instanceof Error ? e.message : 'PDF를 만들지 못했습니다.');
     } finally { setExporting(false); }
@@ -121,7 +125,7 @@ export default function ProfileScreen({
     if (printing || !pdfReport || !metricDefinitions) return;
     setPrinting(true);
     try {
-      await printReport(pdfReport, metricsForReport(pdfReport, metricDefinitions), profile.name);
+      await printReport(pdfReport, metricDefinitions, profile.name, pdfExtras);
     } catch (e) {
       Alert.alert('인쇄 창 열기 실패', e instanceof Error ? e.message : '인쇄 창을 열지 못했습니다.');
     } finally { setPrinting(false); }

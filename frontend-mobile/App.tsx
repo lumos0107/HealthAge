@@ -32,6 +32,7 @@ import MetricDetailScreen from './src/screens/MetricDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import RecordsScreen from './src/screens/RecordsScreen';
 import UploadScreen from './src/screens/UploadScreen';
+import type { PdfExtras } from './src/reportHtml';
 
 type AppTab = 'dashboard' | 'records' | 'history' | 'analysis' | 'upload' | 'profile';
 
@@ -162,6 +163,20 @@ export default function App() {
     : isDemoAccount
       ? { rec: dummyRecommendationsByYear, egfr: dummyEgfrByYear, combo: dummyComboAnalysisByYear }
       : { rec: {}, egfr: {}, combo: {} };
+
+  // 결과 요약 PDF 2·3쪽(히스토리·분석) 자료 — 히스토리·분석 탭에 내려주는 것과 같은 값(design-d).
+  const pdfExtras: PdfExtras | null = loggedIn && !needEmptyState ? {
+    reports: reportsForScreens,
+    highlights: usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null),
+    insight: usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null),
+    changePace: usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null),
+    recommendationsByYear: analysisByYear.rec,
+    egfrByYear: analysisByYear.egfr,
+    comboAnalysisByYear: analysisByYear.combo,
+    gender: profile.gender,
+    smoking: profile.smoking,
+    alcoholWeeklyG: profile.drinking === 'yes' ? profile.alcohol_weekly_g : 0,
+  } : null;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -377,7 +392,7 @@ export default function App() {
         {tab !== 'dashboard' && !loggedIn && <LockedNotice onPress={requireLogin} />}
         {tab === 'records' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} userName={profile.name} onDeleted={() => loadHealthData(profile.id)} medications={medications} onOpenDetail={openDetail} onUpload={() => handleTab('upload')} />)}
+          : <RecordsScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} userId={profile?.id} userName={profile.name} onDeleted={() => loadHealthData(profile.id)} medications={medications} onOpenDetail={openDetail} onUpload={() => handleTab('upload')} pdfExtras={pdfExtras} />)}
         {tab === 'history' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
           : <HistoryScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} highlights={usingRealData ? timeseries?.highlights ?? null : (isDemoAccount ? dummyHighlights : null)} insight={usingRealData ? timeseries?.insight ?? null : (isDemoAccount ? dummyInsight : null)} changePace={usingRealData ? timeseries?.change_pace ?? null : (isDemoAccount ? dummyChangePace : null)} />)}
@@ -397,6 +412,7 @@ export default function App() {
             onOpenAuth={() => setAuthOpen(true)}
             reports={loggedIn && !needEmptyState ? reportsForScreens : null}
             metricDefinitions={loggedIn && !needEmptyState ? metricDefinitionsForScreens : null}
+            pdfExtras={pdfExtras}
           />
         )}
       </View>

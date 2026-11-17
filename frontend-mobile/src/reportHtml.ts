@@ -61,7 +61,7 @@ const STYLE = `
   .unit { color: ${MUTED}; font-size: 11px; margin-left: 2px; }
   .muted { color: ${MUTED}; }
   .tag { font-weight: 700; font-size: 12px; }
-  .page { page-break-before: always; break-before: page; }
+  .page { page-break-before: always; break-before: page; padding-top: 24px; }
   .lead { font-size: 14px; margin: 2px 0 6px; }
   .basis { font-size: 11px; color: #6B7280; margin-top: 8px; }
   .item { font-size: 12px; line-height: 1.5; padding: 4px 0; border-bottom: 1px solid #F0F0F0; break-inside: avoid; }
