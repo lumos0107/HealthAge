@@ -81,14 +81,25 @@ function buildHtml(report: Report, metrics: MetricDefinition[], userName: string
  * 리포트를 PDF로 만들어 공유 시트를 띄운다.
  * @returns 만들어진 파일 경로. 공유가 불가능한 환경이면 경로만 돌려준다.
  */
+// 갤럭시탭에서 PDF 만들기가 끝나지 않아 "만드는 중"이 영원히 남았다(2026-11-17, 원인 조사 중).
+// 멈추면 기다리게 두지 않고 이 시간 뒤 실패로 알린다.
+const RENDER_TIMEOUT_MS = 20000;
+
+function withTimeout<T>(p: Promise<T>, stage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`${stage} 단계가 ${RENDER_TIMEOUT_MS / 1000}초 안에 끝나지 않았어요.`)), RENDER_TIMEOUT_MS);
+    p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+  });
+}
+
 export async function exportReportPdf(
   report: Report,
   metrics: MetricDefinition[],
   userName: string,
 ): Promise<string> {
-  const { uri } = await Print.printToFileAsync({
+  const { uri } = await withTimeout(Print.printToFileAsync({
     html: buildHtml(report, metrics, userName),
-  });
+  }), 'PDF 파일 만들기');
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, {
       mimeType: 'application/pdf',
@@ -97,4 +108,16 @@ export async function exportReportPdf(
     });
   }
   return uri;
+}
+
+/**
+ * 같은 요약을 기기 기본 인쇄 창으로 바로 연다(파일 저장은 인쇄 창이 맡는다 — 「PDF로 저장」·프린터 선택).
+ * printToFileAsync가 멈추는 기기에서 어느 단계가 문제인지 가리고, 되면 대안으로 쓴다.
+ */
+export async function printReport(
+  report: Report,
+  metrics: MetricDefinition[],
+  userName: string,
+): Promise<void> {
+  await withTimeout(Print.printAsync({ html: buildHtml(report, metrics, userName) }), '인쇄 창 열기');
 }

@@ -6,7 +6,7 @@ import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { birthDateFromProfile, metricsForReport, profileBirthFromDate } from '../data';
 import type { MetricDefinition, Report, UserProfile, UserSettings } from '../data';
 import { cancelCheckupReminder, getScheduledCheckupReminder, scheduleCheckupReminder } from '../notifications';
-import { exportReportPdf } from '../reportExport';
+import { exportReportPdf, printReport } from '../reportExport';
 
 type EditState = 'locked' | 'verifying' | 'unlocked';
 
@@ -114,6 +114,17 @@ export default function ProfileScreen({
     } catch (e) {
       Alert.alert('내보내기 실패', e instanceof Error ? e.message : 'PDF를 만들지 못했습니다.');
     } finally { setExporting(false); }
+  };
+  // 같은 요약을 기기 인쇄 창으로 바로 연다(갤럭시탭에서 PDF 만들기가 멈춰 대안·원인 확인용, 11/17).
+  const [printing, setPrinting] = useState(false);
+  const handlePrint = async () => {
+    if (printing || !pdfReport || !metricDefinitions) return;
+    setPrinting(true);
+    try {
+      await printReport(pdfReport, metricsForReport(pdfReport, metricDefinitions), profile.name);
+    } catch (e) {
+      Alert.alert('인쇄 창 열기 실패', e instanceof Error ? e.message : '인쇄 창을 열지 못했습니다.');
+    } finally { setPrinting(false); }
   };
 
   return (
@@ -291,6 +302,9 @@ export default function ProfileScreen({
             })}
           </ScrollView>
           <SecondaryBtn label={exporting ? 'PDF를 만드는 중...' : 'PDF로 내보내기'} onPress={handleExport} />
+          {Platform.OS !== 'web' && (
+            <SecondaryBtn label={printing ? '인쇄 창을 여는 중...' : '인쇄 창으로 열기'} onPress={handlePrint} />
+          )}
         </View>
         </FadeInUp>
         )}
