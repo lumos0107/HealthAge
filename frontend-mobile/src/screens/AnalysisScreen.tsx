@@ -1,4 +1,4 @@
-import { useLayout } from '../responsive';
+import { useGridCell, useLayout } from '../responsive';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -29,12 +29,12 @@ import type { Ctx } from '../lifestyleActions';
  *  on이 아니면(폰·태블릿 전체 보기) 아무것도 감싸지 않고 원래 세로 흐름 그대로 둔다.
  *  ⚠️ 자식은 Fragment로 묶지 말고 바로 넘긴다 — Children.toArray는 Fragment를 펼치지 않아 한 칸이 된다. */
 function LayerGrid({ on, children }: { on: boolean; children: React.ReactNode }) {
+  // 마지막 홀수 칸도 반 폭을 유지한다. 칸 폭은 잰 값으로(useGridCell — calc()는 APK에서 안 됨).
+  const { onLayout, cell } = useGridCell(2);
   if (!on) return <>{children}</>;
-  // 마지막 홀수 칸도 반 폭을 유지한다(히스토리 격자와 같은 값).
-  const cell = { flexBasis: 'calc(50% - 6px)', flexGrow: 0, minWidth: 0 } as any;
   return (
     <GridCellContext.Provider value>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginHorizontal: 16, marginTop: 8 }}>
+      <View onLayout={onLayout} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginHorizontal: 16, marginTop: 8 }}>
         {React.Children.toArray(children).map((child, i) => <View key={i} style={cell}>{child}</View>)}
       </View>
     </GridCellContext.Provider>
@@ -763,6 +763,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // design-d: 태블릿은 1뎁스 = 네 층 2×2 요약, 카드를 누르면 2뎁스 = 그 층만(아래 긴 화면에서 해당 층 부분),
   // 그 안의 카드를 누르면 3뎁스 = 기존 SummaryCard 상세. null이면 1뎁스.
   const [openLayer, setOpenLayer] = useState<number | null>(null);
+  // 1뎁스 2×2 타일 칸 폭 — 훅이라 태블릿 분기 «밖»에서 부른다.
+  const tileGrid = useGridCell(2);
   const layerMode = isTablet && openLayer !== null;
   const showLayer = (i: number) => !layerMode || openLayer === i;
   // 태블릿에서 ①은 참고 점수를 품고 있어(design-d) 이름을 바꿨다. 폰·「분석 탭 보는 법」은 아직 LAYERS 그대로.
@@ -918,7 +920,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       ascvd?.available ? ['심혈관 10년 위험', `${ascvd.risk_percent}% · ${ascvd.risk_label ?? '계산 완료'}`] : null,
       ldlTarget ? ['LDL 개인 목표', ldlTarget.achieved ? '목표 범위예요' : `목표 ${ldlTarget.target_text} · 현재 목표보다 높아요`] : null,
     ].filter((row): row is [string, string] => row != null);
-    const tileStyle = { flexBasis: 'calc(50% - 6px)', flexGrow: 0, minWidth: 0 } as any;
+    const tileStyle = tileGrid.cell;
     const summaryText = { fontSize: T.fs.body, color: T.text2, lineHeight: 24 } as const;
     // 카드 전체가 눌려 그 층의 2뎁스로 들어간다. 맨 아래 「자세히 보기 ›」는 누를 수 있다는 표시.
     const renderTile = (step: string, title: string, subtitle: string, body: React.ReactNode) => (
@@ -958,7 +960,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
         {/* 참고 점수는 따로 카드를 두지 않고 ① 안에 넣는다(design-d) — 점수가 «기준을 벗어난 개수»로
             깎이는 값이라 ①과 같은 말을 두 번 하고 있었다(위험 1 · 주의 8, 별도 신호 4가지). */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'stretch' }}>
+        <View onLayout={tileGrid.onLayout} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'stretch' }}>
           {renderTile('1', tabletLayer0Title, `${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`, <>
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>

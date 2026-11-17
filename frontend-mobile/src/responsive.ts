@@ -1,4 +1,18 @@
-import { useWindowDimensions } from 'react-native';
+import { useState } from 'react';
+import { LayoutChangeEvent, useWindowDimensions } from 'react-native';
+
+/** 격자 칸 폭(design-d) — CSS `calc(50% - 6px)`는 웹에서만 되고 네이티브 앱(APK)에서는 칸이 최소 폭으로
+ *  접혀 글자가 세로로 쪼개졌다. 격자 컨테이너의 실제 폭을 재서 칸 폭을 픽셀로 정한다.
+ *  쓰는 법: 컨테이너에 onLayout, 칸에 cell. 재기 전 첫 그림은 비율로 대신한다. */
+export function useGridCell(cols: number, gap = 12) {
+  const [w, setW] = useState(0);
+  const onLayout = (e: LayoutChangeEvent) => {
+    const nw = Math.floor(e.nativeEvent.layout.width);
+    setW((old) => (old === nw ? old : nw));
+  };
+  const width = w > 0 ? Math.floor((w - gap * (cols - 1)) / cols) : `${Math.floor(100 / cols) - 2}%`;
+  return { onLayout, cell: { width, flexGrow: 0, flexShrink: 0, minWidth: 0 } as any };
+}
 
 // 태블릿 반응형 기준 (태블릿-시안-초안.md 2절)
 //   600 미만                → 모바일 그대로 (하단 탭, 1열)

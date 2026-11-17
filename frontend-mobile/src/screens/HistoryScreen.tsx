@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
 import { ClipPath, Circle, Defs, G, Line, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { FadeIn, FadeInUp, MeasuredChart, T, useChartReveal, useChartW, W } from '../components/UI';
-import { useLayout } from '../responsive';
+import { useGridCell, useLayout } from '../responsive';
 import { A11Y, BAND_TEXT, Expandable, LINE, LINE_TEXT, NORMAL_BAND, PeerRankBlock, StatusChip, SummaryCard, useChartTouchX } from '../components/v2';
 import { cardContent, cardContentFor, metricDirection, metricLabel, metricPlainName, metricsForReport } from '../data';
 import { metricPeerRank, normalBounds, scoreGrade, scoreSeries, subjectJosa, topicJosa, trendDirection } from '../interpret';
@@ -184,6 +184,8 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
   changePace?: ChangePace[] | null;
 }) {
   const { isTablet } = useLayout();
+  // 태블릿 2열 격자 칸 폭 — calc()는 APK에서 칸이 접혀서 잰 값으로(useGridCell). 훅이라 분기 밖에서 부른다.
+  const grid2 = useGridCell(2);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const infos = useMemo(() => buildInfos(reports, metricDefinitions), [reports, metricDefinitions]);
   // 먼저 확인 — 기준을 벗어난 묶음 중 가장 급한 2개.
@@ -307,7 +309,7 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
   if (isTablet) {
     const gridStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 12 } as const;
     // 마지막 홀수 타일도 두 칸 폭을 유지한다. flexGrow: 1이면 마지막 타일이 한 줄 전체로 늘어난다.
-    const cell = { flexBasis: 'calc(50% - 6px)', flexGrow: 0, minWidth: 0 } as any;
+    const cell = grid2.cell;
     const tiles = [
       ...ordered.map((info) => (
         <View key={info.group.title} style={[cell, { backgroundColor: T.white, borderRadius: T.radius, overflow: 'hidden' }]}>
@@ -335,7 +337,7 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
         {attention.length > 0 && (
           <>
             <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>먼저 확인하세요</Text>
-            <View style={gridStyle}>
+            <View onLayout={grid2.onLayout} style={gridStyle}>
               {attention.map((info) => {
                 const m = info.lead!;
                 const pts = seriesOf(m.key, reports);
@@ -372,14 +374,14 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
         )}
 
         <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>항목별로 보기</Text>
-        <View style={gridStyle}>{tiles}</View>
+        <View onLayout={grid2.onLayout} style={gridStyle}>{tiles}</View>
 
         {/* 「또래보다 빨리 변한 항목」·「그 밖의 변화 보기」는 항목 묶음이 아니라 여러 항목을 가로지르는
             보기라, 항목 격자에 섞지 않고 따로 한 줄로 뺀다(design-d). */}
         {(paceCard || highlightCard) && (
           <>
             <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>더 살펴보기</Text>
-            <View style={gridStyle}>
+            <View onLayout={grid2.onLayout} style={gridStyle}>
               {paceCard && <View style={cell}>{paceCard}</View>}
               {highlightCard && <View style={cell}>{highlightCard}</View>}
             </View>

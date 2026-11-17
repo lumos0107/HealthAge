@@ -401,7 +401,9 @@ export function useChartReveal(key: string | number, duration = 900, delay = 0):
     Animated.timing(anim, { toValue: 1, duration, delay, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
     return () => anim.removeListener(id);
   }, [key]);
-  return p;
+  // Android의 react-native-svg는 ClipPath 크기가 바뀌어도 다시 그리지 않아, 펼침 애니메이션을 쓰면
+  // 선·점·숫자가 0 폭에 잘린 채로 남는다(APK에서 확인). 네이티브는 애니메이션 없이 처음부터 다 보여 준다.
+  return Platform.OS === 'web' ? p : 1;
 }
 
 export function FadeIn({ children, delay = 0, duration = 420 }: { children: React.ReactNode; delay?: number; duration?: number }) {

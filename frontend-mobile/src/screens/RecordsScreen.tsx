@@ -8,7 +8,7 @@ import type { MedicationItem, MetricDefinition, MetricKey, Report } from '../dat
 import { deleteReport } from '../health';
 import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
 import { exportReportPdf } from '../reportExport';
-import { useLayout } from '../responsive';
+import { useGridCell, useLayout } from '../responsive';
 
 export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail, onUpload }: {
   reports: Report[];
@@ -26,6 +26,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   onUpload?: () => void;
 }) {
   const { isTablet, itemCols, isLandscape } = useLayout();
+  // 약 카드 격자 칸 폭 — calc()는 APK에서 칸이 접혀서 잰 값으로(useGridCell, 시안대로 2열).
+  const medGrid = useGridCell(2);
   const [selectedYear, setSelectedYear] = useState<number>(reports[reports.length - 1].year);
   // 검사 항목 / 복용약 — 같은 연도 기록 안에서 전환해서 볼 수 있게 한다.
   const [view, setView] = useState<'metrics' | 'medications'>('metrics');
@@ -250,10 +252,10 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                   </Text>
                 </View>
                 {/* 약 카드 격자 — 약 하나가 카드 하나 */}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                <View onLayout={medGrid.onLayout} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
                   {medFlat.map(({ category, count, item }) => (
                     <View key={`${item.drug_code ?? item.product_name}-${item.dispensed_date}`}
-                      style={{ flexBasis: (medCols === 2 ? 'calc(50% - 6px)' : 'calc(33.333% - 8px)') as any, flexGrow: 0, minWidth: 0, backgroundColor: T.white, borderRadius: T.radius, padding: 20, gap: 6 }}>
+                      style={{ ...medGrid.cell, backgroundColor: T.white, borderRadius: T.radius, padding: 20, gap: 6 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ backgroundColor: T.primaryLight, paddingHorizontal: 14, paddingVertical: 6, borderRadius: T.radiusPill }}>
                           <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>{category}</Text>
