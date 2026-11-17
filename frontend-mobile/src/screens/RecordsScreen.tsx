@@ -176,17 +176,23 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                     const visual = categoryVisual(metric.category);
                     const { color } = getStatusStyle(metric.status);
                     return (
+                      // 위아래 두 줄 카드(design-d 1안) — 한 줄에 아이콘·이름·수치+배지·화살표를 다 넣으면
+                      // 이름 칸이 80~100px만 남아 「체질량지수 (BMI)」「혈청 크레아티닌」이 두 줄로 꺾였다.
+                      // 윗줄: 아이콘·이름·화살표 / 아랫줄: 수치(왼쪽)·배지(오른쪽).
                       <Pressable key={metric.key} onPress={() => onOpenDetail?.(metric.key, selectedYear)} accessibilityRole="button" accessibilityLabel={`${metric.name} 자세히 보기`}
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 76, paddingVertical: 10, paddingLeft: 12, paddingRight: 10, borderRadius: 16, backgroundColor: T.white }}>
-                        <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
-                        <View style={{ flex: 1, minWidth: 0 }}>
-                          <Text numberOfLines={isTablet ? 2 : undefined} style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, lineHeight: 22, ...({ wordBreak: 'keep-all' } as any) }}>{metric.name}</Text>
-                          {!!metricGloss[metric.key] && (
-                            <Text style={{ fontSize: T.fs.caption, color: T.text2 }} numberOfLines={isTablet ? 2 : 1}>{metricGloss[metric.key]}</Text>
-                          )}
+                        style={{ gap: 8, paddingTop: 12, paddingBottom: 12, paddingLeft: 14, paddingRight: 12, borderRadius: 16, backgroundColor: T.white }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
+                          <View style={{ flex: 1, minWidth: 0 }}>
+                            <Text numberOfLines={2} style={{ fontSize: T.fs.body, fontWeight: '700', color: T.text1, lineHeight: 22, ...({ wordBreak: 'keep-all' } as any) }}>{metric.name}</Text>
+                            {!!metricGloss[metric.key] && (
+                              <Text style={{ fontSize: T.fs.caption, color: T.text2 }} numberOfLines={2}>{metricGloss[metric.key]}</Text>
+                            )}
+                          </View>
+                          <Ionicons name="chevron-forward" size={20} color={T.text3} />
                         </View>
-                        <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                          <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: metric.infoOnly ? T.text1 : color }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
+                          <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: metric.infoOnly ? T.text1 : color }}>
                             {formatMetricValue(metric, detailReport.values[metric.key])}
                             {metric.unit ? <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text2 }}> {metric.unit}</Text> : null}
                           </Text>
@@ -196,7 +202,6 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                             </View>
                           ) : <StatusBadge status={metric.status} />}
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={T.text3} />
                       </Pressable>
                     );
                   })}
