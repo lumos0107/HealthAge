@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { categoryVisual, SquircleIcon } from '../components/v2';
+import { categoryVisual, MiniRangeBar, SquircleIcon } from '../components/v2';
 import { Eyebrow, FadeIn, FadeInUp, StatusBadge, T } from '../components/UI';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, metricGloss, metricsForReport } from '../data';
 import type { MedicationItem, MetricDefinition, MetricKey, Report } from '../data';
@@ -196,7 +196,17 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                           ) : <StatusBadge status={metric.status} />}
                           <Ionicons name="chevron-forward" size={20} color={T.text3} />
                         </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
+                          {/* 아랫줄 왼쪽 = 기준 막대(design-d C안, 글자 없이 막대만). 숫자 기준이 없는 항목은 짧은 안내로 대신한다. */}
+                          {(() => {
+                            const v = detailReport.values[metric.key];
+                            const numericRange = /\d/.test(metric.normalText ?? '');
+                            if (!metric.infoOnly && typeof v === 'number' && numericRange) return <MiniRangeBar metric={metric} value={v} />;
+                            const note = metric.infoOnly ? '판정 없는 참고값'
+                              : metric.normalText === '기관 기준 확인' ? '기준은 기관마다 달라요'
+                              : `정상 ${metric.normalText}`;
+                            return <Text numberOfLines={1} style={{ flexShrink: 1, fontSize: T.fs.caption, color: T.text2 }}>{note}</Text>;
+                          })()}
                           <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: metric.infoOnly ? T.text1 : color }}>
                             {formatMetricValue(metric, detailReport.values[metric.key])}
                             {metric.unit ? <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text2 }}> {metric.unit}</Text> : null}

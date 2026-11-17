@@ -388,8 +388,8 @@ export function Sparkline({ values, color, height = 40 }: {
 // (배지·칩 배경은 기존 T.successBg 유지 — 글자가 올라가는 배경이라 연해야 한다.)
 export const NORMAL_BAND = '#C9EDDC';
 
-/** percentile이 없는 항목용 — 정상범위 밴드 위에 내 수치 위치만 보여준다(추정 등수를 지어내지 않는다). */
-export function RangeBar({ metric, value }: { metric: MetricDefinition; value: number }) {
+/** RangeBar·MiniRangeBar가 같이 쓰는 눈금 — 카드의 막대와 상세의 막대에서 점 위치가 어긋나지 않게 한 곳에서 계산한다. */
+function rangeGeometry(metric: MetricDefinition, value: number) {
   const { low, high } = normalBounds(metric);
   // 축의 기준 폭은 값↔경계 거리가 아니라 정상범위 폭에 비례시킨다 — 살짝 벗어난 값이
   // 축 줌인 때문에 밴드에서 멀리 떨어져 보이는 왜곡을 막는다. 한쪽 경계만 있으면 경계값의 25%를 폭으로 삼는다.
@@ -400,8 +400,26 @@ export function RangeBar({ metric, value }: { metric: MetricDefinition; value: n
   const min = Math.min(value, bandLo) - pad;
   const max = Math.max(value, bandHi) + pad;
   const pct = (v: number) => Math.min(100, Math.max(0, ((v - min) / (max - min)) * 100));
-  const bandL = pct(low ?? min);
-  const bandR = pct(high ?? max);
+  return { low, high, pct, bandL: pct(low ?? min), bandR: pct(high ?? max) };
+}
+
+/** 글자 없는 작은 기준 막대 — 태블릿 검사항목 카드 아랫줄용(design-d). 초록 = 정상 구간, 점 = 내 값(상태색). */
+export function MiniRangeBar({ metric, value }: { metric: MetricDefinition; value: number }) {
+  const { pct, bandL, bandR } = rangeGeometry(metric, value);
+  const { color } = statusTone(metric);
+  return (
+    <View accessibilityLabel="정상 범위와 내 값의 위치" style={{ flex: 1, minWidth: 0, maxWidth: 150, height: 16, justifyContent: 'center' }}>
+      <View style={{ height: 8, borderRadius: 4, backgroundColor: '#E5E8EB' }}>
+        <View style={{ position: 'absolute', left: `${bandL}%`, width: `${Math.max(2, bandR - bandL)}%`, top: 0, bottom: 0, borderRadius: 4, backgroundColor: NORMAL_BAND }} />
+        <View style={{ position: 'absolute', left: `${pct(value)}%`, top: -4, marginLeft: -8, width: 16, height: 16, borderRadius: 8, backgroundColor: color, borderWidth: 3, borderColor: '#fff' }} />
+      </View>
+    </View>
+  );
+}
+
+/** percentile이 없는 항목용 — 정상범위 밴드 위에 내 수치 위치만 보여준다(추정 등수를 지어내지 않는다). */
+export function RangeBar({ metric, value }: { metric: MetricDefinition; value: number }) {
+  const { low, high, pct, bandL, bandR } = rangeGeometry(metric, value);
   const { color } = statusTone(metric);
   // 라벨을 바 전체가 아니라 밴드 위치에 붙인다 — 밴드가 한쪽으로 쏠려도 글자가 초록 영역을 정확히 가리키게.
   // width:0 컨테이너 + alignItems:center = 해당 % 지점을 중심으로 글자를 앉히는 RN 트릭.
