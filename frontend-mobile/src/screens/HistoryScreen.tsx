@@ -214,7 +214,9 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
             <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 21, marginBottom: 12 }}>
               첫 회차와 마지막 회차를 비교한 값이에요. 중간에 좋아진 구간이 있어도 여기엔 담기지 않아요 — 최근 흐름은 위 점수 추이를 보세요.
             </Text>
-            <Expandable label={`항목 ${changePace.length}개 보기`}>
+            {/* 태블릿은 넓은 왼쪽 열에 놓이므로(design-d) 목록 5줄을 접지 않고 바로 편다. 폰은 그대로 접는다. */}
+            {(() => {
+              const paceList = (<>
               <View style={{ gap: 8 }}>
                 {changePace.map((p, i) => {
                   const strong = (p.pace.ratio ?? 0) >= 2;
@@ -239,7 +241,9 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
               <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, lineHeight: 20, marginTop: 10 }}>
                 기준: 건강보험공단 검진 표본의 성별·연령대별 평균 변화량. 위험도 예측이 아니라 변화 폭 비교예요.
               </Text>
-            </Expandable>
+              </>);
+              return isTablet ? paceList : <Expandable label={`항목 ${changePace.length}개 보기`}>{paceList}</Expandable>;
+            })()}
           </SummaryCard>
   ) : null;
 

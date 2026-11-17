@@ -284,9 +284,15 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
   const positionCard = axes.length > 0 ? detailCard(<><Text style={h}>{valueArea ? '또래와 견주면' : positionTitle(axes)}</Text>{positionExtra}{children}</>, 'position') : null;
   const meaningCard = (meaning || meaningExtra) ? detailCard(<><Text style={h}>그래서 어떤 뜻이에요?</Text>{!!meaning && <Text style={body}>{meaning}</Text>}{meaningExtra}</>, 'meaning') : null;
   const tipsCard = (tips?.length || tipsExtra) ? detailCard(<><Text style={{ ...h, marginBottom: 12 }}>이렇게 해 보세요</Text>{tips?.slice(0, 3).map((tip, i) => <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, marginTop: i === 0 ? 0 : 6 }}><View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: T.fs.body, fontWeight: '800', color: '#007A49' }}>{i + 1}</Text></View><Text style={{ flex: 1, fontSize: T.fs.strong, color: T.text1, lineHeight: 26 }}>{tip}</Text></View>)}{tipsExtra}</>, 'tips') : null;
-  const tabletColumns = isLandscape
-    ? [[conclusionCard, valueCard], [definitionCard, positionCard, meaningCard], [tipsCard]]
-    : [[conclusionCard, valueCard, definitionCard], [positionCard, meaningCard, tipsCard]];
+  // 값 그래프가 없는 카드(히스토리 «더 살펴보기» 두 장)는 ③칸의 목록이 본문이다. 좁은 오른쪽 열에
+  // 밀어 넣으면 왼쪽은 결론·정의 두 장만 남아 비고 본문은 길게 눌린다 — 넓은 왼쪽 열 결론 바로 아래로 올린다(design-d).
+  const tabletColumns = !valueArea
+    ? (isLandscape
+      ? [[conclusionCard, positionCard], [definitionCard, meaningCard], [tipsCard]]
+      : [[conclusionCard, positionCard], [definitionCard, meaningCard, tipsCard]])
+    : isLandscape
+      ? [[conclusionCard, valueCard], [definitionCard, positionCard, meaningCard], [tipsCard]]
+      : [[conclusionCard, valueCard, definitionCard], [positionCard, meaningCard, tipsCard]];
 
   return (
     <>
