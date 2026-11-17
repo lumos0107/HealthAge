@@ -11,6 +11,7 @@ import { calcGloss, cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITER
 import type { MetricDefinition, Report } from '../data';
 import type { RealRecommendations, RealEgfr, RealComboAnalysis, RealCalcItem, RealComboGroup, RealSingleGroup, RealAscvdSimulation } from '../health';
 import { ACTIONS, rankActions } from '../lifestyleActions';
+import { analysisSummary, levelSummary, worstInterpretation } from '../analysisSummary';
 import type { Ctx } from '../lifestyleActions';
 
 /** 장기 구획 — ②층 카드 6장을 신장/간/대사·지질/심혈관으로 나누는 «덩어리 표시».
@@ -627,41 +628,7 @@ function ComboMeanCompare({ combo }: { combo: RealComboGroup }) {
   );
 }
 
-/** 지표 카드의 결론 한 줄 — 행(근거)을 읽기 전에 요약부터 보여준다.
- *  level: info=판정 없음(제외), low=양호, 그 외(moderate/high/very_high)=주의 이상. */
-/** 1뎁스 요약 — «몇 개가» 걸렸는지만 센다.
- *  «얼마나 나쁜가»는 배지가 말하므로 여기서 '양호/주의' 낱말을 다시 쓰지 않는다.
- *  ⚠️ 걸린 지표의 «이름»을 대는 쪽이 더 유용하겠지만 그럴 수 없다 — 항목명이
- *  「Castelli 지수 I」·「AIP 죽상형성지수」·「METS-IR」처럼 전문용어라
- *  1뎁스에 늘어놓으면 스펙 §2(1뎁스에 전문 용어 금지)를 어기고 읽히지도 않는다.
- *  이름은 카드를 열면 CalcRows가 값·기준과 함께 보여준다. */
-/** 지표가 몇 개 안 되는 카드의 결론 — «가장 나쁜 지표의 판정»을 그대로 쓴다.
- *
- *  ⚠️ 개수(levelSummary)는 제목의 질문에 답하지 않는다. 「간에 지방이 꼈나」에
- *  「지표 2개 중 2개가 기준 밖」은 계산 도구 이야기지 간 이야기가 아니고,
- *  판단은 배지가 이미 말한다. 백엔드가 지표마다 보내주는 판정이 실제 답이다.
- *
- *  ⚠️ 읽는 것은 `interpretation`이 아니라 `plain`이다. `interpretation`은 학회 원문
- *  라벨(「진행 간섬유화 배제 불가 (추가 평가 권장)」·「NPV~96%」)이라 2뎁스 배지에는
- *  맞지만 1뎁스 결론 문장으로는 §7(해요체·진단 단정 금지)과 축 2(전문용어 금지)에
- *  걸린다. 백엔드가 같은 dict에 해요체 한 문장을 함께 내려주고, 여기서는 그것을
- *  그대로 쓴다 — 프론트에서 다시 쓰면 지어내는 것이 된다.
- *  `plain`이 없는 계산기는 결론에 오르지 않는다(null → 카드가 결론을 안 그린다).
- *
- *  지표가 많은 카드(대사·지질 7종)에는 쓰지 않는다: 하나만 꺼내면 나머지가 묻히고,
- *  지표 이름이 전부 전문용어라 «무엇이» 그런지 1뎁스에 밝힐 수도 없다. */
-const LEVEL_RANK: Record<string, number> = { very_high: 0, high: 1, moderate: 2, borderline: 2, low: 3, info: 4 };
-
-function worstInterpretation(items: { level: string; plain?: string | null }[]): string | null {
-  const withText = items.filter((it) => it.plain);
-  if (!withText.length) return null;
-  const worst = [...withText].sort((a, b) => (LEVEL_RANK[a.level] ?? 9) - (LEVEL_RANK[b.level] ?? 9))[0];
-  // 같은 판정이 전부면 «모두»로 묶어 하나만 말한다 — 같은 문장을 두 줄 쓰지 않는다.
-  const allSame = withText.every((it) => it.plain === worst.plain);
-  return allSame && withText.length > 1
-    ? `${withText.length}개 지표 모두 ${worst.plain}`
-    : worst.plain!;
-}
+// worstInterpretation·levelSummary(1뎁스 결론 문장)는 ../analysisSummary.ts로 옮겼다 — 결과 요약 PDF와 같이 쓴다(design-d).
 
 /** 「내 LDL 목표를 넘었나」의 1뎁스 결론.
  *
@@ -680,17 +647,6 @@ function ldlSummary(t: { target_text: string; achieved: boolean | null; gap: num
   return t.achieved
     ? `${why} ${goal} · ${now}지키고 있어요`
     : `${why} ${goal} · ${now}${t.gap != null ? `${t.gap} ` : ''}넘었어요`;
-}
-
-function levelSummary(levels: string[]): string | null {
-  const judged = levels.filter((l) => l !== 'info');
-  if (!judged.length) return null;
-  const bad = judged.filter((l) => l !== 'low').length;
-  // 해요체로 끝낸다(§7). 「기준 밖」처럼 명사로 끊으면 문장이 아니라 «라벨»로 읽혀
-  // 카드 셋이 나란히 놓였을 때 표의 한 칸처럼 보인다.
-  return bad === 0
-    ? `지표 ${judged.length}개 모두 기준 안이에요`
-    : `지표 ${judged.length}개 중 ${bad}개가 기준 밖이에요`;
 }
 
 /** 1뎁스 판정 배지 — 카드를 열지 않고도 «이 카드가 나쁜가»를 알 수 있게 한다.
@@ -854,26 +810,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // "점수는 양호한데 아래 카드는 빨간" 상태가 구조적으로 생긴다.
   // ⚠️ 산식은 건드리지 않는다 — 점수는 그 해 기록에 저장된 값이라 바꾸면 홈·기록·히스토리와 어긋난다.
   // 대신 점수가 못 세는 것을 점수 바로 아래 모아 보여 단절을 감추지 않는다.
-  const outsideScore = useMemo(() => {
-    const out: { label: string; detail: string }[] = [];
-    if (egfr && egfr.severity !== 'normal') {
-      out.push({ label: '신장 기능', detail: `${egfr.egfr} ${egfr.unit} · ${egfr.stage} ${egfr.label}` });
-    }
-    if (msDetail?.is_metabolic_syndrome) {
-      out.push({ label: '대사증후군', detail: `5개 기준 중 ${msDetail.count}개 충족` });
-    }
-    // 'low'(낮은 편)만 빼고 경계 구간부터 싣는다 — 경계는 점수엔 흔적조차 없다.
-    if (ascvd?.available && ascvd.risk_level && ascvd.risk_level !== 'low') {
-      out.push({ label: '심혈관 10년 위험', detail: `${ascvd.risk_percent}%${ascvd.risk_label ? ` · ${ascvd.risk_label}` : ''}` });
-    }
-    for (const [name, idx] of [['FLI', flIndices?.fli], ['HSI', flIndices?.hsi]] as const) {
-      if (idx?.level === 'high') out.push({ label: `지방간 지표 ${name}`, detail: idx.interpretation });
-    }
-    if (ldlTarget?.achieved === false) {
-      out.push({ label: 'LDL 개인 목표', detail: `목표 ${ldlTarget.target_text}${ldlTarget.gap != null ? ` · ${ldlTarget.gap} 초과` : ''}` });
-    }
-    return out;
-  }, [egfr, msDetail, ascvd, flIndices, ldlTarget]);
+  // 1뎁스 요약(점수 밖 신호·② 계산 지표·③ 또래·④ 행동)은 결과 요약 PDF와 같은 함수로 계산한다(design-d).
+  const summary = useMemo(() => analysisSummary({ report, metricDefinitions, recommendations, egfr, combo: comboAnalysis, gender, smoking, alcoholWeeklyG }),
+    [report, metricDefinitions, recommendations, egfr, comboAnalysis, gender, smoking, alcoholWeeklyG]);
+  const outsideScore = summary.outsideScore;
 
   // 관리 참고군 묶음: 선택한 연도의 실제 측정값 기준으로 매번 다시 계산한다.
   // 카드 5장은 A3에서 제거됐지만 이 계산은 ③층 '같은 또래 분포' 카드가
@@ -906,20 +846,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   // 태블릿 첫 화면(1뎁스)은 시안처럼 네 층을 2×2 요약 카드로 보여준다. 카드를 누르면
   // 아래 긴 화면 중 그 층만 열리고(2뎁스), 그 안 카드의 상세가 3뎁스다(design-d).
   if (isTablet && openLayer === null) {
-    const peerHighlights = metricsForReport(report, metricDefinitions)
-      .filter((m) => !m.infoOnly && typeof report.values[m.key] === 'number')
-      .map((m) => ({ metric: m, peer: metricPeerRank(m, report.values[m.key] as number) }))
-      .filter((row) => row.peer != null)
-      .sort((a, b) => b.peer!.rank - a.peer!.rank)
-      .slice(0, 3);
-    const action = actionRanks[0] ? ACTIONS.find((a) => a.id === actionRanks[0].id) : null;
-    const layer2Rows = [
-      egfr ? ['신장 기능', `${egfr.egfr} ${egfr.unit} · ${egfr.stage} ${egfr.label}`] : null,
-      flIndices ? ['지방간 지표', worstInterpretation([flIndices.fli, flIndices.hsi].filter(Boolean) as { level: string; interpretation?: string | null }[])] : null,
-      metabolicCalcs.length ? ['대사·지질', levelSummary(metabolicCalcs.map((it) => it.level)) ?? '계산 결과를 확인해 보세요'] : null,
-      ascvd?.available ? ['심혈관 10년 위험', `${ascvd.risk_percent}% · ${ascvd.risk_label ?? '계산 완료'}`] : null,
-      ldlTarget ? ['LDL 개인 목표', ldlTarget.achieved ? '목표 범위예요' : `목표 ${ldlTarget.target_text} · 현재 목표보다 높아요`] : null,
-    ].filter((row): row is [string, string] => row != null);
+    const layer2Rows = summary.computed;
     const tileStyle = tileGrid.cell;
     const summaryText = { fontSize: T.fs.body, color: T.text2, lineHeight: 24 } as const;
     // 카드 전체가 눌려 그 층의 2뎁스로 들어간다. 맨 아래 「자세히 보기 ›」는 누를 수 있다는 표시.
@@ -989,13 +916,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           {renderTile('2', LAYERS[1].title, '검진 수치를 묶어 결과지에 없는 지표를 계산합니다.', layer2Rows.length ? <View style={{ gap: 8 }}>{layer2Rows.map(([label, value]) => <View key={label} style={{ paddingTop: 8, borderTopWidth: 1, borderTopColor: T.divider }}><Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{label}</Text><Text style={summaryText}>{value}</Text></View>)}</View> : <Text style={summaryText}>이 연도에 저장된 추가 분석이 없어요.</Text>)}
 
           {renderTile('3', LAYERS[2].title, '같은 성별·연령대 안에서 내 위치를 확인합니다.', <>
-            {peerHighlights.length ? peerHighlights.map(({ metric, peer }) => <View key={metric.key} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingVertical: 7, borderTopWidth: 1, borderTopColor: T.divider }}><Text style={{ flex: 1, fontSize: T.fs.body, color: T.text1 }}>{metric.shortName ?? metric.name}</Text><Text style={{ fontSize: T.fs.body, fontWeight: '800', color: peer!.rank >= 75 ? T.warn : T.text2 }}>{peer!.rank}등</Text></View>) : <Text style={summaryText}>비교할 수 있는 또래 자료가 없어요.</Text>}
+            {summary.peers.length ? summary.peers.map((peer) => <View key={peer.key} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingVertical: 7, borderTopWidth: 1, borderTopColor: T.divider }}><Text style={{ flex: 1, fontSize: T.fs.body, color: T.text1 }}>{peer.name}</Text><Text style={{ fontSize: T.fs.body, fontWeight: '800', color: peer.rank >= 75 ? T.warn : T.text2 }}>{peer.rank}등</Text></View>) : <Text style={summaryText}>비교할 수 있는 또래 자료가 없어요.</Text>}
             <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>등수가 높을수록 또래 중 관리가 더 필요한 쪽이에요.</Text>
           </>)}
 
           {renderTile('4', LAYERS[3].title, '앞에서 확인한 결과를 실천과 다음 검진 목표로 옮깁니다.', <>
-            <Text style={summaryText}>{action ? `${action.title(actionCtx)}부터 시작하면 현재 지표를 가장 크게 움직여요.` : '현재 조건에 맞는 우선 행동을 계산할 수 없어요.'}</Text>
-            {!!recommendations?.priority_messages?.[0] && <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 12 }}><Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{recommendations.priority_messages[0]}</Text></View>}
+            <Text style={summaryText}>{summary.topAction ? `${summary.topAction}부터 시작하면 현재 지표를 가장 크게 움직여요.` : '현재 조건에 맞는 우선 행동을 계산할 수 없어요.'}</Text>
+            {!!summary.priorityMessage && <View style={{ backgroundColor: T.cardAlt, borderRadius: T.radiusSm, padding: 12 }}><Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text1 }}>{summary.priorityMessage}</Text></View>}
             {reports.length > 0 && <NextCheckupGoal
               latest={reports[reports.length - 1]}
               gender={gender}
