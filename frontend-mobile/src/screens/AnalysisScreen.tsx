@@ -765,6 +765,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   const [openLayer, setOpenLayer] = useState<number | null>(null);
   const layerMode = isTablet && openLayer !== null;
   const showLayer = (i: number) => !layerMode || openLayer === i;
+  // 태블릿에서 ①은 참고 점수를 품고 있어(design-d) 이름을 바꿨다. 폰·「분석 탭 보는 법」은 아직 LAYERS 그대로.
+  const tabletLayer0Title = '내 건강 점수는';
   // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
   // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
   const report = reports[yearIdx];
@@ -957,7 +959,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         {/* 참고 점수는 따로 카드를 두지 않고 ① 안에 넣는다(design-d) — 점수가 «기준을 벗어난 개수»로
             깎이는 값이라 ①과 같은 말을 두 번 하고 있었다(위험 1 · 주의 8, 별도 신호 4가지). */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'stretch' }}>
-          {renderTile('1', LAYERS[0].title, `${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`, <>
+          {renderTile('1', tabletLayer0Title, `${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`, <>
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
                 <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '600' }}>참고 점수</Text>
@@ -1041,7 +1043,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       <LayerHeader
         first
         step={LAYERS[0].step}
-        title={LAYERS[0].title}
+        title={layerMode ? tabletLayer0Title : LAYERS[0].title}
         sub={`${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`}
       />
 
