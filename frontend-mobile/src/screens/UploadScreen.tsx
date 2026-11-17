@@ -230,6 +230,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
       const warn = result.warnings?.length ? ` (${result.warnings.join(' ')})` : '';
       setStatusMsg(`확인한 검진표 값이 저장되었습니다.${warn}`);
       onSaved?.();
+      onTab('dashboard'); // 저장이 끝나면 홈으로(design-d)
     } catch (e) {
       setIsError(true);
       setStatusMsg(e instanceof Error ? `저장에 실패했습니다: ${e.message}` : '저장에 실패했습니다.');
