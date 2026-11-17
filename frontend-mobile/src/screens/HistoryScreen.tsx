@@ -583,7 +583,7 @@ function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: bo
   );
 }
 
-function ScoreChart({ series, wide = false }: { series: { year: number; score: number; complete: boolean }[]; wide?: boolean }) {
+export function ScoreChart({ series, wide = false }: { series: { year: number; score: number; complete: boolean }[]; wide?: boolean }) {
   const reveal = useChartReveal(series.length, 1000, 150);
   const CHART_W = useChartW(CHART_W0);
   // wide(태블릿 4안): 처음·가장 낮음·지금에 이름표(점수 위/아래 한 줄 더)를 달아 위아래 여백을 늘린다.

@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
-import Svg, { Circle, G, Path, Polyline, Rect, Text as SvgText } from 'react-native-svg';
-import { Eyebrow, FadeInUp, MeasuredChart, StatusBadge, T, useChartW } from '../components/UI';
+import Svg, { G, Path } from 'react-native-svg';
+import { Eyebrow, FadeInUp, MeasuredChart, StatusBadge, T } from '../components/UI';
 import { categoryVisual, ScoreCalcNote, scoreTone, SquircleIcon } from '../components/v2';
 import { computeScore } from '../data';
 import type { MetricDefinition, MetricKey, Report, TabKey } from '../data';
 import { headline, scoreSeries, statusCounts, top3Alerts } from '../interpret';
 import { useLayout } from '../responsive';
-import { scoreConclusion } from './HistoryScreen';
+import { ScoreChart, scoreConclusion } from './HistoryScreen';
 
 // 외부 링크를 안전하게 연다 — 실패해도 조용히 죽지 않고 안내를 띄운다.
 async function openExternalUrl(url: string) {
@@ -48,33 +48,6 @@ const QUICK_LINKS: {
   { label: '약국\n찾기', icon: 'bandage-outline', svgPill: true, color: T.primary, url: 'https://www.hira.or.kr/ra/hosp/getHealthMap.do?pgmid=HIRAA030002010000' },
   { label: '결과지\n업로드', icon: 'cloud-upload-outline', color: T.primary, url: null },
 ];
-
-// 점수 변화 미리보기(태블릿 홈) — 구간 띠(70↑ 양호 · 40↑ 주의 · 그 아래 관리 필요) 위에 선 하나,
-// 처음·바닥·지금만 연도를 단다. 폭은 카드에서 잰 값을 쓴다.
-function ScoreMiniChart({ series }: { series: { year: number; score: number }[] }) {
-  const w = useChartW(300);
-  const H = 130;
-  const pad = 6;
-  const n = series.length;
-  const plotW = w - pad * 2;
-  const x = (i: number) => pad + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
-  const y = (v: number) => 4 + (1 - v / 100) * (H - 4 - 26);
-  let trough = 0;
-  for (let i = 1; i < n; i++) if (series[i].score <= series[trough].score) trough = i;
-  const idx = Array.from(new Set([0, trough, n - 1]));
-  const anchor = (i: number) => (i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle');
-  const desc = `점수 추이: ${series.map((p) => `${p.year}년 ${p.score}점`).join(', ')}`;
-  return (
-    <Svg width={w} height={H} accessible accessibilityLabel={desc}>
-      <Rect x={pad} y={y(100)} width={plotW} height={y(70) - y(100)} fill={T.successBg} />
-      <Rect x={pad} y={y(70)} width={plotW} height={y(40) - y(70)} fill={T.warnBg} />
-      <Rect x={pad} y={y(40)} width={plotW} height={y(0) - y(40)} fill={T.dangerBg} />
-      <Polyline points={series.map((p, i) => `${x(i)},${y(p.score)}`).join(' ')} fill="none" stroke={T.text1} strokeWidth={2.6} strokeLinejoin="round" />
-      {idx.map((i) => <Circle key={i} cx={x(i)} cy={y(series[i].score)} r={i === n - 1 ? 5.5 : 4} fill={i === n - 1 ? T.warnFill : T.text1} />)}
-      {idx.map((i) => <SvgText key={`t${i}`} x={x(i)} y={H - 6} fontSize={T.fs.caption} fill={T.text2} textAnchor={anchor(i) as any}>{series[i].year}</SvgText>)}
-    </Svg>
-  );
-}
 
 export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin, onOpenDetail }: {
   onTab: (tab: TabKey) => void;
@@ -248,28 +221,22 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   // 점수 변화 미리보기 — 태블릿 시안에서 새로 넣은 카드. 기록이 2회 이상일 때만 의미가 있다.
   const changeCard = series.length >= 2 ? (() => {
     const concl = scoreConclusion(series);
-    const first = series[0];
-    const last = series[series.length - 1];
-    let trough = 0;
-    for (let i = 1; i < series.length; i++) if (series[i].score <= series[trough].score) trough = i;
-    const mid = trough !== 0 && trough !== series.length - 1 ? ` → ${series[trough].year}년 ${series[trough].score}점` : '';
+    // 히스토리 점수 카드(design-d 4안)와 같은 모양 — 위 한 줄(제목·결론 / 히스토리 보기), 아래 그래프 카드 폭 전체.
+    // 큰 점수는 바로 위 점수 카드가 이미 보여 주므로 여기선 뺀다. 「94점 → 22점 → 40점」 줄은 그래프 이름표가 대신한다.
     return (
-      <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 24, paddingVertical: 22, marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 24 }}>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>점수 변화</Text>
-          <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, marginTop: 10, lineHeight: 27 }}>
-            {concl.lead}<Text style={{ color: concl.ink }}>{concl.main}</Text>
-          </Text>
-          <Text style={{ fontSize: T.fs.caption, color: T.text2, marginTop: 4, lineHeight: 21 }}>
-            {first.year}년 {first.score}점{mid} → {last.year}년 {last.score}점
-          </Text>
-          <Pressable onPress={() => onTab('history')} accessibilityRole="button" style={{ alignSelf: 'flex-start', minHeight: 48, paddingHorizontal: 20, borderRadius: T.radiusMd, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center', marginTop: 14 }}>
+      <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 24, paddingVertical: 22, marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>점수 변화</Text>
+            <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, marginTop: 6, lineHeight: 27 }}>
+              {concl.lead}<Text style={{ color: concl.ink }}>{concl.main}</Text>
+            </Text>
+          </View>
+          <Pressable onPress={() => onTab('history')} accessibilityRole="button" style={{ minHeight: 48, paddingHorizontal: 20, borderRadius: T.radiusMd, backgroundColor: T.primary, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>히스토리 보기</Text>
           </Pressable>
         </View>
-        <View style={{ flex: 1, minWidth: 0, maxWidth: 360 }}>
-          <MeasuredChart><ScoreMiniChart series={series} /></MeasuredChart>
-        </View>
+        <MeasuredChart><ScoreChart series={series} wide /></MeasuredChart>
       </View>
     );
   })() : null;
