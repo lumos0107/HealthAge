@@ -713,6 +713,12 @@ function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpe
     return dup ? (metricPlainName[k]?.text ?? m.shortName) : short;
   };
 
+  // 같이 보기(design-d, 태블릿) — 묶음 항목의 단위가 모두 같을 때만(혈압·지질·간 기능).
+  // 단위가 다르면(혈당·체중, 혈액·신장) 한 축에 겹칠 때 값이 작은 쪽이 바닥에 깔려 흐름이 안 보인다 → 지금처럼 하나씩.
+  const { isTablet } = useLayout();
+  const overlay = isTablet && tabKeys.length > 1 && new Set(tabKeys.map((k) => defByKey(k)!.unit)).size === 1;
+  const nameOf = (k: MetricKey) => defByKey(k)!.shortName ?? labelOf(k);
+
   const measured = focus ? measuredIdx(focus.key) : [];
   const prevIdx = [...measured].reverse().find((i) => i < idx);
   const nextIdx = measured.find((i) => i > idx);
@@ -754,8 +760,10 @@ function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpe
         onSelect={(i) => setSelIdx(snap(i, focus.key))}
         reports={reports}
         band={normalBounds(focus)}
-        bandLabel={/\d/.test(focus.normalText ?? '') ? `정상 (${normalPhrase(focus)})` : undefined}
+        bandLabel={!overlay && /\d/.test(focus.normalText ?? '') ? `정상 (${normalPhrase(focus)})` : undefined}
         desc={`${labelOf(focus.key)} 추이`}
+        others={overlay ? tabKeys.filter((k) => k !== focus.key) : undefined}
+        nameOf={nameOf}
       />
 
       {/* 이전 해 / 다음 해 */}
@@ -765,8 +773,34 @@ function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpe
         <StepButton label="다음 해" dir="next" disabled={nextIdx == null} onPress={() => nextIdx != null && setSelIdx(nextIdx)} />
       </View>
 
-      {/* 값 + 배지 */}
-      {isFiniteNum(value) && (
+      {/* 같이 보기면 값 카드 하나 대신 묶음 전체 수치 목록 — 그래프를 읽지 않아도 같이 봐야 할 수치가 한 번에 보인다.
+          줄을 누르면 그 항목이 기준(진한 선·정상 띠)이 된다. */}
+      {overlay ? (
+        <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.divider }}>
+          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: A11Y.sub, marginBottom: 4 }}>{r.year}년 검진 수치</Text>
+          {tabKeys.map((k) => {
+            const m = yearMetrics.find((mm) => mm.key === k) ?? defByKey(k)!;
+            const v = r.values[k];
+            const on = k === focus.key;
+            return (
+              <Pressable key={k} onPress={() => setPick(k)} accessibilityRole="button" accessibilityState={{ selected: on }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingHorizontal: 12, borderRadius: 12, backgroundColor: on ? '#EEF5FF' : 'transparent' }}>
+                <Text style={{ flex: 1, fontSize: T.fs.body, fontWeight: on ? '800' : '600', color: T.text1 }}>{labelOf(k)}</Text>
+                {isFiniteNum(v) ? (
+                  <>
+                    <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: statusInk(m.status) }}>
+                      {v}
+                      {!!m.unit && <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: A11Y.sub }}> {m.unit}</Text>}
+                    </Text>
+                    {/* StatusChip은 alignSelf:flex-start라 줄 가운데에서 위로 뜬다 — 감싸서 가운데에 앉힌다. */}
+                    <View><StatusChip status={m.status ?? '정상'} /></View>
+                  </>
+                ) : <Text style={{ fontSize: T.fs.caption, color: A11Y.sub }}>이 해엔 안 쟀어요</Text>}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : isFiniteNum(value) && (
         <FadeIn key={`${focus.key}-${idx}`} duration={260}>
         <View style={{ backgroundColor: '#F7F8FA', borderRadius: 16, padding: 16, marginTop: 16 }}>
           <Text style={{ fontSize: 34, fontWeight: '800', color: T.text1, letterSpacing: -0.5 }}>
@@ -833,23 +867,34 @@ function StepButton({ label, dir, disabled, onPress }: { label: string; dir: 'pr
 
 const CH = 190;
 const PAD = { top: 34, right: 12, bottom: 34, left: 12 };
+/** 같이 보기(design-d) — 선 끝 이름표 자리 폭과 연한 선 색. */
+const END_LABEL_W = 118;
+const FAINT_LINE = '#C3CAD2';
 const PLOT_H = CH - PAD.top - PAD.bottom;
 
-function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc }: {
+function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc, others, nameOf }: {
   metricKey: MetricKey; selIdx: number; onSelect: (i: number) => void; reports: Report[];
   band?: { low?: number; high?: number } | null;
   bandLabel?: string;
   desc: string;
+  /** 같이 볼 항목(design-d) — 연한 회색 선으로 깔고, 선 끝에 이름·값을 적는다(색 범례 대신). 단위가 같은 묶음만 넘긴다. */
+  others?: MetricKey[];
+  nameOf?: (k: MetricKey) => string;
 }) {
   const reveal = useChartReveal(metricKey, 900);
   const CHART_W = useChartW(CHART_W0);
-  const PLOT_W = CHART_W - PAD.left - PAD.right;   // 항목 탭을 바꿀 때만 다시 그린다 — 연도를 고를 때는 아니다
-  const pts = reports
-    .map((rep, i) => ({ idx: i, v: rep.values[metricKey], year: rep.year }))
+  const overlay = !!others?.length && !!nameOf;
+  // 같이 보기면 오른쪽에 선 끝 이름표 자리(「총콜레스테롤 216」 한 줄 폭)를 비운다.
+  const padRight = overlay ? PAD.right + END_LABEL_W : PAD.right;
+  const PLOT_W = CHART_W - PAD.left - padRight;   // 항목 탭을 바꿀 때만 다시 그린다 — 연도를 고를 때는 아니다
+  const seriesOfKey = (k: MetricKey) => reports
+    .map((rep, i) => ({ idx: i, v: rep.values[k], year: rep.year }))
     .filter((p): p is { idx: number; v: number; year: number } => isFiniteNum(p.v));
+  const pts = seriesOfKey(metricKey);
+  const otherSeries = overlay ? others!.map((k) => ({ k, pts: seriesOfKey(k) })).filter((o) => o.pts.length > 0) : [];
   // 밴드 경계도 범위에 넣는다 — 축 밖으로 밀리면 정작 기준선이 안 보인다. (low:0은 «하한 없음»)
   const edges = [band?.low, band?.high].filter((v): v is number => v != null && v > 0);
-  const all = [...pts.map((p) => p.v), ...edges];
+  const all = [...pts.map((p) => p.v), ...edges, ...otherSeries.flatMap((o) => o.pts.map((p) => p.v))];
   const mn = Math.min(...all);
   const mx = Math.max(...all);
   const padV = (mx - mn || Math.abs(mx) * 0.1 || 1) * 0.15;
@@ -882,7 +927,8 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc
   const lastP = pts[pts.length - 1];
   // 연도 눈금 — 잰 해마다 눈금과 연도를 단다. 자리가 모자라면(라벨 폭 약 44px) 건너뛰되
   // 처음·끝·고른 해는 항상 남기고, 그 곁의 이웃 라벨은 겹치지 않게 뺀다.
-  const LABEL_GAP = 44;
+  // 같이 보기는 이름표 자리만큼 그래프가 좁아져(가로 태블릿 약 190px) 처음·끝 연도와 이웃이 붙는다 — 간격을 넓힌다.
+  const LABEL_GAP = overlay ? 58 : 44;
   const minGap = pts.length > 1 ? Math.min(...pts.slice(1).map((p, i) => x(p.idx) - x(pts[i].idx))) : LABEL_GAP;
   const stride = Math.max(1, Math.ceil(LABEL_GAP / Math.max(minGap, 1)));
   const must = new Set<number>([firstP.idx, lastP.idx, ...(sel ? [sel.idx] : [])]);
@@ -914,10 +960,30 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc
           )}
           <Defs>
             <ClipPath id="line-reveal">
-              <Rect x={-PAD.left} y={-PAD.top} width={(PLOT_W + PAD.left + PAD.right) * reveal} height={CH} />
+              <Rect x={-PAD.left} y={-PAD.top} width={(PLOT_W + PAD.left + padRight) * reveal} height={CH} />
             </ClipPath>
           </Defs>
           <G clipPath="url(#line-reveal)">
+          {/* 같이 볼 항목 — 고른 항목 «아래»에 연하게 깐다. */}
+          {otherSeries.map((o) => (
+            <G key={`o-${o.k}`}>
+              <Path d={o.pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.idx)},${y(p.v)}`).join(' ')} stroke={FAINT_LINE} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <Circle cx={x(o.pts[o.pts.length - 1].idx)} cy={y(o.pts[o.pts.length - 1].v)} r={4} fill={FAINT_LINE} />
+            </G>
+          ))}
+          {/* 선 끝 이름표 — 색 범례를 맞춰 볼 필요 없이 «어느 선이 무엇인지» 바로 읽히게. 가까우면 아래로 민다. */}
+          {overlay && (() => {
+            const rows = [{ k: metricKey, p: pts[pts.length - 1], main: true }, ...otherSeries.map((o) => ({ k: o.k, p: o.pts[o.pts.length - 1], main: false }))]
+              .filter((r) => !!r.p)
+              .map((r) => ({ ...r, ly: y(r.p.v) }))
+              .sort((a, b) => a.ly - b.ly);
+            for (let i = 1; i < rows.length; i++) if (rows[i].ly - rows[i - 1].ly < 18) rows[i].ly = rows[i - 1].ly + 18;
+            return rows.map((r) => (
+              <SvgText key={`lb-${r.k}`} x={PLOT_W + 10} y={r.ly + 5} fontSize={T.fs.caption} fontWeight={r.main ? '800' : '600'} fill={r.main ? LINE_TEXT : T.text3}>
+                {`${nameOf!(r.k)} ${r.p.v}`}
+              </SvgText>
+            ));
+          })()}
           <Path
             d={pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.idx)},${y(p.v)}`).join(' ')}
             stroke={LINE} strokeWidth={3.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
@@ -927,8 +993,9 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc
             <G>
               <Circle cx={x(sel.idx)} cy={y(sel.v)} r={12} fill={LINE} opacity={0.2} />
               <Circle cx={x(sel.idx)} cy={y(sel.v)} r={8} fill={LINE} stroke="#fff" strokeWidth={2.5} />
-              {/* 숫자는 고른 해 하나만 크게 — 나머지는 아래 값 영역이 말한다. 가장자리에선 안쪽으로 붙인다. */}
-              <SvgText
+              {/* 숫자는 고른 해 하나만 크게 — 나머지는 아래 값 영역이 말한다. 가장자리에선 안쪽으로 붙인다.
+                  같이 보기에서 마지막 해를 고르면 선 끝 이름표가 같은 값을 말하므로 뺀다. */}
+              {!(overlay && sel.idx === lastP.idx) && <SvgText
                 x={sel.idx === 0 ? x(sel.idx) - 4 : sel.idx === n - 1 ? x(sel.idx) + 4 : x(sel.idx)}
                 y={y(sel.v) - 18 < -14 ? y(sel.v) + 32 : y(sel.v) - 18}
                 fontSize={T.fs.strong}
@@ -937,7 +1004,7 @@ function LineChart({ metricKey, selIdx, onSelect, reports, band, bandLabel, desc
                 textAnchor={sel.idx === 0 ? 'start' : sel.idx === n - 1 ? 'end' : 'middle'}
               >
                 {sel.v}
-              </SvgText>
+              </SvgText>}
             </G>
           )}
           </G>
