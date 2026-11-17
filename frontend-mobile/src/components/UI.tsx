@@ -370,13 +370,18 @@ export function MetricBar({ label, value, width, color, valueText }: {
  * 연도를 바꿀 때마다 다시 처음부터 채워져서, 딱딱하게 숫자만 바뀌는 것보다 변화가 잘 느껴진다.
  */
 /** 화면 진입 시 카드가 살짝 떠오르며 나타나는 등장 애니메이션 — 여러 화면에서 공통으로 쓴다 */
+/** 태블릿 2열 격자 칸 안에 그려지는 중인지. 칸 안의 카드는 바깥 여백을 버리고 칸 높이를 채운다
+ *  (분석 탭 2뎁스 격자 — 히스토리 태블릿 «항목별로 보기»와 같은 모양). */
+export const GridCellContext = createContext(false);
+
 export function FadeInUp({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const anim = useRef(new Animated.Value(0)).current;
+  const inCell = useContext(GridCellContext);
   useEffect(() => {
     Animated.timing(anim, { toValue: 1, duration: 480, delay, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, []);
   return (
-    <Animated.View style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
+    <Animated.View style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }, inCell && { flexGrow: 1 }]}>
       {children}
     </Animated.View>
   );

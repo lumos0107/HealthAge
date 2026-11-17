@@ -2,7 +2,7 @@ import { useLayout } from '../responsive';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
+import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, GridCellContext, T } from '../components/UI';
 import { Expandable, PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
 import { formatMetricValue, metricPeerRank, rankFromPercentile, sortByAttention } from '../interpret';
 import type { PositionAxis } from '../interpret';
@@ -25,6 +25,22 @@ import type { Ctx } from '../lifestyleActions';
  *  어긋나 화면이 흔들린다. 왼쪽·크게·진하게가 «덩어리의 시작»을 가장 잘 말한다.
  *  중복 걱정(「신장 / 콩팥이 잘 거르고 있나」)은 실제로는 거슬리지 않았다 —
  *  머리말은 구획을 말하고 카드는 질문을 말해서 읽는 층위가 다르다. */
+/** 태블릿 2뎁스(design-d) — 한 층의 카드들을 히스토리 태블릿 «항목별로 보기»처럼 2열 카드 격자로 놓는다.
+ *  on이 아니면(폰·태블릿 전체 보기) 아무것도 감싸지 않고 원래 세로 흐름 그대로 둔다.
+ *  ⚠️ 자식은 Fragment로 묶지 말고 바로 넘긴다 — Children.toArray는 Fragment를 펼치지 않아 한 칸이 된다. */
+function LayerGrid({ on, children }: { on: boolean; children: React.ReactNode }) {
+  if (!on) return <>{children}</>;
+  // 마지막 홀수 칸도 반 폭을 유지한다(히스토리 격자와 같은 값).
+  const cell = { flexBasis: 'calc(50% - 6px)', flexGrow: 0, minWidth: 0 } as any;
+  return (
+    <GridCellContext.Provider value>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginHorizontal: 16, marginTop: 8 }}>
+        {React.Children.toArray(children).map((child, i) => <View key={i} style={cell}>{child}</View>)}
+      </View>
+    </GridCellContext.Provider>
+  );
+}
+
 function DomainHeader({ title }: { title: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginTop: 16, marginBottom: 6 }}>
@@ -1038,7 +1054,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           reports 자체는 오래된 순이므로, 표시만 뒤집고 인덱스(i)는 원래 것을 그대로 넘긴다.
           ⚠️ 카드 «밖»에 둔다(2026-08-02). 아래 카드는 전체가 눌리는 SummaryCard라,
           안에 두면 연도 칩을 눌러도 상세 모달이 함께 열린다. */}
-      {layerMode ? <View style={{ height: 12 }} /> : (
+      {!layerMode && (
       <FadeInUp delay={80}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginBottom: 10 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
         {reports.map((r, i) => ({ r, i })).reverse().map(({ r, i }) => (
@@ -1060,8 +1076,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* 카드 1 — 점수 히어로. **점수만** 말한다.
           여기서 결론 문장·신호 목록까지 떠안으면 «이 탭의 얼굴»이 텍스트 벽이 된다.
           "그래서 무엇이 나쁜가"는 바로 아래 카드가 맡는다. */}
+      <LayerGrid on={layerMode}>
       <FadeInUp delay={100}>
-      <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }}>
+      <View style={[{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 20, marginBottom: 8 }, layerMode && { marginHorizontal: 0, marginBottom: 0, flexGrow: 1 }]}>
         <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '500', marginBottom: 6 }}>참고 점수</Text>
         {/* 연도를 바꿀 때마다 0에서부터 채워지며 그려져, 변화가 자연스럽게 느껴진다 */}
         <AnimatedScore score={scorePct} color={scoreFill} />
@@ -1320,6 +1337,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         )}
       </SummaryCard>
       </FadeInUp>
+      </LayerGrid>
       </>)}
 
       {/* 연도 기준 안내 — ①층이 «끝난 뒤»에 둔다(2026-08-02).
@@ -1337,12 +1355,14 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {showLayer(1) && (<>
       <LayerHeader first={layerMode} step={LAYERS[1].step} title={LAYERS[1].title} sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
+      {/* 2뎁스(태블릿)에서는 장기 소제목을 빼고 카드 6장을 한 격자에 놓는다 — 카드 제목이 이미 장기를 말한다. */}
+      <LayerGrid on={layerMode}>
 
       {/* 신장 — eGFR·CrCl */}
       {/* 소제목은 장기 이름으로 통일한다(간·대사·지질·심혈관과 같은 층위).
           「신장 기능」이면 바로 아래 카드 「신장 기능 (eGFR)」과 같은 말을 두 번 한다. */}
       {/* ③ 신장 기능(eGFR) — 그 해 혈청 크레아티닌이 실제로 측정된 경우에만 백엔드 계산 결과를 보여준다 */}
-      {egfr && <DomainHeader title="신장" />}
+      {!layerMode && egfr && <DomainHeader title="신장" />}
       {egfr && (
         <FadeInUp delay={180}>
         <SummaryCard title="콩팥이 잘 거르고 있나" term="eGFR" definition={cardContent['콩팥이 잘 거르고 있나']?.definition} detail={cardContent['콩팥이 잘 거르고 있나']?.detail} meaning={cardContent['콩팥이 잘 거르고 있나']?.meaning} tips={cardContent['콩팥이 잘 거르고 있나']?.tips} summary={`1분에 ${egfr.egfr}mL를 걸러요`}
@@ -1399,7 +1419,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           갈라 두니 유형 카드가 조건(ALT>40 또는 GGT>75)을 못 맞추는 해에 아무 말 없이 사라져,
           «원래 없는 기능»으로 읽혔다. 합치면 그 자리에서 왜 지금은 대상이 아닌지 말할 수 있다.
           값·구간·해석 문구는 전부 백엔드가 만들어 보내준 것을 그대로 쓴다. */}
-      {flIndices && (flIndices.fli || flIndices.hsi) && <DomainHeader title="간" />}
+      {!layerMode && flIndices && (flIndices.fli || flIndices.hsi) && <DomainHeader title="간" />}
       {flIndices && (flIndices.fli || flIndices.hsi) && (
         <FadeInUp delay={215}>
         <SummaryCard title="간에 지방이 꼈나" term="FLI·HSI" definition={cardContent['간에 지방이 꼈나']?.definition} detail={cardContent['간에 지방이 꼈나']?.detail} meaning={cardContent['간에 지방이 꼈나']?.meaning} tips={cardContent['간에 지방이 꼈나']?.tips}
@@ -1523,7 +1543,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       )}
 
       {/* 대사·지질 — 검증된 수치 계산기(지질비·인슐린저항성·내장지방·혈압) */}
-      {metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
+      {!layerMode && metabolicCalcs.length > 0 && <DomainHeader title="대사·지질" />}
       {metabolicCalcs.length > 0 && (
         <FadeInUp delay={216}>
         <SummaryCard title="혈당·지질에 이상이 있나" term="TyG·Non-HDL" definition={cardContent['혈당·지질에 이상이 있나']?.definition} detail={cardContent['혈당·지질에 이상이 있나']?.detail} meaning={cardContent['혈당·지질에 이상이 있나']?.meaning} tips={cardContent['혈당·지질에 이상이 있나']?.tips} positionExtra={<CalcRankBlock items={metabolicCalcs} />} axes={calcAxes(metabolicCalcs)} summary={levelSummary(metabolicCalcs.map((it) => it.level))}
@@ -1650,7 +1670,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
       {/* ⚠️ 괄호가 필요하다. `A || B && <X/>`는 `A || (B && <X/>)`로 묶여서,
           A가 참이면 식 전체가 true가 되고 React는 true를 아무것도 그리지 않는다 —
           ascvd가 있는 해에는 「심혈관」 구획이 조용히 사라졌다. */}
-      {((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
+      {!layerMode && ((ascvd?.available && ascvd.risk_percent != null) || cvCalcs.length > 0) && <DomainHeader title="심혈관" />}
       {ascvd?.available && ascvd.risk_percent != null && (
         <FadeInUp delay={221}>
         <SummaryCard
@@ -1715,6 +1735,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </SummaryCard>
         </FadeInUp>
       )}
+      </LayerGrid>
       </>)}
 
       {/* ③층 이름은 "같은 또래는 어떤가" — "나만 그런가"였을 때 '또래 자체가 나빠졌나'(집단 추세)가
@@ -1733,6 +1754,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
        *  「또래 100명 중 32명」은 그 판정을 읽는 «맥락»이고, 여기 모아 보기는
        *  「내가 또래 중 어디쯤인가」라는 **다른 질문**이다. 읽는 목적이 달라
        *  겹쳐도 «같은 말 두 번»이 되지 않는다(기록 39의 장기 구획과 같은 판단). */}
+      <LayerGrid on={layerMode}>
       <PeerRankRoundup
         metrics={metricsForReport(report, metricDefinitions)}
         report={report}
@@ -1968,6 +1990,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         />
         </FadeInUp>
       )}
+      </LayerGrid>
       </>)}
 
       {showLayer(3) && (<>
@@ -1975,6 +1998,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 
       {/* ④-0 흩어진 행동을 한 줄로. 맞춤 권장사항보다 «앞»에 둔다 —
           「무엇부터」를 읽고 나서 「그래서 각각 어떻게」를 읽는 순서다. */}
+      <LayerGrid on={layerMode}>
       <ActionRoundup
         ranks={actionRanks}
         ctx={actionCtx}
@@ -2119,6 +2143,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         />
         </FadeInUp>
       )}
+
+      </LayerGrid>
+      {layerMode && <View style={{ height: 12 }} />}
 
       {/* 다음 검진 목표 세우기 — 문제 → 행동 → 결과. 권장사항 바로 뒤에 둔다(같은 ④층).
           ⚠️ 서버는 '가장 최근' 저장 검진값을 기준선으로 쓴다. 그래서 위 연도 선택과

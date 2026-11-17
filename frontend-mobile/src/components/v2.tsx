@@ -8,7 +8,7 @@ import { SCORE_PENALTY } from '../data';
 import type { MetricDefinition, Report } from '../data';
 import { formatMetricValue, normalBounds, positionTitle, scoreGrade } from '../interpret';
 import type { PositionAxis } from '../interpret';
-import { MeasuredChart, T, useChartReveal, useChartW, W, WebFrame } from './UI';
+import { GridCellContext, MeasuredChart, T, useChartReveal, useChartW, W, WebFrame } from './UI';
 import { useLayout } from '../responsive';
 
 /** 시니어 접근성 색 — 흰/연한 배경 위에서 글자 대비 4.5:1 이상. 글자는 T.success/warn/danger, 막대·점·큰 숫자는 T.*Fill.
@@ -224,6 +224,8 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
   const open = openProp ?? openState;
   const setOpen = (v: boolean) => { if (openProp === undefined) setOpenState(v); onOpenChange?.(v); };
   const [showDetail, setShowDetail] = useState(false);
+  // 태블릿 격자 칸 안(분석 탭 2뎁스)이면 card 모양의 바깥 여백을 버리고 칸 높이를 채운다.
+  const inCell = React.useContext(GridCellContext);
   const chevron = <Ionicons name="chevron-forward" size={22} color="#6B7684" />;
   const trigger = variant === 'row' ? (
     <Pressable
@@ -248,9 +250,10 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
       {chevron}
     </Pressable>
   ) : (
-    <Pressable onPress={() => setOpen(true)} style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }}>
+    <Pressable onPress={() => setOpen(true)} accessibilityRole="button" style={[{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginBottom: 8 }, inCell && { marginHorizontal: 0, marginBottom: 0, flexGrow: 1 }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1 }}>
+        {/* 격자 칸(반 폭)에서는 용어를 제목 아래 줄로 내린다 — 한 줄에 두면 「간이 굳어가고 / 있나 BARD·De / Ritis」처럼 둘 다 쪼개진다. */}
+        <View style={inCell ? { flex: 1, minWidth: 0, gap: 2 } : { flexDirection: 'row', alignItems: 'baseline', gap: 6, flex: 1 }}>
           <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, flexShrink: 1 }}>{title}</Text>
           {!!term && <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: A11Y.sub }}>{term}</Text>}
         </View>
@@ -289,6 +292,8 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
     <>
       {trigger}
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
+        {/* 상세(3뎁스) 안은 격자 칸이 아니다 — 칸 표시를 끊는다. */}
+        <GridCellContext.Provider value={false}>
         {/* 태블릿에서는 검사항목 상세와 같은 전체 폭 프레임을 쓴다. */}
         <WebFrame wide={isTablet}>
         <View style={{ flex: 1, backgroundColor: T.bg }}>
@@ -308,6 +313,7 @@ export function SummaryCard({ title, term, summary, detailSummary, badge, previe
           </ScrollView>
         </View>
         </WebFrame>
+        </GridCellContext.Provider>
       </Modal>
     </>
   );
