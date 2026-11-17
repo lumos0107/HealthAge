@@ -318,8 +318,6 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
           />
         </View>
       )),
-      ...(paceCard ? [<View key="pace" style={cell}>{paceCard}</View>] : []),
-      ...(highlightCard ? [<View key="hl" style={cell}>{highlightCard}</View>] : []),
     ];
     return (
       <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
@@ -371,6 +369,18 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
 
         <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>항목별로 보기</Text>
         <View style={gridStyle}>{tiles}</View>
+
+        {/* 「또래보다 빨리 변한 항목」·「그 밖의 변화 보기」는 항목 묶음이 아니라 여러 항목을 가로지르는
+            보기라, 항목 격자에 섞지 않고 따로 한 줄로 뺀다(design-d). */}
+        {(paceCard || highlightCard) && (
+          <>
+            <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>더 살펴보기</Text>
+            <View style={gridStyle}>
+              {paceCard && <View style={cell}>{paceCard}</View>}
+              {highlightCard && <View style={cell}>{highlightCard}</View>}
+            </View>
+          </>
+        )}
 
         <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
       </ScrollView>
