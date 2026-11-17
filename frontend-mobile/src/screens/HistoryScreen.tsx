@@ -545,7 +545,7 @@ function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: bo
           </View>
         </View>
         <View>
-          {series.length >= 2 && <MeasuredChart><ScoreChart series={series} wide /></MeasuredChart>}
+          {series.length >= 2 && <MeasuredChart><ScoreChart series={series} wide compact /></MeasuredChart>}
           {series.length >= 2 && hasGap && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
               <Svg width={20} height={20} viewBox="0 0 20 20">
@@ -583,12 +583,13 @@ function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: bo
   );
 }
 
-export function ScoreChart({ series, wide = false }: { series: { year: number; score: number; complete: boolean }[]; wide?: boolean }) {
+export function ScoreChart({ series, wide = false, compact = false }: { series: { year: number; score: number; complete: boolean }[]; wide?: boolean; compact?: boolean }) {
   const reveal = useChartReveal(series.length, 1000, 150);
   const CHART_W = useChartW(CHART_W0);
   // wide(태블릿 4안): 처음·가장 낮음·지금에 이름표(점수 위/아래 한 줄 더)를 달아 위아래 여백을 늘린다.
-  const H = wide ? 260 : 190;
-  const pad = wide ? { top: 46, right: 12, bottom: 40, left: 12 } : { top: 22, right: 8, bottom: 34, left: 8 };
+  // compact(히스토리 태블릿) — 높이를 예전 좌우 배치 그래프(190)에 가깝게 줄인다. 홈 「점수 변화」는 wide 그대로.
+  const H = wide ? (compact ? 210 : 260) : 190;
+  const pad = wide ? { top: compact ? 44 : 46, right: 12, bottom: compact ? 46 : 40, left: 12 } : { top: 22, right: 8, bottom: 34, left: 8 };
   const plotW = CHART_W - pad.left - pad.right;
   const plotH = H - pad.top - pad.bottom;
   const n = series.length;
