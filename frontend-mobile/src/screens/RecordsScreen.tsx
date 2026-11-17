@@ -178,7 +178,7 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                     return (
                       // 위아래 두 줄 카드(design-d 1안) — 한 줄에 아이콘·이름·수치+배지·화살표를 다 넣으면
                       // 이름 칸이 80~100px만 남아 「체질량지수 (BMI)」「혈청 크레아티닌」이 두 줄로 꺾였다.
-                      // 윗줄: 아이콘·이름·화살표 / 아랫줄: 수치(왼쪽)·배지(오른쪽).
+                      // 윗줄: 아이콘·이름·상태 배지·화살표 / 아랫줄: 수치(오른쪽, 예전 배지 자리).
                       <Pressable key={metric.key} onPress={() => onOpenDetail?.(metric.key, selectedYear)} accessibilityRole="button" accessibilityLabel={`${metric.name} 자세히 보기`}
                         style={{ gap: 8, paddingTop: 12, paddingBottom: 12, paddingLeft: 14, paddingRight: 12, borderRadius: 16, backgroundColor: T.white }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -189,18 +189,18 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                               <Text style={{ fontSize: T.fs.caption, color: T.text2 }} numberOfLines={2}>{metricGloss[metric.key]}</Text>
                             )}
                           </View>
-                          <Ionicons name="chevron-forward" size={20} color={T.text3} />
-                        </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
-                          <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: metric.infoOnly ? T.text1 : color }}>
-                            {formatMetricValue(metric, detailReport.values[metric.key])}
-                            {metric.unit ? <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text2 }}> {metric.unit}</Text> : null}
-                          </Text>
                           {metric.infoOnly ? (
                             <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: T.radiusPill, backgroundColor: T.cardAlt }}>
                               <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.text2 }}>○ 참고</Text>
                             </View>
                           ) : <StatusBadge status={metric.status} />}
+                          <Ionicons name="chevron-forward" size={20} color={T.text3} />
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: T.divider }}>
+                          <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: metric.infoOnly ? T.text1 : color }}>
+                            {formatMetricValue(metric, detailReport.values[metric.key])}
+                            {metric.unit ? <Text style={{ fontSize: T.fs.caption, fontWeight: '500', color: T.text2 }}> {metric.unit}</Text> : null}
+                          </Text>
                         </View>
                       </Pressable>
                     );
