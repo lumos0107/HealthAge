@@ -954,22 +954,19 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           ))}
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, backgroundColor: T.white, borderRadius: T.radius, padding: 20 }}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '600', marginBottom: 4 }}>참고 점수</Text>
-            <AnimatedScore score={scorePct} color={scoreFill} />
-          </View>
-          <View style={{ flex: 1, minWidth: 0, borderLeftWidth: 1, borderLeftColor: T.divider, paddingLeft: 24, gap: 8 }}>
-            <View style={{ alignSelf: 'flex-start', backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill }}>
-              <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
-            </View>
-            <Text style={summaryText}>{report.trackCount ? `위험 ${report.trackCount}` : '위험 0'} · {report.manageCount ? `주의 ${report.manageCount}` : '주의 0'}</Text>
-            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>점수에 포함되지 않는 별도 신호 {outsideScore.length}가지</Text>
-          </View>
-        </View>
-
+        {/* 참고 점수는 따로 카드를 두지 않고 ① 안에 넣는다(design-d) — 점수가 «기준을 벗어난 개수»로
+            깎이는 값이라 ①과 같은 말을 두 번 하고 있었다(위험 1 · 주의 8, 별도 신호 4가지). */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'stretch' }}>
           {renderTile('1', LAYERS[0].title, `${report.year}년 검진 수치가 학회 기준 안에 있는지 봅니다.`, <>
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+                <Text style={{ fontSize: T.fs.caption, color: T.text3, fontWeight: '600' }}>참고 점수</Text>
+                <View style={{ backgroundColor: scoreBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: T.radiusPill }}>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: scoreColor }}>{scoreLabel}</Text>
+                </View>
+              </View>
+              <AnimatedScore score={scorePct} color={scoreFill} />
+            </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {([
                 ['■ 정상', normalCount, T.success, T.successBg],
