@@ -744,7 +744,11 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
 }) {
   const { isTablet } = useLayout();
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
-  const [showFullTabletAnalysis, setShowFullTabletAnalysis] = useState(false);
+  // design-d: 태블릿은 1뎁스 = 네 층 2×2 요약, 카드를 누르면 2뎁스 = 그 층만(아래 긴 화면에서 해당 층 부분),
+  // 그 안의 카드를 누르면 3뎁스 = 기존 SummaryCard 상세. null이면 1뎁스.
+  const [openLayer, setOpenLayer] = useState<number | null>(null);
+  const layerMode = isTablet && openLayer !== null;
+  const showLayer = (i: number) => !layerMode || openLayer === i;
   // 점수 계산 방법은 2.5뎁스 — 점수 자체가 요약이고, 산식은 궁금한 사람만 펼쳐 본다.
   // 심혈관 위험엔진 3종 비교는 2.5뎁스 — 기본은 ASCVD 하나만 보여준다.
   const report = reports[yearIdx];
@@ -879,9 +883,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
     [appliedGroups],
   );
 
-  // 태블릿 첫 화면은 시안처럼 네 층을 2×2 요약 카드로 보여준다. 기존의 깊은 분석은
-  // 별도 상세 화면으로 남겨 모든 근거·계산기·접힘 내용을 계속 볼 수 있게 한다.
-  if (isTablet && !showFullTabletAnalysis) {
+  // 태블릿 첫 화면(1뎁스)은 시안처럼 네 층을 2×2 요약 카드로 보여준다. 카드를 누르면
+  // 아래 긴 화면 중 그 층만 열리고(2뎁스), 그 안 카드의 상세가 3뎁스다(design-d).
+  if (isTablet && openLayer === null) {
     const peerHighlights = metricsForReport(report, metricDefinitions)
       .filter((m) => !m.infoOnly && typeof report.values[m.key] === 'number')
       .map((m) => ({ metric: m, peer: metricPeerRank(m, report.values[m.key] as number) }))
@@ -898,8 +902,9 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
     ].filter((row): row is [string, string] => row != null);
     const tileStyle = { flexBasis: 'calc(50% - 6px)', flexGrow: 0, minWidth: 0 } as any;
     const summaryText = { fontSize: T.fs.body, color: T.text2, lineHeight: 24 } as const;
+    // 카드 전체가 눌려 그 층의 2뎁스로 들어간다. 맨 아래 「자세히 보기 ›」는 누를 수 있다는 표시.
     const renderTile = (step: string, title: string, subtitle: string, body: React.ReactNode) => (
-      <View key={step} style={[tileStyle, { backgroundColor: T.white, borderRadius: T.radius, padding: 20, gap: 10 }]}>
+      <Pressable key={step} onPress={() => setOpenLayer(Number(step) - 1)} accessibilityRole="button" accessibilityLabel={`${step}. ${title} 자세히 보기`} style={[tileStyle, { backgroundColor: T.white, borderRadius: T.radius, padding: 20, gap: 10 }]}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
           <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: T.text1 }}>
             <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.white }}>{step}</Text>
@@ -910,11 +915,16 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           </View>
         </View>
         {body}
-      </View>
+        <View style={{ flex: 1 }} />
+        <View style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, borderTopWidth: 1, borderTopColor: T.divider, marginTop: 4 }}>
+          <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.primaryText }}>자세히 보기</Text>
+          <Ionicons name="chevron-forward" size={18} color={T.primaryText} />
+        </View>
+      </Pressable>
     );
 
     return (
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12, maxWidth: 1280, width: '100%', alignSelf: 'center' }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+      <ScrollView key="tablet-summary" contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12, maxWidth: 1280, width: '100%', alignSelf: 'center' }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
         <View style={{ paddingRight: 64 }}>
           <Eyebrow>ANALYSIS</Eyebrow>
           <TabIntroNote title="건강분석" />
@@ -980,9 +990,6 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           </>)}
         </View>
 
-        <Pressable onPress={() => setShowFullTabletAnalysis(true)} style={{ minHeight: 52, borderRadius: T.radiusMd, backgroundColor: T.white, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
-          <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.primaryText }}>상세 분석 모두 보기  ›</Text>
-        </Pressable>
         <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, textAlign: 'center' }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
       </ScrollView>
     );
@@ -991,7 +998,8 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   return (
     // 태블릿: 레일을 뺀 본문 안에서 읽기 편한 폭(820)으로 가운데 모은다. 카드는 아직 1열 그대로다
     // (태블릿 시안의 «네 층 2×2»는 이 화면이 하나의 긴 흐름이라 별도 작업으로 남긴다).
-    <ScrollView contentContainerStyle={isTablet ? { paddingBottom: 40, alignSelf: 'center', width: '100%', maxWidth: 820 } : { paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...(isTablet ? { wordBreak: 'keep-all' as const } : {}) }}>
+    // key: 1뎁스 ↔ 2뎁스(층마다)를 오갈 때 스크롤 위치를 물려받지 않고 맨 위에서 시작한다.
+    <ScrollView key={`analysis-${openLayer ?? 'all'}`} contentContainerStyle={isTablet ? { paddingBottom: 40, alignSelf: 'center', width: '100%', maxWidth: 820 } : { paddingBottom: 40 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...(isTablet ? { wordBreak: 'keep-all' as const } : {}) }}>
 
       {/* 페이지 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
       <FadeInUp delay={0}>
@@ -1005,12 +1013,18 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         <TabIntroNote title="건강분석" />
       </View>
       </FadeInUp>
-      {isTablet && showFullTabletAnalysis && (
-        <Pressable onPress={() => setShowFullTabletAnalysis(false)} style={{ alignSelf: 'flex-start', minHeight: 48, justifyContent: 'center', marginHorizontal: 20, paddingHorizontal: 14, borderRadius: T.radiusPill, backgroundColor: T.white }}>
-          <Text style={{ fontSize: T.fs.caption, fontWeight: '700', color: T.primaryText }}>‹ 요약으로 돌아가기</Text>
-        </Pressable>
+      {/* 2뎁스(태블릿) — 돌아가기 + 어느 해 기준인지. 연도는 1뎁스에서 고르므로 여기엔 칩을 두지 않는다. */}
+      {layerMode && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 8 }}>
+          <Pressable onPress={() => setOpenLayer(null)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, paddingHorizontal: 16, borderRadius: T.radiusPill, backgroundColor: T.white }}>
+            <Ionicons name="chevron-back" size={18} color={T.primaryText} />
+            <Text style={{ fontSize: T.fs.body, fontWeight: '700', color: T.primaryText }}>네 단계 요약으로</Text>
+          </Pressable>
+          <Text style={{ fontSize: T.fs.caption, color: T.text3 }}>{report.year}년 검진 기준</Text>
+        </View>
       )}
 
+      {showLayer(0) && (<>
       <LayerHeader
         first
         step={LAYERS[0].step}
@@ -1024,6 +1038,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           reports 자체는 오래된 순이므로, 표시만 뒤집고 인덱스(i)는 원래 것을 그대로 넘긴다.
           ⚠️ 카드 «밖»에 둔다(2026-08-02). 아래 카드는 전체가 눌리는 SummaryCard라,
           안에 두면 연도 칩을 눌러도 상세 모달이 함께 열린다. */}
+      {layerMode ? <View style={{ height: 12 }} /> : (
       <FadeInUp delay={80}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginBottom: 10 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
         {reports.map((r, i) => ({ r, i })).reverse().map(({ r, i }) => (
@@ -1040,6 +1055,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         ))}
       </ScrollView>
       </FadeInUp>
+      )}
 
       {/* 카드 1 — 점수 히어로. **점수만** 말한다.
           여기서 결론 문장·신호 목록까지 떠안으면 «이 탭의 얼굴»이 텍스트 벽이 된다.
@@ -1304,19 +1320,23 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         )}
       </SummaryCard>
       </FadeInUp>
+      </>)}
 
       {/* 연도 기준 안내 — ①층이 «끝난 뒤»에 둔다(2026-08-02).
           예전에는 층 머리말과 집단군 판정 카드 «사이»에 끼어 있어서, 한 층의 답인
           점수 카드와 집단군 판정을 갈라놓았다. 두 카드는 「기준을 벗어났나」라는 같은 질문의
           두 답이라 붙어 있어야 한다. 문구도 "여기부터 아래"에서 화면 전체로 바꿨다 —
           아래로 내려온 이상 위 두 카드도 같은 연도 기준이기 때문이다. */}
+      {!layerMode && (
       <View style={{ paddingHorizontal: 20, marginTop: 10, marginBottom: 2 }}>
         <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20 }}>
           이 화면의 카드는 모두 {report.year}년 수치로 계산했어요. 위에서 연도를 바꾸면 함께 바뀝니다.
         </Text>
       </View>
+      )}
 
-      <LayerHeader step={LAYERS[1].step} title={LAYERS[1].title} sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
+      {showLayer(1) && (<>
+      <LayerHeader first={layerMode} step={LAYERS[1].step} title={LAYERS[1].title} sub="크레아티닌 하나로는 알 수 없던 것이 나이·성별·다른 수치와 묶이면 신장 여과율이 됩니다. 이 층이 분석 탭의 존재 이유예요." />
 
       {/* 신장 — eGFR·CrCl */}
       {/* 소제목은 장기 이름으로 통일한다(간·대사·지질·심혈관과 같은 층위).
@@ -1695,10 +1715,12 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         </SummaryCard>
         </FadeInUp>
       )}
+      </>)}
 
       {/* ③층 이름은 "같은 또래는 어떤가" — "나만 그런가"였을 때 '또래 자체가 나빠졌나'(집단 추세)가
           층 이름(내 위치)과 안 맞았다. 또래 분포·16년 변화·내 위치를 모두 덮는 이름으로. */}
-      <LayerHeader step={LAYERS[2].step} title={LAYERS[2].title} sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
+      {showLayer(2) && (<>
+      <LayerHeader first={layerMode} step={LAYERS[2].step} title={LAYERS[2].title} sub="같은 성별·연령대 사람들은 어떤 상태인지, 그 안에서 나는 어디쯤인지 봅니다." />
 
       {/* ③-0 또래 순위 모아 보기.
        *
@@ -1946,8 +1968,10 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
         />
         </FadeInUp>
       )}
+      </>)}
 
-      <LayerHeader step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
+      {showLayer(3) && (<>
+      <LayerHeader first={layerMode} step={LAYERS[3].step} title={LAYERS[3].title} sub="①~③에서 나온 것을 행동과 다음 검진 목표로 옮깁니다." />
 
       {/* ④-0 흩어진 행동을 한 줄로. 맞춤 권장사항보다 «앞»에 둔다 —
           「무엇부터」를 읽고 나서 「그래서 각각 어떻게」를 읽는 순서다. */}
@@ -2111,6 +2135,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
           />
         </FadeInUp>
       )}
+      </>)}
 
       {/* 면책 — 히스토리 탭과 같이 맨 아래 회색 한 줄로 둔다.
           예전에는 헤더 바로 아래에 경고 기호 + 두 줄이라, 첫 화면에서 내 수치보다 먼저 읽혔다.
