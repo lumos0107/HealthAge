@@ -99,3 +99,18 @@ describe('buildReportHtml — 2쪽 히스토리 · 3쪽 분석', () => {
     expect(html.lastIndexOf('진단서·소견서가 아닙니다')).toBeGreaterThan(html.lastIndexOf('<section class="page">'));
   });
 });
+
+describe('buildReportHtml — 2쪽이 히스토리 화면과 같은 말을 한다(최종 검토 지적)', () => {
+  it('항목 이름은 화면처럼 metricLabel로 바꿔 쓴다 — 백엔드 원래 이름(감마지티피)이 그대로 나오지 않는다', async () => {
+    const { metricLabel } = await import('./data');
+    const html = buildReportHtml(byYear(2024), metricDefinitions, '홍길동', demoExtras);
+    expect(text(html)).not.toContain('감마지티피');
+    expect(text(html)).toContain(metricLabel('감마지티피'));
+  });
+
+  it('또래보다 빨리 변한 항목에는 화면의 주의 문구가 붙는다', () => {
+    const html = buildReportHtml(byYear(2024), metricDefinitions, '홍길동', demoExtras);
+    expect(text(html)).toContain('악화 방향만 모았어요.');
+    expect(text(html)).toContain('첫 회차와 마지막 회차를 비교한 값이에요. 중간에 좋아진 구간이 있어도 여기엔 담기지 않아요');
+  });
+});

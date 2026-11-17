@@ -5,7 +5,7 @@
  *    분석 요약은 analysisSummary(분석 탭과 공용), 점수 추이 문장은 scoreTrend(히스토리와 공용)를 쓴다.
  * react-native를 import하지 않는다(vitest로 시험한다). 실제 PDF 만들기는 reportExport.ts.
  */
-import { metricsForReport } from './data';
+import { metricLabel, metricsForReport } from './data';
 import type { MetricDefinition, Report, Status } from './data';
 import { scoreTrend } from './interpret';
 import { analysisSummary } from './analysisSummary';
@@ -140,7 +140,7 @@ function historyPage(report: Report, extras: PdfExtras): string {
   const nextYear = extras.insight?.next_exam_year ?? null;
   const hasNarrative = concerns.length > 0 || highlights.length > 0 || pace.length > 0 || nextYear != null;
 
-  const list = (title: string, items: string[]) => items.length ? `<h2>${title}</h2>${items.join('')}` : '';
+  const list = (title: string, items: string[], note = '') => items.length ? `<h2>${title}</h2>${note}${items.join('')}` : '';
   return `
   <section class="page">
   <h1>히스토리</h1>
@@ -150,8 +150,10 @@ function historyPage(report: Report, extras: PdfExtras): string {
   ${series.length > 1 ? scoreSvg(series) : ''}
   ${hasNarrative ? `<div class="basis">아래 내용은 전체 기록(~${esc(latestYear)}년) 기준이에요.</div>` : ''}
   ${list('우려할 변화', concerns.map((c) => `<div class="item"><b>${esc(c.title)}</b>${c.current_value ? ` <span class="muted">(${esc(c.current_value)})</span>` : ''}<br/><span class="d">${esc(c.details)}</span></div>`))}
-  ${list('크게 바뀐 항목', highlights.map((h) => `<div class="item"><b>${esc(h.metric)}</b> · <span class="d">${esc(h.message)}</span></div>`))}
-  ${list('또래보다 빨리 변한 항목', pace.map((p) => `<div class="item"><b>${esc(p.metric)}</b> · <span class="d">${esc(p.pace.text)}</span></div>`))}
+  ${list('크게 바뀐 항목', highlights.map((h) => `<div class="item"><b>${esc(metricLabel(h.metric))}</b> · <span class="d">${esc(h.message)}</span></div>`))}
+  ${list('또래보다 빨리 변한 항목', pace.map((p) => `<div class="item"><b>${esc(metricLabel(p.metric))}</b> · <span class="d">${esc(p.pace.text)}</span></div>`),
+    // 화면(HistoryScreen 또래보다 빨리 변한 항목)과 같은 단서 — 백엔드 «악화 중» 문장은 첫·마지막 회차만 비교한 값이다.
+    '<div class="note">악화 방향만 모았어요. 첫 회차와 마지막 회차를 비교한 값이에요. 중간에 좋아진 구간이 있어도 여기엔 담기지 않아요 — 최근 흐름은 위 점수 변화를 보세요.</div>')}
   ${nextYear != null ? `<div class="next">다음 검진 권장: ${esc(nextYear)}년</div>` : ''}
   </section>`;
 }
