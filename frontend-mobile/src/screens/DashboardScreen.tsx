@@ -157,7 +157,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
             accessibilityRole="button"
             accessibilityLabel={link.label.replace('\n', '')}
             style={isTablet
-              ? { flex: 1, minHeight: 104, borderRadius: T.radiusMd, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center', gap: 8 }
+              ? { flex: 1, minHeight: 116, borderRadius: T.radiusMd, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center', gap: 8 }
               : { alignItems: 'center', gap: 8, flex: 1 }}
             onPress={() => {
               if (link.url) openExternalUrl(link.url);
@@ -165,10 +165,11 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
               else onTab('upload');
             }}
           >
-            <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: isTablet ? 'transparent' : T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
+            {/* 태블릿 칸은 넓은데 아이콘이 26px라 작아 보였다(design-d) — 태블릿만 36px로. */}
+            <View style={{ width: isTablet ? 60 : 54, height: isTablet ? 60 : 54, borderRadius: 18, backgroundColor: isTablet ? 'transparent' : T.cardAlt, alignItems: 'center', justifyContent: 'center' }}>
               {link.svgPill
-                ? <PillIcon size={26} />
-                : <Ionicons name={link.icon} size={26} color={link.color} />}
+                ? <PillIcon size={isTablet ? 36 : 26} />
+                : <Ionicons name={link.icon} size={isTablet ? 36 : 26} color={link.color} />}
             </View>
             <Text style={{ fontSize: isTablet ? T.fs.body : T.fs.caption, color: isTablet ? T.text1 : T.text2, fontWeight: isTablet ? '700' : '500', textAlign: 'center', lineHeight: 20 }}>
               {isTablet ? link.label.replace('\n', ' ') : link.label}
