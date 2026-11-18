@@ -325,6 +325,8 @@ export default function App() {
   };
 
   useEffect(() => { loadProfile(true); }, []);
+  // QR 웹 체험판 빌드 전용: EXPO_PUBLIC_AUTO_DEMO=1이면 열자마자 데모 계정으로 들어간다(APK·평소 빌드는 꺼짐).
+  useEffect(() => { if (process.env.EXPO_PUBLIC_AUTO_DEMO === '1') login('root', '1234'); }, []);
 
   const handleTab = (t: AppTab) => setTab(t);
   const requireLogin = () => setAuthOpen(true);
