@@ -305,7 +305,7 @@ timeseries_analyses (시계열 캐시 — 현재 미사용)
 ### RLS (Row Level Security)
 모든 테이블에 활성. 사용자는 자기 데이터만 접근 가능.
 
-자세히: [DB 구조 가이드](../1_pending_tasks.md) 또는 `sql/01_schema.sql` 참고.
+자세히: `sql/01_schema.sql` 참고.
 
 ---
 

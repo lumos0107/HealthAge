@@ -307,7 +307,7 @@ export async function apiUpload(path: string, form: FormData): Promise<any> {
 
 - [ ] **Step 3: `src/api/types.ts` 작성 — 모바일 `health.ts`에서 이식**
 
-`frontend-mobile/src/health.ts`의 69~258행, 335~363행, 399~421행, 494~521행, 533~539행, 567~580행에 정의된 타입을 **그대로 복사**한다. 추가로 아래 3개를 새로 정의한다 (모바일에는 없던 웹 전용).
+`frontend-mobile/src/health.ts`의 69\~258행, 335\~363행, 399\~421행, 494\~521행, 533\~539행, 567\~580행에 정의된 타입을 **그대로 복사**한다. 추가로 아래 3개를 새로 정의한다 (모바일에는 없던 웹 전용).
 
 ```typescript
 // ─── 화면용 요약 모양 (adapt.ts가 만든다) ────────────────────────────────
@@ -1724,7 +1724,7 @@ feat(web): What-if 시뮬레이터 — 좌 스테퍼 / 우 결과 2단 패널
 
 **렌더링 내용:**
 
-1. **회차 0~1개**: 선그래프 대신 안내. 1개면 "회차가 2개 이상이면 추이 그래프가 나타나요" + 현재 값 표.
+1. **회차 0\~1개**: 선그래프 대신 안내. 1개면 "회차가 2개 이상이면 추이 그래프가 나타나요" + 현재 값 표.
 2. **그래프 5종** (2열 그리드, 각 `ResponsiveContainer` height 260):
    - 혈압 추이 (`sbp`·`dbp`)
    - 콜레스테롤 추이 (`ldl`·`hdl`·`total_chol`)
@@ -1963,7 +1963,7 @@ confidence는 백엔드가 준 값만 쓰고 없으면 표시하지 않는다.
 
 - 마운트 시 `getReferenceItems()` → 지원 항목 목록(`sbp`, `dbp`, `fbs`, `total_chol`, `ldl`, `tg`, `ast`, `alt`, `bmi`, `egfr`, `hdl`, `waist`, `hb`, `ggt`, `creatinine` 등)을 받는다. 목록은 백엔드가 주는 것을 그대로 쓴다.
 - 성별 선택(M/F) + 항목별 값 입력(빈 칸은 전송 안 함) → `evaluateReference(sex, items)`
-- 결과 표: 항목 · 값+`unit` · 정상범위(`normal_low`~`normal_high`) · `normal_status` · `severity` · `in_normal_range`
+- 결과 표: 항목 · 값+`unit` · 정상범위(`normal_low`\~`normal_high`) · `normal_status` · `severity` · `in_normal_range`
 - `population_mean`을 입력하면 `diff_from_mean`·`pct_from_mean`·`mean_position`도 표시.
 - 라벨은 `metricLabel()`로 한글화하되, 매핑에 없으면 원본 키를 그대로 쓴다.
 

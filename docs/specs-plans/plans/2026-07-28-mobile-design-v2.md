@@ -16,7 +16,7 @@
 - 토큰 값(설계서 §5 그대로): 배경 `#F3F5F7` · 카드 흰색 radius 20 무테두리·무그림자 · 브랜드 그린 `#00C073`/눌림 `#00A862`/틴트 `#E6F9F1`(인터랙션 전용) · 정상 `#1F8A5D`+`#EAF7F1` · 주의 `#D97706`+`#FFF3E7` · 위험 `#F04452`+`#FEE9EB` · 텍스트 `#191F28`/`#4E5968`/`#8B95A1` · 구분선 `#F2F4F6` · radius 카드 20/버튼 14/입력 12/칩 999.
 - 브랜드 그린은 버튼·링크·활성 탭 등 **인터랙션 전용**. '정상' 상태 표시는 `#1F8A5D`.
 - 문구: 해요체·능동형. 수치엔 해석 한 줄. 이상 소견 화면에 장식·캐릭터 금지. L2 하단 고지 "참고용이며 진단이 아닙니다".
-- 타이포: 핵심 숫자 크게(점수 64~80pt), 화면 제목 24~26. 새로 만드는 화면의 설명·본문 문장은 fontSize 15 이상(RN pt 기준 — 스펙의 "본문 16px"을 RN에 맞게 15pt로 적용, 캡션·보조 라벨은 12~13 허용).
+- 타이포: 핵심 숫자 크게(점수 64\~80pt), 화면 제목 24\~26. 새로 만드는 화면의 설명·본문 문장은 fontSize 15 이상(RN pt 기준 — 스펙의 "본문 16px"을 RN에 맞게 15pt로 적용, 캡션·보조 라벨은 12\~13 허용).
 - 데이터 정직성: percentile 없으면 등수 슬라이더 대신 정상범위 바만. 측정 안 된 연도·항목은 지어내지 않음(기존 원칙 유지).
 - 기능 보존 체크리스트(삭제 금지): 연도 선택·기록 삭제·복용약 보기·PDF 내보내기(프로필로 이동)·분석 콘텐츠 전부·업로드 플로우·데모 모드·빈 상태(EmptyDataState)·비로그인 프리뷰.
 
@@ -133,7 +133,7 @@ git commit -m "feat(mobile): 디자인 토큰 v2 교체 — 뱅샐 그린·토�
   - `sortByAttention(defs: MetricDefinition[]): MetricDefinition[]` — 위험→주의→정상 (안정 정렬)
   - `statusCounts(defs: MetricDefinition[]): { 정상: number; 주의: number; 위험: number }`
   - `normalBounds(metric: MetricDefinition): { low?: number; high?: number }`
-  - `rankFromPercentile(percentile: number): number` — 1~100 clamp
+  - `rankFromPercentile(percentile: number): number` — 1\~100 clamp
 
 - [ ] **Step 1: vitest 설치 + 스크립트 추가**
 
@@ -710,7 +710,7 @@ git commit -m "feat(mobile): L2 항목 상세 오버레이 + L3 펼침"
 
 컴포넌트 상단에서 `const top3 = top3Alerts(metricDefinitions);`로 계산하고, 기존 `topAlerts`(slice(0,4)) 계산은 제거. import에 `top3Alerts, headline`(interpret), `SquircleIcon, categoryVisual`(v2), `StatusBadge`(UI) 추가.
 
-- [ ] **Step 3: 히어로·빠른이동 토큰 정리** — 점수 히어로(64~80pt 숫자)는 유지. `QUICK_LINKS`의 색은 `T.primary/T.primaryLight`를 쓰고 있는데 이제 그린 틴트가 되므로 그대로 두면 인터랙션 색으로 맞다(빠른 이동 = 누르는 것). 프리뷰 카드·점수 바 등은 토큰이 자동 반영되므로 구조 변경 없음. 단 하나: 히어로가 이제 연회색 배경 위에 바로 놓이므로 히어로 영역(`DashboardScreen.tsx:91` View)을 흰 카드로 감싼다 — `style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 16 }}`. 프리뷰 분기(`:72` View)도 동일하게 흰 카드로.
+- [ ] **Step 3: 히어로·빠른이동 토큰 정리** — 점수 히어로(64\~80pt 숫자)는 유지. `QUICK_LINKS`의 색은 `T.primary/T.primaryLight`를 쓰고 있는데 이제 그린 틴트가 되므로 그대로 두면 인터랙션 색으로 맞다(빠른 이동 = 누르는 것). 프리뷰 카드·점수 바 등은 토큰이 자동 반영되므로 구조 변경 없음. 단 하나: 히어로가 이제 연회색 배경 위에 바로 놓이므로 히어로 영역(`DashboardScreen.tsx:91` View)을 흰 카드로 감싼다 — `style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, padding: 20, marginBottom: 12, marginTop: 16 }}`. 프리뷰 분기(`:72` View)도 동일하게 흰 카드로.
 - [ ] **Step 4: typecheck + Commit**
 
 Run: `npm run typecheck` → PASS
