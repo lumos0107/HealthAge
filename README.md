@@ -1,50 +1,99 @@
-현재 상태는 이렇게 보면 돼:
+# 헬스에이지 (HealthAge)
 
-frontend-upload 브랜치 → GitHub 업로드 완료
-PR #1 생성 완료
-팀원들이 리뷰 가능
-아직 main에 합쳐진 것은 아님
+사진 한 장으로 읽는 건강검진 분석 서비스
 
+제주대학교 컴퓨터공학전공 팀 **코드짜는 한라봉** (강승준 · 고강혁 · 양인권)
 
-팀원한테는 이렇게 말하면 돼:
+건강검진 결과지를 사진으로 찍으면 AI가 수치를 읽어 기록하고, 국민건강보험공단 검진 데이터 1,596만 건과 비교해 내 건강 상태를 쉽게 알려 주는 개인 건강 분석 서비스입니다. 연도별 변화와 또래 비교, 결과지에 없는 건강 지표 계산에 복용 중인 약까지 반영해, 다음 검진까지 무엇을 챙기면 좋을지 안내합니다.
 
-프론트엔드는 PR #1로 올려뒀습니다.
-frontend 폴더 안에 React + Vite 프로젝트가 들어있고,
-실행은 cd frontend → npm install → npm run dev 순서로 하면 됩니다.
-환경변수는 frontend/.env.example 참고하면 됩니다.
+## 바로 보기
 
+| 구분 | 주소 | 비고 |
+|---|---|---|
+| 웹 체험판 | https://lumos0107.github.io/HealthAge/ | 데모 계정으로 자동 로그인됩니다. 분석 서버 없이 데모 데이터로 동작하며, 결과지 사진을 골라도 서버로 보내지 않고 예시 값을 보여 줍니다. |
+| 안드로이드 체험판 | [Releases](https://github.com/lumos0107/HealthAge/releases/tag/co-show-2026) | 2026 CO-SHOW 전시에서 쓴 APK |
 
-그리고 만약 팀원이 “이걸 어떻게 실행해?”라고 물어보면:
+## 화면
 
-git clone https://github.com/hahaha13791/health-service-back.git
+| 홈 | 결과지 업로드 | 히스토리 | 건강분석 |
+|---|---|---|---|
+| <img src="docs/images/home.png" width="200"> | <img src="docs/images/up1.png" width="200"> | <img src="docs/images/history.png" width="200"> | <img src="docs/images/analysis.png" width="200"> |
+| 올해 건강 점수, 지금 주의할 항목, 해마다의 점수 변화 | AI가 읽은 수치를 확인하고 고쳐서 저장 | 점수와 항목별 수치의 연도별 변화 | 또래 비교와 결과지에 없는 지표 계산, 할 일 정리 |
 
-cd health-service-back
+(태블릿 화면입니다. 같은 앱이 폰 화면에도 맞춰 바뀝니다. 화면 속 이름과 수치는 모두 데모 데이터입니다.)
 
-git checkout frontend-upload
+## 주요 기능
 
-cd frontend
+1. **촬영**: 결과지를 찍으면 비전 AI(OCR)가 측정 16항목과 생활습관 2항목을 읽습니다. 심평원 「내가 먹는 약! 한눈에」 복약 기록도 함께 불러옵니다.
+2. **확인**: 읽은 값을 사용자가 확인하고 고친 뒤 저장합니다. 이미지에서 근거를 찾지 못한 값은 버려, 잘못 읽은 값이 저장되지 않게 했습니다.
+3. **분석**: 공단 표본 1,596만 건으로 같은 나이·성별 또래와 비교하고, 정상·주의·위험 구간이 해마다 어떻게 바뀌었는지 봅니다. 콩팥 기능(eGFR)·지방간 지수 등 결과지에 없는 지표 22종을 계산하고, 약 덕분에 정상인 수치는 따로 구분합니다.
+4. **행동**: 결과에 따라 다음 검진까지 챙길 생활 습관과 목표를 알려 줍니다.
 
-npm install
+판정은 예측 모델이 아니라 공단 통계와 학회 진료지침 7종을 근거로 하여, 결과가 왜 그렇게 나왔는지 설명할 수 있게 했습니다. 약학대학 교수 자문과 기업 멘토링 3회를 반영해 기준을 정했습니다.
 
-npm run dev
+## 시스템 구성
 
+```mermaid
+flowchart LR
+    A[검진지 사진<br>복약 기록] --> B[OCR<br>OpenCV 표 검출 + 비전 AI]
+    B --> C[사용자 확인<br>모바일 앱]
+    C --> D[분석 서버<br>FastAPI]
+    S[(공단 표본 통계<br>연령·성별 집단)] --> D
+    D <--> E[(Supabase<br>인증·DB)]
+    D --> F[모바일 앱 · 웹<br>결과 화면]
+```
 
+| 부분 | 기술 |
+|---|---|
+| 모바일·태블릿 앱 | React Native 0.81, Expo SDK 54, TypeScript |
+| 웹 | React 19, Vite 7, TypeScript |
+| 분석 서버 | Python 3.11+, FastAPI, pandas |
+| OCR | OpenCV 표 검출 + 비전 언어 모델 (개발: Ollama qwen2.5vl, 배포: Gemini) |
+| 인증·DB | Supabase (PostgreSQL) |
 
+## 폴더 구성
 
-프론트 PR 올렸습니다.
-PR: https://github.com/hahaha13791/health-service-back/pull/1
+| 폴더 | 내용 |
+|---|---|
+| `frontend-mobile/` | 모바일·태블릿 앱 (전시 시연에 쓴 앱) |
+| `backend/` | 분석 서버, OCR 파이프라인, 판정 기준, DB 스키마(`backend/sql/`) |
+| `backend/data/stats/` | 공단 표본에서 만든 연령·성별 집단 통계 (원자료는 넣지 않음) |
+| `frontend/` | 웹판 |
+| `HealthAge-Design/` | 화면·기능별 설계와 디자인 규칙 |
+| `docs/` | 설계 기록, 공단 표본 재분석(`docs/analysis/`), 생활습관 효과 근거 조사(`docs/evidence/`) |
+| `tools/` | 데모 데이터와 시험용 결과지(개인정보를 가짜 값으로 바꾼 것) 만들기 |
+| `모바일앱사용설명서제작/` | 사용 설명서용 화면 캡처 |
 
-실행 방법:
-cd frontend
+## 직접 실행
 
-npm install
+분석 서버 (`backend/.env.example`을 `.env`로 복사해 Supabase 주소와 키를 넣은 뒤)
 
-npm run dev
+```bash
+cd backend
+uv sync
+uv run uvicorn app.main:app --reload
+uv run pytest
+```
 
+모바일 앱 (`frontend-mobile/.env.example`을 `.env`로 복사한 뒤)
 
-환경변수:
-frontend/.env.example 복사해서 frontend/.env 만들고
+```bash
+cd frontend-mobile
+npm ci
+npx expo start        # 웹으로 보려면 npx expo start --web
+npm test
+```
 
-VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_BACKEND_URL 입력하면 됩니다.
+자세한 설정은 `backend/README.md`, `frontend/docs/frontend-guide.md`에 있습니다.
 
-빌드는 npm run build로 확인했고 정상 통과했습니다.
+## 데이터와 개인정보
+
+- 또래 비교는 국민건강보험공단 건강검진정보(2009~2024년, 1,596만 건)를 연령·성별 집단 통계로 줄인 값만 씁니다. 원자료는 이 저장소에 없습니다.
+- 이 저장소에는 실제 검진 결과지나 개인정보가 들어 있지 않습니다. 화면과 시험에 쓴 값은 데모 데이터이고, 시험용 결과지는 이름·주민번호·검진의사 정보 등을 가짜 값으로 바꿔 만들었습니다.
+
+## 저장소 안내
+
+- 개발은 팀 비공개 저장소에서 2026년 7월부터 진행했습니다. 이 저장소는 전시용 공개본으로, 개발 기록(커밋)은 옮기지 않고 최종 코드만 담았습니다.
+- 웹 체험판 빌드 결과는 `gh-pages` 브랜치에 있습니다.
+
+※ 본 서비스는 참고용이며 의학적 진단을 대신하지 않습니다.
