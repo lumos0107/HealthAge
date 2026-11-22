@@ -137,6 +137,7 @@
 
 ```mermaid
 flowchart LR
+    classDef default fill:#E6F9F1,stroke:#00A862,color:#0b0b0b
     A[검진지 사진] --> B[OCR<br>OpenCV 표 검출 + 비전 AI]
     M[복약 기록<br>엑셀 파일] --> D
     B --> C[사용자 확인<br>모바일 앱]
