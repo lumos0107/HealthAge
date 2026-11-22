@@ -79,6 +79,12 @@ def _decode_token(token: str) -> dict:
         logger.debug("JWKS 호출 실패, HS256 fallback 시도: %s", e)
 
     # 2차: HS256 fallback (레거시 토큰 또는 테스트용)
+    # 비밀키가 비어 있으면 빈 키로 서명한 위조 토큰까지 통과하므로 fallback을 쓰지 않는다.
+    if not (settings.supabase_jwt_secret or "").strip():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="유효하지 않은 토큰입니다.",
+        )
     try:
         payload = jwt.decode(
             token,
