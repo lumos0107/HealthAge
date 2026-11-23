@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
-import { T } from './UI';
+import { T, WebFrame } from './UI';
 import { simulateCheckup } from '../health';
 import { simulateDemo } from '../dummyAnalysis';
 import { ACTIONS, GRAMS_PER_DRINK, rankActions, round1 } from '../lifestyleActions';
@@ -141,6 +141,8 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
       </View>}
 
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
+        {/* 넓은 모니터에서는 1280 안 가운데(WebFrame). 그 밖의 화면에서는 배치가 지금과 같다. */}
+        <WebFrame wide>
         <View style={{ flex: 1, backgroundColor: T.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 52, paddingBottom: 14, backgroundColor: T.white, borderBottomWidth: 1, borderBottomColor: T.divider }}>
             <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1 }}>다음 검진 목표 세우기</Text>
@@ -433,6 +435,7 @@ export function NextCheckupGoal({ latest, gender, smoking, alcoholWeeklyG, demoM
             )}
           </ScrollView>
         </View>
+        </WebFrame>
       </Modal>
     </>
   );

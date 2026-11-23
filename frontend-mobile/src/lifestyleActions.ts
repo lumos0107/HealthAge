@@ -316,3 +316,36 @@ export function rankActions(actions: ActionDef[], ctx: Ctx): ActionRank[] {
 
   return ranked.map(({ id, reductionRatio, movedFactors }) => ({ id, reductionRatio, movedFactors }));
 }
+
+/** 홈 「다음 검진까지 할 일」(넓은 모니터)이 쓰는 계산 문맥. 다음 검진 목표 창(NextCheckupGoal)과 같은 식이라
+ *  두 화면의 순서·숫자가 같다 — 음주 값이 없으면 0, 혈압 140/90 이상이면 고혈압군. */
+export function buildActionCtx(values: Report['values'], gender: 1 | 2, smoking: Ctx['smoking'], alcoholWeeklyG: number | null | undefined): Ctx {
+  return {
+    values,
+    gender,
+    weightKg: typeof values.weight === 'number' ? values.weight : null,
+    smoking,
+    alcoholWeeklyG: alcoholWeeklyG ?? 0,
+    hypertensive: (values.sbp ?? 0) >= 140 || (values.dbp ?? 0) >= 90,
+  };
+}
+
+export type TodoLine = { id: string; title: string; effect: string; positive: boolean; caution?: string };
+
+/** 할 일 카드 줄 — 다음 검진 목표 창 ②와 같은 순서(rankActions)·같은 표기(소수 한 자리 %, 0이면 회색 문구).
+ *  경고(caution)는 빠뜨리면 위험한 조언이 되므로 줄에 함께 싣는다. */
+export function todoLines(ctx: Ctx, n = 3): TodoLine[] {
+  return rankActions(ACTIONS, ctx).slice(0, n).map((r) => {
+    const a = ACTIONS.find((x) => x.id === r.id)!;
+    const pct = Math.round(r.reductionRatio * 1000) / 10;
+    return {
+      id: a.id,
+      title: a.title(ctx),
+      effect: pct > 0
+        ? `기준까지의 거리가 ${pct}% 줄어요 — ${r.movedFactors.join(' · ')}`
+        : '대사증후군 5기준을 움직이지는 않아요. 이 행동이 겨냥하는 건 다른 수치예요.',
+      positive: pct > 0,
+      ...(a.caution ? { caution: a.caution } : {}),
+    };
+  });
+}

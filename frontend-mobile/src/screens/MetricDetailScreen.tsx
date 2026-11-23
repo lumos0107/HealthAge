@@ -12,13 +12,16 @@ import { A11Y, MetricTrendChart, PeerRankBlock, RangeBar, StatusChip } from '../
 // L2 항목 상세 — 히스토리·분석 상세(SummaryCard)와 같은 순서·같은 규격으로 읽힌다:
 // ① 결론(22px) → 값 영역(연도·값·추이) → ② 이 지표는요(+「왜 그럴까요?」) → ③ 또래와 견주면 → ⑤ 이렇게 해 보세요.
 // 화면 전환은 이 오버레이 한 번만. 심화 설명만 접어둔다(2.5뎁스).
-export default function MetricDetailScreen({ metric, report, reports, onYear, onClose }: {
+export default function MetricDetailScreen({ metric, report, reports, onYear, onClose, variant = 'modal' }: {
   metric: MetricDefinition;
   report: Report;
   reports: Report[];
   /** 있으면 화면 안에서 해를 바꿀 수 있다 — 값·배지·헤드라인·전년 대비·등수·차트가 전부 따라간다. */
   onYear?: (year: number) => void;
-  onClose: () => void;
+  /** 모달일 때 뒤로 가기. */
+  onClose?: () => void;
+  /** pane: 넓은 모니터의 검사항목 오른쪽 칸 — 모달·머리줄 없이 같은 카드를 1열로 쌓는다(칸 폭이 440~600이라 3열이 안 들어감). */
+  variant?: 'modal' | 'pane';
 }) {
   const { isTablet, isLandscape } = useLayout();
   const value = report.values[metric.key];
@@ -183,6 +186,15 @@ export default function MetricDetailScreen({ metric, report, reports, onYear, on
         { flex: 408, items: [conclusionCard, valueCard, aboutCard] },
         { flex: 300, items: [peerCard, tipsCard] },
       ];
+
+  if (variant === 'pane') {
+    return (
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false}>
+        {[conclusionCard, valueCard, aboutCard, peerCard, tipsCard].map((node, i) => node ? <React.Fragment key={i}>{node}</React.Fragment> : null)}
+        {footnote}
+      </ScrollView>
+    );
+  }
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>

@@ -183,7 +183,7 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
   insight?: Insight | null;
   changePace?: ChangePace[] | null;
 }) {
-  const { isTablet } = useLayout();
+  const { isTablet, isWide } = useLayout();
   // 태블릿 2열 격자 칸 폭 — calc()는 APK에서 칸이 접혀서 잰 값으로(useGridCell). 훅이라 분기 밖에서 부른다.
   const grid2 = useGridCell(2);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -310,9 +310,11 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
     const gridStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 12 } as const;
     // 마지막 홀수 타일도 두 칸 폭을 유지한다. flexGrow: 1이면 마지막 타일이 한 줄 전체로 늘어난다.
     const cell = grid2.cell;
+    // 넓은 모니터: 항목 타일은 오른쪽 열에 1열로 쌓는다 — 왼쪽 격자(grid2)의 칸 폭을 쓰면 안 된다.
+    const tileCell = isWide ? { width: '100%' as const } : cell;
     const tiles = [
       ...ordered.map((info) => (
-        <View key={info.group.title} style={[cell, { backgroundColor: T.white, borderRadius: T.radius, overflow: 'hidden' }]}>
+        <View key={info.group.title} style={[tileCell, { backgroundColor: T.white, borderRadius: T.radius, overflow: 'hidden' }]}>
           <ChartCard
             first
             group={info.group}
@@ -325,16 +327,13 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
         </View>
       )),
     ];
-    return (
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
-        <View style={{ paddingRight: 64 }}>
-          <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 32 }}>히스토리</Text>
-          <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginTop: 2 }}>해마다 어떻게 달라졌는지 봐요.</Text>
-        </View>
-
-        <ScoreHero reports={reports} tablet />
-
-        {attention.length > 0 && (
+    const titleBlock = (
+      <View style={{ paddingRight: 64 }}>
+        <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 32 }}>히스토리</Text>
+        <Text style={{ fontSize: T.fs.body, color: A11Y.sub, marginTop: 2 }}>해마다 어떻게 달라졌는지 봐요.</Text>
+      </View>
+    );
+    const attentionBlock = attention.length > 0 && (
           <>
             <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>먼저 확인하세요</Text>
             <View onLayout={grid2.onLayout} style={gridStyle}>
@@ -371,14 +370,10 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
               })}
             </View>
           </>
-        )}
-
-        <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>항목별로 보기</Text>
-        <View onLayout={grid2.onLayout} style={gridStyle}>{tiles}</View>
-
-        {/* 「또래보다 빨리 변한 항목」·「그 밖의 변화 보기」는 항목 묶음이 아니라 여러 항목을 가로지르는
-            보기라, 항목 격자에 섞지 않고 따로 한 줄로 뺀다(design-d). */}
-        {(paceCard || highlightCard) && (
+    );
+    // 「또래보다 빨리 변한 항목」·「그 밖의 변화 보기」는 항목 묶음이 아니라 여러 항목을 가로지르는
+    // 보기라, 항목 격자에 섞지 않고 따로 한 줄로 뺀다(design-d).
+    const moreBlock = (paceCard || highlightCard) && (
           <>
             <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>더 살펴보기</Text>
             <View onLayout={grid2.onLayout} style={gridStyle}>
@@ -386,9 +381,46 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
               {highlightCard && <View style={cell}>{highlightCard}</View>}
             </View>
           </>
-        )}
+    );
+    const footnote = <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>;
+    const scrollStyle = { backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) };
 
-        <Text style={{ fontSize: T.fs.caption, color: A11Y.sub, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
+    // ── 넓은 모니터: 왼쪽(점수 → 먼저 확인하세요 → 더 살펴보기) | 오른쪽(항목별로 보기 1열).
+    //    왼쪽은 기본 폭 600에서 늘어나고, 1280~1366처럼 좁으면 오른쪽(620)도 520까지 함께 줄어든다.
+    if (isWide) {
+      return (
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={scrollStyle}>
+          {titleBlock}
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+            <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 600, minWidth: 0, gap: 12 }}>
+              <ScoreHero reports={reports} tablet />
+              {attentionBlock}
+              {moreBlock}
+            </View>
+            <View style={{ width: 620, flexShrink: 1, minWidth: 520, gap: 12 }}>
+              <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>항목별로 보기</Text>
+              {tiles}
+            </View>
+          </View>
+          {footnote}
+        </ScrollView>
+      );
+    }
+
+    return (
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={scrollStyle}>
+        {titleBlock}
+
+        <ScoreHero reports={reports} tablet />
+
+        {attentionBlock}
+
+        <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1, marginTop: 6 }}>항목별로 보기</Text>
+        <View onLayout={grid2.onLayout} style={gridStyle}>{tiles}</View>
+
+        {moreBlock}
+
+        {footnote}
       </ScrollView>
     );
   }

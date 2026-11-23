@@ -16,6 +16,8 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
+import { useLayout } from '../responsive';
+import { NARROW_MAX } from '../wideLayout';
 import type { Status } from '../data';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -108,8 +110,21 @@ export const W = Math.min(Dimensions.get('window').width, PHONE_WIDTH);
 // 래퍼 바깥으로 빠져나가고, 네이티브 태블릿에서는 애초에 래퍼 자체가 화면 전체 폭이라
 // 마찬가지로 넓게 뜬다. 둘 다 이 프레임으로 한 번 더 감싸야 비율이 맞는다.
 export function WebFrame({ children, backgroundColor = T.bg, wide = false }: { children: React.ReactNode; backgroundColor?: string; wide?: boolean }) {
-  // wide: 태블릿 반응형 화면 — 폰 폭으로 가두지 않고 화면 전체를 쓴다.
-  if (wide || Dimensions.get('window').width <= PHONE_WIDTH) return <>{children}</>;
+  // 넓은 모니터(wide 배치)에서는 화면 전체 창도 1280 안 가운데로 둔다. 웹의 Modal은 document.body로 따로 붙어
+  // App의 본문 폭 틀을 받지 않기 때문이다. 태블릿(wide prop)과 넓은 배치는 같은 두 겹 View를 그리고 스타일만
+  // 바꾼다 — 창 크기를 바꿔 둘 사이를 넘나들어도 창 안이 다시 그려지지 않게.
+  const { isWide } = useLayout();
+  if (wide || isWide) {
+    return (
+      <View style={isWide ? { flex: 1, alignItems: 'center', backgroundColor: T.bg } : { flex: 1 }}>
+        <View style={isWide ? { flex: 1, width: '100%', maxWidth: NARROW_MAX } : { flex: 1 }}>
+          {children}
+        </View>
+      </View>
+    );
+  }
+  // 그 밖: 폰 폭 이하 화면은 그대로, 그보다 넓은데 태블릿 구조가 아니면(폰 가로·좁은 브라우저) 폰 폭 틀.
+  if (Dimensions.get('window').width <= PHONE_WIDTH) return <>{children}</>;
   return (
     <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#d9dce1', height: Platform.OS === 'web' ? ('100vh' as any) : '100%' }}>
       <View style={{ flex: 1, width: PHONE_WIDTH, maxWidth: '100%' as any, backgroundColor }}>

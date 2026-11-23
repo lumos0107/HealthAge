@@ -7,7 +7,9 @@ import { categoryVisual, ScoreCalcNote, scoreTone, SquircleIcon } from '../compo
 import { computeScore } from '../data';
 import type { MetricDefinition, MetricKey, Report, TabKey } from '../data';
 import { headline, scoreSeries, statusCounts, top3Alerts } from '../interpret';
+import { buildActionCtx, todoLines, type Ctx } from '../lifestyleActions';
 import { useLayout } from '../responsive';
+import { NARROW_MAX } from '../wideLayout';
 import { ScoreChart, scoreConclusion } from './HistoryScreen';
 
 // 외부 링크를 안전하게 연다 — 실패해도 조용히 죽지 않고 안내를 띄운다.
@@ -49,7 +51,7 @@ const QUICK_LINKS: {
   { label: '결과지\n업로드', icon: 'cloud-upload-outline', color: T.primary, url: null },
 ];
 
-export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin, onOpenDetail }: {
+export default function DashboardScreen({ onTab, reports, metricDefinitions, usingRealData, isPreview, onRequireLogin, onOpenDetail, gender, smoking, alcoholWeeklyG }: {
   onTab: (tab: TabKey) => void;
   reports: Report[];
   metricDefinitions: MetricDefinition[];
@@ -58,8 +60,14 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   isPreview?: boolean;
   onRequireLogin?: () => void;
   onOpenDetail?: (key: MetricKey, year: number) => void;
+  /** 넓은 모니터 홈의 「다음 검진까지 할 일」 계산용 — App이 분석 탭에 주는 값과 같다. 성별이 없으면 카드를 그리지 않는다. */
+  gender?: 1 | 2;
+  smoking?: Ctx['smoking'];
+  alcoholWeeklyG?: number | null;
 }) {
-  const { isTablet } = useLayout();
+  const { isTablet, isWide } = useLayout();
+  // 넓은 모니터의 윗줄에서는 빠른 이동 4개를 2×2로 놓는다(로그인 전 미리보기는 태블릿 배치 그대로).
+  const quickGrid = isWide && !isPreview;
   const latest = reports[reports.length - 1];
   const top3 = top3Alerts(metricDefinitions);
   // 검사항목 탭과 같은 기준(statusCounts) — 판정 대상이 아닌 참고 항목(키·몸무게)은 세지 않는다.
@@ -148,15 +156,17 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   //   축 4의 «홈은 심각도 순»은 판단 요소끼리(점수 → TOP 3)의 순서를 말하는 것이지,
   //   도구 카드까지 뒤로 밀라는 뜻이 아니다. 태블릿은 점수·TOP 3가 나란히 서므로 그 아래 한 줄로 둔다.
   const quickCard = (
-    <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: mh, marginBottom: 12 }}>
+    <View style={[{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 20, paddingVertical: 18, marginHorizontal: mh, marginBottom: 12 }, quickGrid && { flex: 1, marginBottom: 0 }]}>
       <Text style={{ fontSize: isTablet ? T.fs.h3 : T.fs.body, fontWeight: isTablet ? '800' : '700', color: T.text1, marginBottom: 16 }}>빠른 이동</Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: isTablet ? 12 : 0 }}>
+      <View style={[{ flexDirection: 'row', justifyContent: 'space-between', gap: isTablet ? 12 : 0 }, quickGrid && { flex: 1, flexWrap: 'wrap' }]}>
         {QUICK_LINKS.map((link) => (
           <Pressable hitSlop={8}
             key={link.label}
             accessibilityRole="button"
             accessibilityLabel={link.label.replace('\n', '')}
-            style={isTablet
+            style={quickGrid
+              ? { flexBasis: '40%', flexGrow: 1, minHeight: 104, borderRadius: T.radiusMd, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center', gap: 8 }
+              : isTablet
               ? { flex: 1, minHeight: 116, borderRadius: T.radiusMd, backgroundColor: T.cardAlt, alignItems: 'center', justifyContent: 'center', gap: 8 }
               : { alignItems: 'center', gap: 8, flex: 1 }}
             onPress={() => {
@@ -225,7 +235,7 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
     // 히스토리 점수 카드(design-d 4안)와 같은 모양 — 위 한 줄(제목·결론 / 히스토리 보기), 아래 그래프 카드 폭 전체.
     // 큰 점수는 바로 위 점수 카드가 이미 보여 주므로 여기선 뺀다. 「94점 → 22점 → 40점」 줄은 그래프 이름표가 대신한다.
     return (
-      <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 24, paddingVertical: 22, marginBottom: 12 }}>
+      <View style={[{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 24, paddingVertical: 22, marginBottom: 12 }, isWide && { flex: 1, marginBottom: 0 }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <View style={{ flexShrink: 1 }}>
             <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>점수 변화</Text>
@@ -242,10 +252,35 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
     );
   })() : null;
 
+  // ── 넓은 모니터(웹 체험판 전시용): 윗줄 (점수 | TOP 3 | 빠른 이동 2×2) → 아랫줄 (점수 변화 | 다음 검진까지 할 일)
+  if (isWide && !isPreview) {
+    const todo = gender ? <TodoCard ctx={buildActionCtx(latest.values, gender, smoking, alcoholWeeklyG)} onMore={() => onTab('analysis')} /> : null;
+    return (
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+        <View style={{ paddingRight: 64 }}>
+          <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 32 }}>{`${latest.year}년 건강검진`}</Text>
+          <Text style={{ fontSize: T.fs.body, color: T.text2, marginTop: 2 }}>{latest.hospital}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'stretch' }}>
+          <View style={{ flex: 1.1, minWidth: 340 }}>{heroCard}</View>
+          <View style={{ flex: 1.3, minWidth: 400 }}>{top3Card}</View>
+          <View style={{ flex: 1, minWidth: 300 }}>{quickCard}</View>
+        </View>
+        {(changeCard || todo) && (
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'stretch' }}>
+            {changeCard && <View style={{ flex: 2.3, minWidth: 0 }}>{changeCard}</View>}
+            {todo && <View style={{ flex: 1, minWidth: 360 }}>{todo}</View>}
+          </View>
+        )}
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
+      </ScrollView>
+    );
+  }
+
   // ── 태블릿: 제목 줄 → (점수 | TOP 3) → 빠른 이동 → 점수 변화
   if (isTablet) {
     return (
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+      <ScrollView contentContainerStyle={[{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }, isWide && { maxWidth: NARROW_MAX, width: '100%', alignSelf: 'center' }]} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
         {/* 오른쪽 위에는 내 정보 버튼(App)이 떠 있어서 그 자리를 비워 둔다. */}
         <View style={{ paddingRight: 64 }}>
           <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 32 }}>
@@ -280,5 +315,47 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
       <FadeInUp delay={90}>{quickCard}</FadeInUp>
       {!isPreview && <FadeInUp delay={180}>{top3Card}</FadeInUp>}
     </ScrollView>
+  );
+}
+
+// 넓은 모니터 홈 「다음 검진까지 할 일」 — 다음 검진 목표 창 ②와 같은 순서·표기(todoLines), 경고는 같은 모양으로 함께.
+// 글은 모두 기존 문구(효과 줄·0% 문구·빈 안내·분석 ④의 순서 안내)를 그대로 쓴다. 새 글은 제목과 단추뿐.
+function TodoCard({ ctx, onMore }: { ctx: Ctx; onMore: () => void }) {
+  const lines = todoLines(ctx);
+  return (
+    <View style={{ flex: 1, backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 24, paddingVertical: 22 }}>
+      <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>다음 검진까지 할 일</Text>
+      {lines.length === 0 ? (
+        <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 8 }}>
+          지금 정보로 제시할 수 있는 행동이 없어요. 내정보에서 몸무게·흡연·음주를 입력하면 더 정확해집니다.
+        </Text>
+      ) : (
+        <>
+          <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20, marginTop: 4, marginBottom: 6 }}>효과가 큰 것부터 차례로 놓았어요.</Text>
+          {lines.map((l, i) => (
+            <View key={l.id} style={{ paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: T.divider }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                <Text style={{ fontSize: T.fs.body, fontWeight: '800', color: T.primaryText }}>{i + 1}</Text>
+                <Text style={{ flex: 1, fontSize: T.fs.body, fontWeight: '700', color: T.text1, lineHeight: 22 }}>{l.title}</Text>
+              </View>
+              <Text style={{ fontSize: T.fs.caption, color: l.positive ? T.success : T.text3, fontWeight: l.positive ? '600' : '400', lineHeight: 20, marginTop: 4 }}>{l.effect}</Text>
+              {!!l.caution && (
+                <View style={{ marginTop: 8, backgroundColor: T.warnBg, borderRadius: 10, padding: 12 }}>
+                  <Text style={{ fontSize: T.fs.caption, fontWeight: '800', color: T.warn, marginBottom: 4 }}>⚠️ 함께 지킬 것</Text>
+                  <Text style={{ fontSize: T.fs.caption, color: T.text2, lineHeight: 20 }}>{l.caution}</Text>
+                </View>
+              )}
+            </View>
+          ))}
+          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>
+            여기 순서는 «수치를 얼마나 움직이나»로 매긴 것이지 의학적 우선순위가 아니에요. 복용 중인 약이나 진료 계획이 있으면 그쪽이 먼저입니다.
+          </Text>
+        </>
+      )}
+      <View style={{ flexGrow: 1, minHeight: 12 }} />
+      <Pressable onPress={onMore} accessibilityRole="button" style={{ minHeight: 48, borderRadius: T.radiusMd, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.primaryText }}>분석에서 자세히 보기</Text>
+      </Pressable>
+    </View>
   );
 }

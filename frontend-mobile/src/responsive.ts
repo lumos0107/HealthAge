@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { LayoutChangeEvent, useWindowDimensions } from 'react-native';
+import { LayoutChangeEvent, Platform, useWindowDimensions } from 'react-native';
+import { isWideLayout, readSearch, WIDE_MAX_CONTENT } from './wideLayout';
 
 /** 격자 칸 폭(design-d) — CSS `calc(50% - 6px)`는 웹에서만 되고 네이티브 앱(APK)에서는 칸이 최소 폭으로
  *  접혀 글자가 세로로 쪼개졌다. 격자 컨테이너의 실제 폭을 재서 칸 폭을 픽셀로 정한다.
@@ -24,7 +25,11 @@ export const TABLET_MIN = 600;
 export const LANDSCAPE_MIN = 1024;
 export const RAIL_W = 96;
 
-export type LayoutMode = 'phone' | 'tabletPortrait' | 'tabletLandscape';
+//   웹이고 1280 이상          → wide(넓은 모니터, wideLayout.ts) — 높이와 상관없이, 태블릿 가로 배치 위에 넓은 배치를 얹는다
+export type LayoutMode = 'phone' | 'tabletPortrait' | 'tabletLandscape' | 'wide';
+
+// 주소(?wide=0)는 처음 열 때 한 번만 읽는다. 웹이 아니면 location을 건드리지 않는다.
+const SEARCH = readSearch(Platform.OS, (globalThis as { window?: unknown }).window);
 
 export function layoutFor(width: number, height: number): LayoutMode {
   if (width < TABLET_MIN || Math.min(width, height) < TABLET_MIN) return 'phone';
@@ -33,13 +38,14 @@ export function layoutFor(width: number, height: number): LayoutMode {
 
 export function useLayout() {
   const { width, height } = useWindowDimensions();
-  const mode = layoutFor(width, height);
+  const isWide = isWideLayout(width, Platform.OS, SEARCH);
+  const mode: LayoutMode = isWide ? 'wide' : layoutFor(width, height);
   const isTablet = mode !== 'phone';
-  const isLandscape = mode === 'tabletLandscape';
-  // 레일을 뺀 본문 폭
-  const contentWidth = isTablet ? width - RAIL_W : width;
+  const isLandscape = mode === 'tabletLandscape' || mode === 'wide';
+  // 레일을 뺀 본문 폭(넓은 배치는 상한 1824 적용)
+  const contentWidth = isWide ? Math.min(width - RAIL_W, WIDE_MAX_CONTENT) : isTablet ? width - RAIL_W : width;
   return {
-    mode, isTablet, isLandscape, width, height, contentWidth,
+    mode, isTablet, isLandscape, isWide, width, height, contentWidth,
     /** 본문 좌우 여백 — 시안 28 / 모바일은 각 화면이 정한 16 */
     pad: isTablet ? 28 : 16,
     /** 검사항목 목록 열 수 */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { reports } from './data';
-import { ACTIONS, deviationTotal, rankActions, type Ctx } from './lifestyleActions';
+import { ACTIONS, buildActionCtx, deviationTotal, rankActions, todoLines, type Ctx } from './lifestyleActions';
 
 /** 데모 페르소나 2024년 회차(홍길동, 1968년생 남, 현재 흡연·주 280g 음주).
  *  실제 화면이 쓰는 값 그대로 — 여기서 지어내면 화면과 다른 걸 검증하게 된다. */
@@ -109,5 +109,61 @@ describe('rankActions — 효과크기로 순서를 매긴다', () => {
       expect(r.reductionRatio).toBeGreaterThanOrEqual(0);
       expect(r.reductionRatio).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('buildActionCtx — 홈 「다음 검진까지 할 일」이 쓰는 계산 문맥(다음 검진 목표 창과 같은 식)', () => {
+  it('데모 2024년 값으로 만들면 화면이 쓰는 demoCtx와 같다', () => {
+    expect(buildActionCtx(latest.values, 1, 'current', 280)).toEqual(demoCtx);
+  });
+  it('혈압 140/90 이상일 때만 고혈압군', () => {
+    const v = { ...latest.values };
+    expect(buildActionCtx({ ...v, sbp: 139, dbp: 89 }, 1, 'never', 0).hypertensive).toBe(false);
+    expect(buildActionCtx({ ...v, sbp: 140, dbp: 80 }, 1, 'never', 0).hypertensive).toBe(true);
+    expect(buildActionCtx({ ...v, sbp: 120, dbp: 90 }, 1, 'never', 0).hypertensive).toBe(true);
+  });
+  it('음주 값이 없으면 0, 0은 0 그대로', () => {
+    expect(buildActionCtx(latest.values, 1, 'never', undefined).alcoholWeeklyG).toBe(0);
+    expect(buildActionCtx(latest.values, 1, 'never', null).alcoholWeeklyG).toBe(0);
+    expect(buildActionCtx(latest.values, 1, 'never', 0).alcoholWeeklyG).toBe(0);
+  });
+  it('몸무게가 없으면 weightKg는 null', () => {
+    const { weight: _w, ...noWeight } = latest.values;
+    expect(buildActionCtx(noWeight as Ctx['values'], 1, 'never', 0).weightKg).toBeNull();
+  });
+});
+
+describe('todoLines — 홈 할 일 카드 줄(다음 검진 목표 창 ②와 같은 순서·표기)', () => {
+  it('순서는 rankActions 위 3개', () => {
+    expect(todoLines(demoCtx).map((l) => l.id)).toEqual(rankActions(ACTIONS, demoCtx).slice(0, 3).map((r) => r.id));
+  });
+  it('제목은 행동 정의의 title 그대로', () => {
+    for (const l of todoLines(demoCtx)) expect(l.title).toBe(ACTIONS.find((a) => a.id === l.id)!.title(demoCtx));
+  });
+  it('효과는 소수 한 자리 %와 움직이는 기준 — 「기준까지의 거리가 …% 줄어요 — …」', () => {
+    const rank = rankActions(ACTIONS, demoCtx);
+    for (const l of todoLines(demoCtx)) {
+      const r = rank.find((x) => x.id === l.id)!;
+      expect(l.positive).toBe(true);
+      expect(l.effect).toBe(`기준까지의 거리가 ${Math.round(r.reductionRatio * 1000) / 10}% 줄어요 — ${r.movedFactors.join(' · ')}`);
+      expect(l.effect).toMatch(/^기준까지의 거리가 \d+(\.\d)?% 줄어요 — /);
+    }
+  });
+  it('경고(caution)가 있는 행동은 줄에 그 경고를 함께 싣는다 — 체중 감량', () => {
+    const w = todoLines(demoCtx).find((l) => l.id === 'weight');
+    expect(w).toBeDefined();
+    expect(w!.caution).toBe(ACTIONS.find((a) => a.id === 'weight')!.caution);
+  });
+  it('대사증후군 5기준이 모두 정상이면 모든 줄이 0% 문구', () => {
+    const normal = buildActionCtx({ waist: 80, sbp: 110, dbp: 70, glucose: 90, triglyceride: 100, hdl: 60, weight: 65 } as Ctx['values'], 1, 'never', 0);
+    const lines = todoLines(normal);
+    expect(lines.length).toBeGreaterThan(0);
+    for (const l of lines) {
+      expect(l.positive).toBe(false);
+      expect(l.effect).toBe('대사증후군 5기준을 움직이지는 않아요. 이 행동이 겨냥하는 건 다른 수치예요.');
+    }
+  });
+  it('값이 하나도 없고 해당 행동도 없으면 빈 배열(카드는 기존 안내 문구를 보인다)', () => {
+    expect(todoLines(buildActionCtx({} as Ctx['values'], 1, 'never', 0))).toEqual([]);
   });
 });

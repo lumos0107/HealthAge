@@ -10,6 +10,8 @@ import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
 import { exportReportPdf } from '../reportExport';
 import type { PdfExtras } from '../reportExport';
 import { useGridCell, useLayout } from '../responsive';
+import { recordsSplit } from '../wideLayout';
+import MetricDetailScreen from './MetricDetailScreen';
 
 export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail, onUpload, pdfExtras }: {
   reports: Report[];
@@ -28,12 +30,14 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   // PDF 2·3쪽(히스토리·분석)용 자료 — 없으면 검사항목 1쪽만(design-d).
   pdfExtras?: PdfExtras | null;
 }) {
-  const { isTablet, itemCols, isLandscape } = useLayout();
+  const { isTablet, itemCols, isLandscape, isWide, contentWidth } = useLayout();
   // 약 카드 격자 칸 폭 — calc()는 APK에서 칸이 접혀서 잰 값으로(useGridCell, 시안대로 2열).
   const medGrid = useGridCell(2);
   const [selectedYear, setSelectedYear] = useState<number>(reports[reports.length - 1].year);
   // 검사 항목 / 복용약 — 같은 연도 기록 안에서 전환해서 볼 수 있게 한다.
   const [view, setView] = useState<'metrics' | 'medications'>('metrics');
+  // 넓은 모니터(wide): 항목을 누르면 전체 화면 대신 오른쪽 칸이 바뀐다. 고른 항목이 그해 목록에 없으면 첫 항목.
+  const [selectedKey, setSelectedKey] = useState<MetricKey | null>(null);
 
   const detailReport = reports.find((r) => r.year === selectedYear) ?? reports[reports.length - 1];
   // 그 해 검진의 실제 상태(statusByKey)를 그대로 반영한 항목 목록 — 점수와 항상 일치한다.
@@ -101,14 +105,18 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   if (isTablet) {
     const statusChips = ([['정상', counts.정상, T.success, T.successBg, '■'], ['주의', counts.주의, T.warn, T.warnBg, '●'], ['위험', counts.위험, T.danger, T.dangerBg, '▲']] as const);
     // 열 우선 정렬 — 먼저 확인할 위험·주의가 왼쪽 열에 모이도록 위에서 아래로 채운다.
-    const perCol = Math.ceil(rows.length / itemCols);
-    const columns = Array.from({ length: itemCols }, (_, c) => rows.slice(c * perCol, (c + 1) * perCol));
+    // 넓은 모니터는 오른쪽 상세 칸을 빼고 남는 폭으로 열 수를 다시 정한다(recordsSplit).
+    const split = isWide ? recordsSplit(contentWidth) : null;
+    const listCols = split ? split.listCols : itemCols;
+    const picked = rows.find((r) => r.key === selectedKey) ?? rows[0];
+    const perCol = Math.ceil(rows.length / listCols);
+    const columns = Array.from({ length: listCols }, (_, c) => rows.slice(c * perCol, (c + 1) * perCol));
     // 태블릿 시안은 세로·가로 모두 효능군 카드를 2열로 배치한다.
     const medCols = 2;
     const medFlat = medGroups.flatMap(({ category, items }) => items.map((item) => ({ category, count: items.length, item })));
 
-    return (
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+    const body = (
+      <>
         {/* 오른쪽 위 내 정보 버튼(App) 자리를 비운다 */}
         <View style={{ paddingRight: 64 }}>
           <Text style={{ fontSize: T.fs.title, fontWeight: '800', color: T.text1, lineHeight: 32 }}>검사항목</Text>
@@ -184,8 +192,10 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
                       // 위아래 두 줄 카드(design-d 1안) — 한 줄에 아이콘·이름·수치+배지·화살표를 다 넣으면
                       // 이름 칸이 80~100px만 남아 「체질량지수 (BMI)」「혈청 크레아티닌」이 두 줄로 꺾였다.
                       // 윗줄: 아이콘·이름·상태 배지·화살표 / 아랫줄: 수치(오른쪽, 예전 배지 자리).
-                      <Pressable key={metric.key} onPress={() => onOpenDetail?.(metric.key, selectedYear)} accessibilityRole="button" accessibilityLabel={`${metric.name} 자세히 보기`}
-                        style={{ gap: 8, paddingTop: 12, paddingBottom: 12, paddingLeft: 14, paddingRight: 12, borderRadius: 16, backgroundColor: T.white }}>
+                      <Pressable key={metric.key} onPress={() => (split ? setSelectedKey(metric.key) : onOpenDetail?.(metric.key, selectedYear))} accessibilityRole="button" accessibilityLabel={`${metric.name} 자세히 보기`}
+                        accessibilityState={split ? { selected: picked?.key === metric.key } : undefined}
+                        style={[{ gap: 8, paddingTop: 12, paddingBottom: 12, paddingLeft: 14, paddingRight: 12, borderRadius: 16, backgroundColor: T.white },
+                          split && { borderWidth: 2, borderColor: picked?.key === metric.key ? T.primary : 'transparent', paddingTop: 10, paddingBottom: 10, paddingLeft: 12, paddingRight: 10 }]}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                           <SquircleIcon icon={visual.icon} color={visual.color} bg={visual.bg} />
                           <View style={{ flex: 1, minWidth: 0 }}>
@@ -290,6 +300,30 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
           </FadeIn>
         )}
         <Text style={{ fontSize: T.fs.caption, color: T.text3, textAlign: 'center', marginTop: 4 }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
+      </>
+    );
+
+    // 넓은 모니터: 화면 높이 안에서 왼쪽 목록·오른쪽 상세가 각자 스크롤된다(바깥 스크롤 하나에 넣으면
+    // 오른쪽 칸 높이가 정해지지 않아 따로 스크롤되지 않는다). 복용약 보기에서는 오른쪽 칸을 숨긴다.
+    if (split) {
+      return (
+        <View style={{ flex: 1, flexDirection: 'row', gap: 12, paddingHorizontal: 28, paddingTop: 28, backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+          <ScrollView style={{ flex: 1, minWidth: 0 }} contentContainerStyle={{ paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false}>
+            {body}
+          </ScrollView>
+          {view === 'metrics' && picked && (
+            // 위쪽 60은 App의 내 정보 단추(오른쪽 위 48px) 자리.
+            <View style={{ width: split.paneW, flexShrink: 0, marginTop: 60 }}>
+              <MetricDetailScreen key={picked.key} variant="pane" metric={picked} report={detailReport} reports={reports} onYear={setSelectedYear} />
+            </View>
+          )}
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+        {body}
       </ScrollView>
     );
   }

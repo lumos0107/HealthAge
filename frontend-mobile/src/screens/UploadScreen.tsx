@@ -5,6 +5,8 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { FixedCTA } from '../components/v2';
+import { useLayout } from '../responsive';
+import { NARROW_MAX } from '../wideLayout';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, ocrTemplate } from '../data';
 import type { MedicationItem, OcrField, TabKey, UserProfile } from '../data';
@@ -24,6 +26,8 @@ async function openExternalUrl(url: string) {
 }
 
 export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle, demoMode }: { profile: UserProfile; onTab: (tab: TabKey) => void; onSaved?: () => void; onSaveLifestyle?: (ls: Lifestyle) => void; demoMode?: boolean }) {
+  // 넓은 모니터(wide): 검진 결과지는 왼쪽 올리기 칸 | 오른쪽 읽은 값 확인 칸, 복약자료는 1280 안 가운데.
+  const { isWide } = useLayout();
   const [mode, setMode] = useState<'checkup' | 'medication'>('checkup');
   const [fields, setFields] = useState<OcrField[]>([]);
   const [source, setSource] = useState('');
@@ -252,7 +256,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={[{ flex: 1 }, isWide && mode === 'medication' && { width: '100%', maxWidth: NARROW_MAX, alignSelf: 'center' }]}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
@@ -287,9 +291,10 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
 
         {/* 선택한 모드에 맞는 내용 — 모드를 바꾸면 살짝 페이드되며 갱신된다 */}
         <FadeIn key={mode}>
-        {mode === 'checkup' && (
-          <>
-            <View style={{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 }}>
+        {mode === 'checkup' && (() => {
+          const uploadCard = (
+            <View style={[{ backgroundColor: T.white, marginHorizontal: 16, borderRadius: T.radius, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 18, marginBottom: 8 },
+              isWide && { backgroundColor: T.primaryLight, borderWidth: 2, borderStyle: 'dashed', borderColor: T.primary, paddingTop: 24, paddingBottom: 24 }]}>
               {/* 회원 정보 안내 — 박스 안에 박스를 두지 않고, 카드 안에서 아이콘+텍스트로 평평하게 표시 */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 16, marginBottom: 18, borderBottomWidth: 1, borderBottomColor: T.divider }}>
                 <Ionicons name="person-circle-outline" size={20} color={T.primary} />
@@ -319,9 +324,9 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                 <Text style={{ fontSize: T.fs.caption, fontWeight: '600', color: T.text2 }}>예시 결과 미리보기 (참고용 더미 데이터)</Text>
               </Pressable>
             </View>
+          );
 
-
-            {fields.length > 0 && (
+          const fieldsBlock = (
               <>
                 {missing.length > 0 && (!manualEntry || touched) && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 14, marginHorizontal: 16, marginBottom: 4, borderBottomWidth: 1, borderBottomColor: T.divider }}>
@@ -428,9 +433,41 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
                   )}
                 </View>
               </>
-            )}
-          </>
-        )}
+          );
+
+          // 넓은 모니터: 왼쪽 올리기 칸 | 오른쪽 읽은 값 확인 칸. 저장 단추는 아래 고정 막대 대신 오른쪽 칸 끝
+          // (글자·동작·나오는 조건은 고정 막대와 같다).
+          if (isWide) {
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 12 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>{uploadCard}</View>
+                <View style={{ width: 640, flexShrink: 1, minWidth: 480 }}>
+                  {fields.length > 0 ? (
+                    <>
+                      {fieldsBlock}
+                      <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
+                        <Pressable hitSlop={8} onPress={requestSave} disabled={analyzeLoading} accessibilityRole="button"
+                          style={({ pressed }) => ({ height: 52, borderRadius: T.radiusMd, alignItems: 'center', justifyContent: 'center', backgroundColor: analyzeLoading ? T.text3 : pressed ? T.primaryPressed : T.primary })}>
+                          {analyzeLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>확인한 값 저장하기</Text>}
+                        </Pressable>
+                      </View>
+                    </>
+                  ) : (
+                    <View style={{ marginHorizontal: 16, backgroundColor: T.white, borderRadius: T.radius, paddingVertical: 48, paddingHorizontal: 20, alignItems: 'center' }}>
+                      <Text style={{ fontSize: T.fs.body, color: T.text3, textAlign: 'center' }}>사진을 고르면 AI가 읽은 값이 여기에 나와요</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            );
+          }
+          return (
+            <>
+              {uploadCard}
+              {fields.length > 0 && fieldsBlock}
+            </>
+          );
+        })()}
 
         {mode === 'medication' && (
           <>
@@ -603,7 +640,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
         </View>
       </Modal>
 
-      {mode === 'checkup' && fields.length > 0 && (
+      {mode === 'checkup' && fields.length > 0 && !isWide && (
         <FixedCTA label="확인한 값 저장하기" onPress={requestSave} disabled={analyzeLoading} loading={analyzeLoading} />
       )}
       {mode === 'medication' && (

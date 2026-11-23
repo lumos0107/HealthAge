@@ -19,6 +19,7 @@ import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/ap
 import { Chip, ChipRow, FieldInput, PHONE_WIDTH, PrimaryBtn, T } from './src/components/UI';
 import { TabletRail } from './src/components/TabletRail';
 import { RAIL_W, useLayout } from './src/responsive';
+import { NARROW_MAX, WIDE_MAX_CONTENT } from './src/wideLayout';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { applyGender, initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
@@ -367,6 +368,9 @@ export default function App() {
       <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
       {isTablet && <TabletRail items={TABS} active={tab} onSelect={handleTab} onHome={() => handleTab('dashboard')} />}
       <View style={{ flex: 1, minWidth: 0 }}>
+      {/* 본문 폭 틀 — 넓은 모니터(wide)에서는 1824 안 가운데. 창 크기에 따라 넣었다 빼면 화면 안 상태가
+          사라지므로 늘 그려 두고 스타일만 바꾼다. 내 정보 단추도 이 안에 있어 본문 오른쪽 끝에 붙는다. */}
+      <View style={layout.isWide ? { flex: 1, width: '100%', maxWidth: WIDE_MAX_CONTENT, alignSelf: 'center' } : { flex: 1 }}>
 
       {/* 헤더 (모바일) — 태블릿은 화면마다 제목 줄이 있고, 내 정보 버튼만 오른쪽 위에 띄운다 */}
       {/* 홈은 히어로 카드가 바로 이어져 구분선 없이, 나머지 탭은 실선으로 콘텐츠와 구분 */}
@@ -390,7 +394,7 @@ export default function App() {
       <View style={{ flex: 1, backgroundColor: T.bg }}>
         {tab === 'dashboard' && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
-          : <DashboardScreen onTab={handleTab} reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} isPreview={!loggedIn} onRequireLogin={requireLogin} onOpenDetail={openDetail} />)}
+          : <DashboardScreen onTab={handleTab} reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} isPreview={!loggedIn} onRequireLogin={requireLogin} onOpenDetail={openDetail} gender={profile.gender} smoking={profile.smoking} alcoholWeeklyG={profile.drinking === 'yes' ? profile.alcohol_weekly_g : 0} />)}
         {tab !== 'dashboard' && !loggedIn && <LockedNotice onPress={requireLogin} />}
         {tab === 'records' && loggedIn && (needEmptyState
           ? <EmptyDataState onUpload={() => handleTab('upload')} />
@@ -403,6 +407,7 @@ export default function App() {
           : <AnalysisScreen reports={reportsForScreens} metricDefinitions={metricDefinitionsForScreens} usingRealData={usingRealData} recommendationsByYear={analysisByYear.rec} egfrByYear={analysisByYear.egfr} comboAnalysisByYear={analysisByYear.combo} gender={profile.gender} smoking={profile.smoking} alcoholWeeklyG={profile.drinking === 'yes' ? profile.alcohol_weekly_g : 0} />)}
         {tab === 'upload' && loggedIn && <UploadScreen profile={profile} onTab={handleTab} onSaved={() => loadHealthData(profile.id)} onSaveLifestyle={(ls) => saveProfile({ ...profile, ...ls })} demoMode={isDemoAccount} />}
         {tab === 'profile' && loggedIn && (
+          <View style={layout.isWide ? { flex: 1, width: '100%', maxWidth: NARROW_MAX, alignSelf: 'center' } : { flex: 1 }}>
           <ProfileScreen
             profile={profile}
             settings={settings}
@@ -416,9 +421,11 @@ export default function App() {
             metricDefinitions={loggedIn && !needEmptyState ? metricDefinitionsForScreens : null}
             pdfExtras={pdfExtras}
           />
+          </View>
         )}
       </View>
 
+      </View>
       </View>
       </View>
 

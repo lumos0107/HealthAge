@@ -1,10 +1,12 @@
 import { useGridCell, useLayout } from '../responsive';
+import { analysisCols } from '../wideLayout';
+import { ScoreChart, scoreConclusion } from './HistoryScreen';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, GridCellContext, T } from '../components/UI';
+import { AnimatedScore, Eyebrow, FadeIn, FadeInUp, GridCellContext, MeasuredChart, T } from '../components/UI';
 import { Expandable, PeerRankBlock, ScoreCalcNote, scoreTone, SummaryCard } from '../components/v2';
-import { formatMetricValue, metricPeerRank, rankFromPercentile, sortByAttention } from '../interpret';
+import { formatMetricValue, metricPeerRank, rankFromPercentile, scoreSeries, sortByAttention } from '../interpret';
 import type { PositionAxis } from '../interpret';
 import { NextCheckupGoal } from '../components/NextCheckupGoal';
 import { calcGloss, cardContent, computeGroupsForReport, FATTY_LIVER_TYPE_CRITERIA, metricLabel, metricsForReport } from '../data';
@@ -714,13 +716,13 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
   egfrByYear?: Record<number, RealEgfr>;
   comboAnalysisByYear?: Record<number, RealComboAnalysis>;
 }) {
-  const { isTablet } = useLayout();
+  const { isTablet, isWide, contentWidth } = useLayout();
   const [yearIdx, setYearIdx] = useState(reports.length - 1);
   // design-d: 태블릿은 1뎁스 = 네 층 2×2 요약, 카드를 누르면 2뎁스 = 그 층만(아래 긴 화면에서 해당 층 부분),
   // 그 안의 카드를 누르면 3뎁스 = 기존 SummaryCard 상세. null이면 1뎁스.
   const [openLayer, setOpenLayer] = useState<number | null>(null);
-  // 1뎁스 2×2 타일 칸 폭 — 훅이라 태블릿 분기 «밖»에서 부른다.
-  const tileGrid = useGridCell(2);
+  // 1뎁스 2×2 타일 칸 폭 — 훅이라 태블릿 분기 «밖»에서 부른다. 넓은 모니터에서 격자가 충분히 넓으면 한 줄에 4장.
+  const tileGrid = useGridCell(isWide ? analysisCols(contentWidth) : 2);
   const layerMode = isTablet && openLayer !== null;
   const showLayer = (i: number) => !layerMode || openLayer === i;
   // 태블릿에서 ①은 참고 점수를 품고 있어(design-d) 이름을 바꿨다. 폰·「분석 탭 보는 법」은 아직 LAYERS 그대로.
@@ -871,7 +873,7 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
     );
 
     return (
-      <ScrollView key="tablet-summary" contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12, maxWidth: 1280, width: '100%', alignSelf: 'center' }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
+      <ScrollView key="tablet-summary" contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 28, paddingBottom: 40, gap: 12, maxWidth: isWide ? undefined : 1280, width: '100%', alignSelf: 'center' }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg, ...({ wordBreak: 'keep-all' } as any) }}>
         <View style={{ paddingRight: 64 }}>
           <Eyebrow>ANALYSIS</Eyebrow>
           <TabIntroNote title="건강분석" />
@@ -933,6 +935,22 @@ export default function AnalysisScreen({ reports, metricDefinitions, usingRealDa
             />}
           </>)}
         </View>
+
+        {/* 넓은 모니터: 카드 줄 아래에 홈과 같은 점수 변화 그래프(기록 2회 이상일 때). */}
+        {isWide && (() => {
+          const series = scoreSeries(reports);
+          if (series.length < 2) return null;
+          const concl = scoreConclusion(series);
+          return (
+            <View style={{ backgroundColor: T.white, borderRadius: T.radius, paddingHorizontal: 24, paddingVertical: 22 }}>
+              <Text style={{ fontSize: T.fs.h3, fontWeight: '800', color: T.text1 }}>점수 변화</Text>
+              <Text style={{ fontSize: T.fs.strong, fontWeight: '800', color: T.text1, marginTop: 6, lineHeight: 27 }}>
+                {concl.lead}<Text style={{ color: concl.ink }}>{concl.main}</Text>
+              </Text>
+              <MeasuredChart><ScoreChart series={series} wide /></MeasuredChart>
+            </View>
+          );
+        })()}
 
         <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, textAlign: 'center' }}>참고용이에요. 걱정되면 의료진과 상담해 보세요.</Text>
       </ScrollView>
