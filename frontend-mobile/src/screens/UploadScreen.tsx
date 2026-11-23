@@ -6,7 +6,7 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Modal, Platfor
 import { Eyebrow, FadeIn, FadeInUp, T } from '../components/UI';
 import { FixedCTA } from '../components/v2';
 import { useLayout } from '../responsive';
-import { NARROW_MAX } from '../wideLayout';
+import { DIALOG_MAX, NARROW_MAX } from '../wideLayout';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { medicationDosageText, medicationPeriodText, medicationTemplate, ocrTemplate } from '../data';
 import type { MedicationItem, OcrField, TabKey, UserProfile } from '../data';
@@ -258,7 +258,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
   return (
     <View style={[{ flex: 1 }, isWide && mode === 'medication' && { width: '100%', maxWidth: NARROW_MAX, alignSelf: 'center' }]}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: isWide && mode === 'checkup' ? 40 : 110 }} showsVerticalScrollIndicator={false} style={{ backgroundColor: T.bg }}>
 
         {/* 페이지 헤더 — 화면에 들어오면 살짝 떠오르며 나타난다 */}
         <FadeInUp delay={0}>
@@ -575,7 +575,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
       {/* 저장 확인 모달 */}
       <Modal transparent visible={confirmOpen} animationType="fade">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
-          <View style={{ backgroundColor: T.white, borderRadius: T.radiusMd, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 }}>
+          <View style={[{ backgroundColor: T.white, borderRadius: T.radiusMd, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 }, isWide && { width: '100%', maxWidth: DIALOG_MAX, alignSelf: 'center' }]}>
             <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Ionicons name="save-outline" size={24} color={T.primary} />
             </View>
@@ -604,7 +604,7 @@ export default function UploadScreen({ profile, onTab, onSaved, onSaveLifestyle,
       {/* 생년월일 재입력 — HIRA 파일이 프로필 생일로 안 열릴 때. 파일을 다시 고르지 않고 그대로 재시도한다. */}
       <Modal transparent visible={!!medBirthdayAsk} animationType="fade" onRequestClose={() => setMedBirthdayAsk(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 }}>
-          <View style={{ backgroundColor: T.white, borderRadius: T.radiusMd, padding: 24 }}>
+          <View style={[{ backgroundColor: T.white, borderRadius: T.radiusMd, padding: 24 }, isWide && { width: '100%', maxWidth: DIALOG_MAX, alignSelf: 'center' }]}>
             <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: T.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Ionicons name="lock-closed-outline" size={24} color={T.primary} />
             </View>

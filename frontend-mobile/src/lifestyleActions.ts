@@ -349,3 +349,9 @@ export function todoLines(ctx: Ctx, n = 3): TodoLine[] {
     };
   });
 }
+
+/** 할 일 카드 아래 「여기 순서는 «수치를 얼마나 움직이나»로…」 안내를 보일지 — 다음 검진 목표 창 ②와 같은 조건.
+ *  모든 줄이 0%면 효과로 순서를 매겼다는 말이 맞지 않으므로 숨긴다. */
+export function showsOrderNote(lines: TodoLine[]): boolean {
+  return lines.some((l) => l.positive);
+}

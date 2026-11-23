@@ -19,7 +19,7 @@ import { apiFetch, getAccessToken, supabase, supabaseConfigured } from './src/ap
 import { Chip, ChipRow, FieldInput, PHONE_WIDTH, PrimaryBtn, T } from './src/components/UI';
 import { TabletRail } from './src/components/TabletRail';
 import { RAIL_W, useLayout } from './src/responsive';
-import { NARROW_MAX, WIDE_MAX_CONTENT } from './src/wideLayout';
+import { DIALOG_MAX, NARROW_MAX, WIDE_MAX_CONTENT } from './src/wideLayout';
 import { EMPTY_LIFESTYLE, LifestyleForm, type Lifestyle } from './src/components/LifestyleForm';
 import { applyGender, initialProfile, initialSettings, profileBirthFromDate, reports as dummyReports, metricDefinitions as dummyMetricDefinitions, metricsForReport } from './src/data';
 import type { UserProfile, UserSettings, Report, MetricDefinition, MedicationItem, MetricKey } from './src/data';
@@ -358,6 +358,24 @@ export default function App() {
     </Pressable>
   );
 
+  // 넓은 모니터: 내 정보 단추를 본문 위에 띄우지 않고 레일 맨 아래에 둔다(스크롤할 때 본문 글자를 가리지 않게).
+  const railProfile = layout.isWide ? (
+    <Pressable
+      onPress={() => (loggedIn ? handleTab('profile') : requireLogin())}
+      accessibilityRole="button"
+      accessibilityLabel="내 정보"
+      accessibilityState={{ selected: tab === 'profile' }}
+      style={{ width: RAIL_W - 12, minHeight: 64, alignItems: 'center', justifyContent: 'center', paddingVertical: 6 }}
+    >
+      <View style={{ width: 56, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginBottom: 4, backgroundColor: tab === 'profile' ? T.primaryLight : 'transparent' }}>
+        <Ionicons name={tab === 'profile' ? 'person' : 'person-outline'} size={24} color={tab === 'profile' ? T.primaryText : T.text2} />
+      </View>
+      <Text style={{ fontSize: T.fs.caption, color: tab === 'profile' ? T.primaryText : T.text2, fontWeight: tab === 'profile' ? '700' : '500' }}>내 정보</Text>
+    </Pressable>
+  ) : null;
+  // 넓은 모니터의 작은 창(바텀시트)은 화면 가로 전체가 아니라 가운데 560 안에.
+  const dialogCap = layout.isWide ? { width: '100%' as const, maxWidth: DIALOG_MAX, alignSelf: 'center' as const } : null;
+
   return (
     <View style={shellStyle}>
     <SafeAreaProvider>
@@ -366,7 +384,7 @@ export default function App() {
 
       {/* 태블릿: 좌측 레일 + 본문 / 모바일: 상단 헤더 + 본문 + 하단 탭 */}
       <View style={{ flex: 1, flexDirection: isTablet ? 'row' : 'column' }}>
-      {isTablet && <TabletRail items={TABS} active={tab} onSelect={handleTab} onHome={() => handleTab('dashboard')} />}
+      {isTablet && <TabletRail items={TABS} active={tab} onSelect={handleTab} onHome={() => handleTab('dashboard')} footer={railProfile} />}
       <View style={{ flex: 1, minWidth: 0 }}>
       {/* 본문 폭 틀 — 넓은 모니터(wide)에서는 1824 안 가운데. 창 크기에 따라 넣었다 빼면 화면 안 상태가
           사라지므로 늘 그려 두고 스타일만 바꾼다. 내 정보 단추도 이 안에 있어 본문 오른쪽 끝에 붙는다. */}
@@ -374,7 +392,7 @@ export default function App() {
 
       {/* 헤더 (모바일) — 태블릿은 화면마다 제목 줄이 있고, 내 정보 버튼만 오른쪽 위에 띄운다 */}
       {/* 홈은 히어로 카드가 바로 이어져 구분선 없이, 나머지 탭은 실선으로 콘텐츠와 구분 */}
-      {isTablet ? profileButton : (
+      {isTablet ? (layout.isWide ? null : profileButton) : (
       <View style={[s.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, tab === 'dashboard' && { borderBottomWidth: 0 }]}>
         <Pressable onPress={() => handleTab('dashboard')} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={s.logoIcon}>
@@ -469,7 +487,7 @@ export default function App() {
             두 플랫폼 모두 padding 모드로 통일해 부드럽게 따라 올라오도록 한다 */}
         <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
           <Pressable style={s.modalOverlay} onPress={() => setAuthOpen(false)}>
-            <Pressable style={s.modalSheet} onPress={(e) => e.stopPropagation()}>
+            <Pressable style={[s.modalSheet, dialogCap]} onPress={(e) => e.stopPropagation()}>
               <View style={s.modalHandle} />
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <Text style={{ fontSize: T.fs.h3, fontWeight: '700', color: T.text1, marginBottom: 20 }}>로그인 / 회원가입</Text>
@@ -484,7 +502,7 @@ export default function App() {
       <Modal transparent visible={lifestylePrompt} animationType="slide" onRequestClose={() => setLifestylePrompt(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
           <Pressable style={s.modalOverlay} onPress={() => setLifestylePrompt(false)}>
-            <Pressable style={s.modalSheet} onPress={(e) => e.stopPropagation()}>
+            <Pressable style={[s.modalSheet, dialogCap]} onPress={(e) => e.stopPropagation()}>
               <View style={s.modalHandle} />
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <Text style={{ fontSize: T.fs.h3, fontWeight: '700', color: T.text1, marginBottom: 6 }}>생활습관 문진</Text>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analysisCols, isWideLayout, readSearch, recordsSplit } from './wideLayout';
+import { analysisCols, isWideLayout, keepSelection, readSearch, recordsSplit } from './wideLayout';
 
 describe('isWideLayout — 넓은 모니터 배치(wide)를 켤지', () => {
   it('웹은 창 폭 1280부터 켠다', () => {
@@ -61,5 +61,17 @@ describe('analysisCols — 분석 요약 카드를 한 줄에 몇 장', () => {
     expect(analysisCols(1505)).toBe(2);
     expect(analysisCols(1440)).toBe(2);
     expect(analysisCols(1184)).toBe(2);
+  });
+});
+
+describe('keepSelection — 검사항목 오른쪽 칸에서 고른 항목을 그해 목록에 맞춰 둘지', () => {
+  it('그해 목록에 있으면 그대로', () => {
+    expect(keepSelection(['bmi', 'sbp'], 'sbp')).toBe('sbp');
+  });
+  it('그해 목록에 없으면 고른 것을 지운다(첫 항목으로 바뀌고, 다른 해로 가도 되살아나지 않음)', () => {
+    expect(keepSelection(['bmi', 'sbp'], 'hdl')).toBeNull();
+  });
+  it('고른 것이 없으면 없는 그대로', () => {
+    expect(keepSelection(['bmi'], null)).toBeNull();
   });
 });

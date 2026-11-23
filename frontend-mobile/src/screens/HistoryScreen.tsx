@@ -187,6 +187,10 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
   // 태블릿 2열 격자 칸 폭 — calc()는 APK에서 칸이 접혀서 잰 값으로(useGridCell). 훅이라 분기 밖에서 부른다.
   const grid2 = useGridCell(2);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  // 넓은 배치와 태블릿 배치는 화면 구조가 달라 1280을 넘나들면 카드가 새로 그려진다. 열린 상세 창과
+  // 창 안의 항목 탭·연도를 여기(화면 상태)에 두어, 창 크기를 바꿔도 보던 그대로 남게 한다.
+  const [openMore, setOpenMore] = useState<'pace' | 'highlight' | null>(null);
+  const [chartViews, setChartViews] = useState<Record<string, ChartView>>({});
   const infos = useMemo(() => buildInfos(reports, metricDefinitions), [reports, metricDefinitions]);
   // 먼저 확인 — 기준을 벗어난 묶음 중 가장 급한 2개.
   const attention = useMemo(
@@ -202,6 +206,8 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
             tabletResponsive
             variant="link"
             flush={isTablet}
+            open={openMore === 'pace'}
+            onOpenChange={(v) => setOpenMore(v ? 'pace' : null)}
             title="또래보다 빨리 변한 항목"
             summary={`${changePace[0]?.span_years ?? ''}년을 통틀어 ${changePace.length}개 항목이 또래보다 크게 변했어요.`}
             definition={cardContent['또래보다 빠르게 변한 항목'].definition}
@@ -254,6 +260,8 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
             tabletResponsive
             variant="link"
             flush={isTablet}
+            open={openMore === 'highlight'}
+            onOpenChange={(v) => setOpenMore(v ? 'highlight' : null)}
             title="그 밖의 변화 보기"
             summary={insight?.top_concerns?.length
               ? `우려할 만한 변화 ${insight.top_concerns.length}건을 포함해 ${highlights.length}건을 짚었어요.`
@@ -323,6 +331,8 @@ export default function HistoryScreen({ reports, metricDefinitions, highlights, 
             metricDefinitions={metricDefinitions}
             open={openGroup === info.group.title}
             onOpenChange={(v) => setOpenGroup(v ? info.group.title : null)}
+            view={chartViews[info.group.title]}
+            onView={(v) => setChartViews((m) => ({ ...m, [info.group.title]: v }))}
           />
         </View>
       )),
@@ -719,9 +729,14 @@ export function ScoreChart({ series, wide = false, compact = false }: { series: 
 
 // ─── 묶음 한 행 + 2뎁스 상세 ──────────────────────────────
 
-function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpenChange }: {
+/** 항목 묶음 상세 창의 보기 상태 — 고른 항목 탭(pick)과 연도(selIdx). */
+type ChartView = { pick: MetricKey | null; selIdx: number };
+
+function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpenChange, view, onView }: {
   group: Group; lead: MetricDefinition | null; reports: Report[]; metricDefinitions: MetricDefinition[];
   first?: boolean; open: boolean; onOpenChange: (v: boolean) => void;
+  /** 있으면 보기 상태를 바깥(HistoryScreen)이 들고 있다 — 창 크기를 바꿔 카드가 새로 그려져도 유지. */
+  view?: ChartView; onView?: (v: ChartView) => void;
 }) {
   const defByKey = (k: MetricKey) => metricDefinitions.find((d) => d.key === k);
   const measuredIdx = (k: MetricKey) => reports.map((r, i) => (isFiniteNum(r.values[k]) ? i : -1)).filter((i) => i >= 0);
@@ -729,8 +744,12 @@ function ChartCard({ group, lead, reports, metricDefinitions, first, open, onOpe
   const tabKeys = group.keys.filter((k) => !!defByKey(k) && measuredIdx(k).length > 0);
 
   // 보기 상태: 항목(pick)과 연도(selIdx). 고른 항목을 안 잰 해에 있으면 가장 가까운 잰 해로 붙는다.
-  const [pick, setPick] = useState<MetricKey | null>(null);
-  const [selIdx, setSelIdx] = useState(reports.length - 1);
+  const [localView, setLocalView] = useState<ChartView>({ pick: null, selIdx: reports.length - 1 });
+  const cur = view ?? localView;
+  const setView = onView ?? setLocalView;
+  const { pick, selIdx } = cur;
+  const setPick = (k: MetricKey | null) => setView({ ...cur, pick: k });
+  const setSelIdx = (i: number) => setView({ ...cur, selIdx: i });
   // 기본 항목은 «최신 연도로 고정한 대표 항목» — 연도를 옮긴다고 기준이 갈아타면 안 된다.
   const focusKey: MetricKey | undefined =
     pick && tabKeys.includes(pick) ? pick : lead && tabKeys.includes(lead.key) ? lead.key : tabKeys[0];

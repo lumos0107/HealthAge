@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { reports } from './data';
-import { ACTIONS, buildActionCtx, deviationTotal, rankActions, todoLines, type Ctx } from './lifestyleActions';
+import { ACTIONS, buildActionCtx, deviationTotal, rankActions, showsOrderNote, todoLines, type Ctx } from './lifestyleActions';
 
 /** 데모 페르소나 2024년 회차(홍길동, 1968년생 남, 현재 흡연·주 280g 음주).
  *  실제 화면이 쓰는 값 그대로 — 여기서 지어내면 화면과 다른 걸 검증하게 된다. */
@@ -165,5 +165,15 @@ describe('todoLines — 홈 할 일 카드 줄(다음 검진 목표 창 ②와 �
   });
   it('값이 하나도 없고 해당 행동도 없으면 빈 배열(카드는 기존 안내 문구를 보인다)', () => {
     expect(todoLines(buildActionCtx({} as Ctx['values'], 1, 'never', 0))).toEqual([]);
+  });
+});
+
+describe('showsOrderNote — 할 일 카드 아래 「여기 순서는…」 안내를 보일지(다음 검진 목표 창 ②와 같은 조건)', () => {
+  it('효과가 0보다 큰 줄이 하나라도 있으면 보인다', () => {
+    expect(showsOrderNote(todoLines(demoCtx))).toBe(true);
+  });
+  it('모든 줄이 0%면 숨긴다 — 순서를 효과로 매겼다는 말이 맞지 않으므로', () => {
+    const normal = buildActionCtx({ waist: 80, sbp: 110, dbp: 70, glucose: 90, triglyceride: 100, hdl: 60, weight: 65 } as Ctx['values'], 1, 'never', 0);
+    expect(showsOrderNote(todoLines(normal))).toBe(false);
   });
 });

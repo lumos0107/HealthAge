@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { Eyebrow, FadeInUp, FieldInput, SecondaryBtn, T } from '../components/UI';
+import { useLayout } from '../responsive';
+import { DIALOG_MAX } from '../wideLayout';
 import { LifestyleForm, type Lifestyle } from '../components/LifestyleForm';
 import { birthDateFromProfile, profileBirthFromDate } from '../data';
 import type { MetricDefinition, Report, UserProfile, UserSettings } from '../data';
@@ -38,6 +40,8 @@ export default function ProfileScreen({
   // PDF 2·3쪽(히스토리·분석)용 자료 — 없으면 검사항목 1쪽만 만든다(design-d).
   pdfExtras?: PdfExtras | null;
 }) {
+  // 넓은 모니터: 비밀번호 확인 창(바텀시트)을 가운데 560 안에.
+  const { isWide } = useLayout();
   const [editState, setEditState] = useState<EditState>('locked');
   const [pwInput, setPwInput] = useState('');
   const [pwError, setPwError] = useState('');
@@ -346,7 +350,7 @@ export default function ProfileScreen({
           onPress={() => { setEditState('locked'); setPwInput(''); setPwError(''); }}
         >
           <Pressable
-            style={{ backgroundColor: T.white, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 48 : 32 }}
+            style={[{ backgroundColor: T.white, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: Platform.OS === 'ios' ? 48 : 32 }, isWide && { width: '100%', maxWidth: DIALOG_MAX, alignSelf: 'center' }]}
             onPress={(e) => e.stopPropagation()}
           >
             <View style={{ width: 36, height: 4, backgroundColor: T.border, borderRadius: 2, alignSelf: 'center', marginBottom: 24 }} />

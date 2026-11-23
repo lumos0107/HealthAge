@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { categoryVisual, MiniRangeBar, SquircleIcon } from '../components/v2';
 import { Eyebrow, FadeIn, FadeInUp, StatusBadge, T } from '../components/UI';
@@ -10,7 +10,7 @@ import { formatMetricValue, sortByAttention, statusCounts } from '../interpret';
 import { exportReportPdf } from '../reportExport';
 import type { PdfExtras } from '../reportExport';
 import { useGridCell, useLayout } from '../responsive';
-import { recordsSplit } from '../wideLayout';
+import { keepSelection, recordsSplit } from '../wideLayout';
 import MetricDetailScreen from './MetricDetailScreen';
 
 export default function RecordsScreen({ reports, metricDefinitions, usingRealData, userId, userName, onDeleted, medications, onOpenDetail, onUpload, pdfExtras }: {
@@ -45,6 +45,14 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
   const counts = statusCounts(yearMetrics);
   // 필터 없이 주의 순 정렬만 — 목록이 짧고 이미 심각한 것부터 정렬돼 있어 필터는 과한 도구다.
   const rows = sortByAttention(yearMetrics);
+  // 넓은 배치: 고른 항목이 그해 목록에 없으면 고른 것을 지운다(오른쪽 칸은 첫 항목, 다른 해로 가도 되살아나지 않음).
+  const rowKeys = rows.map((r) => r.key);
+  const rowKeysSig = rowKeys.join(',');
+  useEffect(() => {
+    const kept = keepSelection(rowKeys, selectedKey);
+    if (kept !== selectedKey) setSelectedKey(kept);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowKeysSig, selectedKey]);
 
   const confirmDelete = () => {
     const year = detailReport.year;
@@ -312,8 +320,8 @@ export default function RecordsScreen({ reports, metricDefinitions, usingRealDat
             {body}
           </ScrollView>
           {view === 'metrics' && picked && (
-            // 위쪽 60은 App의 내 정보 단추(오른쪽 위 48px) 자리.
-            <View style={{ width: split.paneW, flexShrink: 0, marginTop: 60 }}>
+            // 넓은 배치에서는 내 정보 단추가 왼쪽 레일 아래에 있어 오른쪽 칸을 위까지 쓴다.
+            <View style={{ width: split.paneW, flexShrink: 0 }}>
               <MetricDetailScreen key={picked.key} variant="pane" metric={picked} report={detailReport} reports={reports} onYear={setSelectedYear} />
             </View>
           )}

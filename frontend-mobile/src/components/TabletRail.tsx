@@ -12,11 +12,13 @@ export type RailItem<K extends string> = {
 };
 
 // 태블릿 좌측 레일(96px) — 하단 탭이 엄지에서 멀어서 옮겼다. 라벨은 14px, 터치 영역 64px 이상.
-export function TabletRail<K extends string>({ items, active, onSelect, onHome }: {
+export function TabletRail<K extends string>({ items, active, onSelect, onHome, footer }: {
   items: Array<RailItem<K>>;
   active: K | string;
   onSelect: (key: K) => void;
   onHome: () => void;
+  /** 레일 맨 아래에 붙일 것(넓은 모니터에서 내 정보 단추). 없으면 아무것도 그리지 않는다. */
+  footer?: React.ReactNode;
 }) {
   return (
     <View style={{ width: RAIL_W, backgroundColor: T.white }}>
@@ -47,6 +49,7 @@ export function TabletRail<K extends string>({ items, active, onSelect, onHome }
           );
         })}
       </ScrollView>
+      {footer ? <View style={{ alignItems: 'center', paddingBottom: 20 }}>{footer}</View> : null}
     </View>
   );
 }

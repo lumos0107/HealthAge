@@ -7,7 +7,7 @@ import { categoryVisual, ScoreCalcNote, scoreTone, SquircleIcon } from '../compo
 import { computeScore } from '../data';
 import type { MetricDefinition, MetricKey, Report, TabKey } from '../data';
 import { headline, scoreSeries, statusCounts, top3Alerts } from '../interpret';
-import { buildActionCtx, todoLines, type Ctx } from '../lifestyleActions';
+import { buildActionCtx, showsOrderNote, todoLines, type Ctx } from '../lifestyleActions';
 import { useLayout } from '../responsive';
 import { NARROW_MAX } from '../wideLayout';
 import { ScoreChart, scoreConclusion } from './HistoryScreen';
@@ -347,9 +347,11 @@ function TodoCard({ ctx, onMore }: { ctx: Ctx; onMore: () => void }) {
               )}
             </View>
           ))}
-          <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>
-            여기 순서는 «수치를 얼마나 움직이나»로 매긴 것이지 의학적 우선순위가 아니에요. 복용 중인 약이나 진료 계획이 있으면 그쪽이 먼저입니다.
-          </Text>
+          {showsOrderNote(lines) && (
+            <Text style={{ fontSize: T.fs.caption, color: T.text3, lineHeight: 20, marginTop: 6 }}>
+              여기 순서는 «수치를 얼마나 움직이나»로 매긴 것이지 의학적 우선순위가 아니에요. 복용 중인 약이나 진료 계획이 있으면 그쪽이 먼저입니다.
+            </Text>
+          )}
         </>
       )}
       <View style={{ flexGrow: 1, minHeight: 12 }} />

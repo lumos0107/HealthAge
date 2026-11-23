@@ -38,3 +38,12 @@ export function recordsSplit(contentWidth: number): { paneW: number; listCols: 2
 export function analysisCols(contentWidth: number): 2 | 4 {
   return contentWidth - 56 >= 1450 ? 4 : 2;
 }
+
+/** 넓은 배치의 작은 확인 창(바텀시트·가운데 창) 최대 폭 — 넓은 모니터에서 화면 가로 전체로 퍼지지 않게. */
+export const DIALOG_MAX = 560;
+
+/** 검사항목 오른쪽 칸에서 고른 항목을 그해 목록에 맞춰 둔다. 그해 목록에 없으면 고른 것을 지운다
+ *  (오른쪽 칸은 목록 첫 항목을 보이고, 그 항목을 잰 해로 돌아가도 예전 선택이 되살아나지 않는다). */
+export function keepSelection<K extends string>(rowKeys: K[], selected: K | null): K | null {
+  return selected !== null && rowKeys.includes(selected) ? selected : null;
+}
