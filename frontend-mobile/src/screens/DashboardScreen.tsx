@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { Eyebrow, FadeInUp, MeasuredChart, StatusBadge, T } from '../components/UI';
@@ -66,6 +66,8 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
   alcoholWeeklyG?: number | null;
 }) {
   const { isTablet, isWide } = useLayout();
+  // 넓은 모니터 홈의 점수 변화 그래프 칸 높이(옆 「할 일」 카드에 맞춰 늘어난 높이) — 그래프를 그 높이로 그린다.
+  const [chartFillH, setChartFillH] = useState(0);
   // 넓은 모니터의 윗줄에서는 빠른 이동 4개를 2×2로 놓는다(로그인 전 미리보기는 태블릿 배치 그대로).
   const quickGrid = isWide && !isPreview;
   const latest = reports[reports.length - 1];
@@ -247,7 +249,17 @@ export default function DashboardScreen({ onTab, reports, metricDefinitions, usi
             <Text style={{ fontSize: T.fs.strong, fontWeight: '700', color: T.onPrimary }}>히스토리 보기</Text>
           </Pressable>
         </View>
-        <MeasuredChart><ScoreChart series={series} wide /></MeasuredChart>
+        {isWide ? (
+          // 넓은 배치: 옆 「할 일」 카드가 더 길면 그 높이까지 그래프가 채운다. 그래프는 칸 위에 겹쳐(absolute) 그려
+          // 카드의 원래 높이에는 최소 높이(274 = 위 여백 14 + 그래프 260)만 보탠다 — 옆 카드가 짧아지면 같이 줄어든다.
+          <View style={{ flex: 1, minHeight: 274 }} onLayout={(e) => setChartFillH(Math.floor(e.nativeEvent.layout.height))}>
+            <View style={{ position: 'absolute', left: 0, right: 0, top: 0 }}>
+              <MeasuredChart><ScoreChart series={series} wide height={chartFillH > 274 ? chartFillH - 14 : undefined} /></MeasuredChart>
+            </View>
+          </View>
+        ) : (
+          <MeasuredChart><ScoreChart series={series} wide /></MeasuredChart>
+        )}
       </View>
     );
   })() : null;

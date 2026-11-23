@@ -619,13 +619,14 @@ function ScoreHero({ reports, tablet = false }: { reports: Report[]; tablet?: bo
   );
 }
 
-export function ScoreChart({ series, wide = false, compact = false }: { series: { year: number; score: number; complete: boolean }[]; wide?: boolean; compact?: boolean }) {
+export function ScoreChart({ series, wide = false, compact = false, height }: { series: { year: number; score: number; complete: boolean }[]; wide?: boolean; compact?: boolean; height?: number }) {
   const reveal = useChartReveal(series.length, 1000, 150);
   const CHART_W = useChartW(CHART_W0);
   // wide(태블릿 4안): 처음·가장 낮음·지금에 이름표(점수 위/아래 한 줄 더)를 달아 위아래 여백을 늘린다.
   // compact(히스토리 태블릿) — 높이를 예전 좌우 배치 그래프(190)에 가깝게 줄인다. 홈 「점수 변화」는 wide 그대로.
   // compact는 위 점수 줄과 그래프 사이도 좁힌다 — 「처음」 이름표가 그래프 맨 위에 붙도록 위 여백 44→40, 바깥 간격 14→2.
-  const H = wide ? (compact ? 206 : 260) : 190;
+  // height: 넓은 모니터 홈에서 옆 카드 높이에 맞춰 그래프를 키울 때만 준다(없으면 지금 높이 그대로).
+  const H = height ?? (wide ? (compact ? 206 : 260) : 190);
   const pad = wide ? { top: compact ? 40 : 46, right: 12, bottom: compact ? 46 : 40, left: 12 } : { top: 22, right: 8, bottom: 34, left: 8 };
   const plotW = CHART_W - pad.left - pad.right;
   const plotH = H - pad.top - pad.bottom;
